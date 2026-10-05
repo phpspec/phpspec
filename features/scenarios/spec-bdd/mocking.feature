@@ -196,6 +196,30 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: An unstubbed method returns a usable default for a type no double can stand in for
+    Given an interface "src/App/Machine.php":
+      """
+      <?php
+      namespace App;
+
+      interface Machine {
+          public function each(): iterable;
+          public function hook(): \Closure;
+          public function stream(): \Generator;
+          public function same(): static;
+      }
+      """
+    And a spec with example:
+      """
+      $machine = mock(App\Machine::class);
+      expect($machine->each())->toBe([]);
+      expect($machine->hook())->toBeAnInstanceOf(\Closure::class);
+      expect($machine->stream())->toBeAnInstanceOf(\Generator::class);
+      expect($machine->same())->toBe($machine);
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing a return value
     Given an interface "src/App/UserRepository.php":
       """

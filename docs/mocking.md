@@ -68,6 +68,15 @@ it('handles errors', function (UserRepository $repo) {
 Give it the very instance to throw, as above, or a class name and a message
 and it builds one at the call: `toThrow(\RuntimeException::class, 'Not found')`.
 
+### What an unstubbed call returns
+
+A method nobody stubbed returns a default for its return type: `''`, `0`,
+`false`, `[]`, `null` where allowed, a double of a class or interface it
+returns, an empty `iterable`, a `Closure`, an empty `Generator`, the double
+itself for `static`. A method returning a final class has no stand-in: calling
+it before it is stubbed says so. Return an interface, or make the class
+non-final.
+
 ## Verifying Method Calls
 
 Stub and verify the same call in any order: a stubbed call still records

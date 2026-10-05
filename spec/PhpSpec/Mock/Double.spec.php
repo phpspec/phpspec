@@ -14,6 +14,16 @@ class DoubleSpecClass {
     public function nullableUnionReturn(): string|null { return null; }
 }
 
+final class DoubleSpecCoin {}
+
+interface DoubleSpecMachine {
+    public function each(): iterable;
+    public function hook(): Closure;
+    public function stream(): Generator;
+    public function same(): static;
+    public function coin(): DoubleSpecCoin;
+}
+
 class DoubleSpecMagic {
     public function __call(string $name, array $arguments): string { return 'magic'; }
 }
@@ -269,6 +279,29 @@ describe(Double::class, function() {
             $double->greet();
         } catch (\RuntimeException $thrown) {
             expect($thrown)->toBe($notFound);
+
+            return;
+        }
+
+        expect(false)->toBeTrue();
+    });
+
+    it("returns a usable default for a return type it cannot wrap: an empty iterable, a closure, a generator, itself", function() {
+        $machine = Double::getInstance(DoubleSpecMachine::class);
+
+        expect($machine->each())->toBe([]);
+        expect($machine->hook())->toBeAnInstanceOf(\Closure::class);
+        expect($machine->stream())->toBeAnInstanceOf(\Generator::class);
+        expect($machine->same())->toBe($machine);
+    });
+
+    it("says why a method returning a final class cannot be called before it is stubbed", function() {
+        $machine = Double::getInstance(DoubleSpecMachine::class);
+
+        try {
+            $machine->coin();
+        } catch (\LogicException $e) {
+            expect($e->getMessage())->toContain('DoubleSpecCoin is final');
 
             return;
         }

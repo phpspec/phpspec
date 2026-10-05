@@ -65,7 +65,8 @@ final class Double
         // create a unique name for the double class using a hash of the FQCN
         // to avoid collisions between classes with the same short name
         $classHash = substr(md5($class), 0, 8);
-        $shortName = substr($class, strrpos($class, '\\') + 1);
+        $separator = strrpos($class, '\\');
+        $shortName = $separator === false ? $class : substr($class, $separator + 1);
         $mockClassName = 'PhpspecDouble\\' . $shortName . '_Double_' . $classHash . '_' . uniqid();
 
         // generate the methods for the double
@@ -421,17 +422,39 @@ PHP;
      */
     private static function getBuiltinReturnCode(string $typeName): ?string
     {
+        $returning = static fn(string $value): string => "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+
         return match ($typeName) {
-            'string' => "\$__ret = ''; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;",
+            'string' => $returning("''"),
             'void' => 'return;',
             'never' => "throw new \\RuntimeException('Mock method should not be called');",
             'mixed' => 'return null;',
-            'array' => '$__ret = []; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
-            'int' => '$__ret = 0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
-            'float' => '$__ret = 0.0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
-            'bool' => '$__ret = false; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            'array', 'iterable' => $returning('[]'),
+            'int' => $returning('0'),
+            'float' => $returning('0.0'),
+            'bool' => $returning('false'),
+            // No double can stand in for these, so a usable value does.
+            'static', 'self' => $returning('$this'),
+            'object' => $returning('new \\stdClass()'),
+            'callable', 'Closure' => $returning('static fn() => null'),
+            'Generator' => $returning('(static fn() => yield from [])()'),
             default => null,
         };
+    }
+
+    /**
+     * What a method returns when nothing can stand in for its return type: an
+     * explanation, where PHP alone would say a value of that type was expected
+     * and none returned.
+     */
+    private static function unbuildableReturnCode(string $class, string $methodName, string $returnType): string
+    {
+        $why = class_exists($returnType) && (new ReflectionClass($returnType))->isFinal()
+            ? "$returnType is final, so no double of it can be made"
+            : "no double of $returnType can be made";
+        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): %s. Return an interface, or make the class non-final.', $class, $methodName, $why);
+
+        return 'throw new \\LogicException(' . var_export($message, true) . ');';
     }
 
     /**
@@ -707,7 +730,8 @@ PHP;
             } elseif ($isEnum) {
                 $return = "return \\{$simpleReturnName}::cases()[0];";
             } elseif ($simpleReturnName !== null) {
-                $return = self::getBuiltinReturnCode($simpleReturnName) ?? '';
+                $return = self::getBuiltinReturnCode($simpleReturnName)
+                    ?? self::unbuildableReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName);
             }
 
             // stub check — uses StubRegistry to find matching stub by method + args
