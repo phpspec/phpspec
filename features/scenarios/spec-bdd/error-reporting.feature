@@ -30,6 +30,27 @@ Feature: Error reporting
     When I run phpspec run
     Then the output should contain "to be: 42"
 
+  Scenario: A spec file with a syntax error is reported and its neighbours still run
+    Given a spec file "spec/App/Healthy.spec.php":
+      """
+      <?php
+      describe('Healthy', function () {
+          it('still runs', function () { expect(true)->toBeTrue(); });
+      });
+      """
+    And a spec file "spec/App/Broken.spec.php":
+      """
+      <?php
+      describe('Broken', function () {
+          it('never runs', function () {}
+      });
+      """
+    When I run phpspec run in a fresh process with option "--no-interaction"
+    Then the output should contain "still runs"
+    And the output should contain "Broken > Broken"
+    And the output should contain "2 examples (1 passes, 1 errors)"
+    And the exit code should be 1
+
   Scenario: Error shows file and line number
     Given a spec file "spec/App/Location.spec.php":
       """

@@ -60,6 +60,8 @@ All keywords register into the same step registry -- the keyword is for readabil
 Helper classes for your steps live under `features/support/`, the Cucumber
 way: every PHP file in it (and its subdirectories) is loaded before any step
 definition, with no autoload configuration:
+A support or step file that cannot load, a syntax error or a class built on a
+type that does not exist yet, stops the run naming the file and the reason.
 
 ```
 features/

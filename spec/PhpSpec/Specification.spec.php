@@ -34,6 +34,19 @@ describe(Specification::class, function() {
         expect($spec->getPath())->toBe('/some/path/MyClass.spec.php');
     });
 
+    it("reports a spec file that does not parse as one errored example, so the run goes on", function() {
+        $file = sys_get_temp_dir() . '/phpspec_broken_' . uniqid() . '.spec.php';
+        file_put_contents($file, "<?php\ndescribe('Broken', function () {\n    it('never runs', function () {}\n});\n");
+
+        $result = (new Specification($file))->run();
+        unlink($file);
+
+        $examples = $result->getResults();
+        expect($examples)->toHaveCount(1);
+        expect($examples[0]->isError())->toBeTrue();
+        expect($examples[0]->getError()?->getType())->toBe('ParseError');
+    });
+
     it("announces the spec file to the active coverage collector", function (CoverageDriver $driver) {
         allow($driver->stop())->toReturn([]);
         $collector = new PerExampleCollector($driver);

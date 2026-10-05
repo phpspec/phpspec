@@ -33,6 +33,25 @@ Feature: Story BDD with Gherkin
     When I run phpspec run "features/"
     Then all steps should pass
 
+  Scenario: A support class that cannot load stops the run with its reason, not a stack trace
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/time.feature":
+      """
+      Feature: Time
+        Scenario: Noon
+          Given it is noon
+      """
+    And a file "features/support/AdjustableClock.php":
+      """
+      <?php
+      final class AdjustableClock implements App\Clock {}
+      """
+    When I run phpspec run in a fresh process with option "features/"
+    Then the output should contain "AdjustableClock.php"
+    And the output should contain "App\Clock"
+    And the output should not contain "Stack trace"
+    And the exit code should be 1
+
   Scenario: Undefined steps are reported
     Given a feature file "features/missing.feature":
       """

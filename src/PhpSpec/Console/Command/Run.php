@@ -27,6 +27,7 @@ use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
+use PhpSpec\FileLoadException;
 use PhpSpec\FilterRegistry;
 use PhpSpec\Guard\Coverage;
 use PhpSpec\Guard\Inspection;
@@ -304,7 +305,7 @@ final class Run extends Command
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
-            return $this->stopped($prose, $formatter, $e->getMessage());
+            return $this->stopped($prose, $formatter, $e->getMessage(), $e instanceof FileLoadException ? $e->remedy() : null);
         }
 
         if ($this->selectedNothing($given, $results)) {

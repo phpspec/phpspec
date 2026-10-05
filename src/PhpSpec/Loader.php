@@ -270,7 +270,7 @@ final class Loader
         }
 
         foreach ($uniqueStepFiles as $stepFile) {
-            require $stepFile;
+            $this->requireFile($stepFile, false);
         }
 
         $features = [];
@@ -311,7 +311,19 @@ final class Loader
         }
 
         foreach ($this->collectPhpFiles($supportDir) as $file) {
-            require_once $file;
+            $this->requireFile($file, true);
+        }
+    }
+
+    /**
+     * @throws FileLoadException when the file does not parse or declares what cannot load
+     */
+    private function requireFile(string $file, bool $once): void
+    {
+        try {
+            $once ? require_once $file : require $file;
+        } catch (\Throwable $e) {
+            throw new FileLoadException($file, $e);
         }
     }
 
