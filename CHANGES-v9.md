@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `--fake` writes no return it cannot express as a literal, an object or an array holding one used to come out as a `__set_state()` call, and fakes no method whose result the expectation went on to call something on
  - An error thrown inside PhpSpec itself, in a double or in a vendor library is shown at the spec line that led there, with that line's code around it, instead of PhpSpec's own source; and reading a double's generated code as a file no longer prints a warning
  - A type-hinted mock of an interface that does not exist yet is offered for generation like one made with `mock()`; the two paths used to word the error differently and only one was recognised
  - A mock injected into a `let()` closure by type hint is there on `$this` under the parameter's name, as the mocking docs showed, so it can be stubbed and verified

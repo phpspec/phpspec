@@ -53,6 +53,44 @@ Feature: Code generation
     When I run phpspec run with option "--format=agent"
     Then the output should not contain "cannot be called statically"
 
+  Scenario: --fake writes no return it cannot express and fakes no method whose result was called on
+    Given a class "src/App/Money.php":
+      """
+      <?php
+      namespace App;
+
+      class Money {
+          public function __construct(public readonly int $pence) {}
+          public function plus(Money $other)
+          {
+          }
+      }
+      """
+    And a class "src/App/Oops.php":
+      """
+      <?php
+      namespace App;
+
+      class Oops {}
+      """
+    And a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('adds', function () {
+              expect((new App\Money(1))->plus(new App\Money(2)))->toBeLike(new App\Money(3));
+          });
+
+          it('names what is missing', function () {
+              expect(App\Oops::for('unicorn latte')->getMessage())->toBe('unicorn latte is not on the menu');
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers --fake"
+    Then the file "src/App/Money.php" should not contain "__set_state"
+    And the class "src/App/Oops.php" should contain "public static function for($argument1)"
+    And the file "src/App/Oops.php" should not contain "return 'unicorn latte is not on the menu'"
+
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
       """

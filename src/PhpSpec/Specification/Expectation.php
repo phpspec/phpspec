@@ -1019,12 +1019,14 @@ class Expectation
     }
 
     /**
-     * Converts a value to its PHP source code representation for --fake code generation.
+     * Converts a value to the PHP literal --fake would return, or null for a
+     * value no literal expresses: an object, or an array holding one, would
+     * come out as a __set_state() call the class does not have.
      *
      * @param mixed $value value to export
-     * @return string PHP source code literal
+     * @return string|null PHP source code literal
      */
-    private static function exportValue(mixed $value): string
+    private static function exportValue(mixed $value): ?string
     {
         if (is_string($value)) {
             return "'" . addslashes($value) . "'";
@@ -1038,9 +1040,24 @@ class Expectation
         if (is_null($value)) {
             return 'null';
         }
-        if (is_array($value)) {
+        if (is_array($value) && !self::holdsAnObject($value)) {
             return var_export($value, true);
         }
-        return var_export($value, true);
+
+        return null;
+    }
+
+    /**
+     * @param array<mixed> $value
+     */
+    private static function holdsAnObject(array $value): bool
+    {
+        foreach ($value as $item) {
+            if (is_object($item) || (is_array($item) && self::holdsAnObject($item))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

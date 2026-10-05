@@ -188,6 +188,11 @@ public function add()
 
 The `--fake` flag works by extracting the expected values from matcher results (via `fakeExpression` metadata) and using them as return values. This creates a quick feedback loop: write spec, run with `--fake`, get passing tests immediately, then replace the faked implementation with real logic.
 
+Two things are never faked: a return no literal expresses (an object, or an
+array holding one), and a method whose result the expectation went on to call
+something on, as in `expect(Oops::for('x')->getMessage())`, where the value
+belongs to `getMessage()` and not to `for()`.
+
 ## Nothing is written without an answer
 
 Everything above is **offered**, never assumed. PhpSpec asks `[Y/n]` and writes

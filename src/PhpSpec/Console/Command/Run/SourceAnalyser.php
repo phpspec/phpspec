@@ -62,13 +62,15 @@ final class SourceAnalyser
     }
 
     /**
-     * Scans source lines near an error location for a ->toBe(VALUE) expectation to extract the return value.
-     * Used in --fake mode to determine what value a generated method should return.
+     * The value a toBe() expectation wants of the method call at the given
+     * location, for --fake to return: only when the call itself is what
+     * expect() was given. A method whose result the expectation went on to
+     * call something on has no value of its own to fake.
      *
      * @param string $file the spec file path
      * @param int $line the error line number
      * @param string $methodName the undefined method name
-     * @return string|null the expected return expression, or null if not found
+     * @return string|null the expected return expression, or null when there is none to take
      */
     public function extractExpectedReturnValue(string $file, int $line, string $methodName): ?string
     {
@@ -80,13 +82,20 @@ final class SourceAnalyser
             return null;
         }
 
-        // Search the error line and a few lines after for ->toBe(VALUE)
+        // The statement that starts on the error line, to its semicolon.
+        $statement = '';
         for ($i = max(0, $line - 1); $i < min(count($lines), $line + 5); $i++) {
-            $sourceLine = $lines[$i];
-            if (preg_match('/->toBe\((.+)\)/', $sourceLine, $m)) {
-                return trim($m[1]);
+            $statement .= $lines[$i];
+            if (str_contains($lines[$i], ';')) {
+                break;
             }
         }
+
+        $call = '(?:->|::)' . preg_quote($methodName, '/') . '\((?:[^()]|\([^()]*\))*\)';
+        if (preg_match('/' . $call . '\)\s*->toBe\((.+)\)\s*;/s', $statement, $m) === 1) {
+            return trim($m[1]);
+        }
+
         return null;
     }
 
