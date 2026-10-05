@@ -123,6 +123,20 @@ Feature: Code generation
     Then a file "src/App/Logger.php" should be generated
     And it should contain "interface Logger"
 
+  Scenario: Generate an interface from a type-hinted injection
+    Given a spec file "spec/App/Service.spec.php":
+      """
+      <?php
+      describe('Service', function () {
+          it('uses a notifier', function (App\Notifier $notifier) {
+              expect($notifier)->toBeAnInstanceOf(App\Notifier::class);
+          });
+      });
+      """
+    When I run phpspec run and answer "y" to generation prompts
+    Then a file "src/App/Notifier.php" should be generated
+    And it should contain "interface Notifier"
+
   Scenario: A generated class lands where composer.json says its namespace lives
     Given no phpspec.json config
     And a file "composer.json":
