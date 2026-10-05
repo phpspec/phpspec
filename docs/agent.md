@@ -89,7 +89,7 @@ Scenario Outline is its own entry, named by its values
 | `state` | `failing`, `error`, `pending`, or `skipped`; `passing` only under `-v`. |
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
-| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. Absent with `spec`. |
+| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
 | `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expectation?, at? }`, in the order they were declared. |

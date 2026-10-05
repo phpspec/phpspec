@@ -570,7 +570,7 @@ describe(Agent::class, function () {
         expect($example['exception']['at'])->toBe('src/App/Money.php:9');
     });
 
-    it('keeps the site of an error that surfaced in the spec file itself', function () use ($render, $thrownAt) {
+    it('keeps the site of an error that surfaced in the spec file itself, re-running by the declaring line', function () use ($render, $thrownAt) {
         $errored = new ExampleResult('adds cents', [], true);
         $errored->declaredAt(getcwd() . '/spec/App/Money.spec.php', 7);
         $errored->setError(new ExampleError('boom', $thrownAt('boom', getcwd() . '/spec/App/Money.spec.php', 12)));
@@ -578,7 +578,7 @@ describe(Agent::class, function () {
         $example = $render(new SuiteResult([new SpecificationResult('App\\Money', [$errored])]))['examples'][0];
 
         expect($example['spec'])->toBe('spec/App/Money.spec.php:12');
-        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:12');
+        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:7');
     });
 
     it('addresses a failure asserted in a helper by the line that declares the example', function () use ($render) {

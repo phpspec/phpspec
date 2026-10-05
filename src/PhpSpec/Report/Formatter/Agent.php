@@ -493,7 +493,7 @@ final class Agent extends AbstractFormatter
             $match = $this->failingMatch($example);
             $entry += $this->expectation($match);
             $entry['message'] = $example->getMessage();
-            $this->addLocation($entry, $this->address($example, $match?->getFile(), $match?->getLine()));
+            $this->address($entry, $example, $match?->getFile(), $match?->getLine());
             // No offer on a failure: the code exists and the behaviour is wrong,
             // there is nothing to generate — `state: failing` already says so.
         } elseif ($state === 'error') {
@@ -506,7 +506,7 @@ final class Agent extends AbstractFormatter
             // Mirrored, so one field answers "what went wrong" whatever the
             // state: the exception adds the class and the site, not the text.
             $entry['message'] = $error?->getMessage();
-            $this->addLocation($entry, $this->address($example, $error?->getFile(), $error?->getLine()));
+            $this->address($entry, $example, $error?->getFile(), $error?->getLine());
             // A missing class/method/interface the error names becomes a concrete
             // offer to generate it, right on the example that hit it. Only present
             // when the error actually maps to something a generator can create.
@@ -515,7 +515,7 @@ final class Agent extends AbstractFormatter
                 $entry['offer'] = $offer;
             }
         } elseif ($state === 'passing') {
-            $this->addLocation($entry, $this->address($example, null, null));
+            $this->address($entry, $example, null, null);
         }
 
         $this->attachOutput($entry, $example->getOutput());
@@ -762,7 +762,8 @@ final class Agent extends AbstractFormatter
         // and a pass are addressed, as with examples: a scenario waiting on
         // undefined steps is work to write, not work to re-run.
         if ($state === 'failing' || $state === 'passing') {
-            $this->addLocation($entry, $this->location($origin->path, $origin->line));
+            $scenario = $this->location($origin->path, $origin->line);
+            $this->addLocation($entry, $scenario, $scenario);
         }
 
         $this->report($entry);
@@ -806,40 +807,38 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * The line an example is acted on from, always in its own spec file: the
-     * site of what went wrong when that site is in the file, else the line that
-     * declares the example. An error thrown inside the code under test, or an
-     * expectation asserted in a helper, would otherwise hand an agent a path
-     * that is not a spec, and "run src/App/Money.php:12" would be executed
-     * blindly. Null when the example's file is not known and the site is not
-     * either.
+     * Addresses an example, always in its own spec file: `spec` is the site of
+     * what went wrong when that site is in the file (the expect() line, a let
+     * binding that threw), else the line that declares the example; `rerun`
+     * targets the declaring line, which phpspec resolves to this example and
+     * no other. An error thrown inside the code under test, or an expectation
+     * asserted in a helper, would otherwise hand an agent a path that is not a
+     * spec, and "run src/App/Money.php:12" would be executed blindly. Nothing
+     * is attached when neither the declaration nor the site is known.
+     *
+     * @param array<string, mixed> $entry
      */
-    private function address(ExampleResult $example, ?string $file, ?int $line): ?string
+    private function address(array &$entry, ExampleResult $example, ?string $file, ?int $line): void
     {
-        $declared = $example->getFile();
+        $declared = $this->location($example->getFile(), $example->getLine());
+        $site = $declared === null || $file === $example->getFile() ? $this->location($file, $line) : null;
 
-        if ($declared === null || $file === $declared) {
-            return $this->location($file, $line);
-        }
-
-        return $this->location($declared, $example->getLine());
+        $this->addLocation($entry, $site ?? $declared, $declared ?? $site);
     }
 
     /**
      * Attaches the line the entry is acted on from, and the exact line-targeted
      * command that re-runs just that one, so an agent can verify a single fix
-     * without a full-suite run. phpspec resolves a "spec.php:LINE" path to the
-     * example whose closure spans that line. Both are absent when the location
-     * is not known: a key that says null is a question a reader has to ask
-     * twice.
+     * without a full-suite run. Both are absent when the location is not known:
+     * a key that says null is a question a reader has to ask twice.
      *
      * @param array<string, mixed> $entry
      */
-    private function addLocation(array &$entry, ?string $location): void
+    private function addLocation(array &$entry, ?string $spec, ?string $rerun): void
     {
-        if ($location !== null) {
-            $entry['spec'] = $location;
-            $entry['rerun'] = 'run ' . $location;
+        if ($spec !== null && $rerun !== null) {
+            $entry['spec'] = $spec;
+            $entry['rerun'] = 'run ' . $rerun;
         }
     }
 
