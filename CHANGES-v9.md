@@ -27,8 +27,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `phpspec api` names the docs by their absolute path inside the installed package, and the package ships `docs/`; it used to name paths relative to a checkout that a Composer install did not have
+ - A `file:LINE` selector that reaches no example or scenario stops the run with `No example at ...` and exit 1, with a remedy, instead of running nothing and exiting 0
+ - `describe -r` under `--format=agent` runs the new spec after its receipt, in the agent format and with the describe's interactivity, and exits with the run's code; it used to stop at the receipt
+ - `toBeCalledWith()` judges every call the double received during the example, as `toBeCalled()` and `toBeCalledTimes()` do; it used to see only the most recent call, so a call made before the expectation was written was missed
  - An error that came back from a `--parallel` worker carries no site, so the agent entry has no `spec` or `rerun` for it and the human formatters show no code around it; it used to name a line inside PhpSpec itself. The JUnit report carries the error's type, so the entry names it
- - A `let()` binding or a `beforeEach` hook that throws fails the example it was preparing and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
+ - A `let()` binding, a `beforeEach` or an `afterEach` hook that throws fails the example it wraps and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
+ - What `beforeEach` and `afterEach` print rides in the example's `output`, and under `--format=agent` anything printed outside an example goes to standard error; hook output used to land between two events and break the stream
  - An agent entry's `rerun` targets the `it()` line that declares the example, whatever line `spec` points at inside the file
  - A failed mock expectation reports the call the spec wanted and the calls the double received, arguments included, under the matcher's name; the pair used to read `1` against `PhpSpec\Mock\LastCallDouble`
  - A method called on a double that its type does not define fails naming the type, `Call to undefined method App\Clock::now()`, as PHP would on the real object; the error, the agent entry's offer and the summary's offer agree, where the entry used to name the generated double and a double of a class got no offer at all

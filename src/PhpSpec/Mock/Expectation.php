@@ -29,9 +29,6 @@ use PhpSpec\Specification\Expectation as BaseExpectation;
  */
 final class Expectation extends BaseExpectation
 {
-    /** @var array<string, MockedMethod> Maps double class names to their most recent MockedMethod */
-    public static array $registry = [];
-
     /** @var LastCallDouble|null Tracks the most recent mock method call for scalar-return bridging */
     public static ?LastCallDouble $lastDouble = null;
 
@@ -145,8 +142,7 @@ final class Expectation extends BaseExpectation
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
         return $this->should(
-            get_class($double),
-            fn($mocked) => $mocked->wasCalled() && $this->matchArguments($mocked->arguments, $expectedArgs),
+            fn(): bool => $calls->countCallsToWithArgs($methodName, array_values($expectedArgs)) >= 1,
             "Expected $class::$methodName() to be called with specific arguments",
             new CallComparison($class, $methodName, $expectedArgs, 'at least 1', $calls),
             'toBeCalledWith',
@@ -196,30 +192,19 @@ final class Expectation extends BaseExpectation
         });
     }
 
-    /**
-     * Compares actual call arguments against expected values.
-     * Uses ArgumentMatcher::matches() for matcher instances, strict equality otherwise.
-     *
-     * @param array<int, mixed> $actual the arguments that were actually passed
-     * @param array<int|string, mixed> $expected the expected arguments to compare against
-     */
-    private function matchArguments(array $actual, array $expected): bool
-    {
-        return ArgumentMatcher::matchArgs($actual, $expected);
-    }
 
     /**
-     * Dispatches a mock verification as an expectation event.
+     * Dispatches a mock verification as an expectation event, judged at the
+     * end of the example over every call the double received by then.
      * Handles negation by inverting the match closure and adjusting the message.
      *
-     * @param string $doubleName the double class name used as registry key
-     * @param Closure $match closure that receives the MockedMethod and returns pass/fail
+     * @param Closure(): bool $match whether the calls received satisfy the expectation
      * @param string $message the failure message
      * @param CallComparison $comparison the call wanted and the calls received, for the failure's data
      * @param string $matcher the matcher's name
      * @return $this
      */
-    private function should(string $doubleName, Closure $match, string $message, CallComparison $comparison, string $matcher): static
+    private function should(Closure $match, string $message, CallComparison $comparison, string $matcher): static
     {
         $trace = debug_backtrace()[1];
         $file = $trace['file'] ?? 'unknown';
@@ -227,16 +212,13 @@ final class Expectation extends BaseExpectation
 
         if ($this->negated) {
             $originalMatch = $match;
-            $match = fn($mocked) => !$originalMatch($mocked);
+            $match = fn(): bool => !$originalMatch();
             $message = str_replace(' to ', ' not to ', $message);
         }
 
-        return $this->expectation(function () use ($doubleName, $match, $message, $comparison, $matcher, $file, $line) {
-            $mocked = self::$registry[$doubleName];
-            $result = $match($mocked);
-
+        return $this->expectation(function () use ($match, $message, $comparison, $matcher, $file, $line) {
             return match (true) {
-                $result => MatchResult::passed(),
+                $match() => MatchResult::passed(),
                 default => MatchResult::failed(
                     $comparison->received(),
                     $comparison->wanted(),

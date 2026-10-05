@@ -14,7 +14,16 @@ if (!function_exists('_phpspec_remove_dir')) {
         );
 
         foreach ($entries as $entry) {
-            $entry->isDir() && !$entry->isLink() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
+            $path = $entry->getPathname();
+
+            if ($entry->isLink()) {
+                // Windows removes a link to a directory as a directory.
+                PHP_OS_FAMILY === 'Windows' && is_dir($path) ? rmdir($path) : unlink($path);
+            } elseif ($entry->isDir()) {
+                rmdir($path);
+            } else {
+                unlink($path);
+            }
         }
 
         rmdir($dir);

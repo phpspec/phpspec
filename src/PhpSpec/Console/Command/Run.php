@@ -47,6 +47,7 @@ use PhpSpec\Report\Formatter\Junit;
 use PhpSpec\Report\Formatter\Pretty;
 use PhpSpec\Report\Formatter\Tap;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
@@ -297,11 +298,22 @@ final class Run extends Command
         }
 
         try {
-            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null);
+            $results = $formatter instanceof Agent
+                ? $this->withOnlyTheDocumentOnStdout(fn(): SuiteResult => $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null))
+                : $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null);
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
             return $this->stopped($prose, $formatter, $e->getMessage());
+        }
+
+        if ($this->selectedNothing($given, $results)) {
+            return $this->stopped(
+                $prose,
+                $formatter,
+                'No example at ' . implode(', ', $given),
+                'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.',
+            );
         }
 
         $this->writeReportFiles($input, $prose, $results);
@@ -410,6 +422,60 @@ final class Run extends Command
 
         foreach ($outputs['extraConsole'] as $format) {
             $this->createFormatter($format, $output)->format($results);
+        }
+    }
+
+    /**
+     * Whether every path given was a "file:LINE" selector and none of them
+     * reached an example or a scenario: an explicit line is a precise ask, and
+     * a run that answers it with nothing has not answered it.
+     *
+     * @param list<string> $given the paths as given on the command line
+     */
+    private function selectedNothing(array $given, SuiteResult $results): bool
+    {
+        if ($given === [] || array_filter($given, static fn(string $path): bool => preg_match('/:\d+$/', $path) !== 1) !== []) {
+            return false;
+        }
+
+        return !$this->ranAnything($results);
+    }
+
+    private function ranAnything(Results $results): bool
+    {
+        foreach ($results->getResults() as $result) {
+            if ($result instanceof ExampleResult || $result instanceof ScenarioResult || $this->ranAnything($result)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Runs the suite with standard output reserved for the document: whatever
+     * user code prints outside an example's own capture (a describe body, a
+     * beforeAll hook) is held back and goes to standard error once the run is
+     * over, instead of landing between two events and breaking the stream.
+     *
+     * @param callable(): SuiteResult $run
+     */
+    private function withOnlyTheDocumentOnStdout(callable $run): SuiteResult
+    {
+        $level = ob_get_level();
+        ob_start();
+
+        try {
+            return $run();
+        } finally {
+            $leaked = '';
+            while (ob_get_level() > $level) {
+                $leaked = (string) ob_get_clean() . $leaked;
+            }
+
+            if ($leaked !== '') {
+                fwrite(STDERR, $leaked);
+            }
         }
     }
 

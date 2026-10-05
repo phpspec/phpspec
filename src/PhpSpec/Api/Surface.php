@@ -72,7 +72,7 @@ final readonly class Surface
         'expect() captures its subject when called: a value the body reassigns afterwards is not seen, an object the body mutates afterwards is.',
         'toThrow() runs its callable where the expectation is written, so what follows sees what it did; only the verdict waits.',
         'Mock expectations (toBeCalled, toBeCalledTimes, toBeCalledWith) judge the calls made during the whole example.',
-        'let() values are built lazily, once per example, on first access through $this.',
+        'let() values are built afresh before each example and read through $this; a let() closure that throws fails that example alone.',
     ];
 
     private const DOCS = [
@@ -117,7 +117,7 @@ final readonly class Surface
                 'functions' => self::functions(self::BROWSER),
                 'note' => 'Every call returns a Response the response matchers accept, and attaches the exchange to the report.',
             ],
-            'docs' => self::DOCS,
+            'docs' => array_map(static fn(string $path): string => dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path), self::DOCS),
         ];
     }
 

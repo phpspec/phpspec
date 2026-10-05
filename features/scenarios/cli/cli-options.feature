@@ -147,6 +147,18 @@ Feature: CLI options
     And the output should not contain "second example"
     And the output should contain "1 example"
 
+  Scenario: A line that selects no example stops the run and says so
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php:9999"
+    Then the output should contain "No example at spec/App/Calc.spec.php:9999"
+    And the exit code should be 1
+
   Scenario: Run several examples of one file by their line numbers
     Given a spec file "spec/App/Trio.spec.php":
       """
