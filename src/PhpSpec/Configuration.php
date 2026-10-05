@@ -605,15 +605,38 @@ final class Configuration
             });
         }
 
-        // Fallback PSR-4 autoloader for the src directory
-        $srcPath = $this->getSrcPath();
-        $srcDir = rtrim($this->rootDir, '/') . '/' . ltrim($srcPath, './');
-        spl_autoload_register(function (string $class) use ($srcDir) {
-            $file = $srcDir . '/' . str_replace('\\', '/', $class) . '.php';
-            if (file_exists($file)) {
-                require $file;
+        $layout = $this->layout();
+        $srcDir = rtrim($this->rootDir, '/') . '/' . ltrim($layout['src'], './');
+
+        spl_autoload_register(function (string $class) use ($srcDir, $layout) {
+            foreach ($this->filesFor($class, $srcDir, $layout['prefix']) as $file) {
+                if (file_exists($file)) {
+                    require $file;
+
+                    return;
+                }
             }
         });
+    }
+
+    /**
+     * Where the layout files a class: under the source directory with the
+     * PSR-4 prefix taken off its name, which is where the generator writes it,
+     * and failing that under its full namespace path.
+     *
+     * @return list<string>
+     */
+    private function filesFor(string $class, string $srcDir, string $prefix): array
+    {
+        $files = [];
+
+        if ($prefix !== '' && str_starts_with($class, $prefix . '\\')) {
+            $files[] = $srcDir . '/' . str_replace('\\', '/', substr($class, strlen($prefix) + 1)) . '.php';
+        }
+
+        $files[] = $srcDir . '/' . str_replace('\\', '/', $class) . '.php';
+
+        return $files;
     }
 
     /**

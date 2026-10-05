@@ -37,6 +37,34 @@ describe(Configuration::class, function () {
         expect($config->getPsr4Prefix())->toBe('App');
     });
 
+    // A real directory for the autoloader, which reads the disk; composer.json
+    // stays on the fake filesystem the configuration reads.
+    $projectWith = function (Filesystem $fs, string $mapping, string $classFile, string $code): string {
+        $root = sys_get_temp_dir() . '/phpspec_autoload_' . uniqid();
+        mkdir(dirname($root . '/' . $classFile), 0777, true);
+        file_put_contents($root . '/' . $classFile, $code);
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === $root . '/composer.json');
+        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => $mapping]]]));
+
+        return $root;
+    };
+
+    it('loads a class from the path the layout maps its namespace to', function (Filesystem $fs) use ($projectWith) {
+        $root = $projectWith($fs, 'src/Tasker/', 'src/Tasker/MappedByPrefix.php', "<?php\nnamespace Tasker;\nclass MappedByPrefix {}\n");
+
+        (new Configuration($root, $fs))->registerAutoloaders();
+
+        expect(class_exists('Tasker\\MappedByPrefix'))->toBeTrue();
+    });
+
+    it('still loads a class filed under its full namespace path', function (Filesystem $fs) use ($projectWith) {
+        $root = $projectWith($fs, 'src/', 'src/Tasker/FiledInFull.php', "<?php\nnamespace Tasker;\nclass FiledInFull {}\n");
+
+        (new Configuration($root, $fs))->registerAutoloaders();
+
+        expect(class_exists('Tasker\\FiledInFull'))->toBeTrue();
+    });
+
     it('keeps a configured layout over the one composer.json declares', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.json', '/app/composer.json'], true));
         allow($fs->read())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json'

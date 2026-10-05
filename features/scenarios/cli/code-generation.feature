@@ -169,6 +169,27 @@ Feature: Code generation
     Then the class "src/Tasker/TaskList.php" should contain "function add"
     And no file "src/TaskList.php" should be generated
 
+  Scenario: A class generated under a composer mapping is found by the next run
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Tasker\\": "src/Tasker/"}}}
+      """
+    And a spec file "spec/Tasker/Board.spec.php":
+      """
+      <?php
+      describe('Tasker\Board', function () {
+          it('starts empty', function () {
+              expect(new Tasker\Board())->toBeAnInstanceOf(Tasker\Board::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/Tasker/Board.php" should be generated
+    When I run phpspec run with option "--format=agent"
+    Then the output should not contain "create_class"
+    And the exit code should be 0
+
   Scenario: Describe command generates a spec
     When I run phpspec describe "App\Formatter"
     Then a spec file "spec/App/Formatter.spec.php" should be generated

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - PhpSpec's own autoloader finds a class at the path the layout maps its namespace to, where the generator writes it; under a PSR-4 prefix it looked for the full namespace path, so a generated class was not found by the next run unless Composer knew the mapping
  - A generation that could not be applied says so: the `accept` receipt and the `applied` block of an `--accept-offers` summary carry `applied: false` and the `reason`, and `accept` exits 1; the receipt used to read `applied: true` with no files, and the summary said nothing
  - A method is generated into the file its class was loaded from, so a composer mapping that disagrees with where the file sits no longer sends the stub to a path that does not exist; a vendor or internal class is still never written to
  - An agent entry's `spec` and `rerun` stay in the spec file: an error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it, with `exception.at` keeping the throw site; `rerun` used to name a line of `src/`
