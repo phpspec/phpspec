@@ -12,6 +12,11 @@ use PhpSpec\StopConditions;
 use PhpSpec\StopRegistry;
 use PhpSpec\TitleFilter;
 
+interface ContextSpecMailer
+{
+    public function send(string $message): void;
+}
+
 describe(Context::class, function() {
 
     it("instantiates", function() {
@@ -109,6 +114,37 @@ describe(Context::class, function() {
         $results = $ctx->run()->getResults();
 
         expect($results[0]->getOutput())->toBe("setup body teardown");
+    });
+
+    it("exposes a mock injected into a let on the world, under the parameter's name, for the example's duration", function() {
+        $world = new Subject();
+        $seen = null;
+        $ctx = new Context("injected let", function() use ($world, &$seen) {
+            let('notifier', fn (ContextSpecMailer $mailer) => new \stdClass());
+            it("reads the mailer", function() use ($world, &$seen) { $seen = $world->mailer; });
+        });
+        $ctx->setWorld($world);
+
+        $ctx->run();
+
+        expect($seen)->toBeAnInstanceOf(ContextSpecMailer::class);
+        expect(isset($world->mailer))->toBeFalse();
+    });
+
+    it("hands each example a mock of its own, never the previous example's", function() {
+        $seen = [];
+        $ctx = new Context("fresh mocks", function() use (&$seen) {
+            let('notifier', fn (ContextSpecMailer $mailer) => new \stdClass());
+            beforeEach(function (ContextSpecMailer $mailer) use (&$seen) { $seen[] = $mailer; });
+            it("one", function() {});
+            it("two", function() {});
+        });
+        $ctx->setWorld(new Subject());
+
+        $ctx->run();
+
+        expect($seen)->toHaveCount(2);
+        expect($seen[0])->not()->toBe($seen[1]);
     });
 
     it("runs beforeEach hooks before each example", function() {

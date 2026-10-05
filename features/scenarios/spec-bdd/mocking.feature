@@ -161,6 +161,41 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A mock injected into a let is there as a property, as the docs show
+    Given an interface "src/App/Mailer.php":
+      """
+      <?php
+      namespace App;
+
+      interface Mailer {
+          public function send(string $message): void;
+      }
+      """
+    And a class "src/App/Notifier.php":
+      """
+      <?php
+      namespace App;
+
+      final class Notifier {
+          public function __construct(private Mailer $mailer) {}
+          public function notify(string $message): void { $this->mailer->send($message); }
+      }
+      """
+    And a spec file "spec/App/Notifier.spec.php":
+      """
+      <?php
+      describe('App\Notifier', function () {
+          let('notifier', fn (App\Mailer $mailer) => new App\Notifier($mailer));
+
+          it('sends an email', function () {
+              expect($this->mailer->send('hello'))->toBeCalled();
+              $this->notifier->notify('hello');
+          });
+      });
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing a return value
     Given an interface "src/App/UserRepository.php":
       """

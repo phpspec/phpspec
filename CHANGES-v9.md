@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A mock injected into a `let()` closure by type hint is there on `$this` under the parameter's name, as the mocking docs showed, so it can be stubbed and verified
  - A call that was stubbed can still be verified: `allow($x->name())->toReturn('winter')` followed by `expect($x->name())->toBeCalled()` works, in either order; the stubbed value used to turn the second expect into an ordinary one that knew no `toBeCalled`
  - An agent entry whose value is a float JSON cannot hold (`INF`, `NAN`), or whose value or printed output holds a byte that is not UTF-8, arrives whole: the float is named, the byte replaced, and an event is never written as `{}`
  - `phpspec api` names the docs by their absolute path inside the installed package, and the package ships `docs/`; it used to name paths relative to a checkout that a Composer install did not have
