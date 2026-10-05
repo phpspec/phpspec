@@ -104,7 +104,7 @@ describe(Agent::class, function () {
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
         ]));
 
-        expect($doc['suite'])->toBe(['v' => 2, 'event' => 'run_started', 'suite' => 'default', 'seed' => null]);
+        expect($doc['suite'])->toBe(['v' => 2, 'event' => 'run_started', 'suite' => 'default', 'seed' => null, 'php' => PHP_VERSION, 'coverage' => false, 'guard' => 'off']);
         expect($doc['examples'])->toBe([]);
         expect($doc['result']['event'])->toBe('summary');
     });
@@ -121,6 +121,38 @@ describe(Agent::class, function () {
 
         expect($doc['suite']['seed'])->toBe(424242);
         expect($doc['suite']['suite'])->toBe('spec,features/');
+    });
+
+    it('states in the header the mode it runs in, so a reader knows upfront what verdicts to expect', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->runningWith(coverage: true, guard: 'stood down');
+        $formatter->format(new SuiteResult([]));
+        $doc = $stream($output->fetch());
+
+        expect($doc['suite']['php'])->toBe(PHP_VERSION);
+        expect($doc['suite']['coverage'])->toBeTrue();
+        expect($doc['suite']['guard'])->toBe('stood down');
+    });
+
+    it('carries the remedy for what stopped the run, when there is one', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stopped('Code coverage requires Xdebug with coverage mode enabled', remedy: 'XDEBUG_MODE=coverage bin/phpspec run --coverage-min=90');
+        $formatter->publish();
+        $doc = $stream($output->fetch());
+
+        expect($doc['fatal']['remedy'])->toBe('XDEBUG_MODE=coverage bin/phpspec run --coverage-min=90');
+    });
+
+    it('carries no remedy key when nothing is known to help', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stopped('Two step definitions share a title');
+        $formatter->publish();
+        $doc = $stream($output->fetch());
+
+        expect($doc['fatal'])->not()->toHaveKey('remedy');
     });
 
     it('closes the stream once, however often the command publishes it', function () {

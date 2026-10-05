@@ -39,7 +39,7 @@ A run of three examples — one passing, one failing, one erroring on a missing
 class — produces four lines:
 
 ```json
-{"v":2,"event":"run_started","suite":"default","seed":null}
+{"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}
 {"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
 {"v":2,"event":"example","id":"66b1647a77b6","example":"App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
 {"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
@@ -61,8 +61,12 @@ in between. A run that never started still emits both.
 ### `run_started` — the header
 
 `suite` is what the run targets, as the paths were given; `seed` is the
-random-order seed when one was used, else `null`. The totals are not here: at
-this point nothing has run yet, and the `summary` carries them.
+random-order seed when one was used, else `null`. `php` is the version that
+ran, `coverage` says whether coverage is being collected, so a `coverage`
+verdict will follow, and `guard` is `on`, `off` or `stood down` (guard is on
+but there is no coverage driver to judge with, so no verdict will come). The
+totals are not here: at this point nothing has run yet, and the `summary`
+carries them.
 
 ### `example` — only what needs attention
 
@@ -258,11 +262,14 @@ missed and anything that stopped it.
 
 A run that never started (a missing bootstrap, an unknown format) or that died
 partway (a parse error, a class that fails to compile) still answers. It emits a
-`fatal` line of `{ "message", "at" }`, keeps whatever it managed to collect, and
-counts 1 in `actionable`:
+`fatal` line of `{ "message", "at", "remedy"? }`, keeps whatever it managed to
+collect, and counts 1 in `actionable`. `remedy` is present when the way past is
+known: a run that wanted coverage and found no Xdebug gets the same command
+under `XDEBUG_MODE=coverage`, a missing bootstrap or path gets what to point
+where:
 
 ```json
-{"v":2,"event":"run_started","suite":"default","seed":null}
+{"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}
 {"v":2,"event":"fatal","message":"Class Mute contains 1 abstract method and must therefore be declared abstract or implement the remaining methods (Speaks::speak)","at":"spec/App/Broken.spec.php:8"}
 {"v":2,"event":"summary","examples":0,"actionable":1,"…":"…"}
 ```

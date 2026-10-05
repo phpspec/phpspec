@@ -32,6 +32,27 @@ Feature: Agent output format
     And the output should contain "summary"
     And the output should contain "passing"
 
+  Scenario: The header states which PHP ran and whether coverage and guard are on
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(2)->toBe(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the header should state "php"
+    And the header should state "coverage" as "false"
+    And the header should state "guard" as "off"
+
+  Scenario: A fatal says how to get past it, when that is known
+    When I run phpspec run with option "--bootstrap=nope.php --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "fatal"
+    And the output should contain "remedy"
+    And the output should contain "--bootstrap"
+
   Scenario: A failing example carries its expected, actual and state
     Given a spec file "spec/App/Calc.spec.php":
       """

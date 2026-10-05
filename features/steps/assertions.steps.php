@@ -139,6 +139,26 @@ then('the receipt should report the offer as not applied because {string}', func
     }
 });
 
+// The value as JSON when it reads as JSON (false, 3, null), else as the string it is.
+then('the header should state {string} as {string}', function (string $key, string $value) use ($events) {
+    $header = $events($this->output)[0] ?? [];
+
+    try {
+        $expected = json_decode($value, flags: JSON_THROW_ON_ERROR);
+    } catch (\JsonException) {
+        $expected = $value;
+    }
+
+    expect(array_key_exists($key, $header))->toBeTrue();
+    expect($header[$key])->toBe($expected);
+});
+
+then('the header should state {string}', function (string $key) use ($events) {
+    $header = $events($this->output)[0] ?? [];
+
+    expect(isset($header[$key]) && $header[$key] !== '')->toBeTrue();
+});
+
 then('the first event should be {string}', function (string $name) use ($events) {
     $stream = $events($this->output);
 

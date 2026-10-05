@@ -86,8 +86,14 @@ final class Agent extends AbstractFormatter
     /** @var list<array{id: string, action: string, target: string, file: string, applied: bool, reason?: string}> */
     private array $applied = [];
 
-    /** @var array{message: string, at: string|null}|null what stopped the run short, when something did */
+    /** @var array{message: string, at: string|null, remedy: string|null}|null what stopped the run short, when something did */
     private ?array $fatal = null;
+
+    /** Whether this run collects coverage, so a reader knows a verdict will follow. */
+    private bool $collectingCoverage = false;
+
+    /** Guard's standing in this run: on, off, or stood down for lack of a coverage driver. */
+    private string $guardStanding = 'off';
 
     /**
      * @param OutputInterface $output the stream the document goes to
@@ -123,6 +129,16 @@ final class Agent extends AbstractFormatter
         $this->seed = $seed;
     }
 
+    /**
+     * Tells the formatter the mode the run is in, so the header says upfront
+     * whether a coverage verdict and a guard verdict are to be expected.
+     */
+    public function runningWith(bool $coverage, string $guard): void
+    {
+        $this->collectingCoverage = $coverage;
+        $this->guardStanding = $guard;
+    }
+
     public function begin(): void
     {
         $this->start();
@@ -145,6 +161,9 @@ final class Agent extends AbstractFormatter
             'event' => Schema::EVENT_RUN_STARTED,
             'suite' => $this->suite,
             'seed' => $this->seed,
+            'php' => PHP_VERSION,
+            'coverage' => $this->collectingCoverage,
+            'guard' => $this->guardStanding,
         ]);
     }
 
@@ -210,10 +229,11 @@ final class Agent extends AbstractFormatter
      *
      * @param string $message what went wrong
      * @param string|null $at where, as a project-relative file:line
+     * @param string|null $remedy how to get past it, when that is known
      */
-    public function stopped(string $message, ?string $at = null): void
+    public function stopped(string $message, ?string $at = null, ?string $remedy = null): void
     {
-        $this->fatal ??= ['message' => $message, 'at' => $at];
+        $this->fatal ??= ['message' => $message, 'at' => $at, 'remedy' => $remedy];
     }
 
     /**
@@ -255,12 +275,18 @@ final class Agent extends AbstractFormatter
         $this->start();
 
         if ($this->fatal !== null) {
-            $this->emit([
+            $fatal = [
                 'v' => Schema::V,
                 'event' => Schema::EVENT_FATAL,
                 'message' => $this->fatal['message'],
                 'at' => $this->fatal['at'],
-            ]);
+            ];
+
+            if ($this->fatal['remedy'] !== null) {
+                $fatal['remedy'] = $this->fatal['remedy'];
+            }
+
+            $this->emit($fatal);
         }
 
         $this->emit($this->summary());
