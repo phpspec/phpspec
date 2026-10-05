@@ -472,6 +472,29 @@ describe(Agent::class, function () {
         expect($doc['result']['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', 'spec/App/Basket.spec.php:20', '--format=agent']);
     });
 
+    it('keeps an entry whole when a compared value is a float JSON cannot hold', function () use ($render) {
+        $match = MatchResult::failed(INF, 1.0, 'Expected INF to be 1.0', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe');
+
+        $example = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('reports infinity', [$match])]),
+        ]))['examples'][0];
+
+        expect($example['example'])->toBe('App\\Basket > reports infinity');
+        expect($example['expectation']['actual'])->toBe('INF');
+        expect($example['expectation']['expected'])->toBe(1.0);
+    });
+
+    it('keeps an entry whole when a value or the printed output holds bytes that are not UTF-8', function () use ($render) {
+        $failing = new ExampleResult('reads bytes', [MatchResult::failed("bad\xFF", 'good', 'no', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe')]);
+        $failing->setOutput("output\xFF");
+
+        $example = $render(new SuiteResult([new SpecificationResult('App\\Basket', [$failing])]))['examples'][0];
+
+        expect($example['state'])->toBe('failing');
+        expect($example['expectation']['actual'])->toBe("bad\u{FFFD}");
+        expect($example['output'])->toBe("output\u{FFFD}");
+    });
+
     it('keeps a null value an anonymous matcher failed on, having a site to prove it real', function () use ($render) {
         // A custom or predicate matcher reaches phpspec through __call and stays
         // nameless: null everywhere except the site. "Your code produced null"

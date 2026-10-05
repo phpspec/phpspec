@@ -43,6 +43,15 @@ final class ValueExporter
             return ObjectName::of($value);
         }
 
+        // JSON has no word for these, so they are named: INF, -INF, NAN.
+        if (is_float($value) && !is_finite($value)) {
+            return is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
+        }
+
+        if (is_resource($value)) {
+            return sprintf('resource (%s)', get_resource_type($value));
+        }
+
         if (is_string($value)) {
             return self::exportString($value);
         }

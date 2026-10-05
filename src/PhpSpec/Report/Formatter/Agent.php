@@ -20,6 +20,7 @@ use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\FirstDifference;
+use PhpSpec\Report\Formatter\Agent\Json;
 use PhpSpec\Report\Formatter\Agent\Offers;
 use PhpSpec\Report\Formatter\Agent\Origin;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
@@ -302,11 +303,7 @@ final class Agent extends AbstractFormatter
      */
     private function emit(array $event): void
     {
-        // The zero fraction is kept: a float that lost it would read as the int
-        // it was compared against, turning a type failure into a tautology.
-        $json = json_encode($event, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION) ?: '{}';
-
-        $this->output->write($json . "\n", false, OutputInterface::OUTPUT_RAW);
+        $this->output->write(Json::line($event), false, OutputInterface::OUTPUT_RAW);
     }
 
     /**

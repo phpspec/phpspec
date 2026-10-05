@@ -167,6 +167,24 @@ Feature: Agent output format
     And the output should contain "rerun_argv"
     And the output should contain "--format=agent"
 
+  Scenario: A failure on a value JSON cannot hold still arrives whole
+    Given a spec file "spec/App/Serialization.spec.php":
+      """
+      <?php
+      describe('App\Serialization', function () {
+          it('reports infinity', fn () => expect(INF)->toBe(1.0));
+          it('reports an invalid byte', fn () => expect("bad\xFF")->toBe('good'));
+          it('reports binary output', function () { echo "output\xFF"; expect(false)->toBeTrue(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should have 5 events
+    And the output should contain "reports infinity"
+    And the output should contain "INF"
+    And the output should contain "reports an invalid byte"
+    And the output should contain "reports binary output"
+
   Scenario: An emptiness failure wants the empty form of what it was given
     Given a spec file "spec/App/Bag.spec.php":
       """
