@@ -166,6 +166,24 @@ class Example implements ExampleResultRegistry, Rebindable
         return $result;
     }
 
+    /**
+     * The result of an example whose setup (a let binding, a beforeEach hook)
+     * threw before its body could run: an error of its own, declared where it
+     * is, so the examples beside it still run and the count holds.
+     */
+    public function failedToStart(\Throwable $e): ExampleResult
+    {
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+
+        $this->isError = true;
+        $this->exampleResult = new ExampleResult($this->title, [], true);
+        $this->exampleResult->setError(new ExampleError($e->getMessage(), $e));
+
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+
+        return $this->declared($this->exampleResult);
+    }
+
     private function execute(): ExampleResult
     {
         $subscriber = new ExampleSubscriber($this);
