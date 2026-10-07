@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\CodeGeneration\PhpName;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
@@ -34,8 +35,11 @@ final class Exemplify extends Command
      * @param SpecGenerator $generator the spec file generator
      * @param string|null $name the command name (defaults to "exemplify")
      */
-    public function __construct(private readonly SpecGenerator $generator, ?string $name = null)
-    {
+    public function __construct(
+        private readonly SpecGenerator $generator,
+        private readonly SourceLayout $layout = new SourceLayout(),
+        ?string $name = null,
+    ) {
         parent::__construct($name);
     }
 
@@ -78,6 +82,7 @@ final class Exemplify extends Command
             return 1;
         }
 
+        $class = $this->layout->withinDefaultNamespace(str_replace('/', '\\', $class));
         $spec = str_replace('\\', '/', $class);
 
         $this->generator->generate($spec);

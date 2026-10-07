@@ -116,6 +116,24 @@ describe(ArgumentMatcher::class, function () {
         });
     });
 
+    describe('matchArgs() with objects', function () {
+        it('matches an equal object, not only the very same instance', function () {
+            expect(ArgumentMatcher::matchArgs([new ArrayObject([1])], [new ArrayObject([1])]))->toBeTrue();
+        });
+
+        it('tells objects of a different state apart', function () {
+            expect(ArgumentMatcher::matchArgs([new ArrayObject([1])], [new ArrayObject([2])]))->toBeFalse();
+        });
+
+        it('matches equal objects inside an array argument', function () {
+            expect(ArgumentMatcher::matchArgs([['a' => new ArrayObject([1])]], [['a' => new ArrayObject([1])]]))->toBeTrue();
+        });
+
+        it('keeps scalars strict', function () {
+            expect(ArgumentMatcher::matchArgs(['1'], [1]))->toBeFalse();
+        });
+    });
+
     describe('matchArgs()', function () {
         it('matches exact values', function () {
             expect(ArgumentMatcher::matchArgs([1, 'a'], [1, 'a']))->toBeTrue();

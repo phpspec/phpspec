@@ -18,6 +18,7 @@ use PhpSpec\Browser\BrowserRegistry;
 use PhpSpec\Console\Application;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
+use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
@@ -54,10 +55,13 @@ final class InProcessRunner
         $savedStoryBDD = StoryBDDRegistry::saveState();
         $savedBrowser = BrowserRegistry::saveState();
         $savedCoverage = CoverageRegistry::collector();
+        $savedArranging = ArrangingCode::roots();
+        $savedVerbosity = [getenv('SHELL_VERBOSITY'), $_ENV['SHELL_VERBOSITY'] ?? null, $_SERVER['SHELL_VERBOSITY'] ?? null];
 
         // Reset for inner run — fresh Dispatcher for the nested Application
         DispatcherRegistry::reset();
         Double::resetCache();
+        ArrangingCode::reset();
         MockExpectation::$lastDouble = null;
         MockExpectation::$lastMockReturn = null;
         MockExpectation::$lastCallForAllow = null;
@@ -89,6 +93,8 @@ final class InProcessRunner
             MockExpectation::$lastCallForAllow = $savedLastCallForAllow;
             StoryBDDRegistry::restoreState($savedStoryBDD);
             BrowserRegistry::restoreState($savedBrowser);
+            ArrangingCode::under(...$savedArranging);
+            self::restoreShellVerbosity($savedVerbosity);
 
             if ($savedCoverage !== null) {
                 CoverageRegistry::activate($savedCoverage);
@@ -103,6 +109,32 @@ final class InProcessRunner
                     spl_autoload_unregister($autoloader);
                 }
             }
+        }
+    }
+
+    /**
+     * Puts SHELL_VERBOSITY back as it was. A console Application sets it from
+     * the options it was run with, and one that ran quiet would otherwise
+     * silence every Application run after it in this process.
+     *
+     * @param array{0: string|false, 1: mixed, 2: mixed} $saved
+     */
+    private static function restoreShellVerbosity(array $saved): void
+    {
+        [$env, $dollarEnv, $server] = $saved;
+
+        putenv($env === false ? 'SHELL_VERBOSITY' : 'SHELL_VERBOSITY=' . $env);
+
+        if ($dollarEnv === null) {
+            unset($_ENV['SHELL_VERBOSITY']);
+        } else {
+            $_ENV['SHELL_VERBOSITY'] = $dollarEnv;
+        }
+
+        if ($server === null) {
+            unset($_SERVER['SHELL_VERBOSITY']);
+        } else {
+            $_SERVER['SHELL_VERBOSITY'] = $server;
         }
     }
 

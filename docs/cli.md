@@ -138,7 +138,7 @@ bin/phpspec describe <class> [options]
 ```
 
 **Arguments:**
-- `class` -- The class path using `/` as namespace separator.
+- `class` -- The class path using `/` as namespace separator. A name under none of the mapped namespaces is asked about, or put under `default_namespace`; see [Code Generation](code-generation.md#a-class-under-none-of-the-mapped-namespaces).
 
 **Options:**
 - `-e`, `--exemplify=METHOD` -- Include an example for the specified method.

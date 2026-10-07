@@ -42,16 +42,22 @@ final class Expectation extends BaseExpectation
     private MatchableDouble $mockSubject;
 
     /**
-     * Creates a mock expectation wrapping a MatchableDouble subject.
+     * Creates a mock expectation on a doubled method call: the call matchers
+     * (toBeCalled, toBeCalledWith) judge the double, the ordinary matchers
+     * judge what the call returned, so a stubbed call compares its value and
+     * verifies itself alike.
      *
-     * @param MatchableDouble $subject the mock wrapper returned by a doubled method call
+     * @param MatchableDouble $double the mock wrapper the doubled method call stands for
      * @param string $file the spec file where the expectation was created
      * @param int $line the line number in the spec file
+     * @param mixed ...$returned what the call returned, when a stub gave it a value; else the double itself
      */
-    public function __construct(MatchableDouble $subject, string $file, int $line)
+    public function __construct(MatchableDouble $double, string $file, int $line, mixed ...$returned)
     {
-        $this->mockSubject = $subject;
-        parent::__construct($subject, $file, $line);
+        $this->mockSubject = $double;
+        parent::__construct($returned === [] ? $double : $returned[0], $file, $line);
+        $this->declare();
+
     }
 
     /**
@@ -115,11 +121,34 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Alias for toBeCalled() for past-tense readability.
+     * Judges now, from the calls recorded so far, that the call expect() was
+     * handed has been made: the past tense, for after the act. The arguments
+     * it was written with are part of the question; written bare, it asks
+     * whether the method was called at all. toBeCalled() is the future tense,
+     * declared before the act and judged when the example ends.
      */
-    public function toHaveBeenCalled(): CallCountExpectation
+    public function toHaveBeenCalled(): static
     {
-        return $this->toBeCalled();
+        $double = $this->getGeneratedDouble();
+        $class = $double->______PhpSpecNameOfClassDoubled();
+        $calls = $double->______PhpSpecGetStubbedCalls();
+        $method = $calls->peek();
+
+        if ($method === null) {
+            throw new \LogicException('No method call recorded on the mock. Call a method before using toHaveBeenCalled().');
+        }
+
+        $methodName = $method->method;
+        $method->unCall();
+        $argPattern = $method->arguments === [] ? null : $method->arguments;
+        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+
+        return $this->should(
+            fn(): bool => $calls->countCallsToWithArgs($methodName, $argPattern) >= 1,
+            "Expected $class::$methodName() to have been called",
+            new CallComparison($class, $methodName, $argPattern, 'at least 1', $calls),
+            'toHaveBeenCalled',
+        );
     }
 
     /**
@@ -249,6 +278,25 @@ final class Expectation extends BaseExpectation
     /**
      * Retrieves the GeneratedDouble from the mock subject.
      */
+    /**
+     * The call expect() was handed is expected: made from the code under
+     * spec, it is no longer a call nothing declared.
+     */
+    private function declare(): void
+    {
+        $double = $this->mockSubject->______PhpSpecGetDouble();
+
+        if (!$double instanceof GeneratedDouble) {
+            return;
+        }
+
+        $method = $this->mockSubject->______PhpSpecGetMethod();
+        $arranging = $double->______PhpSpecGetStubbedCalls()->peek();
+        $args = $arranging !== null && $arranging->method === $method && $arranging->arguments !== [] ? $arranging->arguments : null;
+
+        $double->______PhpSpecDeclare($method, $args);
+    }
+
     private function getGeneratedDouble(): GeneratedDouble
     {
         $double = $this->mockSubject->______PhpSpecGetDouble();

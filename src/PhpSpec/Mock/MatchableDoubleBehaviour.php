@@ -42,21 +42,27 @@ trait MatchableDoubleBehaviour
         return $this->______phpspec_methodName;
     }
 
-    public function toReturn(mixed $value): void
+    public function toReturn(mixed $value): static
     {
         $this->______phpspec_mockedObject->______PhpSpecStubReturn($this->______phpspec_methodName, $value);
         $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
+
+        return $this;
     }
 
-    public function toReturnUsing(callable $callback): void
+    public function toReturnUsing(callable $callback): static
     {
         $this->______phpspec_mockedObject->______PhpSpecStubReturnUsing($this->______phpspec_methodName, $callback);
         $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
+
+        return $this;
     }
 
-    public function toThrow(string|\Throwable $exception, string $message = ''): void
+    public function toThrow(string|\Throwable $exception, string $message = ''): static
     {
         $this->______phpspec_mockedObject->______PhpSpecStubThrow($this->______phpspec_methodName, $exception, $message);
         $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
+
+        return $this;
     }
 }

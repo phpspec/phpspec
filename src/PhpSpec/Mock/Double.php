@@ -54,7 +54,7 @@ final class Double
     public static function getInstance(string $class): object
     {
         if (!class_exists($class) && !interface_exists($class) && !trait_exists($class) && !enum_exists($class)) {
-            throw new LogicException("Cannot create test double: class or interface '$class' does not exist.");
+            throw new LogicException("Cannot create mock: class or interface '$class' does not exist. Make sure the class is autoloaded or the file is included.");
         }
 
         if (isset(self::$classCache[$class])) {
@@ -65,7 +65,8 @@ final class Double
         // create a unique name for the double class using a hash of the FQCN
         // to avoid collisions between classes with the same short name
         $classHash = substr(md5($class), 0, 8);
-        $shortName = substr($class, strrpos($class, '\\') + 1);
+        $separator = strrpos($class, '\\');
+        $shortName = $separator === false ? $class : substr($class, $separator + 1);
         $mockClassName = 'PhpspecDouble\\' . $shortName . '_Double_' . $classHash . '_' . uniqid();
 
         // generate the methods for the double
@@ -126,6 +127,8 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
     private \$______phpspec_stubbedReturns = [];
     private \$______phpspec_stubbedThrows = [];
     private \$______phpspec_stubbedReturnCallbacks = [];
+    private \$______phpspec_lenient = false;
+    private \$______phpspec_declared = [];
 
     $methods
     $undefinedMethodGuard
@@ -151,6 +154,24 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
 
     public function ______PhpSpecNameOfClassDoubled(): string {
         return '$prefixedClass';
+    }
+
+    public function ______PhpSpecBeLenient(): void {
+        \$this->______phpspec_lenient = true;
+    }
+
+    public function ______PhpSpecDeclare(string \$method, ?array \$args): void {
+        \$this->______phpspec_declared[\$method][] = \$args;
+    }
+
+    private function ______PhpSpecUnexpectedUnlessArranging(string \$method, array \$args, array \$frame): void {
+        if (\$this->______phpspec_lenient
+            || \PhpSpec\Mock\StubRegistry::isDeclared(\$method, \$args, \$this->______phpspec_declared)
+            || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')) {
+            return;
+        }
+
+        throw \PhpSpec\Mock\UnexpectedCallException::to('$prefixedClass', \$method, \$args, \$frame['file'] ?? '', \$frame['line'] ?? 0);
     }
 
     public function ______PhpSpecStubReturn(string \$method, mixed \$value, ?array \$args = null): void {
@@ -325,7 +346,7 @@ PHP;
      */
     private static function getUnionReturnCode(ReflectionUnionType $type): string
     {
-        $clear = '\\PhpSpec\\Mock\\Expectation::$lastDouble = null; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; ';
+        $clear = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; ';
         $typeNames = array_map(
             fn(ReflectionNamedType|ReflectionIntersectionType $t) => $t instanceof ReflectionNamedType ? $t->getName() : (string) $t,
             $type->getTypes(),
@@ -421,17 +442,61 @@ PHP;
      */
     private static function getBuiltinReturnCode(string $typeName): ?string
     {
+        $returning = static fn(string $value): string => "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+
         return match ($typeName) {
-            'string' => "\$__ret = ''; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;",
+            'string' => $returning("''"),
             'void' => 'return;',
             'never' => "throw new \\RuntimeException('Mock method should not be called');",
             'mixed' => 'return null;',
-            'array' => '$__ret = []; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
-            'int' => '$__ret = 0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
-            'float' => '$__ret = 0.0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
-            'bool' => '$__ret = false; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            'array', 'iterable' => $returning('[]'),
+            'int' => $returning('0'),
+            'float' => $returning('0.0'),
+            'bool' => $returning('false'),
+            // No double can stand in for these, so a usable value does.
+            'static', 'self' => $returning('$this'),
+            'object' => $returning('new \\stdClass()'),
+            'callable', 'Closure' => $returning('static fn() => null'),
+            'Generator' => $returning('(static fn() => yield from [])()'),
             default => null,
         };
+    }
+
+    /**
+     * What a method returns when nothing can stand in for its return type: an
+     * explanation, where PHP alone would say a value of that type was expected
+     * and none returned.
+     */
+    private static function unbuildableReturnCode(string $class, string $methodName, string $returnType): string
+    {
+        $why = class_exists($returnType) && (new ReflectionClass($returnType))->isFinal()
+            ? "$returnType is final, so no double of it can be made"
+            : "no double of $returnType can be made";
+        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): %s. Stub the call with allow(), return an interface, or make the class non-final.', $class, $methodName, $why);
+
+        return 'throw new \\LogicException(' . var_export($message, true) . ');';
+    }
+
+    /**
+     * What a method returns when no double of its return type can be made: an
+     * instance of the very class, built without its constructor, for allow()
+     * to replace. A lenient double has nobody about to replace it, so it
+     * refuses instead.
+     */
+    private static function placeholderReturnCode(string $class, string $methodName, string $returnType, bool $mayBeLenient): string
+    {
+        $refusal = self::unbuildableReturnCode($class, $methodName, $returnType);
+
+        if (!class_exists($returnType) || (new ReflectionClass($returnType))->isInternal()) {
+            return $refusal;
+        }
+
+        $placeholder = sprintf(
+            '$__ret = (new \ReflectionClass(%s))->newInstanceWithoutConstructor(); \PhpSpec\Mock\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            var_export($returnType, true),
+        );
+
+        return $mayBeLenient ? "if (\$this->______phpspec_lenient) { $refusal } $placeholder" : $placeholder;
     }
 
     /**
@@ -694,7 +759,7 @@ PHP;
             $return = '';
             if ($isNullable && $simpleReturnName !== 'mixed' && !isset($className)) {
                 // Nullable types can just return null, clear mock state
-                $return = '\\PhpSpec\\Mock\\Expectation::$lastDouble = null; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return null;';
+                $return = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return null;';
             } elseif ($isCompoundType && !isset($className)) {
                 // Union/intersection types: return null if nullable, else pick simplest
                 if ($returnedType instanceof ReflectionUnionType) {
@@ -707,7 +772,13 @@ PHP;
             } elseif ($isEnum) {
                 $return = "return \\{$simpleReturnName}::cases()[0];";
             } elseif ($simpleReturnName !== null) {
-                $return = self::getBuiltinReturnCode($simpleReturnName) ?? '';
+                $return = self::getBuiltinReturnCode($simpleReturnName)
+                    ?? self::placeholderReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName, $depth === 0);
+            }
+
+            $guard = '';
+            if ($depth === 0 && $simpleReturnName !== 'never') {
+                $guard = "if (\$__match === null) { \$this->______PhpSpecUnexpectedUnlessArranging('$methodName', func_get_args(), debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []); }";
             }
 
             // stub check — uses StubRegistry to find matching stub by method + args
@@ -717,12 +788,12 @@ PHP;
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
                     . " if (\$__match['type'] === 'callback') { try { (\$__match['data'])(...func_get_args()); } catch (\\ArgumentCountError) {} }"
-                    . ' \\PhpSpec\\Mock\\Expectation::$lastDouble = null; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
+                    . ' \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
             } elseif ($simpleReturnName !== 'never') {
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { try { \$__ret = (\$__match['data'])(...func_get_args()); \\PhpSpec\\Mock\\Expectation::\$lastDouble = null; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = null; return \$__ret; } catch (\\ArgumentCountError) {} }"
-                    . " if (\$__match['type'] === 'value') { \\PhpSpec\\Mock\\Expectation::\$lastDouble = null; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = null; return \$__match['data']; } }";
+                    . " if (\$__match['type'] === 'callback') { try { \$__ret = (\$__match['data'])(...func_get_args()); \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } catch (\\ArgumentCountError) {} }"
+                    . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 
             // put it all together
@@ -730,6 +801,7 @@ PHP;
     public function $methodName($paramString)$returnedTypeSyntax {
         \$this->______PhpSpecWasCalledWith('$methodName', func_get_args());
         $stubCheck
+        $guard
         $return
     }
 PHP;

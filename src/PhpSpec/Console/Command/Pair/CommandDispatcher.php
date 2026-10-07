@@ -414,7 +414,7 @@ final class CommandDispatcher
         // not class_exists(), which reports false for a class whose source is
         // right there but fails to autoload (a PSR-4 mismatch) and would have us
         // offer to create a file that already exists.
-        $location = ClassLocation::for($fqcn, ltrim($this->config->getSrcPath(), './'), $this->config->getPsr4Prefix());
+        $location = ClassLocation::for($fqcn, $this->config->getSourceLayout());
 
         if (!$location->exists($this->filesystem)) {
             $question = sprintf('Do you want me to create class <fg=white>%s</> for you?', $fqcn);
@@ -585,11 +585,10 @@ final class CommandDispatcher
     private function offerGeneration(GenerationCandidates $candidates): void
     {
         $codeGenerator = new CodeGenerator(
-            ltrim($this->config->getSrcPath(), './'),
+            $this->config->getSourceLayout(),
             ltrim($this->config->getSpecPath(), './'),
             $this->interactive ? Generation::Asks : Generation::Accepts,
             $this->config->getSpecSuffix(),
-            $this->config->getPsr4Prefix(),
             $this->chooser,
         );
         $codeGenerator->apply($this->output->getOutput(), $candidates, false);

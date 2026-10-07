@@ -72,7 +72,7 @@ if (!function_exists('_pair_exec')) {
 
     $dispatcher = new CommandDispatcher(
         new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
-        new ClassGenerator(ltrim($config->getSrcPath(), './')),
+        new ClassGenerator($config->getSourceLayout()),
         $config,
         $pairOutput,
         interactive: %INTERACTIVE%,

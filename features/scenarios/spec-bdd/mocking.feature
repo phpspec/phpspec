@@ -99,6 +99,127 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: An equal value object matches a stub and a verification
+    Given a class "src/App/Money.php":
+      """
+      <?php
+      namespace App;
+
+      class Money {
+          public function __construct(public readonly int $pence) {}
+      }
+      """
+    And an interface "src/App/Discount.php":
+      """
+      <?php
+      namespace App;
+
+      interface Discount {
+          public function applyTo(Money $amount): Money;
+      }
+      """
+    And an interface "src/App/Ledger.php":
+      """
+      <?php
+      namespace App;
+
+      interface Ledger {
+          public function record(Money $amount): void;
+      }
+      """
+    And a spec with example:
+      """
+      $discount = mock(App\Discount::class);
+      allow($discount->applyTo(new App\Money(900)))->toReturn(new App\Money(720));
+      expect($discount->applyTo(new App\Money(900))->pence)->toBe(720);
+
+      $ledger = mock(App\Ledger::class);
+      $ledger->record(new App\Money(5));
+      expect($ledger->record(new App\Money(5)))->toBeCalled();
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: A call stubbed first can still be verified
+    Given an interface "src/App/Catalogue.php":
+      """
+      <?php
+      namespace App;
+
+      interface Catalogue {
+          public function name(): string;
+      }
+      """
+    And a spec with example:
+      """
+      $catalogue = mock(App\Catalogue::class);
+      allow($catalogue->name())->toReturn('winter');
+      expect($catalogue->name())->toBeCalled();
+
+      expect($catalogue->name())->toBe('winter');
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: A mock injected into a let is there as a property, as the docs show
+    Given an interface "src/App/Mailer.php":
+      """
+      <?php
+      namespace App;
+
+      interface Mailer {
+          public function send(string $message): void;
+      }
+      """
+    And a class "src/App/Notifier.php":
+      """
+      <?php
+      namespace App;
+
+      final class Notifier {
+          public function __construct(private Mailer $mailer) {}
+          public function notify(string $message): void { $this->mailer->send($message); }
+      }
+      """
+    And a spec file "spec/App/Notifier.spec.php":
+      """
+      <?php
+      describe('App\Notifier', function () {
+          let('notifier', fn (App\Mailer $mailer) => new App\Notifier($mailer));
+
+          it('sends an email', function () {
+              expect($this->mailer->send('hello'))->toBeCalled();
+              $this->notifier->notify('hello');
+          });
+      });
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: An unstubbed method returns a usable default for a type no double can stand in for
+    Given an interface "src/App/Machine.php":
+      """
+      <?php
+      namespace App;
+
+      interface Machine {
+          public function each(): iterable;
+          public function hook(): \Closure;
+          public function stream(): \Generator;
+          public function same(): static;
+      }
+      """
+    And a spec with example:
+      """
+      $machine = mock(App\Machine::class);
+      expect($machine->each())->toBe([]);
+      expect($machine->hook())->toBeAnInstanceOf(\Closure::class);
+      expect($machine->stream())->toBeAnInstanceOf(\Generator::class);
+      expect($machine->same())->toBe($machine);
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing a return value
     Given an interface "src/App/UserRepository.php":
       """
@@ -398,6 +519,274 @@ Feature: Mocking
       describe('Mailer injection', function () {
           it('injects mocks by type hint', function (Mailer $mailer) {
               expect($mailer)->toBeAnInstanceOf(Mailer::class);
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: A call the spec never declared fails at once, naming the call and where it came from
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders two of everything', function (Stock $stock) {
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "App\Stock::reserve("
+    And the output should contain ", 2) was called but not expected"
+    And the output should contain "src/App/Checkout.php:8"
+    And the exit code should be 1
+
+  Scenario: A call declared with allow() is expected, and toHaveBeenCalled() verifies it after the act
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders two of everything', function (Stock $stock) {
+              allow($stock->reserve('tea', 2))->toReturn(true);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+
+              expect($stock->reserve('tea', 2))->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: toHaveBeenCalled() fails after the act naming the calls the method did receive
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders coffee', function (Stock $stock) {
+              allow($stock->reserve());
+
+              (new Checkout($stock))->order('tea');
+
+              expect($stock->reserve('coffee', 1))->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "to have been called"
+    And the output should contain "tea"
+    And the exit code should be 1
+
+  Scenario: An injected double stubbed in beforeEach ignores the other calls once told to
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+          public function audit(string $item): void;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              $this->stock->audit($item);
+
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          beforeEach(function (Stock $stock) {
+              allow($stock->reserve())->toReturn(true)->ignoreOthers();
+          });
+
+          it('orders two of everything', function (Stock $stock) {
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: A dummy answers every call with a default, declared or not
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders without anyone minding the stock', function () {
+              $stock = dummy(Stock::class);
+
+              expect((new Checkout($stock))->order('tea'))->toBeFalse();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: A method returning a final class can be stubbed
+    Given a class "src/App/Coin.php":
+      """
+      <?php
+      namespace App;
+
+      final class Coin {
+          public function __construct(private int $pence) {}
+          public function pence(): int
+          {
+              return $this->pence;
+          }
+      }
+      """
+    And a class "src/App/Wallet.php":
+      """
+      <?php
+      namespace App;
+
+      class Wallet {
+          public function coin(): Coin
+          {
+              return new Coin(1);
+          }
+      }
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {
+          public function take(Wallet $wallet): int
+          {
+              return $wallet->coin()->pence();
+          }
+      }
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      use App\Coin;
+      use App\Till;
+      use App\Wallet;
+
+      describe('Till', function () {
+          it('takes the coin from the wallet', function (Wallet $wallet) {
+              allow($wallet->coin())->toReturn(new Coin(50));
+
+              expect((new Till())->take($wallet))->toBe(50);
           });
       });
       """

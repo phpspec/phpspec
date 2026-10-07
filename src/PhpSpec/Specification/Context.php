@@ -224,28 +224,42 @@ class Context implements ExampleRegistry, Rebindable
                 }
                 $this->world->__phpspec_let_mocks = $this->letMocks;
             });
+
+            $result = $example->run();
+            $body = $result->getOutput();
+
+            try {
+                $teardown->around(function (): void {
+                    foreach ($this->afterEachHooks as $hook) {
+                        $hook(...$this->resolveClosureArgs($hook));
+                    }
+                });
+            } catch (Throwable $e) {
+                $result = $example->failedInHook($e);
+            }
         } catch (Throwable $e) {
             $coverage?->endExample($example->getTitle());
 
             return $this->printed($example->failedInHook($e), $setup->text(), '');
-        }
-
-        $result = $example->run();
-        $body = $result->getOutput();
-
-        try {
-            $teardown->around(function (): void {
-                foreach ($this->afterEachHooks as $hook) {
-                    $hook(...$this->resolveClosureArgs($hook));
-                }
-            });
-        } catch (Throwable $e) {
-            $result = $example->failedInHook($e);
+        } finally {
+            $this->forgetInjectedMocks();
         }
 
         $coverage?->endExample($result->getTitle());
 
         return $this->printed($result, $setup->text() . $body, $teardown->text());
+    }
+
+    /**
+     * Takes the mocks this example was handed off the world, so no example
+     * after it, in this context or a nested one sharing the world, inherits a
+     * double that carries this example's stubs.
+     */
+    private function forgetInjectedMocks(): void
+    {
+        foreach (array_keys($this->letMocks) as $name) {
+            unset($this->world->$name);
+        }
     }
 
     private function printed(ExampleResult $result, string $before, string $after): ExampleResult
@@ -534,8 +548,11 @@ class Context implements ExampleRegistry, Rebindable
                 } elseif (isset($this->world->$name) && $this->world->$name instanceof $className) {
                     $args[] = $this->world->$name;
                 } else {
+                    // A mock made for a parameter is the example's to stub and
+                    // verify too, under the parameter's name on $this.
                     $mock = \PhpSpec\Mock\Double::getInstance($className);
                     $this->letMocks[$name] = $mock;
+                    $this->world->$name = $mock;
                     $args[] = $mock;
                 }
             }

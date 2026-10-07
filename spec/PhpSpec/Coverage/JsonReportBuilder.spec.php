@@ -8,6 +8,7 @@ use PhpSpec\Filesystem;
 describe(JsonReportBuilder::class, function () {
 
     beforeEach(function (CoverageDriver $driver) {
+        allow($driver->start());
         allow($driver->stop())->toReturn([
             '/project/src/App/Calculator.php' => [12 => 1, 13 => -1],
             '/project/spec/App/Calculator.spec.php' => [5 => 1],
@@ -58,6 +59,7 @@ describe(JsonReportBuilder::class, function () {
     });
 
     it('handles Windows-style backslash paths', function (CoverageDriver $winDriver, Filesystem $filesystem) {
+        allow($winDriver->start());
         allow($winDriver->stop())->toReturn([
             'C:\\project\\src\\App\\Calculator.php' => [12 => 1],
         ]);

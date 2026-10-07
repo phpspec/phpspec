@@ -2,6 +2,10 @@
 
 use PhpSpec\Mock\ArgumentMatcher;
 
+interface FunctionsSpecContract {
+    public function doSomething(): string;
+}
+
 describe("Mock global functions", function () {
 
     it("anInstanceOf returns an ArgumentMatcher", function () {
@@ -30,6 +34,25 @@ describe("Mock global functions", function () {
         expect($m)->toBeAnInstanceOf(ArgumentMatcher::class);
         expect($m->matches('hello world'))->toBeTrue();
         expect($m->matches('world hello'))->toBeFalse();
+    });
+
+    it("dummy makes a double that answers any call with a default, from anywhere", function () {
+        $saved = \PhpSpec\Mock\ArrangingCode::roots();
+        \PhpSpec\Mock\ArrangingCode::under(__DIR__);
+        $outsider = sys_get_temp_dir() . '/phpspec_functions_spec_outsider_' . getmypid() . '.php';
+        if (!function_exists('functions_spec_outsider_greets')) {
+            register_shutdown_function(static fn() => @unlink($outsider));
+            file_put_contents($outsider, "<?php\nfunction functions_spec_outsider_greets(object \$it) { return \$it->doSomething(); }\n");
+            require $outsider;
+        }
+
+        try {
+            $contract = dummy(FunctionsSpecContract::class);
+
+            expect(functions_spec_outsider_greets($contract))->toBe('');
+        } finally {
+            \PhpSpec\Mock\ArrangingCode::under(...$saved);
+        }
     });
 
     it("allow throws when called without preceding mock call", function () {

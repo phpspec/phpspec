@@ -27,12 +27,14 @@ use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
+use PhpSpec\FileLoadException;
 use PhpSpec\FilterRegistry;
 use PhpSpec\Guard\Coverage;
 use PhpSpec\Guard\Inspection;
 use PhpSpec\Guard\Report as GuardReport;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
+use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
@@ -304,7 +306,7 @@ final class Run extends Command
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
-            return $this->stopped($prose, $formatter, $e->getMessage());
+            return $this->stopped($prose, $formatter, $e->getMessage(), $e instanceof FileLoadException ? $e->remedy() : null);
         }
 
         if ($this->selectedNothing($given, $results)) {
@@ -722,6 +724,8 @@ final class Run extends Command
             FilterRegistry::activate(new TitleFilter($filter));
         }
 
+        ArrangingCode::under(...array_filter([$this->config->getSpecPath(), $this->config->getFeaturesPath(), $this->config->getStepsPath()]));
+
         $suite = $this->loader->load($files, $filter);
 
         $problems = (bool) $input->getOption('stop-on-problems');
@@ -1039,11 +1043,10 @@ final class Run extends Command
     private function codeGenerator(Generation $generation): CodeGenerator
     {
         return new CodeGenerator(
-            ltrim($this->config->getSrcPath(), './'),
+            $this->config->getSourceLayout(),
             ltrim($this->config->getSpecPath(), './'),
             $generation,
             $this->config->getSpecSuffix(),
-            $this->config->getPsr4Prefix(),
         );
     }
 }

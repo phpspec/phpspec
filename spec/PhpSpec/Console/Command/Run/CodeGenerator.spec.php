@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Run\CodeGenerator;
@@ -17,7 +18,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(CodeGenerator::class, function () {
 
-    let('generator', fn() => new CodeGenerator('src', 'spec'));
+    let('generator', fn() => new CodeGenerator(SourceLayout::under('src'), 'spec'));
     let('output', fn() => new BufferedOutput());
 
     context('generate with empty results', function () {
@@ -104,7 +105,7 @@ describe(CodeGenerator::class, function () {
             $specFile = $absDir . '/spec/CgTest/Widget.spec.php';
             file_put_contents($specFile, "<?php\nit('works', fn() => expect(\$this->widget->spin())->toBe(true));\n");
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src'), $relDir . '/spec', Generation::Accepts);
 
             $original = eval("return new \\Error('Call to undefined method CgTest\\\\Widget::spin()');");
             $error = new \PhpSpec\Specification\ExampleError(
@@ -150,7 +151,7 @@ describe(CodeGenerator::class, function () {
             $specFile = $absDir . '/spec/CgTest/Widget.spec.php';
             file_put_contents($specFile, "<?php\nit('works', fn() => expect(Widget::of('a', 'b'))->toBeAnInstanceOf(Widget::class));\n");
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src'), $relDir . '/spec', Generation::Accepts);
 
             $original = eval("return new \\Error('Call to undefined method CgTest\\\\Widget::of()');");
             $error = new \PhpSpec\Specification\ExampleError('Call to undefined method CgTest\Widget::of()', $original);
@@ -185,7 +186,7 @@ describe(CodeGenerator::class, function () {
             $specFile = $absDir . '/spec/test.spec.php';
             file_put_contents($specFile, "<?php\nit('mocks', function(CgTest2\\Repo \$mock) {});\n");
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src'), $relDir . '/spec', Generation::Accepts);
 
             $original = new \RuntimeException("Cannot create mock: class or interface 'CgTest2\\Repo' does not exist");
             $error = new \PhpSpec\Specification\ExampleError(
@@ -224,7 +225,7 @@ describe(CodeGenerator::class, function () {
     context('offers a class that does not exist yet where its error would have been reported', function () {
 
         it('says the spec is about a class that does not exist yet, then asks to generate it', function () {
-            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', Generation::Declines);
 
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Calculator" not found', new \Error('Class "App\Calculator" not found'));
             $example = new ExampleResult('App\Calculator', [], isError: true);
@@ -246,7 +247,7 @@ describe(CodeGenerator::class, function () {
         });
 
         it('reads a describe block titled by the short name as describing that class', function () {
-            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', Generation::Declines);
 
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Basket" not found', new \Error('Class "App\Basket" not found'));
             $example = new ExampleResult('totals nothing to start with', [], isError: true);
@@ -259,7 +260,7 @@ describe(CodeGenerator::class, function () {
         });
 
         it('names the class a spec needs when it is not the one it describes', function () {
-            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', Generation::Declines);
 
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Coupon" not found', new \Error('Class "App\Coupon" not found'));
             $example = new ExampleResult('applies a coupon', [], isError: true);
@@ -284,7 +285,7 @@ describe(CodeGenerator::class, function () {
             mkdir($absDir . '/src', 0777, true);
             mkdir($absDir . '/spec', 0777, true);
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src'), $relDir . '/spec', Generation::Accepts);
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Coupon" not found', new \Error('Class "App\Coupon" not found'));
             $example = new ExampleResult('applies a coupon', [], isError: true);
             $example->setError($error);
@@ -319,7 +320,7 @@ describe(CodeGenerator::class, function () {
             $specFile = $absDir . '/spec/CgTest/Widget.spec.php';
             file_put_contents($specFile, "<?php\nit('works', fn() => expect(\$this->widget->spin())->toBe(true));\n");
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src'), $relDir . '/spec', Generation::Accepts);
             $original = eval("return new \\Error('Call to undefined method CgTest\\\\Widget::spin()');");
             $error = new \PhpSpec\Specification\ExampleError('Call to undefined method CgTest\Widget::spin()', $original);
             foreach (['file' => $specFile, 'line' => 2] as $property => $value) {
@@ -346,7 +347,7 @@ describe(CodeGenerator::class, function () {
         });
 
         it('returns nothing when nothing was written', function () {
-            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', Generation::Declines);
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Coupon" not found', new \Error('Class "App\Coupon" not found'));
             $example = new ExampleResult('applies a coupon', [], isError: true);
             $example->setError($error);
@@ -374,7 +375,7 @@ describe(CodeGenerator::class, function () {
                 "<?php\n\nnamespace App\\Model;\n\nclass User\n{\n}\n",
             );
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts, psr4Prefix: 'App');
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src', 'App'), $relDir . '/spec', Generation::Accepts);
 
             $original = new \RuntimeException('Class "App\Model\User" not found');
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Model\User" not found', $original);
@@ -418,7 +419,7 @@ describe(CodeGenerator::class, function () {
             file_put_contents($specFile, "<?php\nit('works', fn() => expect(\$this->widget->spin())->toBe(true));\n");
 
             $chooser = new Chooser($this->pairOutput, true, fn() => '1');
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', chooser: $chooser);
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src'), $relDir . '/spec', chooser: $chooser);
 
             $original = eval("return new \\Error('Call to undefined method CgChooser\\\\Widget::spin()');");
             $error = new \PhpSpec\Specification\ExampleError(
@@ -468,7 +469,7 @@ describe(CodeGenerator::class, function () {
             file_put_contents($specFile, "<?php\nit('works', fn() => expect(\$this->widget->spin())->toBe(true));\n");
 
             $chooser = new Chooser($this->pairOutput, true, fn() => '3');
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', chooser: $chooser);
+            $generator = new CodeGenerator(SourceLayout::under($relDir . '/src'), $relDir . '/spec', chooser: $chooser);
 
             $original = eval("return new \\Error('Call to undefined method CgChooserNo\\\\Widget::spin()');");
             $error = new \PhpSpec\Specification\ExampleError(

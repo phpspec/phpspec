@@ -12,7 +12,9 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Report\Formatter\Agent;
+namespace PhpSpec\Report;
+
+use PhpSpec\Report\Formatter\Agent\ValueExporter;
 
 /**
  * @internal

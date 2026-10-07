@@ -64,6 +64,47 @@ describe(SourceAnalyser::class, function () {
         });
     });
 
+    context('extractExpectedReturnValue', function () {
+        $lineOf = function (string $code): array {
+            $tmpFile = tempnam(sys_get_temp_dir(), 'phpspec_test_');
+            file_put_contents($tmpFile, "<?php\n" . $code . "\n");
+
+            return [$tmpFile, 2];
+        };
+
+        it('reads the value the expectation wants of the method call itself', function () use ($lineOf) {
+            [$file, $line] = $lineOf("expect(\$calc->add(2, 3))->toBe(5);");
+
+            expect($this->analyser->extractExpectedReturnValue($file, $line, 'add'))->toBe('5');
+
+            unlink($file);
+        });
+
+        it('reads nothing when the expectation is about a call made on the method result', function () use ($lineOf) {
+            [$file, $line] = $lineOf("expect(Oops::for('x')->getMessage())->toBe('x is not on the menu');");
+
+            expect($this->analyser->extractExpectedReturnValue($file, $line, 'for'))->toBeNull();
+
+            unlink($file);
+        });
+
+        it('reads only the value from an arrow-function example, not the parenthesis closing it()', function () use ($lineOf) {
+            [$file, $line] = $lineOf("it('is short', fn () => expect(\$voucher->shortCode())->toBe('B5'));");
+
+            expect($this->analyser->extractExpectedReturnValue($file, $line, 'shortCode'))->toBe("'B5'");
+
+            unlink($file);
+        });
+
+        it('reads a value that holds parentheses and a closing parenthesis inside a string', function () use ($lineOf) {
+            [$file, $line] = $lineOf("it('labels', fn () => expect(\$voucher->label())->toBe(sprintf('%s)', 'B5')));");
+
+            expect($this->analyser->extractExpectedReturnValue($file, $line, 'label'))->toBe("sprintf('%s)', 'B5')");
+
+            unlink($file);
+        });
+    });
+
     context('isStaticCall', function () {
 
         $lineOf = function (string $code): array {

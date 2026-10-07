@@ -26,6 +26,13 @@ interface GeneratedDouble
 
     public function ______PhpSpecNameOfClassDoubled(): string;
 
+    public function ______PhpSpecBeLenient(): void;
+
+    /**
+     * @param array<int, mixed>|null $args
+     */
+    public function ______PhpSpecDeclare(string $method, ?array $args): void;
+
     /**
      * @param array<int, mixed>|null $args
      */

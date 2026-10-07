@@ -7,6 +7,7 @@ use PhpSpec\StopConditions;
 describe(Configuration::class, function () {
 
     it('returns defaults when no config file exists', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getSpecPath())->toBe('./spec');
@@ -25,6 +26,38 @@ describe(Configuration::class, function () {
 
         expect($config->getSrcPath())->toBe('src');
         expect($config->getPsr4Prefix())->toBe('Tasker');
+    });
+
+    it('lays every composer mapping out, not only the first', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
+        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Brew\\' => 'src/Brew/', 'Another\\' => ['src/Another/', 'lib/']]]]));
+
+        $layout = (new Configuration('/app', $fs))->getSourceLayout();
+
+        expect($layout->mappings())->toBe(['Brew' => 'src/Brew', 'Another' => 'src/Another']);
+        expect($layout->srcPath())->toBe('src');
+        expect($layout->defaultNamespace())->toBeNull();
+    });
+
+    it('lays out by the autoload map and the default namespace the config states', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
+        allow($fs->read())->toReturn("default_namespace: Brew\\Acme\nautoload:\n  Brew\\Acme\\: src/Brew/Acme\n  Another\\Acme\\: src/Another\n");
+
+        $layout = (new Configuration('/app', $fs))->getSourceLayout();
+
+        expect($layout->mappings())->toBe(['Brew\\Acme' => 'src/Brew/Acme', 'Another\\Acme' => 'src/Another']);
+        expect($layout->defaultNamespace())->toBe('Brew\\Acme');
+        expect($layout->withinDefaultNamespace('Thing'))->toBe('Brew\\Acme\\Thing');
+    });
+
+    it('lays out by src_path and psr4_prefix as one mapping when the config states them', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
+        allow($fs->read())->toReturn("src_path: lib\npsr4_prefix: App\\\n");
+
+        $layout = (new Configuration('/app', $fs))->getSourceLayout();
+
+        expect($layout->mappings())->toBe(['App' => 'lib']);
+        expect($layout->srcPath())->toBe('lib');
     });
 
     it('takes the first directory of a composer mapping that lists several', function (Filesystem $fs) {
@@ -270,6 +303,7 @@ describe(Configuration::class, function () {
     });
 
     it('returns default spec_suffix when not configured', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getSpecSuffix())->toBe('.spec.php');
@@ -290,6 +324,7 @@ describe(Configuration::class, function () {
     // Guard is off until a project says otherwise, and every value it needs has
     // a default, so `guard: {status: active}` is a complete configuration.
     it('leaves guard off when nothing says otherwise', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getGuardConfig())->toBe([
@@ -549,6 +584,7 @@ describe(Configuration::class, function () {
     });
 
     it('returns null for ai config when not configured', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
@@ -580,6 +616,7 @@ describe(Configuration::class, function () {
     });
 
     it('returns default features path when not configured', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getFeaturesPath())->toBe('features/');
@@ -655,6 +692,7 @@ describe(Configuration::class, function () {
     });
 
     it('has no steps path by default', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
         expect($config->getStepsPath())->toBeNull();
     });

@@ -186,7 +186,7 @@ stop_on_skipped: true
 
 ### `autoload`
 
-PSR-4 namespace-to-directory mappings, used to autoload classes while specs run. Where generated classes are written is decided by `src_path` and `psr4_prefix`, or by `composer.json` when neither is set; see [Code Generation](code-generation.md#where-generated-classes-go).
+PSR-4 namespace-to-directory mappings, used to autoload classes while specs run and to place the classes PhpSpec generates: a class goes to the directory its own namespace is mapped to, the longest matching prefix winning. A config that states none reads the mappings from `composer.json`; see [Code Generation](code-generation.md#where-generated-classes-go).
 
 ```yaml
 autoload:
@@ -202,6 +202,21 @@ the path the layout maps their namespace to (the same place generated classes
 are written), so a project with no Composer autoloader, or one whose mapping
 changed without a `composer dump-autoload`, still runs.
 
+### `default_namespace`
+
+The namespace a `describe` or `exemplify` name is put under when it is under
+none of the mapped namespaces, instead of asking which one. A name already
+under a mapping is left as written.
+
+```yaml
+default_namespace: Brew\Acme
+autoload:
+  Brew\Acme\: src/Brew/Acme
+  Another\Acme\: src/Another
+```
+
+With this, `describe Thing` describes `Brew\Acme\Thing` in
+`spec/Brew/Acme/Thing.spec.php`, and `describe Another/Acme/Thing` stays as it is.
 ### `base_url`
 
 Base URL for browser testing. Default: `null`.

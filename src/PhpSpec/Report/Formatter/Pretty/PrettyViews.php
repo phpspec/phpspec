@@ -218,6 +218,30 @@ final class PrettyViews
     }
 
     /**
+     * Where an error is blamed, followed by the frames the trace holds beyond
+     * that place. A trace that starts at the blamed place repeats nothing.
+     *
+     * @param array{file: string, line: int} $at
+     * @param array<int, array{file?: string, line?: int}> $trace
+     */
+    public static function location(OutputInterface $output, array $at, array $trace): void
+    {
+        $output->write(PHP_EOL . '  at ' . $at['file'] . ':' . $at['line'] . PHP_EOL);
+
+        foreach ($trace as $index => $frame) {
+            if (($frame['file'] ?? null) === $at['file'] && ($frame['line'] ?? null) === $at['line']) {
+                $trace = array_slice($trace, $index + 1);
+
+                break;
+            }
+        }
+
+        foreach (array_slice($trace, 0, 5) as $frame) {
+            $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
+        }
+    }
+
+    /**
      * @param array<string, int> $counts
      */
     public static function counts(OutputInterface $output, array $counts, float $duration = 0): void

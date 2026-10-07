@@ -382,6 +382,13 @@ bin/phpspec describe App/Basket --agent
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":true}
 ```
 
+A name under none of the mapped namespaces, with no `default_namespace` to
+put it under, is refused with the remedy, exit code 1:
+
+```json
+{"v":2,"action":"describe","error":"Acme\\Thing is under none of the mapped namespaces: Brew\\.","remedy":"Describe Brew\\Acme\\Thing, name a default_namespace in the phpspec config to put every such name under, or answer when asked which one."}
+```
+
 `created` is `false` when the spec already existed (both commands are
 idempotent). Combine `describe --agent` with `-e` to also add a method example:
 

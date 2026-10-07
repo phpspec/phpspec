@@ -18,7 +18,9 @@ use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\SpecificationFinished;
 use PhpSpec\EventDispatcher\Event\SpecificationStarted;
+use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Specification\ExampleError;
 use PhpSpec\Specification\ExampleRegistry;
 use PhpSpec\Specification\Rebindable;
 use PhpSpec\Specification\SpecBlock;
@@ -66,20 +68,29 @@ class Specification implements ExampleRegistry, SpecBlock
         $subscribers = DispatcherRegistry::dispatcher()->snapshot();
 
         try {
-            $subject = $this->loadSubject();
-
             $blockResults = [];
 
-            foreach ($this->targetedSpecBlocks() as $specBlock) {
-                if ($specBlock instanceof Specification\Context) {
-                    $specBlock->setWorld($subject);
-                }
+            try {
+                $subject = $this->loadSubject();
+            } catch (\Throwable $e) {
+                // A file that does not parse, or declares what cannot load, is
+                // one errored example of its own: the run goes on to the rest.
+                $blockResults[] = $this->failedToLoad($e);
+                $subject = null;
+            }
 
-                $blockResult = $specBlock->run();
-                $blockResults[] = $blockResult;
+            if ($subject !== null) {
+                foreach ($this->targetedSpecBlocks() as $specBlock) {
+                    if ($specBlock instanceof Specification\Context) {
+                        $specBlock->setWorld($subject);
+                    }
 
-                if (StopRegistry::reached($blockResult)) {
-                    break;
+                    $blockResult = $specBlock->run();
+                    $blockResults[] = $blockResult;
+
+                    if (StopRegistry::reached($blockResult)) {
+                        break;
+                    }
                 }
             }
         } finally {
@@ -179,5 +190,13 @@ class Specification implements ExampleRegistry, SpecBlock
         }
 
         return $world;
+    }
+
+    private function failedToLoad(\Throwable $e): ExampleResult
+    {
+        $failed = new ExampleResult($this->getTitle(), [], true);
+        $failed->setError(new ExampleError($e->getMessage(), $e));
+
+        return $failed;
     }
 }

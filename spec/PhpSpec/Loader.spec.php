@@ -12,6 +12,8 @@ describe(Loader::class, function () {
     });
 
     it("returns empty suite for non-existent path", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturn(false);
+        allow($fs->isDir())->toReturn(false);
         $suite = (new Loader($fs))->load('./missing');
         expect($suite)->toBeAnInstanceOf(Suite::class);
     });
@@ -54,6 +56,7 @@ describe(Loader::class, function () {
     });
 
     it("defaults to ./spec when null is passed", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './spec');
         allow($fs->scandir())->toReturn(['.', '..']);
 
@@ -354,4 +357,24 @@ describe(Loader::class, function () {
         expect($features[0]->run()->getResults())->toHaveCount(2);
     });
 
+    it("stops on a support file that cannot load, naming the file and the reason", function () {
+        $root = sys_get_temp_dir() . '/phpspec_support_' . uniqid();
+        mkdir($root . '/features/support', 0777, true);
+        file_put_contents($root . '/features/support/Broken.php', "<?php\nfinal class PhpspecLoaderSpecBroken implements Nope\\Clock {}\n");
+        file_put_contents($root . '/features/time.feature', "Feature: Time\n  Scenario: Noon\n    Given it is noon\n");
+        $loader = new Loader(new \PhpSpec\RealFilesystem(), featuresPath: $root . '/features');
+
+        try {
+            $loader->load($root . '/features');
+            expect(false)->toBeTrue();
+        } catch (\PhpSpec\FileLoadException $e) {
+            expect($e->getMessage())->toContain('Broken.php could not load: Interface "Nope\Clock" not found');
+        } finally {
+            unlink($root . '/features/support/Broken.php');
+            unlink($root . '/features/time.feature');
+            rmdir($root . '/features/support');
+            rmdir($root . '/features');
+            rmdir($root);
+        }
+    });
 });

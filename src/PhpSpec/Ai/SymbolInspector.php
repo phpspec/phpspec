@@ -15,6 +15,7 @@
 namespace PhpSpec\Ai;
 
 use PhpSpec\CodeGeneration\ClassLocation;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use ReflectionClass;
@@ -34,8 +35,7 @@ final readonly class SymbolInspector
     private Filesystem $filesystem;
 
     public function __construct(
-        private string $srcPath = 'src',
-        private string $psr4Prefix = '',
+        private SourceLayout $layout = new SourceLayout(),
         ?Filesystem $filesystem = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
@@ -65,7 +65,7 @@ final readonly class SymbolInspector
      */
     private function absentReport(string $fqcn): string
     {
-        $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
+        $location = ClassLocation::for($fqcn, $this->layout);
 
         if ($location->exists($this->filesystem)) {
             return sprintf(
@@ -91,7 +91,7 @@ final readonly class SymbolInspector
     {
         $kind = $reflection->isInterface() ? 'interface' : ($reflection->isTrait() ? 'trait' : 'class');
         $filePath = $reflection->getFileName()
-            ?: ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix)->filePath();
+            ?: ClassLocation::for($fqcn, $this->layout)->filePath();
 
         $lines = [sprintf('%s %s (%s)', $kind, $fqcn, $filePath)];
 

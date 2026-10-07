@@ -60,6 +60,8 @@ All keywords register into the same step registry -- the keyword is for readabil
 Helper classes for your steps live under `features/support/`, the Cucumber
 way: every PHP file in it (and its subdirectories) is loaded before any step
 definition, with no autoload configuration:
+A support or step file that cannot load, a syntax error or a class built on a
+type that does not exist yet, stops the run naming the file and the reason.
 
 ```
 features/
@@ -255,7 +257,10 @@ bin/phpspec run features/greeting.feature  # Run a specific feature
 
 ## Step Generation
 
-When running features with undefined steps, PhpSpec offers to generate step definition stubs:
+A scenario with an undefined step was never checked, so the run fails with exit
+code 1 until the step is defined; a `pending()` step is work deferred on
+purpose and leaves the exit code at 0. When running features with undefined
+steps, PhpSpec offers to generate step definition stubs:
 
 ```
 3 undefined steps in features/greeting.feature.

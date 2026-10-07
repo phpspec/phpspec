@@ -15,7 +15,9 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\CodeGeneration\PhpName;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\ExceptionInterface;
@@ -36,8 +38,12 @@ final class Describe extends Command
      * @param SpecGenerator $generator the spec file generator
      * @param string|null $name the command name (defaults to "describe")
      */
-    public function __construct(private readonly SpecGenerator $generator, ?string $name = null)
-    {
+    public function __construct(
+        private readonly SpecGenerator $generator,
+        private readonly SourceLayout $layout = new SourceLayout(),
+        private readonly Prompt $prompt = new Prompt(),
+        ?string $name = null,
+    ) {
         parent::__construct($name);
     }
 
@@ -87,7 +93,13 @@ final class Describe extends Command
             return $this->refuse($problem, $forAgent, $output);
         }
 
-        $spec = str_replace('\\', '/', $class);
+        $fqcn = $this->placed(str_replace('/', '\\', $class), $input, $output, $forAgent);
+
+        if ($fqcn === null) {
+            return 1;
+        }
+
+        $spec = str_replace('\\', '/', $fqcn);
 
         if ($forAgent) {
             return $this->describeForAgent($spec, $input, $output);
@@ -97,7 +109,7 @@ final class Describe extends Command
         $output->writeln('');
         $output->writeln(sprintf(
             '<fg=green>Specification for <fg=yellow>%s</> created in <fg=yellow>%s</></>',
-            $class,
+            $fqcn === str_replace('/', '\\', $class) ? $class : $fqcn,
             $this->specFile($spec),
         ));
 
@@ -139,6 +151,79 @@ final class Describe extends Command
      *
      * @param string $spec the class path using forward slashes
      */
+    /**
+     * The name to describe: as given when it is under a mapped namespace, or
+     * when the project maps none; otherwise within the default namespace, or
+     * under the mapped namespace the person picks. Null when nobody could
+     * pick, said and explained on the way out.
+     */
+    private function placed(string $fqcn, Input $input, Output $output, bool $forAgent): ?string
+    {
+        if ($this->layout->mappings() === [] || $this->layout->isMapped($fqcn)) {
+            return $fqcn;
+        }
+
+        if ($this->layout->defaultNamespace() !== null) {
+            return $this->layout->withinDefaultNamespace($fqcn);
+        }
+
+        $candidates = $this->layout->candidatesFor($fqcn);
+        $problem = sprintf(
+            '%s is under none of the mapped namespaces: %s.',
+            $fqcn,
+            implode(', ', array_map(static fn(string $prefix): string => $prefix . '\\', array_keys($this->layout->mappings()))),
+        );
+        $remedy = sprintf(
+            'Describe %s, name a default_namespace in the phpspec config to put every such name under, or answer when asked which one.',
+            $this->oneOf($candidates),
+        );
+
+        if ($forAgent || !$input->isInteractive()) {
+            $this->refuse($problem, $forAgent, $output, $remedy);
+
+            return null;
+        }
+
+        $output->writeln('');
+        $output->writeln(sprintf('<fg=yellow>%s</> Describe:', $problem));
+        foreach ($candidates as $index => $candidate) {
+            $output->writeln(sprintf('  [%d] %s', $index + 1, $candidate));
+        }
+        $output->writeln(sprintf('  [0] %s, as written', $fqcn));
+
+        while (true) {
+            $answer = $this->prompt->ask('  > ');
+
+            if ($answer === null) {
+                $this->refuse($problem, false, $output, $remedy);
+
+                return null;
+            }
+
+            $answer = trim($answer) === '' ? '1' : trim($answer);
+
+            if ($answer === '0') {
+                return $fqcn;
+            }
+
+            if (ctype_digit($answer) && isset($candidates[(int) $answer - 1])) {
+                return $candidates[(int) $answer - 1];
+            }
+
+            $output->writeln(sprintf('  <fg=red>Answer with a number from 0 to %d.</>', count($candidates)));
+        }
+    }
+
+    /**
+     * @param list<string> $names
+     */
+    private function oneOf(array $names): string
+    {
+        $last = array_pop($names);
+
+        return $names === [] ? (string) $last : implode(', ', $names) . ' or ' . $last;
+    }
+
     private function specFile(string $spec): string
     {
         return $this->generator->getSpecPath() . '/' . $spec . $this->generator->getSpecSuffix();
@@ -152,13 +237,14 @@ final class Describe extends Command
      * @param string $problem why the name was refused
      * @param bool $forAgent whether the caller asked for the machine-readable receipt
      * @param Output $output the console output
+     * @param string|null $remedy what would get the name written, when there is such a thing
      * @return int the exit code (always 1)
      */
-    private function refuse(string $problem, bool $forAgent, Output $output): int
+    private function refuse(string $problem, bool $forAgent, Output $output, ?string $remedy = null): int
     {
         if ($forAgent) {
             $json = json_encode(
-                ['v' => Schema::V, 'action' => 'describe', 'error' => $problem],
+                ['v' => Schema::V, 'action' => 'describe', 'error' => $problem] + ($remedy === null ? [] : ['remedy' => $remedy]),
                 JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
             ) ?: '{}';
             $output->write($json . "\n", false, Output::OUTPUT_RAW);
@@ -167,6 +253,10 @@ final class Describe extends Command
         }
 
         $output->writeln(sprintf('<fg=red>%s</>', $problem));
+
+        if ($remedy !== null) {
+            $output->writeln(sprintf('<fg=yellow>%s</>', $remedy));
+        }
 
         return 1;
     }

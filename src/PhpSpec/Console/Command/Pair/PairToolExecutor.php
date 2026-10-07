@@ -927,11 +927,7 @@ final class PairToolExecutor implements ToolExecutor
 
     private function inspectSymbolHandler(): Closure
     {
-        $inspector = new SymbolInspector(
-            ltrim($this->config->getSrcPath(), './'),
-            $this->config->getPsr4Prefix(),
-            $this->filesystem,
-        );
+        $inspector = new SymbolInspector($this->config->getSourceLayout(), $this->filesystem);
 
         return fn(array $args) => $inspector->describe($args['fqcn']);
     }

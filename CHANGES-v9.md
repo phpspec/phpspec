@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - `describe` asks which mapped namespace a name under none of them belongs to, or keeps it as written; `default_namespace` in the config answers for every such name, in `describe` and `exemplify`; with nobody to answer and no default the name is refused with a remedy, exit code 1
+ - `dummy()` makes a lenient double for a collaborator whose calls do not matter: it answers every call with a default and still takes stubs
+ - `allow()` on its own declares a call as expected, a stub being optional: `allow($stock->reserve('tea', 2));`
+ - A stub ending in `->ignoreOthers()` leaves the rest of the double lenient, for a double injected by type hint that `dummy()` cannot make
  - A stubbed method can be told to throw an exception instance, `allow($repo->find(999))->toThrow(new RuntimeException('Not found'))`, as the mocking docs showed; a class name and a message still build one at the call
  - The browser behind visit() is an extension point: put your own implementation of the Browser contract behind the DSL with `extensions: {browser: ...}`
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
@@ -21,6 +25,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - A double is strict towards the code under spec: a call that no `allow()` or `expect()` declared, made from outside the spec and features folders, fails the example at once naming the call and where it came from, instead of answering with a default; the spec file itself may call anything, which is how `allow()` and `expect()` reach the call they declare
+ - `toHaveBeenCalled()` is asked after the act and judged at once from the calls recorded so far, while `toBeCalled()` stays declared before the act and judged when the example ends
+ - A failure's pair shows values typed: a string in quotes, a number bare, a float at full precision, null as null, an object with its properties when its name tells nothing; two long strings meant to be equal are shown around their first difference and the offset is named
+ - A stub or a verification written with an object argument matches an equal object, not only the very instance: `applyTo(new Money(900))` is met by any `Money(900)`; scalars stay strict
+ - An undefined step fails the run with exit code 1: the scenario was never checked; a `pending()` step still leaves it at 0
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
  - The pretty formatter reports an example and a step the same way: one set of glyphs (✓ ✘ ○ - ?), the title in the outcome's colour, and a spec headed `Spec:` as a feature is headed `Feature:`
  - A spec describing a class that does not exist yet is met with a sentence saying so and the offer to generate it, in place of a tree, an Errors section and a count; the generated-file message and diff name the file from the project root
@@ -28,6 +37,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `expect()` verifies a call to a method whose return type allows null, which used to fall out of the mock routing
+ - A generated class, interface or method lands in the directory its own namespace is mapped to, by `composer.json` or the `autoload` map, the longest prefix winning, instead of the first mapping's directory for every class; a class under no mapping keeps its whole name under the source path, where the next run finds it
+ - A method returning a final class can be stubbed: `allow()` receives an instance of the class built without its constructor and replaces it, where the call used to be refused
+ - An unstubbed double method returns a usable default for a return type no double can stand in for: an empty `iterable`, a `Closure`, an empty `Generator`, itself for `static`; a method returning a final class says so plainly instead of failing with a type error
+ - A spec file that does not parse is reported as one errored example and the other files still run, instead of PHP dying with exit 255 and no summary; a step or support file that cannot load stops the run naming the file and the reason, with a remedy, instead of a stack trace
+ - `--fake` writes no return it cannot express as a literal, an object or an array holding one used to come out as a `__set_state()` call, and fakes no method whose result the expectation went on to call something on
+ - An error thrown inside PhpSpec itself, in a double or in a vendor library is shown at the spec line that led there, with that line's code around it, instead of PhpSpec's own source; and reading a double's generated code as a file no longer prints a warning
+ - A type-hinted mock of an interface that does not exist yet is offered for generation like one made with `mock()`; the two paths used to word the error differently and only one was recognised
+ - A mock injected into a `let()` closure by type hint is there on `$this` under the parameter's name, as the mocking docs showed, so it can be stubbed and verified
+ - A call that was stubbed can still be verified: `allow($x->name())->toReturn('winter')` followed by `expect($x->name())->toBeCalled()` works, in either order; the stubbed value used to turn the second expect into an ordinary one that knew no `toBeCalled`
  - An agent entry whose value is a float JSON cannot hold (`INF`, `NAN`), or whose value or printed output holds a byte that is not UTF-8, arrives whole: the float is named, the byte replaced, and an event is never written as `{}`
  - `phpspec api` names the docs by their absolute path inside the installed package, and the package ships `docs/`; it used to name paths relative to a checkout that a Composer install did not have
  - A `file:LINE` selector that reaches no example or scenario stops the run with `No example at ...` and exit 1, with a remedy, instead of running nothing and exiting 0

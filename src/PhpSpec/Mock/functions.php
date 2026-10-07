@@ -39,6 +39,27 @@ function mock(string $class): object
 }
 
 /**
+ * Creates a lenient test double. A call nothing declared with allow() or
+ * expect() returns a default for its type wherever it is made, where a double
+ * from mock() refuses such a call made from outside the spec code.
+ *
+ * @param class-string<object> $class fully qualified class or interface name
+ * @return object the generated test double instance
+ * @throws InvalidArgumentException if the class or interface does not exist
+ * @throws ReflectionException
+ */
+function dummy(string $class): object
+{
+    $double = mock($class);
+
+    if ($double instanceof GeneratedDouble) {
+        $double->______PhpSpecBeLenient();
+    }
+
+    return $double;
+}
+
+/**
  * Creates an argument matcher that accepts any value.
  */
 function any(): ArgumentMatcher
@@ -147,10 +168,8 @@ function allow(mixed $returnValue = null): LastCallDouble
             throw new LogicException('Expected a GeneratedDouble instance from ______PhpSpecGetDouble()');
         }
         $method = $returnValue->______PhpSpecGetMethod();
-        $stack = $double->______PhpSpecGetStubbedCalls();
-        $top = $stack->peek();
-        $args = ($top && $top->method === $method && !empty($top->arguments)) ? $top->arguments : null;
-        return new LastCallDouble($double, $method, $args);
+
+        return declared($double, $method);
     }
 
     $lastDouble = Expectation::$lastCallForAllow;
@@ -169,9 +188,26 @@ function allow(mixed $returnValue = null): LastCallDouble
         throw new LogicException('Expected a GeneratedDouble instance from ______PhpSpecGetDouble()');
     }
     $method = $lastDouble->______PhpSpecGetMethod();
-    $stack = $double->______PhpSpecGetStubbedCalls();
-    $top = $stack->peek();
-    $args = ($top && $top->method === $method && !empty($top->arguments)) ? $top->arguments : null;
+
+    return declared($double, $method);
+}
+
+/**
+ * Declares the call allow() was handed as expected, with the arguments it was
+ * written with, and leaves it out of the double's call count.
+ *
+ * @internal
+ */
+function declared(GeneratedDouble $double, string $method): LastCallDouble
+{
+    $arranging = $double->______PhpSpecGetStubbedCalls()->peek();
+    $args = $arranging !== null && $arranging->method === $method && $arranging->arguments !== [] ? $arranging->arguments : null;
+
+    if ($arranging !== null && $arranging->method === $method) {
+        $arranging->unCall();
+    }
+
+    $double->______PhpSpecDeclare($method, $args);
 
     return new LastCallDouble($double, $method, $args);
 }

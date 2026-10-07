@@ -1,6 +1,8 @@
 <?php
 
+use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
+use PhpSpec\Mock\UnexpectedCallException;
 
 interface DoubleSpecContract {
     public function doSomething(): string;
@@ -12,6 +14,31 @@ class DoubleSpecClass {
     public function nullableReturn(): ?string { return null; }
     public function unionReturn(): string|int { return ''; }
     public function nullableUnionReturn(): string|null { return null; }
+}
+
+final class DoubleSpecCoin {
+    public function __construct(private int $pence) {}
+    public function pence(): int { return $this->pence; }
+}
+
+interface DoubleSpecStock {
+    public function reserve(string $item, int $quantity): bool;
+}
+
+// Code that is not spec code: a file outside the spec folder calling the double.
+define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
+if (!function_exists('double_spec_outsider_reserves')) {
+    register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\n");
+    require DOUBLE_SPEC_OUTSIDER;
+}
+
+interface DoubleSpecMachine {
+    public function each(): iterable;
+    public function hook(): Closure;
+    public function stream(): Generator;
+    public function same(): static;
+    public function coin(): DoubleSpecCoin;
 }
 
 class DoubleSpecMagic {
@@ -276,12 +303,135 @@ describe(Double::class, function() {
         expect(false)->toBeTrue();
     });
 
+    it("returns a usable default for a return type it cannot wrap: an empty iterable, a closure, a generator, itself", function() {
+        $machine = Double::getInstance(DoubleSpecMachine::class);
+
+        expect($machine->each())->toBe([]);
+        expect($machine->hook())->toBeAnInstanceOf(\Closure::class);
+        expect($machine->stream())->toBeAnInstanceOf(\Generator::class);
+        expect($machine->same())->toBe($machine);
+    });
+
+    it("hands the spec a placeholder for a final return type, so allow() can stub it", function() {
+        $machine = Double::getInstance(DoubleSpecMachine::class);
+        $coin = new DoubleSpecCoin(50);
+
+        expect($machine->coin())->toBeAnInstanceOf(DoubleSpecCoin::class);
+
+        allow($machine->coin())->toReturn($coin);
+
+        expect($machine->coin())->toBe($coin);
+    });
+
+    it("says why a dummy cannot stand in for a final return type", function() {
+        $machine = Double::getInstance(DoubleSpecMachine::class);
+        $machine->______PhpSpecBeLenient();
+
+        try {
+            $machine->coin();
+        } catch (\LogicException $e) {
+            expect($e->getMessage())->toContain('DoubleSpecCoin is final');
+            expect($e->getMessage())->toContain('allow()');
+
+            return;
+        }
+
+        expect(false)->toBeTrue();
+    });
+
+    context("a call made from code outside the spec folder", function () {
+        beforeEach(function () {
+            $this->saved = ArrangingCode::roots();
+            ArrangingCode::under(__DIR__);
+        });
+
+        afterEach(function () {
+            ArrangingCode::under(...$this->saved);
+        });
+
+        it("fails at once when nothing declared the call, naming the call and where it came from", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            try {
+                double_spec_outsider_reserves($stock);
+            } catch (UnexpectedCallException $e) {
+                expect($e->getMessage())->toContain('DoubleSpecStock::reserve("tea", 2) was called but not expected');
+                expect($e->getMessage())->toContain(realpath(DOUBLE_SPEC_OUTSIDER) . ':2');
+                expect($e->getMessage())->toContain('allow()');
+                expect($e->getMessage())->toContain('dummy()');
+
+                return;
+            }
+
+            expect(false)->toBeTrue();
+        });
+
+        it("answers a call that allow() declared", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve('tea', 2))->toReturn(true);
+
+            expect(double_spec_outsider_reserves($stock))->toBeTrue();
+        });
+
+        it("answers a call that allow() declared without stubbing it, with the type's default", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve('tea', 2));
+
+            expect(double_spec_outsider_reserves($stock))->toBeFalse();
+            expect($stock->reserve('tea', 2))->toBeCalledTimes(1);
+        });
+
+        it("answers a call that expect() declared before the act", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            expect($stock->reserve('tea', 2))->toBeCalled();
+
+            expect(double_spec_outsider_reserves($stock))->toBeFalse();
+        });
+
+        it("still refuses the same method with arguments nobody declared", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve('coffee', 1))->toReturn(true);
+
+            try {
+                double_spec_outsider_reserves($stock);
+            } catch (UnexpectedCallException $e) {
+                expect($e->getMessage())->toContain('reserve("tea", 2)');
+
+                return;
+            }
+
+            expect(false)->toBeTrue();
+        });
+
+        it("answers the rest with defaults once a stub ends in ignoreOthers()", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve('coffee', 1))->toReturn(true)->ignoreOthers();
+
+            expect(double_spec_outsider_reserves($stock))->toBeFalse();
+        });
+
+        it("answers every call with a default once made lenient", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            $stock->______PhpSpecBeLenient();
+
+            expect(double_spec_outsider_reserves($stock))->toBeFalse();
+        });
+    });
+
     it("counts method calls", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         $double->greet();
         $double->greet();
         $stack = $double->______PhpSpecGetStubbedCalls();
         expect($stack->countCallsTo('greet'))->toBe(2);
+    });
+
+    it("lets expect() verify a call to a method whose return type allows null", function() {
+        $double = Double::getInstance(DoubleSpecClass::class);
+        $double->nullableReturn();
+
+        expect($double->nullableReturn())->toHaveBeenCalled();
+        expect($double->nullableUnionReturn())->not()->toHaveBeenCalled();
     });
 
     it("handles nullable return types", function() {

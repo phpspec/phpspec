@@ -53,6 +53,64 @@ Feature: Code generation
     When I run phpspec run with option "--format=agent"
     Then the output should not contain "cannot be called statically"
 
+  Scenario: --fake writes no return it cannot express and fakes no method whose result was called on
+    Given a class "src/App/Money.php":
+      """
+      <?php
+      namespace App;
+
+      class Money {
+          public function __construct(public readonly int $pence) {}
+          public function plus(Money $other)
+          {
+          }
+      }
+      """
+    And a class "src/App/Oops.php":
+      """
+      <?php
+      namespace App;
+
+      class Oops {}
+      """
+    And a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('adds', function () {
+              expect((new App\Money(1))->plus(new App\Money(2)))->toBeLike(new App\Money(3));
+          });
+
+          it('names what is missing', function () {
+              expect(App\Oops::for('unicorn latte')->getMessage())->toBe('unicorn latte is not on the menu');
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers --fake"
+    Then the file "src/App/Money.php" should not contain "__set_state"
+    And the class "src/App/Oops.php" should contain "public static function for($argument1)"
+    And the file "src/App/Oops.php" should not contain "return 'unicorn latte is not on the menu'"
+
+  Scenario: --fake writes the value an arrow-function example expects, and nothing of the it() around it
+    Given a class "src/App/Voucher.php":
+      """
+      <?php
+      namespace App;
+
+      class Voucher {}
+      """
+    And a spec file "spec/App/Voucher.spec.php":
+      """
+      <?php
+      describe('App\Voucher', function () {
+          it('has a short code', fn () => expect((new App\Voucher())->shortCode())->toBe('B5'));
+      });
+      """
+    When I run phpspec run with option "--accept-offers --fake"
+    Then the class "src/App/Voucher.php" should contain "return 'B5';"
+    When I run phpspec run in a fresh process
+    Then the output should contain "1 example (1 passes)"
+
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
       """
@@ -123,6 +181,20 @@ Feature: Code generation
     Then a file "src/App/Logger.php" should be generated
     And it should contain "interface Logger"
 
+  Scenario: Generate an interface from a type-hinted injection
+    Given a spec file "spec/App/Service.spec.php":
+      """
+      <?php
+      describe('Service', function () {
+          it('uses a notifier', function (App\Notifier $notifier) {
+              expect($notifier)->toBeAnInstanceOf(App\Notifier::class);
+          });
+      });
+      """
+    When I run phpspec run and answer "y" to generation prompts
+    Then a file "src/App/Notifier.php" should be generated
+    And it should contain "interface Notifier"
+
   Scenario: A generated class lands where composer.json says its namespace lives
     Given no phpspec.json config
     And a file "composer.json":
@@ -141,6 +213,46 @@ Feature: Code generation
     When I run phpspec run with option "--accept-offers"
     Then a class file "src/TaskList.php" should be generated
     And no file "src/Tasker/TaskList.php" should be generated
+
+  Scenario: A class lands in the directory composer maps its own namespace to, not the first mapping's
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/", "Another\\": "src/Another/"}}}
+      """
+    And a spec file "spec/Another/Thing.spec.php":
+      """
+      <?php
+      describe('Another\Thing', function () {
+          it('exists', function () {
+              expect(new Another\Thing())->toBeAnInstanceOf(Another\Thing::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/Another/Thing.php" should be generated
+    And no file "src/Brew/Another/Thing.php" should be generated
+
+  Scenario: A class under none of the mapped namespaces keeps its whole name under the source path, and the next run finds it
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/"}}}
+      """
+    And a spec file "spec/Acme/Thing.spec.php":
+      """
+      <?php
+      describe('Acme\Thing', function () {
+          it('exists', function () {
+              expect(new Acme\Thing())->toBeAnInstanceOf(Acme\Thing::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/Acme/Thing.php" should be generated
+    And no file "src/Brew/Acme/Thing.php" should be generated
+    When I run phpspec run
+    Then the output should contain "1 example (1 passes)"
 
   Scenario: A method lands in the file its class was loaded from, wherever composer says the namespace lives
     Given no phpspec.json config
@@ -223,6 +335,70 @@ Feature: Code generation
     Then the exit code should be 1
     And the output should contain "Describe what?"
     And no file "spec/.spec.php" should be generated
+
+  Scenario: Describing a class under none of the mapped namespaces asks which to put it under
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/", "Another\\": "src/Another/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" answering "2"
+    Then the output should contain "[1] Brew\Acme\Thing"
+    And the output should contain "[2] Another\Acme\Thing"
+    And the output should contain "[0] Acme\Thing, as written"
+    And a spec file "spec/Another/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Another\Acme\Thing"
+    And no file "spec/Acme/Thing.spec.php" should be generated
+
+  Scenario: Keeping a name as written describes it under its own path
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" answering "0"
+    Then a spec file "spec/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Acme\Thing"
+
+  Scenario: A default namespace takes in every name under no mapping, and leaves a mapped one alone
+    Given a phpspec.yaml config:
+      """
+      default_namespace: Brew\Acme
+      autoload:
+        Brew\Acme\: src/Brew/Acme
+        Another\Acme\: src/Another
+      """
+    When I run phpspec describe "Thing"
+    Then a spec file "spec/Brew/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Brew\Acme\Thing"
+    When I run phpspec describe "Another/Acme/Thing"
+    Then a spec file "spec/Another/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Another\Acme\Thing"
+
+  Scenario: Describing a class under none of the mapped namespaces with nobody to answer writes nothing and says why
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/", "Another\\": "src/Another/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" with option "-n"
+    Then the exit code should be 1
+    And the output should contain "Acme\Thing is under none of the mapped namespaces"
+    And the output should contain "default_namespace"
+    And no file "spec/Acme/Thing.spec.php" should be generated
+    And no file "spec/Brew/Acme/Thing.spec.php" should be generated
+
+  Scenario: The agent receipt for a class under none of the mapped namespaces carries the error and a remedy
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" with option "--format=agent -n"
+    Then the exit code should be 1
+    And the output should contain "under none of the mapped namespaces"
+    And the output should contain "remedy"
+    And no file "spec/Acme/Thing.spec.php" should be generated
 
   Scenario: Exemplify refuses a method that is not an identifier
     When I run phpspec exemplify "App\Printer" "2print"

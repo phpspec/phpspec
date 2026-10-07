@@ -37,10 +37,20 @@ describe(Expectation::class, function() {
         $consumer->handle();
     });
 
-    it("verifies with toHaveBeenCalled alias", function(ExpectationSpecService $service) {
+    it("verifies after the act, with toHaveBeenCalled, that the call was made", function(ExpectationSpecService $service) {
         $consumer = new ExpectationSpecConsumer($service);
-        expect($service->save())->toHaveBeenCalled();
         $consumer->handle();
+
+        expect($service->save())->toHaveBeenCalled();
+    });
+
+    it("holds toHaveBeenCalled to the arguments it was written with, and bare to the method", function(ExpectationSpecService $service) {
+        $service->store('a', 1);
+
+        expect($service->store('a', 1))->toHaveBeenCalled();
+        expect($service->store('b', 2))->not()->toHaveBeenCalled();
+        expect($service->store())->toHaveBeenCalled();
+        expect($service->save())->not()->toHaveBeenCalled();
     });
 
     it("verifies with toBeCalledWith using exact args", function(ExpectationSpecService $service) {
@@ -155,6 +165,26 @@ describe(Expectation::class, function() {
         expect($service->store('foo', 42))->not()->toBeCalledWith('foo', 42);
     });
 
+    it("verifies a call that was stubbed first", function(ExpectationSpecService $service) {
+        allow($service->process())->toReturn('winter');
+        expect($service->process())->toBeCalled();
+
+        $service->process();
+    });
+
+    it("verifies a call stubbed with a callback first", function(ExpectationSpecService $service) {
+        allow($service->process())->toReturnUsing(fn() => 'summer');
+        expect($service->process())->toBeCalledTimes(1);
+
+        $service->process();
+    });
+
+    it("still compares a stubbed return value with an ordinary matcher", function(ExpectationSpecService $service) {
+        allow($service->process())->toReturn('winter');
+
+        expect($service->process())->toBe('winter');
+    });
+
     it("negated toBeCalledWith with wrong arg count", function(ExpectationSpecService $service) {
         expect($service->store('foo', 42))->not()->toBeCalledWith('bar');
         $service->store('baz', 100);
@@ -260,10 +290,6 @@ describe(Expectation::class, function() {
         $service->save();
     });
 
-    it("toHaveBeenCalled()->once() works as alias", function(ExpectationSpecService $service) {
-        expect($service->save())->toHaveBeenCalled()->once();
-        $service->save();
-    });
 
     it("stubs different return values for different args", function(ExpectationSpecService $service) {
         allow($service->store('a', 1))->toReturn(null);

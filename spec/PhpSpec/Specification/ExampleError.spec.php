@@ -77,4 +77,23 @@ describe(ExampleError::class, function() {
         expect($error->getSurroundingCode())->toBe([]);
     });
 
+    it("blames the site when the error was thrown in the spec", function() {
+        $line = __LINE__ + 1;
+        $error = new ExampleError("boom", new \RuntimeException("boom"));
+
+        expect($error->blame())->toBe(['file' => __FILE__, 'line' => $line]);
+    });
+
+    it("blames the first frame in the spec when the error was thrown inside PhpSpec itself", function() {
+        try {
+            $line = __LINE__ + 1;
+            \PhpSpec\Mock\Double::getInstance('Nope\Missing');
+        } catch (\LogicException $e) {
+            $error = new ExampleError($e->getMessage(), $e);
+        }
+
+        expect($error->blame())->toBe(['file' => __FILE__, 'line' => $line]);
+        expect(implode("\n", $error->getSurroundingCode()))->toContain("Double::getInstance('Nope\\Missing')");
+    });
+
 });

@@ -20,7 +20,10 @@ function evalNextOutput(Filesystem $fs, string $case): string
     allow($fs->read())->toReturn('');
     allow($fs->isDir())->toReturn(false);
     allow($fs->isFile())->toReturn(false);
+    allow($fs->mtime());
     allow($fs->scandir())->toReturn([]);
+    allow($fs->mkdir());
+    allow($fs->write());
 
     $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/' . $case . '.json'), true);
 

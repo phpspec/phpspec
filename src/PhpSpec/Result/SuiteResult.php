@@ -64,7 +64,9 @@ final class SuiteResult implements Results
     {
         $counts = new Counts($this);
         $c = $counts->toArray();
-        return ($c['failures'] > 0 || $c['errors'] > 0 || $c['stepFailures'] > 0 || $c['stepErrors'] > 0) ? 1 : 0;
+        // An undefined step is a scenario that was never checked, which is not
+        // a pass; a pending one is work deferred on purpose, and is.
+        return ($c['failures'] > 0 || $c['errors'] > 0 || $c['stepFailures'] > 0 || $c['stepErrors'] > 0 || $c['undefined'] > 0) ? 1 : 0;
     }
 
     /**

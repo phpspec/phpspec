@@ -35,31 +35,45 @@ Generates a spec that includes an example for the `add` method.
 
 The argument uses `/` as separator: `App/Calculator` becomes `spec/App/Calculator.spec.php`. This maps to the namespace `App\Calculator`.
 
+### A class under none of the mapped namespaces
+
+When the project maps namespaces to directories (see below) and the name is
+under none of them, `describe` asks which mapped namespace to put it under,
+or to keep it as written:
+
+```
+$ bin/phpspec describe Acme/Thing
+
+Acme\Thing is under none of the mapped namespaces: Brew\, Another\. Describe:
+  [1] Brew\Acme\Thing
+  [2] Another\Acme\Thing
+  [0] Acme\Thing, as written
+  >
+```
+
+Enter takes the first. A `default_namespace` in the config answers for every
+such name, so `describe Thing` becomes `Brew\Acme\Thing` without a question,
+while a name already under a mapping stays as written. With nobody to answer
+(`-n`, `--format=agent`) and no default, nothing is written and the exit code
+is 1; the agent receipt carries the `error` and a `remedy`.
+
 ## Where Generated Classes Go
 
-A generated class, interface or method stub is written under the source
-directory, at the path its namespace maps to. The mapping is taken, in order,
-from:
+A class is written where its own namespace lives, mapping by mapping. The
+mappings come from:
 
-1. The phpspec config: `src_path` with `psr4_prefix`, or a suite's `src` with
-   its `namespace`. The prefix is the part of the namespace the directory
-   already stands for, so `psr4_prefix: App` with `src_path: src` puts
-   `App\Model\User` in `src/Model/User.php`.
-2. Otherwise `composer.json`: the first entry under `autoload.psr-4`, which is
-   what Composer autoloads from, so `"Tasker\\": "src/"` puts `Tasker\TaskList`
-   in `src/TaskList.php`.
-3. Otherwise `src/` with every namespace segment as a directory:
-   `src/Tasker/TaskList.php`.
+1. The phpspec config, when it states a layout: the `autoload` map, and
+   `src_path` with `psr4_prefix` (or a suite's `src` with `namespace`) as one
+   more mapping. The prefix stands for the directory, so `App\` mapped to
+   `src` puts `App\Model\User` in `src/Model/User.php`.
+2. Otherwise `composer.json`: every entry under `autoload.psr-4`, the first
+   directory of an entry that lists several.
 
-A method stub is different: its class already exists, so it is written into
-the file the class was loaded from, wherever that is, and the mapping above is
-not consulted. A method on a vendor or internal class is never written.
-
-A phpspec `autoload` map is consulted at run time only, to load classes while
-specs run; a config that states one keeps the third layout for generation.
-The offer, the diff and the receipt all name the file that will be or was
-written, so a wrong guess is visible before it is taken.
-
+When mappings nest, the longest prefix wins: with `App\` and `App\Legacy\`
+both mapped, `App\Legacy\Order` goes where `App\Legacy\` points. A class
+under no mapping goes below `src_path` (`src` by default) with its whole name
+as directories: `Acme\Thing` in `src/Acme/Thing.php`. The next run finds a
+class at either place without a composer dump.
 ## The `exemplify` Command
 
 Add an example for a single method to a spec (creating the spec first if it
@@ -187,6 +201,11 @@ public function add()
 ```
 
 The `--fake` flag works by extracting the expected values from matcher results (via `fakeExpression` metadata) and using them as return values. This creates a quick feedback loop: write spec, run with `--fake`, get passing tests immediately, then replace the faked implementation with real logic.
+
+Two things are never faked: a return no literal expresses (an object, or an
+array holding one), and a method whose result the expectation went on to call
+something on, as in `expect(Oops::for('x')->getMessage())`, where the value
+belongs to `getMessage()` and not to `for()`.
 
 ## Nothing is written without an answer
 

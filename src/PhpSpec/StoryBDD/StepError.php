@@ -14,7 +14,7 @@
 
 namespace PhpSpec\StoryBDD;
 
-use PhpSpec\CodeGeneration\SurroundingCode;
+use PhpSpec\Specification\BlameTrait;
 
 /**
  * @internal
@@ -23,6 +23,8 @@ use PhpSpec\CodeGeneration\SurroundingCode;
  */
 final class StepError extends \Exception
 {
+    use BlameTrait;
+
     /** @var string the class name of the original throwable */
     private string $type;
 
@@ -57,22 +59,6 @@ final class StepError extends \Exception
         return $error;
     }
 
-    /**
-     * Returns source code lines surrounding the error location.
-     *
-     * @param int $before number of lines to include before the error line
-     * @param int $after number of lines to include after the error line
-     * @return array<int, string> the surrounding code lines
-     */
-    public function getSurroundingCode(int $before = 3, int $after = 3): array
-    {
-        if ($this->file === '') {
-            return [];
-        }
-
-        $surroundingCode = new SurroundingCode($this->original->getFile(), $this->original->getLine(), $before, $after);
-        return $surroundingCode->toArray();
-    }
 
     /**
      * Returns the class name of the original throwable (e.g. "RuntimeException").
@@ -84,28 +70,4 @@ final class StepError extends \Exception
         return $this->type;
     }
 
-    /**
-     * Returns the original exception's stack trace filtered to exclude internal PhpSpec
-     * and vendor frames, keeping only user code.
-     *
-     * @return array<int, array<string, mixed>> stack frames from user code only
-     */
-    public function getFilteredTrace(): array
-    {
-        $trace = $this->original->getTrace();
-        $filtered = [];
-        foreach ($trace as $frame) {
-            if (!isset($frame['file'])) {
-                continue;
-            }
-            if (str_contains($frame['file'], 'src/PhpSpec/')) {
-                continue;
-            }
-            if (str_contains($frame['file'], 'vendor/')) {
-                continue;
-            }
-            $filtered[] = $frame;
-        }
-        return $filtered;
-    }
 }

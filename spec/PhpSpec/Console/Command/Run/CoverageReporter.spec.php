@@ -72,6 +72,7 @@ describe(CoverageReporter::class, function () {
 
         it('renders the requested reports from a per-example collection', function (CoverageDriver $driver) {
             $fixture = (string) realpath(__DIR__ . '/../../../Coverage/Driver/fixtures/covered_probe.php');
+            allow($driver->start());
             allow($driver->stop())->toReturn([$fixture => [3 => 1]]);
             $collector = new PerExampleCollector($driver);
             $collector->beginSpec('spec/PhpSpec/Coverage/JsonReport.spec.php');
@@ -115,6 +116,7 @@ describe(CoverageReporter::class, function () {
 
         it('returns a verdict that demands exit code 1 when coverage is below the minimum', function (CoverageDriver $driver) {
             $fixture = (string) realpath(__DIR__ . '/../../../Coverage/Driver/fixtures/covered_probe.php');
+            allow($driver->start());
             allow($driver->stop())->toReturn([$fixture => [3 => 1, 4 => -1]]);
             $collector = new PerExampleCollector($driver);
             $collector->beginSpec('spec/PhpSpec/Coverage/JsonReport.spec.php');
@@ -141,6 +143,7 @@ describe(CoverageReporter::class, function () {
         });
 
         it('writes the raw collector state to the partial path instead of rendering reports', function (CoverageDriver $driver) {
+            allow($driver->start());
             allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);
             $collector = new PerExampleCollector($driver);
             $collector->beginSpec('spec/App/Calculator.spec.php');
@@ -169,6 +172,7 @@ describe(CoverageReporter::class, function () {
         });
 
         it('merges partial state files into the active collector and removes them', function (CoverageDriver $driver, CoverageDriver $workerDriver) {
+            allow($workerDriver->start());
             allow($workerDriver->stop())->toReturn(['/project/src/App/Greeter.php' => [8 => 1]]);
             $workerCollector = new PerExampleCollector($workerDriver);
             $workerCollector->beginSpec('spec/App/Greeter.spec.php');
