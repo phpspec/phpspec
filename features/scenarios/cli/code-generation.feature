@@ -91,6 +91,26 @@ Feature: Code generation
     And the class "src/App/Oops.php" should contain "public static function for($argument1)"
     And the file "src/App/Oops.php" should not contain "return 'unicorn latte is not on the menu'"
 
+  Scenario: --fake writes the value an arrow-function example expects, and nothing of the it() around it
+    Given a class "src/App/Voucher.php":
+      """
+      <?php
+      namespace App;
+
+      class Voucher {}
+      """
+    And a spec file "spec/App/Voucher.spec.php":
+      """
+      <?php
+      describe('App\Voucher', function () {
+          it('has a short code', fn () => expect((new App\Voucher())->shortCode())->toBe('B5'));
+      });
+      """
+    When I run phpspec run with option "--accept-offers --fake"
+    Then the class "src/App/Voucher.php" should contain "return 'B5';"
+    When I run phpspec run
+    Then the output should contain "1 example (1 passes)"
+
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
       """

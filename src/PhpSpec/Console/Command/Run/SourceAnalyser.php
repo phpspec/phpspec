@@ -92,8 +92,45 @@ final class SourceAnalyser
         }
 
         $call = '(?:->|::)' . preg_quote($methodName, '/') . '\((?:[^()]|\([^()]*\))*\)';
-        if (preg_match('/' . $call . '\)\s*->toBe\((.+)\)\s*;/s', $statement, $m) === 1) {
-            return trim($m[1]);
+        if (preg_match('/' . $call . '\)\s*->toBe\(/s', $statement, $m, PREG_OFFSET_CAPTURE) !== 1) {
+            return null;
+        }
+
+        $value = $this->argumentOpenedAt($statement, $m[0][1] + strlen($m[0][0]));
+
+        return $value === null ? null : trim($value);
+    }
+
+    /**
+     * The source of a call's argument list, read from just after its opening
+     * parenthesis to the parenthesis that balances it, with parentheses inside
+     * string literals left alone.
+     */
+    private function argumentOpenedAt(string $code, int $offset): ?string
+    {
+        $depth = 1;
+        $quote = null;
+
+        for ($i = $offset, $length = strlen($code); $i < $length; $i++) {
+            $char = $code[$i];
+
+            if ($quote !== null) {
+                if ($char === '\\') {
+                    $i++;
+                } elseif ($char === $quote) {
+                    $quote = null;
+                }
+
+                continue;
+            }
+
+            if ($char === '\'' || $char === '"') {
+                $quote = $char;
+            } elseif ($char === '(') {
+                $depth++;
+            } elseif ($char === ')' && --$depth === 0) {
+                return substr($code, $offset, $i - $offset);
+            }
         }
 
         return null;

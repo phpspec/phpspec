@@ -87,6 +87,22 @@ describe(SourceAnalyser::class, function () {
 
             unlink($file);
         });
+
+        it('reads only the value from an arrow-function example, not the parenthesis closing it()', function () use ($lineOf) {
+            [$file, $line] = $lineOf("it('is short', fn () => expect(\$voucher->shortCode())->toBe('B5'));");
+
+            expect($this->analyser->extractExpectedReturnValue($file, $line, 'shortCode'))->toBe("'B5'");
+
+            unlink($file);
+        });
+
+        it('reads a value that holds parentheses and a closing parenthesis inside a string', function () use ($lineOf) {
+            [$file, $line] = $lineOf("it('labels', fn () => expect(\$voucher->label())->toBe(sprintf('%s)', 'B5')));");
+
+            expect($this->analyser->extractExpectedReturnValue($file, $line, 'label'))->toBe("sprintf('%s)', 'B5')");
+
+            unlink($file);
+        });
     });
 
     context('isStaticCall', function () {
