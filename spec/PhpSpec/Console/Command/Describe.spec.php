@@ -1,6 +1,8 @@
 <?php
 
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Console\Command\Describe;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -53,6 +55,85 @@ describe(Describe::class, function() {
         expect($output->fetch())->toBe(
             PHP_EOL . "\e[32mSpecification for \e[39m\e[33mApp/Calculator\e[39m\e[32m created in \e[39m\e[33mspec/App/Calculator.spec.php\e[39m" . PHP_EOL,
         );
+    });
+
+    context("a class under none of the mapped namespaces", function () {
+        $mapped = fn(?string $default = null): SourceLayout => new SourceLayout('src', ['Brew\\' => 'src/Brew', 'Another\\' => 'src/Another'], $default);
+        $specFile = fn(string $path): callable => fn(string $written): bool => str_ends_with($written, str_replace('/', DIRECTORY_SEPARATOR, $path));
+
+        it("asks which mapped namespace to describe it under, and describes the answer", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->mkdir());
+            allow($prompt->ask())->toReturn('2');
+            expect($fs->write(satisfy($specFile('spec/Another/Acme/Thing.spec.php')), any()))->toBeCalled();
+
+            $output = new BufferedOutput();
+            $exit = (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing']), $output);
+
+            expect($exit)->toBe(0);
+            expect($output->fetch())->toContain('[1] Brew\Acme\Thing')->toContain('[2] Another\Acme\Thing')->toContain('[0] Acme\Thing, as written')->toContain('Another\Acme\Thing created in spec/Another/Acme/Thing.spec.php');
+        });
+
+        it("keeps the name as written when told to", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->mkdir());
+            allow($prompt->ask())->toReturn('0');
+            expect($fs->write(satisfy($specFile('spec/Acme/Thing.spec.php')), any()))->toBeCalled();
+
+            (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing']), new NullOutput());
+        });
+
+        it("puts it into the default namespace without asking", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->mkdir());
+            expect($fs->write(satisfy($specFile('spec/Brew/Acme/Thing.spec.php')), any()))->toBeCalled();
+            expect($prompt->ask())->not()->toBeCalled();
+
+            (new Describe(new SpecGenerator('spec', $fs), $mapped('Brew'), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing']), new NullOutput());
+        });
+
+        it("writes nothing and says why when nobody can answer, with the remedies", function (Filesystem $fs, Prompt $prompt) use ($mapped) {
+            allow($fs->exists())->toReturn(false);
+            expect($fs->write())->not()->toBeCalled();
+            expect($prompt->ask())->not()->toBeCalled();
+
+            $input = new ArrayInput(['class' => 'Acme/Thing']);
+            $input->setInteractive(false);
+            $output = new BufferedOutput();
+            $exit = (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run($input, $output);
+
+            expect($exit)->toBe(1);
+            expect($output->fetch())->toContain('Acme\Thing is under none of the mapped namespaces: Brew\, Another\.')->toContain('Brew\Acme\Thing or Another\Acme\Thing')->toContain('default_namespace');
+        });
+
+        it("answers an agent with the error and the remedy", function (Filesystem $fs, Prompt $prompt) use ($mapped) {
+            allow($fs->exists())->toReturn(false);
+            expect($fs->write())->not()->toBeCalled();
+
+            $output = new BufferedOutput();
+            $exit = (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing', '--format' => 'agent']), $output);
+
+            $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+            expect($exit)->toBe(1);
+            expect($doc['action'])->toBe('describe');
+            expect($doc['error'])->toContain('under none of the mapped namespaces');
+            expect($doc['remedy'])->toContain('default_namespace');
+        });
+
+        it("treats an empty answer as the first choice and asks again on a number it does not have", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->mkdir());
+            $answers = ['7', ''];
+            allow($prompt->ask())->toReturnUsing(function () use (&$answers) {
+                return array_shift($answers);
+            });
+            expect($fs->write(satisfy($specFile('spec/Brew/Acme/Thing.spec.php')), any()))->toBeCalled();
+
+            $output = new BufferedOutput();
+            (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing']), $output);
+
+            expect($output->fetch())->toContain('from 0 to 2');
+        });
     });
 
     it("does not add example without -e option", function(Filesystem $fs) {

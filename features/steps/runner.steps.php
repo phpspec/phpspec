@@ -30,7 +30,7 @@ if (!function_exists('_phpspec_exec')) {
         _phpspec_exec_subprocess($world, $args, $interactive);
     }
 
-    function _phpspec_exec_subprocess(object $world, string $args, bool $interactive = false, string $xdebugMode = 'off'): void
+    function _phpspec_exec_subprocess(object $world, string $args, bool $interactive = false, string $xdebugMode = 'off', ?string $answers = null): void
     {
         $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...preg_split('/\s+/', $args)];
 
@@ -46,7 +46,9 @@ if (!function_exists('_phpspec_exec')) {
 
         $process = proc_open($cmd, $descriptors, $pipes, $world->projectDir);
 
-        if ($interactive) {
+        if ($answers !== null) {
+            fwrite($pipes[0], implode("\n", array_map('trim', explode(',', $answers))) . "\n");
+        } elseif ($interactive) {
             fwrite($pipes[0], str_repeat("y\n", 30));
         }
         fclose($pipes[0]);
@@ -169,6 +171,10 @@ when('I run phpspec describe {string} with option {string}', function (string $c
     _phpspec_exec($this, 'describe ' . $class . ' ' . $options);
     $specPath = str_replace('\\', '/', $class);
     $this->lastFile = $this->projectDir . '/spec/' . $specPath . '.spec.php';
+});
+
+when('I run phpspec describe {string} answering {string}', function (string $class, string $answers) {
+    _phpspec_exec_subprocess($this, 'describe ' . $class, answers: $answers);
 });
 
 // -- Exemplify command -------------------------------------------------

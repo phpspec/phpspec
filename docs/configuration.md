@@ -202,6 +202,21 @@ the path the layout maps their namespace to (the same place generated classes
 are written), so a project with no Composer autoloader, or one whose mapping
 changed without a `composer dump-autoload`, still runs.
 
+### `default_namespace`
+
+The namespace a `describe` or `exemplify` name is put under when it is under
+none of the mapped namespaces, instead of asking which one. A name already
+under a mapping is left as written.
+
+```yaml
+default_namespace: Brew\Acme
+autoload:
+  Brew\Acme\: src/Brew/Acme
+  Another\Acme\: src/Another
+```
+
+With this, `describe Thing` describes `Brew\Acme\Thing` in
+`spec/Brew/Acme/Thing.spec.php`, and `describe Another/Acme/Thing` stays as it is.
 ### `base_url`
 
 Base URL for browser testing. Default: `null`.

@@ -336,6 +336,70 @@ Feature: Code generation
     And the output should contain "Describe what?"
     And no file "spec/.spec.php" should be generated
 
+  Scenario: Describing a class under none of the mapped namespaces asks which to put it under
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/", "Another\\": "src/Another/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" answering "2"
+    Then the output should contain "[1] Brew\Acme\Thing"
+    And the output should contain "[2] Another\Acme\Thing"
+    And the output should contain "[0] Acme\Thing, as written"
+    And a spec file "spec/Another/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Another\Acme\Thing"
+    And no file "spec/Acme/Thing.spec.php" should be generated
+
+  Scenario: Keeping a name as written describes it under its own path
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" answering "0"
+    Then a spec file "spec/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Acme\Thing"
+
+  Scenario: A default namespace takes in every name under no mapping, and leaves a mapped one alone
+    Given a phpspec.yaml config:
+      """
+      default_namespace: Brew\Acme
+      autoload:
+        Brew\Acme\: src/Brew/Acme
+        Another\Acme\: src/Another
+      """
+    When I run phpspec describe "Thing"
+    Then a spec file "spec/Brew/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Brew\Acme\Thing"
+    When I run phpspec describe "Another/Acme/Thing"
+    Then a spec file "spec/Another/Acme/Thing.spec.php" should be generated
+    And it should contain a describe block for "Another\Acme\Thing"
+
+  Scenario: Describing a class under none of the mapped namespaces with nobody to answer writes nothing and says why
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/", "Another\\": "src/Another/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" with option "-n"
+    Then the exit code should be 1
+    And the output should contain "Acme\Thing is under none of the mapped namespaces"
+    And the output should contain "default_namespace"
+    And no file "spec/Acme/Thing.spec.php" should be generated
+    And no file "spec/Brew/Acme/Thing.spec.php" should be generated
+
+  Scenario: The agent receipt for a class under none of the mapped namespaces carries the error and a remedy
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" with option "--format=agent -n"
+    Then the exit code should be 1
+    And the output should contain "under none of the mapped namespaces"
+    And the output should contain "remedy"
+    And no file "spec/Acme/Thing.spec.php" should be generated
+
   Scenario: Exemplify refuses a method that is not an identifier
     When I run phpspec exemplify "App\Printer" "2print"
     Then the exit code should be 1

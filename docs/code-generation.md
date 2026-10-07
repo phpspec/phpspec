@@ -35,6 +35,28 @@ Generates a spec that includes an example for the `add` method.
 
 The argument uses `/` as separator: `App/Calculator` becomes `spec/App/Calculator.spec.php`. This maps to the namespace `App\Calculator`.
 
+### A class under none of the mapped namespaces
+
+When the project maps namespaces to directories (see below) and the name is
+under none of them, `describe` asks which mapped namespace to put it under,
+or to keep it as written:
+
+```
+$ bin/phpspec describe Acme/Thing
+
+Acme\Thing is under none of the mapped namespaces: Brew\, Another\. Describe:
+  [1] Brew\Acme\Thing
+  [2] Another\Acme\Thing
+  [0] Acme\Thing, as written
+  >
+```
+
+Enter takes the first. A `default_namespace` in the config answers for every
+such name, so `describe Thing` becomes `Brew\Acme\Thing` without a question,
+while a name already under a mapping stays as written. With nobody to answer
+(`-n`, `--format=agent`) and no default, nothing is written and the exit code
+is 1; the agent receipt carries the `error` and a `remedy`.
+
 ## Where Generated Classes Go
 
 A class is written where its own namespace lives, mapping by mapping. The

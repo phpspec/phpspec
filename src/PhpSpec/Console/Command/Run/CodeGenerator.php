@@ -24,6 +24,7 @@ use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Console\Command\Refactor\Diff;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\ProjectRoot;
@@ -45,6 +46,7 @@ final readonly class CodeGenerator
     private ResultScanner $scanner;
     private SourceAnalyser $analyser;
     private Filesystem $filesystem;
+    private Prompt $prompt;
 
     /**
      * @param SourceLayout $layout where a class's file lives
@@ -64,6 +66,7 @@ final readonly class CodeGenerator
         $this->analyser = new SourceAnalyser();
         $this->scanner = new ResultScanner($this->analyser);
         $this->filesystem = new RealFilesystem();
+        $this->prompt = new Prompt();
     }
 
     /**
@@ -542,7 +545,7 @@ final readonly class CodeGenerator
             $output->prepareForInput();
         }
 
-        $answer = $this->ask('  > ');
+        $answer = $this->prompt->ask('  > ');
 
         if ($output instanceof ScrollRegionOutput && $answer !== null) {
             $output->returnToContent();
@@ -583,22 +586,4 @@ final readonly class CodeGenerator
      * @param string $prompt the prompt string to display
      * @return string the user's input, or empty string if no input
      */
-    /**
-     * One line of input, or null at end of input.
-     *
-     * The difference matters: an empty line is somebody pressing Enter, which
-     * takes the default, while nothing to read at all is nobody there.
-     */
-    private function ask(string $prompt): ?string
-    {
-        if (function_exists('readline') && stream_isatty(STDIN)) {
-            $answer = readline($prompt);
-
-            return $answer === false ? null : $answer;
-        }
-
-        $line = fgets(STDIN);
-
-        return $line === false ? null : rtrim($line, "\r\n");
-    }
 }

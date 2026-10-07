@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Console\Command\Exemplify;
 use PhpSpec\Filesystem;
@@ -11,6 +12,19 @@ describe(Exemplify::class, function () {
     let('exemplify', fn(Filesystem $fs) => new Exemplify(new SpecGenerator('spec', $fs)));
 
     it('instantiates', fn() => expect($this->exemplify)->toBeAnInstanceOf(Exemplify::class));
+
+    it('puts a class under no mapping into the default namespace', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir());
+        allow($fs->read())->toReturn("<?php\n\ndescribe(Thing::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
+        $layout = new SourceLayout('src', ['Brew\\Acme\\' => 'src/Brew/Acme'], 'Brew\\Acme');
+        expect($fs->write(satisfy(fn(string $path): bool => str_ends_with($path, str_replace('/', DIRECTORY_SEPARATOR, 'spec/Brew/Acme/Thing.spec.php'))), any()))->toBeCalled();
+
+        $output = new BufferedOutput();
+        (new Exemplify(new SpecGenerator('spec', $fs), $layout))->run(new ArrayInput(['class' => 'Thing', 'method' => 'spin']), $output);
+
+        expect($output->fetch())->toContain('Brew\Acme\Thing::spin');
+    });
 
     it('generates spec and adds example', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(function (string $p) {

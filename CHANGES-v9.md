@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - `describe` asks which mapped namespace a name under none of them belongs to, or keeps it as written; `default_namespace` in the config answers for every such name, in `describe` and `exemplify`; with nobody to answer and no default the name is refused with a remedy, exit code 1
  - `dummy()` makes a lenient double for a collaborator whose calls do not matter: it answers every call with a default and still takes stubs
  - `allow()` on its own declares a call as expected, a stub being optional: `allow($stock->reserve('tea', 2));`
  - A stub ending in `->ignoreOthers()` leaves the rest of the double lenient, for a double injected by type hint that `dummy()` cannot make
