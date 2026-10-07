@@ -37,10 +37,20 @@ describe(Expectation::class, function() {
         $consumer->handle();
     });
 
-    it("verifies with toHaveBeenCalled alias", function(ExpectationSpecService $service) {
+    it("verifies after the act, with toHaveBeenCalled, that the call was made", function(ExpectationSpecService $service) {
         $consumer = new ExpectationSpecConsumer($service);
-        expect($service->save())->toHaveBeenCalled();
         $consumer->handle();
+
+        expect($service->save())->toHaveBeenCalled();
+    });
+
+    it("holds toHaveBeenCalled to the arguments it was written with, and bare to the method", function(ExpectationSpecService $service) {
+        $service->store('a', 1);
+
+        expect($service->store('a', 1))->toHaveBeenCalled();
+        expect($service->store('b', 2))->not()->toHaveBeenCalled();
+        expect($service->store())->toHaveBeenCalled();
+        expect($service->save())->not()->toHaveBeenCalled();
     });
 
     it("verifies with toBeCalledWith using exact args", function(ExpectationSpecService $service) {
@@ -281,10 +291,6 @@ describe(Expectation::class, function() {
     });
 
 
-    it("toHaveBeenCalled()->once() works as alias", function(ExpectationSpecService $service) {
-        expect($service->save())->toHaveBeenCalled()->once();
-        $service->save();
-    });
     it("stubs different return values for different args", function(ExpectationSpecService $service) {
         allow($service->store('a', 1))->toReturn(null);
         allow($service->store('b', 2))->toReturn(null);

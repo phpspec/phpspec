@@ -121,12 +121,36 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Alias for toBeCalled() for past-tense readability.
+     * Judges now, from the calls recorded so far, that the call expect() was
+     * handed has been made: the past tense, for after the act. The arguments
+     * it was written with are part of the question; written bare, it asks
+     * whether the method was called at all. toBeCalled() is the future tense,
+     * declared before the act and judged when the example ends.
      */
-    public function toHaveBeenCalled(): CallCountExpectation
+    public function toHaveBeenCalled(): static
     {
-        return $this->toBeCalled();
+        $double = $this->getGeneratedDouble();
+        $class = $double->______PhpSpecNameOfClassDoubled();
+        $calls = $double->______PhpSpecGetStubbedCalls();
+        $method = $calls->peek();
+
+        if ($method === null) {
+            throw new \LogicException('No method call recorded on the mock. Call a method before using toHaveBeenCalled().');
+        }
+
+        $methodName = $method->method;
+        $method->unCall();
+        $argPattern = $method->arguments === [] ? null : $method->arguments;
+        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+
+        return $this->should(
+            fn(): bool => $calls->countCallsToWithArgs($methodName, $argPattern) >= 1,
+            "Expected $class::$methodName() to have been called",
+            new CallComparison($class, $methodName, $argPattern, 'at least 1', $calls),
+            'toHaveBeenCalled',
+        );
     }
+
     /**
      * Asserts that the mock method was called with the specified arguments.
      * Supports ArgumentMatcher instances for flexible matching.

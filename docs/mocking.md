@@ -131,29 +131,44 @@ matchers.
 
 ### `toBeCalled()`
 
-Verifies the method was called at least once. Arguments written in the
-expect call are part of the promise: `save($user)` is not satisfied by a
-`save()` of something else. Written without arguments, it means called at all:
+Declared before the act, judged when the example ends: the method must be
+called at least once by then. Arguments written in the expect call are part
+of the promise: `save($user)` is not satisfied by a `save()` of something
+else. Written without arguments, it means called at all. The declaration also
+makes the call expected, so the code under spec may make it:
 
 ```php
 it('calls save', function (UserRepository $repo) {
     expect($repo->save($user))->toBeCalled();
-    $repo->save($user);
+
+    (new Registration($repo))->register($user);
 });
 
 it('saves something', function (UserRepository $repo) {
     expect($repo->save())->toBeCalled();
-    $repo->save($anyUser);
+
+    (new Registration($repo))->register($anyUser);
 });
 ```
 
 ### `toHaveBeenCalled()`
 
-Alias for `toBeCalled()`:
+Asked after the act, judged at once from the calls recorded so far. The call
+has to be declared before the act, with `allow()`, or the code under spec is
+refused when it makes it:
 
 ```php
-expect($repo->save($user))->toHaveBeenCalled();
+it('saves the user', function (UserRepository $repo) {
+    allow($repo->save($user));
+
+    (new Registration($repo))->register($user);
+
+    expect($repo->save($user))->toHaveBeenCalled();
+});
 ```
+
+Negated, it asks that the call was not made: `expect($repo->save($other))->not()->toHaveBeenCalled()`.
+
 ### `toBeCalledWith(...$args)`
 
 Verifies the method was called with specific arguments:

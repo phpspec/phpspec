@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
  - A double is strict towards the code under spec: a call that no `allow()` or `expect()` declared, made from outside the spec and features folders, fails the example at once naming the call and where it came from, instead of answering with a default; the spec file itself may call anything, which is how `allow()` and `expect()` reach the call they declare
+ - `toHaveBeenCalled()` is asked after the act and judged at once from the calls recorded so far, while `toBeCalled()` stays declared before the act and judged when the example ends
  - A failure's pair shows values typed: a string in quotes, a number bare, a float at full precision, null as null, an object with its properties when its name tells nothing; two long strings meant to be equal are shown around their first difference and the offset is named
  - A stub or a verification written with an object argument matches an equal object, not only the very instance: `applyTo(new Money(900))` is met by any `Money(900)`; scalars stay strict
  - An undefined step fails the run with exit code 1: the scenario was never checked; a `pending()` step still leaves it at 0

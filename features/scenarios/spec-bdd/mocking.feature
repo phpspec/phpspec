@@ -566,7 +566,7 @@ Feature: Mocking
     And the output should contain "src/App/Checkout.php:8"
     And the exit code should be 1
 
-  Scenario: A call declared with allow() is expected, and can be verified after the act
+  Scenario: A call declared with allow() is expected, and toHaveBeenCalled() verifies it after the act
     Given an interface "src/App/Stock.php":
       """
       <?php
@@ -601,12 +601,56 @@ Feature: Mocking
 
               expect((new Checkout($stock))->order('tea'))->toBeTrue();
 
-              expect($stock->reserve('tea', 2))->toBeCalled();
+              expect($stock->reserve('tea', 2))->toHaveBeenCalled();
           });
       });
       """
     When I run phpspec run
     Then all examples should pass
+
+  Scenario: toHaveBeenCalled() fails after the act naming the calls the method did receive
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders coffee', function (Stock $stock) {
+              allow($stock->reserve());
+
+              (new Checkout($stock))->order('tea');
+
+              expect($stock->reserve('coffee', 1))->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "to have been called"
+    And the output should contain "tea"
+    And the exit code should be 1
 
   Scenario: An injected double stubbed in beforeEach ignores the other calls once told to
     Given an interface "src/App/Stock.php":
