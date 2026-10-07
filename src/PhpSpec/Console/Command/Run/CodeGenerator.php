@@ -18,6 +18,7 @@ use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\ClassLocation;
 use PhpSpec\CodeGeneration\InterfaceGenerator;
 use PhpSpec\CodeGeneration\MethodStubGenerator;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Console\Command\Pair\Chooser;
@@ -46,20 +47,18 @@ final readonly class CodeGenerator
     private Filesystem $filesystem;
 
     /**
-     * @param string $srcPath relative path to the source directory
+     * @param SourceLayout $layout where a class's file lives
      * @param string $specPath relative path to the spec directory
      * @param Generation $generation how an offer is answered when nobody is asked
      * @param string $specSuffix file suffix for spec files
-     * @param string $psr4Prefix PSR-4 namespace prefix mapped to $srcPath
      * @param Chooser|null $chooser when given, questions are presented through this
      *                              numbered chooser (pair mode) instead of a plain [Y/n] prompt
      */
     public function __construct(
-        private string $srcPath,
+        private SourceLayout $layout,
         private string $specPath,
         private Generation $generation = Generation::Asks,
         private string $specSuffix = '.spec.php',
-        private string $psr4Prefix = '',
         private ?Chooser $chooser = null,
     ) {
         $this->analyser = new SourceAnalyser();
@@ -166,10 +165,10 @@ final readonly class CodeGenerator
     private function generateMissingSpecClasses(Output $output, array $missingClasses): array
     {
         $applied = [];
-        $classGenerator = new ClassGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
+        $classGenerator = new ClassGenerator($this->layout);
 
         foreach ($missingClasses as $fqcn => $describes) {
-            $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
+            $location = ClassLocation::for($fqcn, $this->layout);
 
             // "Class X not found" from a run is a runtime/autoload failure, not
             // proof the source file is missing: a PSR-4 mismatch triggers it
@@ -222,7 +221,7 @@ final readonly class CodeGenerator
     {
         $applied = [];
         $specGenerator = new SpecGenerator($this->specPath, specSuffix: $this->specSuffix);
-        $classGenerator = new ClassGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
+        $classGenerator = new ClassGenerator($this->layout);
 
         foreach ($missingStepClasses as $fqcn) {
             $specName = str_replace('\\', '/', $fqcn);
@@ -240,7 +239,7 @@ final readonly class CodeGenerator
             $output->writeln(sprintf('  <fg=green>Spec for %s created.</>', $fqcn));
             $applied[] = self::applied('create_spec', $fqcn, $this->specPath . '/' . $specName . $this->specSuffix);
 
-            $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
+            $location = ClassLocation::for($fqcn, $this->layout);
 
             if ($location->exists($this->filesystem)) {
                 continue;
@@ -273,10 +272,10 @@ final readonly class CodeGenerator
     private function generateMissingInterfaces(Output $output, array $missingMockTypes): array
     {
         $applied = [];
-        $interfaceGenerator = new InterfaceGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
+        $interfaceGenerator = new InterfaceGenerator($this->layout);
 
         foreach (array_unique($missingMockTypes) as $fqcn) {
-            $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
+            $location = ClassLocation::for($fqcn, $this->layout);
 
             if ($location->exists($this->filesystem)) {
                 continue;
@@ -309,11 +308,11 @@ final readonly class CodeGenerator
     private function generateMockInterfaceMethods(Output $output, array $mockMethods): array
     {
         $applied = [];
-        $methodGenerator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
+        $methodGenerator = new MethodStubGenerator($this->layout);
 
         foreach ($this->uniqueByClassMethod($mockMethods) as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
-            $filePath = ClassLocation::for($error['className'], $this->srcPath, $this->psr4Prefix)->filePath();
+            $filePath = ClassLocation::for($error['className'], $this->layout)->filePath();
 
             $question = sprintf(
                 '  <fg=yellow>Do you want me to add method <fg=white>%s()</> to interface <fg=white>%s</>?</>',
@@ -344,12 +343,12 @@ final readonly class CodeGenerator
     private function generateClassMethods(Output $output, array $classMethods, bool $fake): array
     {
         $applied = [];
-        $generator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
+        $generator = new MethodStubGenerator($this->layout);
 
         foreach ($this->uniqueByClassMethod($classMethods) as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
             $static = $this->analyser->isStaticCall($error['file'], $error['line'], $error['methodName']);
-            $filePath = ClassLocation::for($error['className'], $this->srcPath, $this->psr4Prefix)->filePath();
+            $filePath = ClassLocation::for($error['className'], $this->layout)->filePath();
             $target = $error['className'] . '::' . $error['methodName'];
 
             $returnExpr = $fake ? $this->analyser->extractExpectedReturnValue($error['file'], $error['line'], $error['methodName']) : null;
@@ -384,14 +383,14 @@ final readonly class CodeGenerator
     private function fillEmptyMethods(Output $output, array $fakeableMethods): array
     {
         $applied = [];
-        $generator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
+        $generator = new MethodStubGenerator($this->layout);
 
         foreach ($this->uniqueByClassMethod($fakeableMethods) as $candidate) {
             if (!$generator->hasEmptyMethod($candidate['className'], $candidate['methodName'])) {
                 continue;
             }
 
-            $filePath = ClassLocation::for($candidate['className'], $this->srcPath, $this->psr4Prefix)->filePath();
+            $filePath = ClassLocation::for($candidate['className'], $this->layout)->filePath();
 
             $question = sprintf(
                 '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>',

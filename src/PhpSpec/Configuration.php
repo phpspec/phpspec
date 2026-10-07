@@ -15,6 +15,7 @@
 namespace PhpSpec;
 
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\CodeGeneration\SourceLayout;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -162,6 +163,79 @@ final class Configuration
     public function getPsr4Prefix(): string
     {
         return $this->layout()['prefix'];
+    }
+
+    /**
+     * Where a class's source file lives, mapping by mapping: the ones the
+     * config states (`autoload`, and `src_path` with `psr4_prefix` or a
+     * suite's `src` with `namespace`), else every PSR-4 mapping composer.json
+     * declares. A class under no mapping goes below `src_path`, `src` by
+     * default, and into `default_namespace` first when the config names one.
+     */
+    public function getSourceLayout(): SourceLayout
+    {
+        $srcPath = $this->config['src_path'] ?? $this->suiteValue('src');
+        $default = $this->get('default_namespace');
+
+        return new SourceLayout(
+            ltrim(is_string($srcPath) ? $srcPath : './src', './'),
+            $this->mappings(),
+            is_string($default) && trim($default, '\\') !== '' ? $default : null,
+        );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function mappings(): array
+    {
+        $src = $this->config['src_path'] ?? $this->suiteValue('src');
+        $prefix = $this->config['psr4_prefix'] ?? $this->suiteValue('namespace');
+        $autoload = $this->config['autoload'] ?? null;
+
+        if (!is_string($src) && !is_string($prefix) && !is_array($autoload)) {
+            return $this->composerMappings();
+        }
+
+        $mappings = [];
+
+        foreach (is_array($autoload) ? $autoload : [] as $mappedPrefix => $directory) {
+            if (is_string($mappedPrefix) && is_string($directory)) {
+                $mappings[$mappedPrefix] = ltrim($directory, './');
+            }
+        }
+
+        if (is_string($prefix) && trim($prefix, '\\') !== '') {
+            $mappings[$prefix] = ltrim(is_string($src) ? $src : './src', './');
+        }
+
+        return $mappings;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function composerMappings(): array
+    {
+        $path = rtrim($this->rootDir, '/') . '/composer.json';
+
+        if (!$this->fs->exists($path)) {
+            return [];
+        }
+
+        $composer = json_decode($this->fs->read($path), true);
+        $declared = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
+        $mappings = [];
+
+        foreach (is_array($declared) ? $declared : [] as $prefix => $directory) {
+            $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
+
+            if (is_string($prefix) && is_string($directory) && $directory !== '') {
+                $mappings[$prefix] = ltrim($directory, './');
+            }
+        }
+
+        return $mappings;
     }
 
     /**
@@ -605,38 +679,18 @@ final class Configuration
             });
         }
 
-        $layout = $this->layout();
-        $srcDir = rtrim($this->rootDir, '/') . '/' . ltrim($layout['src'], './');
+        $layout = $this->getSourceLayout();
+        $root = rtrim($this->rootDir, '/');
 
-        spl_autoload_register(function (string $class) use ($srcDir, $layout) {
-            foreach ($this->filesFor($class, $srcDir, $layout['prefix']) as $file) {
-                if (file_exists($file)) {
-                    require $file;
+        spl_autoload_register(static function (string $class) use ($layout, $root): void {
+            foreach ($layout->candidateFilesFor($class) as $file) {
+                if (file_exists($root . DIRECTORY_SEPARATOR . $file)) {
+                    require $root . DIRECTORY_SEPARATOR . $file;
 
                     return;
                 }
             }
         });
-    }
-
-    /**
-     * Where the layout files a class: under the source directory with the
-     * PSR-4 prefix taken off its name, which is where the generator writes it,
-     * and failing that under its full namespace path.
-     *
-     * @return list<string>
-     */
-    private function filesFor(string $class, string $srcDir, string $prefix): array
-    {
-        $files = [];
-
-        if ($prefix !== '' && str_starts_with($class, $prefix . '\\')) {
-            $files[] = $srcDir . '/' . str_replace('\\', '/', substr($class, strlen($prefix) + 1)) . '.php';
-        }
-
-        $files[] = $srcDir . '/' . str_replace('\\', '/', $class) . '.php';
-
-        return $files;
     }
 
     /**

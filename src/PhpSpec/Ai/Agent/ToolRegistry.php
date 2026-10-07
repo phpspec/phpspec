@@ -19,7 +19,6 @@ use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
-use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\FeatureGenerator;
 use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\CodeGeneration\LegacySpecDetector;
@@ -396,9 +395,7 @@ final class ToolRegistry
         }
 
         if ($step->phase === Phase::WriteCode) {
-            $srcDir = ltrim(str_replace('\\', '/', $this->config->getSrcPath()), './');
-
-            return $this->relative(ClassGenerator::resolveFqcn($step->subject, $srcDir, $this->config->getPsr4Prefix())['filePath']);
+            return $this->relative($this->config->getSourceLayout()->filePathFor($step->subject));
         }
 
         if ($step->phase === Phase::WriteFeature) {

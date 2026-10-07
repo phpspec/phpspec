@@ -1,11 +1,12 @@
 <?php
 
 use PhpSpec\CodeGeneration\ClassGenerator;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Filesystem;
 
 describe(ClassGenerator::class, function () {
 
-    let('generator', fn(Filesystem $fs) => new ClassGenerator('src', $fs));
+    let('generator', fn(Filesystem $fs) => new ClassGenerator(SourceLayout::under('src'), $fs));
 
     it("instantiates", function () {
         expect($this->generator)->toBeAnInstanceOf(ClassGenerator::class);

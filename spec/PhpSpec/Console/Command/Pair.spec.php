@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\CodeGeneration\ClassGenerator;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
@@ -19,7 +20,7 @@ describe(Pair::class, function () {
         $config = new Configuration('.', $fs);
         $cmd = new Pair(
             new SpecGenerator('spec', $fs),
-            new ClassGenerator('src', $fs),
+            new ClassGenerator(SourceLayout::under('src'), $fs),
             $config,
         );
         expect($cmd)->toBeAnInstanceOf(Pair::class);
@@ -29,7 +30,7 @@ describe(Pair::class, function () {
         $config = new Configuration('.', $fs);
         $cmd = new Pair(
             new SpecGenerator('spec', $fs),
-            new ClassGenerator('src', $fs),
+            new ClassGenerator(SourceLayout::under('src'), $fs),
             $config,
         );
 

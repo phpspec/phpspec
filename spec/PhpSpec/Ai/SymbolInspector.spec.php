@@ -2,6 +2,7 @@
 
 use PhpSpec\Ai\SymbolInspector;
 use PhpSpec\CodeGeneration\ClassLocation;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Filesystem;
 
 describe(SymbolInspector::class, function () {
@@ -17,7 +18,7 @@ describe(SymbolInspector::class, function () {
     it('reports a symbol that does not exist yet cleanly, not "File not found"', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
 
-        $report = (new SymbolInspector('src', 'App', $fs))->describe('App\\NotBuiltYet');
+        $report = (new SymbolInspector(SourceLayout::under('src', 'App'), $fs))->describe('App\\NotBuiltYet');
 
         expect($report)->toContain('App\\NotBuiltYet does not exist yet');
         expect($report)->not()->toContain('File not found');
@@ -26,7 +27,7 @@ describe(SymbolInspector::class, function () {
     it('distinguishes a PSR-4 autoload mismatch from a missing class', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
 
-        $report = (new SymbolInspector('src', '', $fs))->describe('App\\OnDiskButUnmapped');
+        $report = (new SymbolInspector(SourceLayout::under('src'), $fs))->describe('App\\OnDiskButUnmapped');
 
         expect($report)->toContain('not autoloadable');
         expect($report)->toContain('PSR-4');

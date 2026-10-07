@@ -29,55 +29,23 @@ final class ClassGenerator
     private readonly Filesystem $filesystem;
 
     /**
-     * @param string $srcPath relative path to the source directory
+     * @param SourceLayout $layout where a class's file lives
      * @param Filesystem $filesystem filesystem abstraction for testability
-     * @param string $psr4Prefix PSR-4 namespace prefix mapped to $srcPath
      */
-    public function __construct(private readonly string $srcPath = 'src', ?Filesystem $filesystem = null, private readonly string $psr4Prefix = '')
+    public function __construct(private readonly SourceLayout $layout = new SourceLayout(), ?Filesystem $filesystem = null)
     {
         $this->filesystem = $filesystem ?? new RealFilesystem();
     }
 
     /**
-     * Resolves a FQCN into its short name, namespace declaration, and file path.
+     * Resolves a FQCN into its short name, namespace declaration, and file path
+     * under one source directory with one PSR-4 prefix.
      *
-     * When a PSR-4 prefix is given, the matching namespace segments are stripped
-     * from the directory path. For example, with prefix "App" and FQCN "App\Model\User",
-     * the file path uses "Model/User.php" rather than "App/Model/User.php".
-     *
-     * @param string $fqcn the fully qualified class or interface name
-     * @param string $srcPath relative path to the source directory
-     * @param string $psr4Prefix PSR-4 namespace prefix (e.g. "App") mapped to $srcPath
      * @return array{shortName: string, namespace: string, filePath: string}
      */
     public static function resolveFqcn(string $fqcn, string $srcPath, string $psr4Prefix = ''): array
     {
-        $pieces = explode('\\', $fqcn);
-        $shortName = $pieces[count($pieces) - 1];
-        $namespace = '';
-        $filePath = getcwd() . DIRECTORY_SEPARATOR . $srcPath . DIRECTORY_SEPARATOR;
-
-        if (count($pieces) > 1) {
-            $namespace = "\n\nnamespace " . implode('\\', array_slice($pieces, 0, count($pieces) - 1)) . ';';
-
-            // Strip PSR-4 prefix segments from the directory path
-            $dirPieces = array_slice($pieces, 0, -1);
-            if ($psr4Prefix !== '') {
-                $prefixParts = explode('\\', $psr4Prefix);
-                if (array_slice($dirPieces, 0, count($prefixParts)) === $prefixParts) {
-                    $dirPieces = array_slice($dirPieces, count($prefixParts));
-                }
-            }
-
-            if (count($dirPieces) > 0) {
-                $filePath .= implode(DIRECTORY_SEPARATOR, $dirPieces) . DIRECTORY_SEPARATOR;
-            }
-            $filePath .= $shortName . '.php';
-        } else {
-            $filePath .= $shortName . '.php';
-        }
-
-        return ['shortName' => $shortName, 'namespace' => $namespace, 'filePath' => $filePath];
+        return SourceLayout::under($srcPath, $psr4Prefix)->locate($fqcn);
     }
 
     /**
@@ -89,7 +57,7 @@ final class ClassGenerator
      */
     public function generate(string $fqcn): string
     {
-        ['shortName' => $className, 'namespace' => $namespace, 'filePath' => $filePath] = self::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix);
+        ['shortName' => $className, 'namespace' => $namespace, 'filePath' => $filePath] = $this->layout->locate($fqcn);
 
         $this->generateClass($className, $filePath, $namespace);
 

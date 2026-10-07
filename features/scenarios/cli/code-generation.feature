@@ -214,6 +214,46 @@ Feature: Code generation
     Then a class file "src/TaskList.php" should be generated
     And no file "src/Tasker/TaskList.php" should be generated
 
+  Scenario: A class lands in the directory composer maps its own namespace to, not the first mapping's
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/", "Another\\": "src/Another/"}}}
+      """
+    And a spec file "spec/Another/Thing.spec.php":
+      """
+      <?php
+      describe('Another\Thing', function () {
+          it('exists', function () {
+              expect(new Another\Thing())->toBeAnInstanceOf(Another\Thing::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/Another/Thing.php" should be generated
+    And no file "src/Brew/Another/Thing.php" should be generated
+
+  Scenario: A class under none of the mapped namespaces keeps its whole name under the source path, and the next run finds it
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/"}}}
+      """
+    And a spec file "spec/Acme/Thing.spec.php":
+      """
+      <?php
+      describe('Acme\Thing', function () {
+          it('exists', function () {
+              expect(new Acme\Thing())->toBeAnInstanceOf(Acme\Thing::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/Acme/Thing.php" should be generated
+    And no file "src/Brew/Acme/Thing.php" should be generated
+    When I run phpspec run
+    Then the output should contain "1 example (1 passes)"
+
   Scenario: A method lands in the file its class was loaded from, wherever composer says the namespace lives
     Given no phpspec.json config
     And a file "composer.json":

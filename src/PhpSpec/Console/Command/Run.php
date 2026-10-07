@@ -1043,11 +1043,10 @@ final class Run extends Command
     private function codeGenerator(Generation $generation): CodeGenerator
     {
         return new CodeGenerator(
-            ltrim($this->config->getSrcPath(), './'),
+            $this->config->getSourceLayout(),
             ltrim($this->config->getSpecPath(), './'),
             $generation,
             $this->config->getSpecSuffix(),
-            $this->config->getPsr4Prefix(),
         );
     }
 }

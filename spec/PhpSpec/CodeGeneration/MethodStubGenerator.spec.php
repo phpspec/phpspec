@@ -1,11 +1,12 @@
 <?php
 
 use PhpSpec\CodeGeneration\MethodStubGenerator;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Filesystem;
 
 describe(MethodStubGenerator::class, function () {
 
-    let('generator', fn(Filesystem $fs) => new MethodStubGenerator('src', $fs));
+    let('generator', fn(Filesystem $fs) => new MethodStubGenerator(SourceLayout::under('src'), $fs));
 
     it("instantiates", function () {
         expect($this->generator)->toBeAnInstanceOf(MethodStubGenerator::class);
@@ -63,7 +64,7 @@ describe(MethodStubGenerator::class, function () {
         $loadedFrom = realpath(__DIR__ . '/../../../src/PhpSpec/CodeGeneration/ClassGenerator.php');
         expect($fs->write($loadedFrom, any()))->toBeCalled();
 
-        (new MethodStubGenerator('lib', $fs, 'Acme'))->generate('PhpSpec\\CodeGeneration\\ClassGenerator', 'spin', 0);
+        (new MethodStubGenerator(SourceLayout::under('lib', 'Acme'), $fs))->generate('PhpSpec\\CodeGeneration\\ClassGenerator', 'spin', 0);
     });
 
     it("generates interface method stub without body", function (Filesystem $fs) {

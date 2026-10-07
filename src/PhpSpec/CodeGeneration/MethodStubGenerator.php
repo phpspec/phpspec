@@ -29,11 +29,10 @@ final class MethodStubGenerator
     private readonly Filesystem $filesystem;
 
     /**
-     * @param string $srcPath relative path to the source directory
+     * @param SourceLayout $layout where a class's file lives, when it is not loaded
      * @param Filesystem $filesystem filesystem abstraction for testability
-     * @param string $psr4Prefix PSR-4 namespace prefix mapped to $srcPath
      */
-    public function __construct(private readonly string $srcPath = 'src', ?Filesystem $filesystem = null, private readonly string $psr4Prefix = '')
+    public function __construct(private readonly SourceLayout $layout = new SourceLayout(), ?Filesystem $filesystem = null)
     {
         $this->filesystem = $filesystem ?? new RealFilesystem();
     }
@@ -154,6 +153,6 @@ final class MethodStubGenerator
 
     private function resolveFilePath(string $className): string
     {
-        return ClassLocation::for($className, $this->srcPath, $this->psr4Prefix)->filePath();
+        return ClassLocation::for($className, $this->layout)->filePath();
     }
 }

@@ -29,11 +29,10 @@ final class InterfaceGenerator
     private readonly Filesystem $filesystem;
 
     /**
-     * @param string $srcPath relative path to the source directory
+     * @param SourceLayout $layout where an interface's file lives
      * @param Filesystem $filesystem filesystem abstraction for testability
-     * @param string $psr4Prefix PSR-4 namespace prefix mapped to $srcPath
      */
-    public function __construct(private readonly string $srcPath = 'src', ?Filesystem $filesystem = null, private readonly string $psr4Prefix = '')
+    public function __construct(private readonly SourceLayout $layout = new SourceLayout(), ?Filesystem $filesystem = null)
     {
         $this->filesystem = $filesystem ?? new RealFilesystem();
     }
@@ -47,7 +46,7 @@ final class InterfaceGenerator
      */
     public function generate(string $fqcn): string
     {
-        ['shortName' => $interfaceName, 'namespace' => $namespace, 'filePath' => $filePath] = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix);
+        ['shortName' => $interfaceName, 'namespace' => $namespace, 'filePath' => $filePath] = $this->layout->locate($fqcn);
 
         $content = <<<EOD
         <?php$namespace

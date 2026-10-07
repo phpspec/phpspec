@@ -184,13 +184,12 @@ final class Accept extends Command
         $candidates = is_array($offer->data['candidates'] ?? null) ? $offer->data['candidates'] : [];
 
         $generator = new CodeGenerator(
-            ltrim($this->config->getSrcPath(), './'),
+            $this->config->getSourceLayout(),
             ltrim($this->config->getSpecPath(), './'),
             // Asked for by name on the command line: the person has already
             // said yes, and there is nothing left to put to them.
             Generation::Accepts,
             $this->config->getSpecSuffix(),
-            $this->config->getPsr4Prefix(),
         );
 
         return $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');

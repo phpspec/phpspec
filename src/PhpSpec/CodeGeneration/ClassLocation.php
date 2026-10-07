@@ -22,7 +22,7 @@ use ReflectionClass;
  * @internal
  * Where a class lives and whether it is really there. A class that is loaded
  * lives where it was loaded from; one that is not yet written lives where the
- * layout (source directory and PSR-4 prefix) says it will. Distinguishes "the
+ * source layout says it will. Distinguishes "the
  * file exists" from "the class loads", so a runtime class-not-found (an
  * autoload/PSR-4 mismatch) is never mistaken for a missing source file.
  */
@@ -38,9 +38,9 @@ final readonly class ClassLocation
      * otherwise where the layout would put the class. A missing method on a
      * vendor or internal class must never be written into vendor/.
      */
-    public static function for(string $fqcn, string $srcPath, string $psr4Prefix = ''): self
+    public static function for(string $fqcn, SourceLayout $layout): self
     {
-        return new self($fqcn, self::loadedFrom($fqcn) ?? ClassGenerator::resolveFqcn($fqcn, $srcPath, $psr4Prefix)['filePath']);
+        return new self($fqcn, self::loadedFrom($fqcn) ?? $layout->filePathFor($fqcn));
     }
 
     private static function loadedFrom(string $fqcn): ?string

@@ -6,6 +6,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\Role;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\ClassGenerator;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\AiAssistant;
@@ -50,7 +51,7 @@ function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRun
 
     return new CommandDispatcher(
         new SpecGenerator('spec', $fs),
-        new ClassGenerator('src', $fs),
+        new ClassGenerator(SourceLayout::under('src'), $fs),
         new Configuration('.', $fs),
         $pairOutput,
         false,
@@ -78,7 +79,7 @@ describe(CommandDispatcher::class, function () {
     let('specRunner', fn() => new CommandDispatcherFakeRunner());
     let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),
-        new ClassGenerator('src', $fs),
+        new ClassGenerator(SourceLayout::under('src'), $fs),
         $this->config,
         $this->pairOutput,
         false,
@@ -410,7 +411,7 @@ describe(CommandDispatcher::class, function () {
 
             return new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
-                new ClassGenerator('src', $fs),
+                new ClassGenerator(SourceLayout::under('src'), $fs),
                 $config,
                 $pairOutput,
                 true,
@@ -525,7 +526,7 @@ describe(CommandDispatcher::class, function () {
                 $ai = new AiAssistant($provider, $this->config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
                 $dispatcher = new CommandDispatcher(
                     new SpecGenerator('spec', $fs),
-                    new ClassGenerator('src', $fs),
+                    new ClassGenerator(SourceLayout::under('src'), $fs),
                     $this->config,
                     $this->pairOutput,
                     false,
@@ -565,7 +566,7 @@ describe(CommandDispatcher::class, function () {
             $ai = new AiAssistant($provider, $this->config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
-                new ClassGenerator('src', $fs),
+                new ClassGenerator(SourceLayout::under('src'), $fs),
                 $this->config,
                 $this->pairOutput,
                 false,
@@ -663,7 +664,7 @@ describe(CommandDispatcher::class, function () {
             ]);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
-                new ClassGenerator('src', $fs),
+                new ClassGenerator(SourceLayout::under('src'), $fs),
                 $config,
                 $this->pairOutput,
                 false,
@@ -708,7 +709,7 @@ describe(CommandDispatcher::class, function () {
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
-                new ClassGenerator('src', $fs),
+                new ClassGenerator(SourceLayout::under('src'), $fs),
                 $config,
                 $this->pairOutput,
                 false,
@@ -750,7 +751,7 @@ describe(CommandDispatcher::class, function () {
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
-                new ClassGenerator('src', $fs),
+                new ClassGenerator(SourceLayout::under('src'), $fs),
                 $config,
                 $this->pairOutput,
                 false,
@@ -792,7 +793,7 @@ describe(CommandDispatcher::class, function () {
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
-                new ClassGenerator('src', $fs),
+                new ClassGenerator(SourceLayout::under('src'), $fs),
                 $config,
                 $this->pairOutput,
                 false,
@@ -876,7 +877,7 @@ describe(CommandDispatcher::class, function () {
         });
         let('appDispatcher', fn(Filesystem $fs) => new CommandDispatcher(
             new SpecGenerator('spec', $fs),
-            new ClassGenerator('src', $fs),
+            new ClassGenerator(SourceLayout::under('src'), $fs),
             $this->config,
             $this->pairOutput,
             false,
@@ -926,7 +927,7 @@ describe(CommandDispatcher::class, function () {
         it('does not list pair in additional commands', function () {
             $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Pair(
                 new SpecGenerator('spec'),
-                new ClassGenerator('src'),
+                new ClassGenerator(SourceLayout::under('src')),
                 new Configuration('.'),
             ));
             $this->appDispatcher->dispatch('/help');
@@ -938,7 +939,7 @@ describe(CommandDispatcher::class, function () {
         it('silently ignores /pair command input', function () {
             $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Pair(
                 new SpecGenerator('spec'),
-                new ClassGenerator('src'),
+                new ClassGenerator(SourceLayout::under('src')),
                 new Configuration('.'),
             ));
             $result = $this->appDispatcher->dispatch('/pair');
