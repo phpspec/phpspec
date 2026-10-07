@@ -736,3 +736,59 @@ Feature: Mocking
       """
     When I run phpspec run
     Then all examples should pass
+
+  Scenario: A method returning a final class can be stubbed
+    Given a class "src/App/Coin.php":
+      """
+      <?php
+      namespace App;
+
+      final class Coin {
+          public function __construct(private int $pence) {}
+          public function pence(): int
+          {
+              return $this->pence;
+          }
+      }
+      """
+    And a class "src/App/Wallet.php":
+      """
+      <?php
+      namespace App;
+
+      class Wallet {
+          public function coin(): Coin
+          {
+              return new Coin(1);
+          }
+      }
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {
+          public function take(Wallet $wallet): int
+          {
+              return $wallet->coin()->pence();
+          }
+      }
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      use App\Coin;
+      use App\Till;
+      use App\Wallet;
+
+      describe('Till', function () {
+          it('takes the coin from the wallet', function (Wallet $wallet) {
+              allow($wallet->coin())->toReturn(new Coin(50));
+
+              expect((new Till())->take($wallet))->toBe(50);
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass

@@ -312,13 +312,26 @@ describe(Double::class, function() {
         expect($machine->same())->toBe($machine);
     });
 
-    it("says why a method returning a final class cannot be called before it is stubbed", function() {
+    it("hands the spec a placeholder for a final return type, so allow() can stub it", function() {
         $machine = Double::getInstance(DoubleSpecMachine::class);
+        $coin = new DoubleSpecCoin(50);
+
+        expect($machine->coin())->toBeAnInstanceOf(DoubleSpecCoin::class);
+
+        allow($machine->coin())->toReturn($coin);
+
+        expect($machine->coin())->toBe($coin);
+    });
+
+    it("says why a dummy cannot stand in for a final return type", function() {
+        $machine = Double::getInstance(DoubleSpecMachine::class);
+        $machine->______PhpSpecBeLenient();
 
         try {
             $machine->coin();
         } catch (\LogicException $e) {
             expect($e->getMessage())->toContain('DoubleSpecCoin is final');
+            expect($e->getMessage())->toContain('allow()');
 
             return;
         }

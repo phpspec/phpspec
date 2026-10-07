@@ -472,11 +472,32 @@ PHP;
         $why = class_exists($returnType) && (new ReflectionClass($returnType))->isFinal()
             ? "$returnType is final, so no double of it can be made"
             : "no double of $returnType can be made";
-        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): %s. Return an interface, or make the class non-final.', $class, $methodName, $why);
+        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): %s. Stub the call with allow(), return an interface, or make the class non-final.', $class, $methodName, $why);
 
         return 'throw new \\LogicException(' . var_export($message, true) . ');';
     }
 
+    /**
+     * What a method returns when no double of its return type can be made: an
+     * instance of the very class, built without its constructor, for allow()
+     * to replace. A lenient double has nobody about to replace it, so it
+     * refuses instead.
+     */
+    private static function placeholderReturnCode(string $class, string $methodName, string $returnType, bool $mayBeLenient): string
+    {
+        $refusal = self::unbuildableReturnCode($class, $methodName, $returnType);
+
+        if (!class_exists($returnType) || (new ReflectionClass($returnType))->isInternal()) {
+            return $refusal;
+        }
+
+        $placeholder = sprintf(
+            '$__ret = (new \ReflectionClass(%s))->newInstanceWithoutConstructor(); \PhpSpec\Mock\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            var_export($returnType, true),
+        );
+
+        return $mayBeLenient ? "if (\$this->______phpspec_lenient) { $refusal } $placeholder" : $placeholder;
+    }
 
     /**
      * Checks whether a type represents a class (non-builtin named type).
@@ -752,7 +773,7 @@ PHP;
                 $return = "return \\{$simpleReturnName}::cases()[0];";
             } elseif ($simpleReturnName !== null) {
                 $return = self::getBuiltinReturnCode($simpleReturnName)
-                    ?? self::unbuildableReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName);
+                    ?? self::placeholderReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName, $depth === 0);
             }
 
             $guard = '';

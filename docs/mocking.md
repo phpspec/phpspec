@@ -85,9 +85,9 @@ and it builds one at the call: `toThrow(\RuntimeException::class, 'Not found')`.
 A method nobody stubbed returns a default for its return type: `''`, `0`,
 `false`, `[]`, `null` where allowed, a double of a class or interface it
 returns, an empty `iterable`, a `Closure`, an empty `Generator`, the double
-itself for `static`. A method returning a final class has no stand-in: calling
-it before it is stubbed says so. Return an interface, or make the class
-non-final.
+itself for `static`. A method returning a final class hands the spec an
+instance of it built without its constructor, for `allow()` to replace; a
+`dummy()` has nobody about to replace it and says so instead.
 
 ## Calls the spec never declared
 
