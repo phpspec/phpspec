@@ -10,6 +10,24 @@ use PhpSpec\InProcessRunner;
 describe(InProcessRunner::class, function () {
     let("inProcessRunner", fn() => new InProcessRunner());
 
+    it("leaves the shell verbosity as it found it after a quiet inner run", function () {
+        $project = sys_get_temp_dir() . '/phpspec_quiet_' . uniqid();
+        mkdir($project . '/spec', 0777, true);
+        file_put_contents($project . '/spec/Quiet.spec.php', '<?php describe("Quiet", function () { it("passes", fn() => expect(true)->toBeTrue()); });');
+        putenv('SHELL_VERBOSITY');
+        unset($_ENV['SHELL_VERBOSITY'], $_SERVER['SHELL_VERBOSITY']);
+
+        try {
+            InProcessRunner::run($project, 'run -q');
+
+            expect(getenv('SHELL_VERBOSITY'))->toBe(false);
+            expect(isset($_ENV['SHELL_VERBOSITY']) || isset($_SERVER['SHELL_VERBOSITY']))->toBe(false);
+        } finally {
+            unlink($project . '/spec/Quiet.spec.php');
+            rmdir($project . '/spec');
+            rmdir($project);
+        }
+    });
     it("instantiates", fn() =>
         expect($this->inProcessRunner)->toBeAnInstanceOf(InProcessRunner::class));
 

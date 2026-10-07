@@ -108,7 +108,7 @@ Feature: Code generation
       """
     When I run phpspec run with option "--accept-offers --fake"
     Then the class "src/App/Voucher.php" should contain "return 'B5';"
-    When I run phpspec run
+    When I run phpspec run in a fresh process
     Then the output should contain "1 example (1 passes)"
 
   Scenario: A run nobody can answer writes nothing into the source tree
