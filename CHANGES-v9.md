@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `expect()` verifies a call to a method whose return type allows null, which used to fall out of the mock routing
  - A generated class, interface or method lands in the directory its own namespace is mapped to, by `composer.json` or the `autoload` map, the longest prefix winning, instead of the first mapping's directory for every class; a class under no mapping keeps its whole name under the source path, where the next run finds it
  - A method returning a final class can be stubbed: `allow()` receives an instance of the class built without its constructor and replaces it, where the call used to be refused
  - An unstubbed double method returns a usable default for a return type no double can stand in for: an empty `iterable`, a `Closure`, an empty `Generator`, itself for `static`; a method returning a final class says so plainly instead of failing with a type error

@@ -346,7 +346,7 @@ PHP;
      */
     private static function getUnionReturnCode(ReflectionUnionType $type): string
     {
-        $clear = '\\PhpSpec\\Mock\\Expectation::$lastDouble = null; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; ';
+        $clear = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; ';
         $typeNames = array_map(
             fn(ReflectionNamedType|ReflectionIntersectionType $t) => $t instanceof ReflectionNamedType ? $t->getName() : (string) $t,
             $type->getTypes(),
@@ -759,7 +759,7 @@ PHP;
             $return = '';
             if ($isNullable && $simpleReturnName !== 'mixed' && !isset($className)) {
                 // Nullable types can just return null, clear mock state
-                $return = '\\PhpSpec\\Mock\\Expectation::$lastDouble = null; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return null;';
+                $return = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return null;';
             } elseif ($isCompoundType && !isset($className)) {
                 // Union/intersection types: return null if nullable, else pick simplest
                 if ($returnedType instanceof ReflectionUnionType) {

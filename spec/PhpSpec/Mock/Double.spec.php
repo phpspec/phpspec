@@ -426,6 +426,14 @@ describe(Double::class, function() {
         expect($stack->countCallsTo('greet'))->toBe(2);
     });
 
+    it("lets expect() verify a call to a method whose return type allows null", function() {
+        $double = Double::getInstance(DoubleSpecClass::class);
+        $double->nullableReturn();
+
+        expect($double->nullableReturn())->toHaveBeenCalled();
+        expect($double->nullableUnionReturn())->not()->toHaveBeenCalled();
+    });
+
     it("handles nullable return types", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         $result = $double->nullableReturn();
