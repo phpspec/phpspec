@@ -124,10 +124,7 @@ final class DetailSections
                     $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
                     $output->write(PHP_EOL . '  Error: ' . $error->getMessage() . PHP_EOL . PHP_EOL);
                     PrettyViews::surroundingCode($output, $code, $at['line']);
-                    $output->write(PHP_EOL . '  at ' . $at['file'] . ':' . $at['line'] . PHP_EOL);
-                    foreach (array_slice($error->getFilteredTrace(), 0, 5) as $frame) {
-                        $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
-                    }
+                    PrettyViews::location($output, $at, $error->getFilteredTrace());
                 };
                 $this->attachPrinted('Errors', $example->getOutput());
                 $this->attachHandedOver('Errors', $example->getAttachments());
@@ -219,10 +216,7 @@ final class DetailSections
                         $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
                         $blame = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
                         PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $blame['line']);
-                        $output->write(PHP_EOL . '  at ' . $blame['file'] . ':' . $blame['line'] . PHP_EOL);
-                        foreach (array_slice($error->getFilteredTrace(), 0, 5) as $frame) {
-                            $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
-                        }
+                        PrettyViews::location($output, $blame, $error->getFilteredTrace());
                     };
                     $this->attachPrinted('Errors', $step->getOutput());
                 } elseif ($step->isFailure() && $error !== null) {

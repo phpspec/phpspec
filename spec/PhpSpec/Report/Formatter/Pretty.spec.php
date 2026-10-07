@@ -248,6 +248,46 @@ describe(Pretty::class, function() {
         expect($text)->toContain("boom");
     });
 
+    it("prints the blamed spec line once, with only the frames beyond it underneath", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        try {
+            $line = __LINE__ + 1;
+            \PhpSpec\Mock\Double::getInstance('Nope\Missing');
+        } catch (\LogicException $e) {
+            $error = new ExampleError($e->getMessage(), $e);
+        }
+        $example = new ExampleResult("uses a double", [], true);
+        $example->setError($error);
+        $suite = new SuiteResult([new SpecificationResult("MySpec", [$example])]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("  at " . __FILE__ . ":" . $line);
+        expect(substr_count($text, __FILE__ . ":" . $line))->toBe(1);
+    });
+
+    it("prints a step's blamed line once, with only the frames beyond it underneath", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        try {
+            $line = __LINE__ + 1;
+            \PhpSpec\Mock\Double::getInstance('Nope\Missing');
+        } catch (\LogicException $e) {
+            $error = new StepError($e->getMessage(), $e);
+        }
+        $erroredStep = new StepResult("When I use a double", "error");
+        $erroredStep->setError($error);
+        $suite = new SuiteResult([new FeatureResult("Doubling", [new ScenarioResult("Using a double", [$erroredStep])])]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("  at " . __FILE__ . ":" . $line);
+        expect(substr_count($text, __FILE__ . ":" . $line))->toBe(1);
+    });
+
     it("formats pending results", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

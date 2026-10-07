@@ -75,8 +75,21 @@ Feature: Error reporting
       });
       """
     When I run phpspec run
-    Then the output should contain "Service.spec.php:3"
+    Then the output should contain "Service.spec.php:3" exactly 1 times
     And the output should not contain "Mock/Double.php"
+
+  Scenario: An error raised inside a double made in the example names the spec line once
+    Given a spec file "spec/App/Service.spec.php":
+      """
+      <?php
+      describe('Service', function () {
+          it('uses a notifier', function () {
+              $notifier = mock(App\Nowhere::class);
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "Service.spec.php:4" exactly 1 times
 
   Scenario: Shows surrounding code context
     Given a spec file "spec/App/Context.spec.php":
