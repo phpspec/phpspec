@@ -4,7 +4,7 @@ use PhpSpec\CodeGeneration\SourceLayout;
 
 describe(SourceLayout::class, function () {
 
-    $path = fn(string ...$parts): string => implode(DIRECTORY_SEPARATOR, $parts) . '.php';
+    $path = fn(string ...$parts): string => str_replace('/', DIRECTORY_SEPARATOR, implode('/', $parts)) . '.php';
 
     it('files a class under the directory its namespace is mapped to, the prefix taken off its name', function () use ($path) {
         $layout = new SourceLayout('src', ['Brew\\' => 'src/Brew/', 'Another\\' => 'src/Another']);

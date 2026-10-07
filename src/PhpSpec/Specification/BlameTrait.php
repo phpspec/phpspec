@@ -86,6 +86,8 @@ trait BlameTrait
 
     private static function isUsersCode(string $file): bool
     {
+        $file = str_replace('\\', '/', $file);
+
         return !str_contains($file, 'src/PhpSpec/')
             && !str_contains($file, 'vendor/')
             && !str_contains($file, "eval()'d code")

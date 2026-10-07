@@ -177,6 +177,6 @@ final readonly class SourceLayout
 
     private function fileUnder(string $directory, string $relativeClass): string
     {
-        return $directory . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass) . '.php';
+        return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $directory . '/' . $relativeClass) . '.php';
     }
 }
