@@ -68,12 +68,14 @@ final class LastCallDouble implements MatchableDouble
      *
      * @param mixed $value the value to return
      */
-    public function toReturn(mixed $value): void
+    public function toReturn(mixed $value): static
     {
         if ($this->double instanceof GeneratedDouble) {
             $this->double->______PhpSpecStubReturn($this->method, $value, $this->args);
             $this->double->______PhpSpecGetStubbedCalls()->pop();
         }
+
+        return $this;
     }
 
     /**
@@ -83,12 +85,14 @@ final class LastCallDouble implements MatchableDouble
      *
      * @param callable $callback receives the method arguments and returns the stub value
      */
-    public function toReturnUsing(callable $callback): void
+    public function toReturnUsing(callable $callback): static
     {
         if ($this->double instanceof GeneratedDouble) {
             $this->double->______PhpSpecStubReturnUsing($this->method, $callback, $this->args);
             $this->double->______PhpSpecGetStubbedCalls()->pop();
         }
+
+        return $this;
     }
 
     /**
@@ -98,11 +102,24 @@ final class LastCallDouble implements MatchableDouble
      * @param class-string<\Throwable>|\Throwable $exception the exception to throw: the class to build one from, or the very instance
      * @param string $message the exception message, when a class is given
      */
-    public function toThrow(string|\Throwable $exception, string $message = ''): void
+    public function toThrow(string|\Throwable $exception, string $message = ''): static
     {
         if ($this->double instanceof GeneratedDouble) {
             $this->double->______PhpSpecStubThrow($this->method, $exception, $message, $this->args);
             $this->double->______PhpSpecGetStubbedCalls()->pop();
+        }
+
+        return $this;
+    }
+    /**
+     * Leaves the rest of the double lenient: a call to it that nothing
+     * declared returns a default wherever it is made, as on a dummy(). For a
+     * double that was injected, which dummy() cannot make.
+     */
+    public function ignoreOthers(): void
+    {
+        if ($this->double instanceof GeneratedDouble) {
+            $this->double->______PhpSpecBeLenient();
         }
     }
 }

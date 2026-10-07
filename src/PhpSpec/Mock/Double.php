@@ -127,6 +127,8 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
     private \$______phpspec_stubbedReturns = [];
     private \$______phpspec_stubbedThrows = [];
     private \$______phpspec_stubbedReturnCallbacks = [];
+    private \$______phpspec_lenient = false;
+    private \$______phpspec_declared = [];
 
     $methods
     $undefinedMethodGuard
@@ -152,6 +154,24 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
 
     public function ______PhpSpecNameOfClassDoubled(): string {
         return '$prefixedClass';
+    }
+
+    public function ______PhpSpecBeLenient(): void {
+        \$this->______phpspec_lenient = true;
+    }
+
+    public function ______PhpSpecDeclare(string \$method, ?array \$args): void {
+        \$this->______phpspec_declared[\$method][] = \$args;
+    }
+
+    private function ______PhpSpecUnexpectedUnlessArranging(string \$method, array \$args, array \$frame): void {
+        if (\$this->______phpspec_lenient
+            || \PhpSpec\Mock\StubRegistry::isDeclared(\$method, \$args, \$this->______phpspec_declared)
+            || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')) {
+            return;
+        }
+
+        throw \PhpSpec\Mock\UnexpectedCallException::to('$prefixedClass', \$method, \$args, \$frame['file'] ?? '', \$frame['line'] ?? 0);
     }
 
     public function ______PhpSpecStubReturn(string \$method, mixed \$value, ?array \$args = null): void {
@@ -457,6 +477,7 @@ PHP;
         return 'throw new \\LogicException(' . var_export($message, true) . ');';
     }
 
+
     /**
      * Checks whether a type represents a class (non-builtin named type).
      *
@@ -734,6 +755,11 @@ PHP;
                     ?? self::unbuildableReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName);
             }
 
+            $guard = '';
+            if ($depth === 0 && $simpleReturnName !== 'never') {
+                $guard = "if (\$__match === null) { \$this->______PhpSpecUnexpectedUnlessArranging('$methodName', func_get_args(), debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []); }";
+            }
+
             // stub check — uses StubRegistry to find matching stub by method + args
             $stubCheck = '';
             $throwCheck = '';
@@ -754,6 +780,7 @@ PHP;
     public function $methodName($paramString)$returnedTypeSyntax {
         \$this->______PhpSpecWasCalledWith('$methodName', func_get_args());
         $stubCheck
+        $guard
         $return
     }
 PHP;

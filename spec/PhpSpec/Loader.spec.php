@@ -12,6 +12,8 @@ describe(Loader::class, function () {
     });
 
     it("returns empty suite for non-existent path", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturn(false);
+        allow($fs->isDir())->toReturn(false);
         $suite = (new Loader($fs))->load('./missing');
         expect($suite)->toBeAnInstanceOf(Suite::class);
     });
@@ -54,6 +56,7 @@ describe(Loader::class, function () {
     });
 
     it("defaults to ./spec when null is passed", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './spec');
         allow($fs->scandir())->toReturn(['.', '..']);
 

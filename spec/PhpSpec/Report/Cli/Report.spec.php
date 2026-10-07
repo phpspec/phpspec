@@ -11,9 +11,9 @@ describe(Report::class, function () {
 
         $report = new Report();
         $report->setFormatter($formatter);
-        $report->print($results);
-
         expect($formatter->format($results))->toBeCalled();
+
+        $report->print($results);
     });
 
 });

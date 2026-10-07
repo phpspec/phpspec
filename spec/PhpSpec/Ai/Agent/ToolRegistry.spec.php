@@ -23,7 +23,11 @@ describe(ToolRegistry::class, function () {
         allow($fs->read())->toReturn('');
     });
 
-    let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
+    let('config', function (Filesystem $fs) {
+        allow($fs->exists());
+
+        return new Configuration('.', $fs);
+    });
     let('registry', fn(Filesystem $fs) => new ToolRegistry($this->config, $fs));
     let('genProfile', fn() => new CommandProfile(name: 'generate', body: '', tools: ['write_feature', 'write_steps', 'propose_edit']));
 

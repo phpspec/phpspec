@@ -34,6 +34,7 @@ use PhpSpec\Guard\Inspection;
 use PhpSpec\Guard\Report as GuardReport;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
+use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
@@ -722,6 +723,8 @@ final class Run extends Command
         if ($filter !== null) {
             FilterRegistry::activate(new TitleFilter($filter));
         }
+
+        ArrangingCode::under(...array_filter([$this->config->getSpecPath(), $this->config->getFeaturesPath(), $this->config->getStepsPath()]));
 
         $suite = $this->loader->load($files, $filter);
 

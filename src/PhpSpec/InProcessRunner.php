@@ -18,6 +18,7 @@ use PhpSpec\Browser\BrowserRegistry;
 use PhpSpec\Console\Application;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
+use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
@@ -54,10 +55,12 @@ final class InProcessRunner
         $savedStoryBDD = StoryBDDRegistry::saveState();
         $savedBrowser = BrowserRegistry::saveState();
         $savedCoverage = CoverageRegistry::collector();
+        $savedArranging = ArrangingCode::roots();
 
         // Reset for inner run — fresh Dispatcher for the nested Application
         DispatcherRegistry::reset();
         Double::resetCache();
+        ArrangingCode::reset();
         MockExpectation::$lastDouble = null;
         MockExpectation::$lastMockReturn = null;
         MockExpectation::$lastCallForAllow = null;
@@ -89,6 +92,7 @@ final class InProcessRunner
             MockExpectation::$lastCallForAllow = $savedLastCallForAllow;
             StoryBDDRegistry::restoreState($savedStoryBDD);
             BrowserRegistry::restoreState($savedBrowser);
+            ArrangingCode::under(...$savedArranging);
 
             if ($savedCoverage !== null) {
                 CoverageRegistry::activate($savedCoverage);

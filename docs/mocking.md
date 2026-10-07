@@ -18,6 +18,18 @@ This generates a dynamic subclass (or implementation, for interfaces) that:
 - Overrides all methods to track calls
 - Auto-generates constructor dependencies recursively (using mocks/defaults)
 
+### Using `dummy()`
+
+A double from `mock()` is strict: a call to it that the spec never declared,
+made from the code under spec, fails the example at once. `dummy()` makes a
+lenient double for a collaborator whose calls do not matter, a logger passed
+along for instance. It answers every call with a default for the return type
+and still takes stubs:
+
+```php
+$logger = dummy(Logger::class);
+```
+
 ### Type-Hinted Mock Injection
 
 Both `it()` and `let()` closures support type-hinted parameters that are automatically resolved as mocks:
@@ -77,6 +89,40 @@ itself for `static`. A method returning a final class has no stand-in: calling
 it before it is stubbed says so. Return an interface, or make the class
 non-final.
 
+## Calls the spec never declared
+
+A double is strict towards the code under spec. A call that no `allow()` or
+`expect()` declared, made from anywhere outside the spec and features folders,
+fails the example at once:
+
+```
+App\Stock::reserve("tea", 2) was called but not expected, at src/App/Checkout.php:8.
+Declare the call with allow() or expect(), or make the double a dummy() if its calls do not matter.
+```
+
+A call is declared by the arguments it was written with; written bare, the
+declaration covers any arguments. `allow()` declares on its own, a stub is
+optional:
+
+```php
+allow($stock->reserve('tea', 2));                // reserve('tea', 2) may be called, returns false
+allow($stock->reserve('tea', 2))->toReturn(true); // and returns true
+expect($stock->reserve())->toBeCalled();         // any reserve() may be called, and must be
+```
+
+The spec file itself is free to call anything: that is how `allow()` and
+`expect()` reach the call they declare. A collaborator whose calls do not
+matter is a `dummy()`. A double that was injected by type hint, which
+`dummy()` cannot make, is left lenient for the rest by ending a stub in
+`ignoreOthers()`:
+
+```php
+beforeEach(function (Filesystem $fs) {
+    allow($fs->exists())->toReturn(false);
+    allow($fs->isDir())->toReturn(false)->ignoreOthers();
+});
+```
+
 ## Verifying Method Calls
 
 Stub and verify the same call in any order: a stubbed call still records
@@ -108,7 +154,6 @@ Alias for `toBeCalled()`:
 ```php
 expect($repo->save($user))->toHaveBeenCalled();
 ```
-
 ### `toBeCalledWith(...$args)`
 
 Verifies the method was called with specific arguments:

@@ -89,7 +89,7 @@ describe(Agent::class, function () {
         allow($fs->isDir())->toReturn(false);
         allow($fs->scandir())->toReturn([]);
         allow($fs->read())->toReturn('');
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->mkdir())->toReturn(null)->ignoreOthers();
         $this->written = [];
         $written = &$this->written;
         allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
@@ -97,7 +97,11 @@ describe(Agent::class, function () {
         });
     });
 
-    let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
+    let('config', function (Filesystem $fs) {
+        allow($fs->exists());
+
+        return new Configuration('.', $fs);
+    });
 
     it('consults the model for a named new feature and keeps the derived path over its content', function (Filesystem $fs) {
         $replay = new ReplayProvider([

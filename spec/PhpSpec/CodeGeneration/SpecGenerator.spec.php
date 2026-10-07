@@ -21,27 +21,25 @@ describe(SpecGenerator::class, function () {
             str_ends_with($path, '.spec.php') => false,
             default => true,
         });
+        expect($fs->write())->toBeCalled();
 
         $this->generator->generate('Calculator');
-
-        expect($fs->write())->toBeCalled();
     });
 
     it("creates directory when it does not exist", function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
-
-        $this->generator->generate('App/Service');
-
         expect($fs->mkdir())->toBeCalled();
         expect($fs->write())->toBeCalled();
+
+        $this->generator->generate('App/Service');
     });
 
     it("ends the spec file with a newline", function (Filesystem $fs) {
+        allow($fs->mkdir());
         allow($fs->exists())->toReturn(false);
+        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
 
         $this->generator->generate('Calculator');
-
-        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
     });
 
     it("keeps the newline at the end of a spec it grows by an example", function () {
@@ -52,6 +50,8 @@ describe(SpecGenerator::class, function () {
     });
 
     it("returns true when it creates the spec file", function (Filesystem $fs) {
+        allow($fs->write());
+        allow($fs->mkdir());
         allow($fs->exists())->toReturn(false);
 
         expect($this->generator->generate('Calculator'))->toBe(true);
@@ -75,10 +75,9 @@ describe(SpecGenerator::class, function () {
             it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
         });
         PHP);
+        expect($fs->write($specPath, any()))->toBeCalled();
 
         $this->generator->addExample('Calculator', 'add');
-
-        expect($fs->write($specPath, any()))->toBeCalled();
     });
 
     it("includes method name in added example", function (Filesystem $fs) {
@@ -106,6 +105,7 @@ describe(SpecGenerator::class, function () {
     });
 
     it("returns true when an example is added", function (Filesystem $fs) {
+        allow($fs->write());
         $specPath = getcwd() . DIRECTORY_SEPARATOR . 'spec' . DIRECTORY_SEPARATOR . 'Calculator.spec.php';
 
         allow($fs->exists($specPath))->toReturn(true);

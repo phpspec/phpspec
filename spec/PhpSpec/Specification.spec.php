@@ -48,6 +48,7 @@ describe(Specification::class, function() {
     });
 
     it("announces the spec file to the active coverage collector", function (CoverageDriver $driver) {
+        allow($driver->start());
         allow($driver->stop())->toReturn([]);
         $collector = new PerExampleCollector($driver);
         CoverageRegistry::activate($collector);

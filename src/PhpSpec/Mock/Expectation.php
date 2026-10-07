@@ -56,6 +56,8 @@ final class Expectation extends BaseExpectation
     {
         $this->mockSubject = $double;
         parent::__construct($returned === [] ? $double : $returned[0], $file, $line);
+        $this->declare();
+
     }
 
     /**
@@ -125,7 +127,6 @@ final class Expectation extends BaseExpectation
     {
         return $this->toBeCalled();
     }
-
     /**
      * Asserts that the mock method was called with the specified arguments.
      * Supports ArgumentMatcher instances for flexible matching.
@@ -253,6 +254,25 @@ final class Expectation extends BaseExpectation
     /**
      * Retrieves the GeneratedDouble from the mock subject.
      */
+    /**
+     * The call expect() was handed is expected: made from the code under
+     * spec, it is no longer a call nothing declared.
+     */
+    private function declare(): void
+    {
+        $double = $this->mockSubject->______PhpSpecGetDouble();
+
+        if (!$double instanceof GeneratedDouble) {
+            return;
+        }
+
+        $method = $this->mockSubject->______PhpSpecGetMethod();
+        $arranging = $double->______PhpSpecGetStubbedCalls()->peek();
+        $args = $arranging !== null && $arranging->method === $method && $arranging->arguments !== [] ? $arranging->arguments : null;
+
+        $double->______PhpSpecDeclare($method, $args);
+    }
+
     private function getGeneratedDouble(): GeneratedDouble
     {
         $double = $this->mockSubject->______PhpSpecGetDouble();

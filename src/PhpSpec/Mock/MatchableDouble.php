@@ -35,10 +35,10 @@ interface MatchableDouble
     /**
      * Configures the mock method to return a specific value.
      */
-    public function toReturn(mixed $value): void;
+    public function toReturn(mixed $value): static;
 
     /**
      * Configures the mock method to throw an exception.
      */
-    public function toThrow(string|\Throwable $exception, string $message = ''): void;
+    public function toThrow(string|\Throwable $exception, string $message = ''): static;
 }

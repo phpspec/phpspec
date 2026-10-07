@@ -65,12 +65,16 @@ describe(CommandDispatcher::class, function () {
         allow($fs->exists())->toReturn(false);
         allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
+        allow($fs->scandir())->toReturn([])->ignoreOthers();
     });
 
     let('buffer', fn() => new BufferedOutput());
     let('pairOutput', fn() => new PairOutput($this->buffer));
-    let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
+    let('config', function (Filesystem $fs) {
+        allow($fs->exists());
+
+        return new Configuration('.', $fs);
+    });
     let('specRunner', fn() => new CommandDispatcherFakeRunner());
     let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),
@@ -195,6 +199,7 @@ describe(CommandDispatcher::class, function () {
 
     it('describe shows existing spec message when spec exists', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
+        allow($fs->write());
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();

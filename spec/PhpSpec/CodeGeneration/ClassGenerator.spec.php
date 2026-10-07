@@ -13,20 +13,20 @@ describe(ClassGenerator::class, function () {
 
     it("writes class file when it does not exist", function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
+        expect($fs->mkdir())->toBeCalled();
+        expect($fs->write())->toBeCalled();
 
         $result = $this->generator->generate('Acme\\Foo');
 
-        expect($fs->mkdir())->toBeCalled();
-        expect($fs->write())->toBeCalled();
         expect($result)->toBe("Class Acme\\Foo generated in src/Acme/Foo.php");
     });
 
     it("ends the file with a newline", function (Filesystem $fs) {
+        allow($fs->mkdir());
         allow($fs->exists(any()))->toReturn(false);
+        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
 
         $this->generator->generate('Acme\\Foo');
-
-        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
     });
 
     it("throws when class file already exists", function (Filesystem $fs) {
@@ -40,20 +40,21 @@ describe(ClassGenerator::class, function () {
             // File doesn't exist, but directory does
             return str_ends_with($path, '.php') ? false : true;
         });
+        expect($fs->write())->toBeCalled();
 
         $this->generator->generate('Bar');
 
         expect($fs->mkdir())->not()->toBeCalled();
-        expect($fs->write())->toBeCalled();
     });
 
     it("handles namespaced classes with nested directories", function (Filesystem $fs) {
+        allow($fs->mkdir());
+        $nested = implode(DIRECTORY_SEPARATOR, ['App', 'Models', 'User.php']);
         allow($fs->exists(any()))->toReturn(false);
+        expect($fs->write(satisfy(fn (string $path) => str_ends_with($path, $nested)), any()))->toBeCalled();
 
         $result = $this->generator->generate('App\\Models\\User');
 
-        $nested = implode(DIRECTORY_SEPARATOR, ['App', 'Models', 'User.php']);
-        expect($fs->write(satisfy(fn (string $path) => str_ends_with($path, $nested)), any()))->toBeCalled();
         expect($result)->toContain("Class App\\Models\\User generated in");
     });
 

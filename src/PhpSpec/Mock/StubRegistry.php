@@ -75,6 +75,28 @@ final class StubRegistry
      * @param array<int, mixed> $actualArgs
      * @param array<int, mixed>|null $argPattern
      */
+    /**
+     * Whether allow() or expect() declared a call to this method with these
+     * arguments, a declaration without arguments covering any.
+     *
+     * @param array<int, mixed> $actualArgs
+     * @param array<string, array<int, array<int, mixed>|null>> $declared
+     */
+    public static function isDeclared(string $method, array $actualArgs, array $declared): bool
+    {
+        foreach ($declared[$method] ?? [] as $argPattern) {
+            if (self::argsMatch($actualArgs, $argPattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<int, mixed> $actualArgs
+     * @param array<int, mixed>|null $argPattern
+     */
     private static function argsMatch(array $actualArgs, ?array $argPattern): bool
     {
         if ($argPattern === null) {

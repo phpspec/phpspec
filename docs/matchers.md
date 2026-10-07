@@ -385,7 +385,6 @@ Verifies the method was called at least once.
 ### `toHaveBeenCalled()`
 
 Alias for `toBeCalled()`.
-
 ### `toBeCalledWith(...$args)`
 
 Verifies the method was called with specific arguments. Supports argument matchers: `any()`, `type('string')`, `callback(fn)`.

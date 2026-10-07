@@ -524,3 +524,171 @@ Feature: Mocking
       """
     When I run phpspec run
     Then all examples should pass
+
+  Scenario: A call the spec never declared fails at once, naming the call and where it came from
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders two of everything', function (Stock $stock) {
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "App\Stock::reserve("
+    And the output should contain ", 2) was called but not expected"
+    And the output should contain "src/App/Checkout.php:8"
+    And the exit code should be 1
+
+  Scenario: A call declared with allow() is expected, and can be verified after the act
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders two of everything', function (Stock $stock) {
+              allow($stock->reserve('tea', 2))->toReturn(true);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+
+              expect($stock->reserve('tea', 2))->toBeCalled();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: An injected double stubbed in beforeEach ignores the other calls once told to
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+          public function audit(string $item): void;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              $this->stock->audit($item);
+
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          beforeEach(function (Stock $stock) {
+              allow($stock->reserve())->toReturn(true)->ignoreOthers();
+          });
+
+          it('orders two of everything', function (Stock $stock) {
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: A dummy answers every call with a default, declared or not
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders without anyone minding the stock', function () {
+              $stock = dummy(Stock::class);
+
+              expect((new Checkout($stock))->order('tea'))->toBeFalse();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass

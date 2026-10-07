@@ -6,6 +6,7 @@ use PhpSpec\Coverage\PerExampleCollector;
 describe(PerExampleCollector::class, function () {
 
     it('attributes executed lines to the running example', function (CoverageDriver $driver) {
+        allow($driver->start());
         allow($driver->stop())->toReturn([
             '/project/src/App/Calculator.php' => [12 => 1, 13 => -1, 14 => -2],
         ]);
@@ -24,6 +25,7 @@ describe(PerExampleCollector::class, function () {
     });
 
     it('records timing, peak memory and spec file per test', function (CoverageDriver $driver) {
+        allow($driver->start());
         allow($driver->stop())->toReturn([]);
         $collector = new PerExampleCollector($driver);
 
@@ -41,6 +43,7 @@ describe(PerExampleCollector::class, function () {
     });
 
     it('merges each cycle into an aggregate usable by the other reports', function (CoverageDriver $driver) {
+        allow($driver->start());
         allow($driver->stop())->toReturnUsing(function () {
             static $cycle = 0;
             $cycle++;
@@ -62,6 +65,7 @@ describe(PerExampleCollector::class, function () {
     });
 
     it('normalises away a leading ./ from the spec path in test identifiers', function (CoverageDriver $driver) {
+        allow($driver->start());
         allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);
         $collector = new PerExampleCollector($driver);
 
@@ -77,6 +81,7 @@ describe(PerExampleCollector::class, function () {
     });
 
     it('attributes a line to every example that executes it, without duplicates', function (CoverageDriver $driver) {
+        allow($driver->start());
         allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);
         $collector = new PerExampleCollector($driver);
         $collector->beginSpec('spec/App/Calculator.spec.php');
@@ -95,11 +100,14 @@ describe(PerExampleCollector::class, function () {
     });
 
     it('exports its state and merges state from another collector', function (CoverageDriver $driver, CoverageDriver $otherDriver) {
+        allow($driver->start());
         allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1, 13 => -1]]);
         $collector = new PerExampleCollector($driver);
         $collector->beginSpec('spec/App/Calculator.spec.php');
         $collector->beginExample();
         $collector->endExample('adds');
+
+        allow($otherDriver->start());
 
         allow($otherDriver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1, 13 => 1]]);
         $other = new PerExampleCollector($otherDriver);

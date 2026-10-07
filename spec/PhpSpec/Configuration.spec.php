@@ -7,6 +7,7 @@ use PhpSpec\StopConditions;
 describe(Configuration::class, function () {
 
     it('returns defaults when no config file exists', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getSpecPath())->toBe('./spec');
@@ -270,6 +271,7 @@ describe(Configuration::class, function () {
     });
 
     it('returns default spec_suffix when not configured', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getSpecSuffix())->toBe('.spec.php');
@@ -290,6 +292,7 @@ describe(Configuration::class, function () {
     // Guard is off until a project says otherwise, and every value it needs has
     // a default, so `guard: {status: active}` is a complete configuration.
     it('leaves guard off when nothing says otherwise', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getGuardConfig())->toBe([
@@ -549,6 +552,7 @@ describe(Configuration::class, function () {
     });
 
     it('returns null for ai config when not configured', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
@@ -580,6 +584,7 @@ describe(Configuration::class, function () {
     });
 
     it('returns default features path when not configured', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
 
         expect($config->getFeaturesPath())->toBe('features/');
@@ -655,6 +660,7 @@ describe(Configuration::class, function () {
     });
 
     it('has no steps path by default', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
         $config = new Configuration('/app', $fs);
         expect($config->getStepsPath())->toBeNull();
     });

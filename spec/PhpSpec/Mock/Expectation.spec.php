@@ -280,11 +280,11 @@ describe(Expectation::class, function() {
         $service->save();
     });
 
+
     it("toHaveBeenCalled()->once() works as alias", function(ExpectationSpecService $service) {
         expect($service->save())->toHaveBeenCalled()->once();
         $service->save();
     });
-
     it("stubs different return values for different args", function(ExpectationSpecService $service) {
         allow($service->store('a', 1))->toReturn(null);
         allow($service->store('b', 2))->toReturn(null);

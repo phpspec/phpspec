@@ -107,6 +107,7 @@ describe(Generate::class, function () {
 
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {
         $withAi($fs);
+        allow($fs->write());
         $cmd = new Generate(new Configuration('.', $fs), $fs, new ReplayProvider());
         $tester = new CommandTester($cmd);
 

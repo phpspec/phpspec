@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - `dummy()` makes a lenient double for a collaborator whose calls do not matter: it answers every call with a default and still takes stubs
+ - `allow()` on its own declares a call as expected, a stub being optional: `allow($stock->reserve('tea', 2));`
+ - A stub ending in `->ignoreOthers()` leaves the rest of the double lenient, for a double injected by type hint that `dummy()` cannot make
  - A stubbed method can be told to throw an exception instance, `allow($repo->find(999))->toThrow(new RuntimeException('Not found'))`, as the mocking docs showed; a class name and a message still build one at the call
  - The browser behind visit() is an extension point: put your own implementation of the Browser contract behind the DSL with `extensions: {browser: ...}`
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
@@ -21,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - A double is strict towards the code under spec: a call that no `allow()` or `expect()` declared, made from outside the spec and features folders, fails the example at once naming the call and where it came from, instead of answering with a default; the spec file itself may call anything, which is how `allow()` and `expect()` reach the call they declare
  - A failure's pair shows values typed: a string in quotes, a number bare, a float at full precision, null as null, an object with its properties when its name tells nothing; two long strings meant to be equal are shown around their first difference and the offset is named
  - A stub or a verification written with an object argument matches an equal object, not only the very instance: `applyTo(new Money(900))` is met by any `Money(900)`; scalars stay strict
  - An undefined step fails the run with exit code 1: the scenario was never checked; a `pending()` step still leaves it at 0
