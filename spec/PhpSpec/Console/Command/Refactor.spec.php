@@ -16,17 +16,13 @@ use Symfony\Component\Console\Tester\CommandTester;
 // A non-empty $journal seeds .phpspec/ai/journal.jsonl with prior entries.
 function refactorConsentWorld(Filesystem $fs, array &$written, string $journal = ''): Refactor
 {
-    $yamlPath = './phpspec.yaml';
     $cwd = getcwd();
     $srcPath = $cwd . '/src/App/Good.php';
     $specPath = $cwd . '/spec/App/Good.spec.php';
 
-    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$yamlPath, $srcPath, $specPath], true)
+    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$srcPath, $specPath], true)
         || ($journal !== '' && str_contains($path, 'journal.jsonl')));
-    allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath, $journal): string {
-        if ($path === $yamlPath) {
-            return "ai:\n  provider: google\n  api_key: test-key\n";
-        }
+    allow($fs->read())->toReturnUsing(function (string $path) use ($journal): string {
         if (str_contains($path, 'journal.jsonl')) {
             return $journal;
         }
@@ -62,7 +58,7 @@ function refactorConsentWorld(Filesystem $fs, array &$written, string $journal =
 
     $specRunner = fn(string $path): array => [0, '1 pass'];
 
-    $cmd = new Refactor(Configuration::load('.', $fs), $fs, $specRunner, null, $provider);
+    $cmd = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $fs, $specRunner, null, $provider);
 
     // Registered on an application so the command has a helper set: the
     // consent question needs the question helper, exactly as in production.

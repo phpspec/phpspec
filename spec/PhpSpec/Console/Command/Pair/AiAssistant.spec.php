@@ -43,7 +43,7 @@ describe(AiAssistant::class, function () {
             $this->reads++;
             return array_shift($this->answers) ?? '';
         });
-        $this->config = Configuration::load('.', $fs);
+        $this->config = new Configuration();
 
         // A fresh AI-drives role for the write-focused tests; the default (no
         // role passed) is the human driving / AI navigating, where writes are
@@ -80,10 +80,6 @@ describe(AiAssistant::class, function () {
     });
 
     it('passes the configured reasoning effort through to the provider', function (Filesystem $fs) {
-        $yamlPath = './phpspec.yaml';
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  effort: high\n" : '');
-
         $options = null;
         $this->provider->responder = function (array $messages, array $chatOptions) use (&$options) {
             $options = $chatOptions;
@@ -91,7 +87,7 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, Configuration::load('.', $fs), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant = new AiAssistant($this->provider, new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k', 'effort' => 'high']]), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
         $assistant->handle('hello');
 
         expect($options['effort'])->toBe('high');

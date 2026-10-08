@@ -17,7 +17,7 @@ describe(Pair::class, function () {
     });
 
     it('instantiates', function (Filesystem $fs) {
-        $config = Configuration::load('.', $fs);
+        $config = new Configuration();
         $cmd = new Pair(
             new SpecGenerator('spec', $fs),
             new ClassGenerator(SourceLayout::under('src'), $fs),
@@ -27,7 +27,7 @@ describe(Pair::class, function () {
     });
 
     it('rejects non-interactive terminal', function (Filesystem $fs) {
-        $config = Configuration::load('.', $fs);
+        $config = new Configuration();
         $cmd = new Pair(
             new SpecGenerator('spec', $fs),
             new ClassGenerator(SourceLayout::under('src'), $fs),

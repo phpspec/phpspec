@@ -41,18 +41,13 @@ class CommandDispatcherFakeRunner implements SpecRunner
     }
 }
 
-// Builds a dispatcher whose Configuration reports an ai: block for the given
-// provider, by faking the phpspec.yaml the Configuration reads.
+// Builds a dispatcher whose Configuration holds an ai: block for the given provider.
 function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRunner $specRunner, string $provider): CommandDispatcher
 {
-    $yamlPath = './phpspec.yaml';
-    allow($fs->exists())->toReturnUsing(fn(string $path): bool => $path === $yamlPath);
-    allow($fs->read())->toReturnUsing(fn(string $path): string => $path === $yamlPath ? "ai:\n  provider: $provider\n  api_key: test-key\n" : '');
-
     return new CommandDispatcher(
         new SpecGenerator('spec', $fs),
         new ClassGenerator(SourceLayout::under('src'), $fs),
-        Configuration::load('.', $fs),
+        new Configuration(['ai' => ['provider' => $provider, 'api_key' => 'test-key']]),
         $pairOutput,
         false,
         $fs,
@@ -71,7 +66,7 @@ describe(CommandDispatcher::class, function () {
 
     let('buffer', fn() => new BufferedOutput());
     let('pairOutput', fn() => new PairOutput($this->buffer));
-    let('config', fn(Filesystem $fs) => Configuration::load('.', $fs));
+    let('config', fn() => new Configuration());
     let('specRunner', fn() => new CommandDispatcherFakeRunner());
     let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),
@@ -395,15 +390,14 @@ describe(CommandDispatcher::class, function () {
 
         function generateNoteWorld(Filesystem $fs, PairOutput $pairOutput, object $example): CommandDispatcher
         {
-            $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists())->toReturn(false);
+            allow($fs->read())->toReturn('');
             allow($fs->write())->toReturnUsing(function (string $p, string $c) use ($example) {
                 $example->written[$p] = $c;
             });
             allow($fs->mkdir())->toReturn(null);
 
-            $config = Configuration::load('.', $fs);
+            $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]);
 
             return new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
@@ -645,16 +639,15 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('shows a diff and writes the proposal once confirmed', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p) => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p) => $p === $yamlPath ? "ai:\n  provider: openai\n  api_key: k\n" : '');
+            allow($fs->exists())->toReturn(false);
+            allow($fs->read())->toReturn('');
             allow($fs->mkdir())->toReturn(null);
             $written = [];
             allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
                 $written[$p] = $c;
             });
 
-            $config = Configuration::load('.', $fs);
+            $config = new Configuration(['ai' => ['provider' => 'openai', 'api_key' => 'k']]);
             $replay = new ReplayProvider([
                 new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"])]),
             ]);
@@ -701,7 +694,7 @@ describe(CommandDispatcher::class, function () {
                 }
             };
 
-            $config = Configuration::load('.', $fs);
+            $config = new Configuration();
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
@@ -743,7 +736,7 @@ describe(CommandDispatcher::class, function () {
                 }
             };
 
-            $config = Configuration::load('.', $fs);
+            $config = new Configuration();
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
@@ -785,7 +778,7 @@ describe(CommandDispatcher::class, function () {
                 }
             };
 
-            $config = Configuration::load('.', $fs);
+            $config = new Configuration();
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),

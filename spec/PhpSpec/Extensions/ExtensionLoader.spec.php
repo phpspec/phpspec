@@ -14,16 +14,11 @@ describe(ExtensionLoader::class, function () {
 
     it('loads formatter extensions from config', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  formatters:\n    - " . StubFormatter::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['formatters' => [StubFormatter::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -32,16 +27,11 @@ describe(ExtensionLoader::class, function () {
 
     it('loads command extensions from config', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  commands:\n    - " . StubCommand::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['commands' => [StubCommand::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -51,7 +41,7 @@ describe(ExtensionLoader::class, function () {
     it('returns false for unknown formatter', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => false);
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -60,16 +50,11 @@ describe(ExtensionLoader::class, function () {
 
     it('does not load twice', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  formatters:\n    - " . StubFormatter::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['formatters' => [StubFormatter::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
         $loader->load(); // second call should be a no-op
@@ -79,16 +64,11 @@ describe(ExtensionLoader::class, function () {
 
     it('loads matcher extensions from config', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  matchers:\n    - " . StubMatcher::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['matchers' => [StubMatcher::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -98,16 +78,11 @@ describe(ExtensionLoader::class, function () {
 
     it('loads listener extensions from config', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  listeners:\n    - " . StubListener::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['listeners' => [StubListener::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -117,16 +92,11 @@ describe(ExtensionLoader::class, function () {
 
     it('loads tool provider extensions from config', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  tools:\n    - " . StubToolProvider::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['tools' => [StubToolProvider::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -155,7 +125,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -175,17 +145,15 @@ describe(ExtensionLoader::class, function () {
         ]]);
 
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => true,
             default => false,
         });
         allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  disabled:\n    - vendor/my-ext\n",
             'vendor/composer/installed.json' => $installed,
             default => '',
         });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['disabled' => ['vendor/my-ext']]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -194,16 +162,11 @@ describe(ExtensionLoader::class, function () {
 
     it('returns formatter by name', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  formatters:\n    - " . StubFormatter::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['formatters' => [StubFormatter::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -221,7 +184,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -243,7 +206,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -263,17 +226,15 @@ describe(ExtensionLoader::class, function () {
         ]]);
 
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => true,
             default => false,
         });
         allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  formatters:\n    - " . StubFormatter::class . "\n",
             'vendor/composer/installed.json' => $installed,
             default => '',
         });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['formatters' => [StubFormatter::class]]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -283,21 +244,11 @@ describe(ExtensionLoader::class, function () {
 
     it('skips classes that exist but do not implement the expected interface', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n"
-                . "  formatters:\n    - stdClass\n"
-                . "  matchers:\n    - stdClass\n"
-                . "  commands:\n    - stdClass\n"
-                . "  listeners:\n    - stdClass\n"
-                . "  tools:\n    - stdClass\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['formatters' => ['stdClass'], 'matchers' => ['stdClass'], 'commands' => ['stdClass'], 'listeners' => ['stdClass'], 'tools' => ['stdClass']]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -308,16 +259,11 @@ describe(ExtensionLoader::class, function () {
 
     it('skips classes that do not exist', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             'vendor/composer/installed.json' => false,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  formatters:\n    - NonExistent\\FooFormatter\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['formatters' => ['NonExistent\\FooFormatter']]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -326,15 +272,10 @@ describe(ExtensionLoader::class, function () {
 
     it('puts the browser named in config behind the DSL', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  browser: " . StubBrowser::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['browser' => StubBrowser::class]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -344,7 +285,7 @@ describe(ExtensionLoader::class, function () {
     it('has no browser opinion when none is registered', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -353,15 +294,10 @@ describe(ExtensionLoader::class, function () {
 
     it('refuses a browser that does not implement the contract', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  browser: " . StubFormatter::class . "\n",
-            default => '',
-        });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['browser' => StubFormatter::class]], '/app');
         $loader = new ExtensionLoader($config, $fs);
 
         expect(fn() => $loader->load())->toThrow(
@@ -379,7 +315,7 @@ describe(ExtensionLoader::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json');
         allow($fs->read())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json' ? $installed : '');
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
 
         expect(fn() => $loader->load())->toThrow(
@@ -395,12 +331,11 @@ describe(ExtensionLoader::class, function () {
         ]]);
         allow($fs->exists())->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.yaml', 'vendor/composer/installed.json'], true));
         allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => "extensions:\n  browser: " . OtherStubBrowser::class . "\n",
             'vendor/composer/installed.json' => $installed,
             default => '',
         });
 
-        $config = Configuration::load('/app', $fs);
+        $config = new Configuration(['extensions' => ['browser' => OtherStubBrowser::class]], '/app');
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 

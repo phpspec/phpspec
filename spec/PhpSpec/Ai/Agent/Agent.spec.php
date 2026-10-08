@@ -97,7 +97,7 @@ describe(Agent::class, function () {
         });
     });
 
-    let('config', fn(Filesystem $fs) => Configuration::load('.', $fs));
+    let('config', fn() => new Configuration());
 
     it('consults the model for a named new feature and keeps the derived path over its content', function (Filesystem $fs) {
         $replay = new ReplayProvider([
@@ -151,13 +151,10 @@ describe(Agent::class, function () {
     });
 
     it('lets the user config max_tokens beat the manifest and the default', function (Filesystem $fs) {
-        $yamlPath = './phpspec.yaml';
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  max_tokens: 9999\n" : '');
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
-        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
+        $agent = new Agent(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k', 'max_tokens' => 9999]]), $fs, $replay);
 
         $agent->chat('generate', 'a spec for a Coupon');
 
@@ -165,13 +162,10 @@ describe(Agent::class, function () {
     });
 
     it('passes the configured reasoning effort through to the provider', function (Filesystem $fs) {
-        $yamlPath = './phpspec.yaml';
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  effort: high\n" : '');
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
-        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
+        $agent = new Agent(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k', 'effort' => 'high']]), $fs, $replay);
 
         $agent->chat('generate', 'a spec for a Coupon');
 

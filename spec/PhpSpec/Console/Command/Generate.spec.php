@@ -20,16 +20,10 @@ describe(Generate::class, function () {
         allow($fs->mkdir())->toReturn(null);
     });
 
-    $withAi = function (Filesystem $fs): void {
-        $yamlPath = './phpspec.yaml';
-        allow($fs->exists())->toReturnUsing(fn(string $p) => $p === $yamlPath);
-        allow($fs->read())->toReturnUsing(fn(string $p) => $p === $yamlPath
-            ? "ai:\n  provider: openai\n  api_key: test-key\n"
-            : '');
-    };
+    $withAi = fn(): Configuration => new Configuration(['ai' => ['provider' => 'openai', 'api_key' => 'test-key']]);
 
     it('errors without AI configuration', function (Filesystem $fs) {
-        $cmd = new Generate(Configuration::load('.', $fs));
+        $cmd = new Generate(new Configuration());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['a', 'Calc']], ['interactive' => false]);
@@ -50,13 +44,12 @@ describe(Generate::class, function () {
     );
 
     it('shows a NEW FILE diff and offers the change rather than writing it', function (Filesystem $fs) use ($withAi, $proposing, $projectWrites) {
-        $withAi($fs);
         $written = [];
         allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
 
-        $cmd = new Generate(Configuration::load('.', $fs), $fs, $proposing());
+        $cmd = new Generate($withAi(), $fs, $proposing());
         $tester = new CommandTester($cmd);
 
         // Nobody to ask is not the same as a yes.
@@ -70,13 +63,12 @@ describe(Generate::class, function () {
     });
 
     it('gives an agent an id for each proposal, unapplied', function (Filesystem $fs) use ($withAi, $proposing, $projectWrites) {
-        $withAi($fs);
         $written = [];
         allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
 
-        $cmd = new Generate(Configuration::load('.', $fs), $fs, $proposing());
+        $cmd = new Generate($withAi(), $fs, $proposing());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
@@ -89,13 +81,12 @@ describe(Generate::class, function () {
     });
 
     it('puts the proposal on the table, so accept can take exactly what was read', function (Filesystem $fs) use ($withAi, $proposing) {
-        $withAi($fs);
         $stored = [];
         allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$stored) {
             $stored[$p] = $c;
         });
 
-        $cmd = new Generate(Configuration::load('.', $fs), $fs, $proposing());
+        $cmd = new Generate($withAi(), $fs, $proposing());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
@@ -106,9 +97,8 @@ describe(Generate::class, function () {
     });
 
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {
-        $withAi($fs);
         allow($fs->write());
-        $cmd = new Generate(Configuration::load('.', $fs), $fs, new ReplayProvider());
+        $cmd = new Generate($withAi(), $fs, new ReplayProvider());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['x']], ['interactive' => false]);

@@ -27,7 +27,7 @@ describe('E1 generate: feature at an explicit path', function () {
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-feature-explicit-path.json'), true);
         $replay = ReplayProvider::fromRecording($rec);
 
-        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
+        $agent = new Agent(new Configuration(), $fs, $replay);
         $outcome = $agent->chat('generate', $rec['instruction']);
 
         expect($replay->requests)->toHaveLength(2);                                // consulted, then re-asked once

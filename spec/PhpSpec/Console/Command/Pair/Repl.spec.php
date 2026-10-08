@@ -36,7 +36,7 @@ describe(Repl::class, function () {
     let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),
         new ClassGenerator(SourceLayout::under('src'), $fs),
-        Configuration::load('.', $fs),
+        new Configuration(),
         $this->pairOutput,
         false,
         $fs,
