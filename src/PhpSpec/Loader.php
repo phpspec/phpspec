@@ -14,6 +14,7 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Specification\SpecBlock;
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\FeatureNode;
@@ -325,6 +326,8 @@ final class Loader
         } catch (\Throwable $e) {
             throw new FileLoadException($file, $e);
         }
+
+        ArrangingCode::loaded($file);
     }
 
     /**

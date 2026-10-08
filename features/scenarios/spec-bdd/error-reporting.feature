@@ -91,6 +91,44 @@ Feature: Error reporting
     When I run phpspec run
     Then the output should contain "Service.spec.php:4" exactly 1 times
 
+  Scenario: An error raised beyond the spec, through the code under spec, points at the spec line that led there
+    Given an interface "src/App/Menu.php":
+      """
+      <?php
+      namespace App;
+
+      interface Menu {
+          public function priceOf(string $item): int;
+      }
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {
+          public function __construct(private Menu $menu) {}
+          public function order(string $item): int
+          {
+              return $this->menu->priceOf($item);
+          }
+      }
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      describe('Till', function () {
+          it('orders', function (App\Menu $menu) {
+              $till = new App\Till($menu);
+              $till->order('mocha');
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "Till.spec.php:5" exactly 1 times
+    And the output should contain "src/App/Till.php:8"
+    And the output should not contain "Till.spec.php:3"
+
   Scenario: Shows surrounding code context
     Given a spec file "spec/App/Context.spec.php":
       """

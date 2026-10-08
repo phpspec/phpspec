@@ -5,17 +5,39 @@ use PhpSpec\Mock\ArrangingCode;
 describe('ArrangingCode', function () {
 
     beforeEach(function () {
-        $this->saved = ArrangingCode::roots();
+        $this->saved = [ArrangingCode::roots(), ArrangingCode::loadedFiles()];
         ArrangingCode::reset();
     });
 
     afterEach(function () {
-        ArrangingCode::under(...$this->saved);
+        ArrangingCode::under(...$this->saved[0]);
+        ArrangingCode::loaded(...$this->saved[1]);
     });
 
     it('takes every file for arranging code until told where the spec code lives', function () {
         expect(ArrangingCode::includes(__FILE__))->toBeTrue();
         expect(ArrangingCode::includes('/nowhere/at/all.php'))->toBeTrue();
+    });
+
+    it('includes a file PhpSpec loaded as spec code, wherever it sits', function () {
+        $probe = tempnam(sys_get_temp_dir(), 'phpspec_probe_') . '.spec.php';
+        file_put_contents($probe, '<?php');
+        ArrangingCode::under(__DIR__);
+
+        try {
+            expect(ArrangingCode::includes($probe))->toBeFalse();
+
+            ArrangingCode::loaded($probe);
+
+            expect(ArrangingCode::includes($probe))->toBeTrue();
+            expect(ArrangingCode::loadedFiles())->toBe([realpath($probe)]);
+
+            ArrangingCode::reset();
+
+            expect(ArrangingCode::loadedFiles())->toBe([]);
+        } finally {
+            unlink($probe);
+        }
     });
 
     it('includes a file under one of its roots', function () {

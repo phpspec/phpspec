@@ -19,6 +19,13 @@ final class PrettySpecPoint
     public function __construct(public int $x, public int $y) {}
 }
 
+// Code under spec that reaches into PhpSpec: the error is raised beyond the spec.
+define('BLAME_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_blame_outsider_' . getmypid() . '.php');
+if (!function_exists('blame_spec_outsider_reaches_in')) {
+    register_shutdown_function(static fn() => @unlink(BLAME_SPEC_OUTSIDER));
+    file_put_contents(BLAME_SPEC_OUTSIDER, "<?php\nfunction blame_spec_outsider_reaches_in(): void { \\PhpSpec\\Mock\\Double::getInstance('Nope\\Missing'); }\n");
+    require BLAME_SPEC_OUTSIDER;
+}
 describe(Pretty::class, function() {
 
     // A response body or a watched log can run to megabytes, and a terminal
@@ -266,6 +273,27 @@ describe(Pretty::class, function() {
         $text = $output->fetch();
         expect($text)->toContain("  at " . __FILE__ . ":" . $line);
         expect(substr_count($text, __FILE__ . ":" . $line))->toBe(1);
+    });
+
+    it("points at the spec line an error came through when it was raised beyond the spec, the deeper frames underneath", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        try {
+            $line = __LINE__ + 1;
+            blame_spec_outsider_reaches_in();
+        } catch (\LogicException $e) {
+            $error = new ExampleError($e->getMessage(), $e);
+        }
+        $example = new ExampleResult("reaches in", [], true);
+        $example->declaredAt(__FILE__, $line - 7);
+        $example->setError($error);
+
+        $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$example])]));
+        $text = $output->fetch();
+        expect($text)->toContain("  at " . __FILE__ . ":" . $line);
+        expect($text)->toContain(realpath(BLAME_SPEC_OUTSIDER) . ":2");
+        expect($text)->not()->toContain(__FILE__ . ":" . ($line - 7));
     });
 
     it("prints a step's blamed line once, with only the frames beyond it underneath", function() {

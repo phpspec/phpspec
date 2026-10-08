@@ -792,3 +792,112 @@ Feature: Mocking
       """
     When I run phpspec run
     Then all examples should pass
+
+  Scenario: A spec run by its path from outside the spec folder arranges its doubles, and so does a helper it requires from beside it
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a file "docs/probes/support/arrange.php":
+      """
+      <?php
+      function probes_stock_with_tea(App\Stock $stock): void
+      {
+          allow($stock->reserve('tea', 2))->toReturn(true);
+      }
+      """
+    And a spec file "docs/probes/Checkout.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/support/arrange.php';
+
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders tea', function (Stock $stock) {
+              probes_stock_with_tea($stock);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+              expect($stock->reserve('tea', 2))->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run phpspec run "docs/probes/Checkout.spec.php"
+    Then all examples should pass
+
+  Scenario: A suite's own paths are spec code
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a phpspec.yaml config:
+      """
+      suites:
+        default:
+          paths: [spec]
+        probes:
+          paths: [docs/probes]
+      """
+    And a file "docs/probes/support/arrange.php":
+      """
+      <?php
+      function probes_stock_with_tea(App\Stock $stock): void
+      {
+          allow($stock->reserve('tea', 2))->toReturn(true);
+      }
+      """
+    And a spec file "docs/probes/Checkout.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/support/arrange.php';
+
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders tea', function (Stock $stock) {
+              probes_stock_with_tea($stock);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
