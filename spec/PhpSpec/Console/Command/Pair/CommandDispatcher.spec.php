@@ -288,7 +288,7 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('exemplify reports when an example already exists instead of duplicating it', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
         allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => expect(\$this->calculator->add())->toBe(null));\n});");
 
         $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
@@ -824,7 +824,7 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('suggests /run after /exemplify', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(true);
+            allow($fs->exists())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
             allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
             allow($fs->write())->toReturn(null);
 

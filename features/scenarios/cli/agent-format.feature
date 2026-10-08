@@ -272,7 +272,7 @@ Feature: Agent output format
     And the output should contain "src/App/Money.php:6"
     And the output should not contain "run src/"
 
-  Scenario: A let binding that throws fails each example that needed it, and the count holds
+  Scenario: A let binding that throws fails each example that reads it, and leaves one that never reads it alone
     Given a spec file "spec/App/Money.spec.php":
       """
       <?php
@@ -286,9 +286,10 @@ Feature: Agent output format
       """
     When I run phpspec run with option "--format=agent"
     Then the output should be valid JSON
-    And the output should have 5 events
+    And the output should have 4 events
     And the output should contain "Money > one"
-    And the output should contain "Money > three"
+    And the output should contain "Money > two"
+    And the output should not contain "Money > three"
     And the output should contain "run spec/App/Money.spec.php:5"
 
   Scenario: A stop flag halts the run at the first example that meets it

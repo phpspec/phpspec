@@ -34,7 +34,7 @@ describe(ToolRegistry::class, function () {
     context('definitions', function () {
 
         it('builds the declared tools with their prompt-file descriptions', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(true);
+            allow($fs->exists())->toReturnUsing(fn(string $p) => !str_contains($p, 'phpspec.'));
             allow($fs->read())->toReturnUsing(fn(string $path): string => str_contains($path, 'write_steps') ? 'STEPS TOOL DESC' : 'OTHER');
             $profile = new CommandProfile(name: 'generate', body: '', tools: ['write_feature', 'write_steps']);
 
