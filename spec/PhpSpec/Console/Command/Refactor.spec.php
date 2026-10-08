@@ -62,7 +62,7 @@ function refactorConsentWorld(Filesystem $fs, array &$written, string $journal =
 
     $specRunner = fn(string $path): array => [0, '1 pass'];
 
-    $cmd = new Refactor(new Configuration('.', $fs), $fs, $specRunner, null, $provider);
+    $cmd = new Refactor(Configuration::load('.', $fs), $fs, $specRunner, null, $provider);
 
     // Registered on an application so the command has a helper set: the
     // consent question needs the question helper, exactly as in production.
@@ -162,7 +162,7 @@ describe(Refactor::class, function () {
     });
 
     it('instantiates', function (Filesystem $fs) {
-        $config = new Configuration('.', $fs);
+        $config = Configuration::load('.', $fs);
         $cmd = new Refactor($config, $fs);
         expect($cmd)->toBeAnInstanceOf(Refactor::class);
     });
@@ -170,7 +170,7 @@ describe(Refactor::class, function () {
     context('target resolution', function () {
 
         it('resolves a FQCN to src and spec paths', function (Filesystem $fs) {
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $cmd = new Refactor($config, $fs);
 
             $result = $cmd->resolveTarget('App\\Calculator');
@@ -182,7 +182,7 @@ describe(Refactor::class, function () {
         });
 
         it('resolves a FQCN::method with method focus', function (Filesystem $fs) {
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $cmd = new Refactor($config, $fs);
 
             $result = $cmd->resolveTarget('App\\Calculator::sum');
@@ -194,7 +194,7 @@ describe(Refactor::class, function () {
         });
 
         it('resolves a spec file path and infers src', function (Filesystem $fs) {
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $cmd = new Refactor($config, $fs);
 
             $result = $cmd->resolveTarget('spec/App/Calculator.spec.php');
@@ -206,7 +206,7 @@ describe(Refactor::class, function () {
         });
 
         it('resolves a deeply nested FQCN', function (Filesystem $fs) {
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $cmd = new Refactor($config, $fs);
 
             $result = $cmd->resolveTarget('App\\Domain\\Service\\Calculator');
@@ -217,7 +217,7 @@ describe(Refactor::class, function () {
         });
 
         it('resolves a spec file with .spec.php in the name', function (Filesystem $fs) {
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $cmd = new Refactor($config, $fs);
 
             $result = $cmd->resolveTarget('spec/App/Service.spec.php');
@@ -231,7 +231,7 @@ describe(Refactor::class, function () {
     context('command execution', function () {
 
         it('returns error when AI config is missing', function (Filesystem $fs) {
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $cmd = new Refactor($config, $fs);
 
             $tester = new CommandTester($cmd);
@@ -253,7 +253,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $cmd = new Refactor($configWithAi, $fs);
 
             $tester = new CommandTester($cmd);
@@ -278,7 +278,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $cmd = new Refactor($configWithAi, $fs);
 
             $tester = new CommandTester($cmd);
@@ -304,7 +304,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $specRunner = fn(string $path): array => [1, '1 example (1 failure)'];
             $cmd = new Refactor($configWithAi, $fs, $specRunner);
 
@@ -331,7 +331,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $specRunner = fn(string $path): array => [0, '1 pass'];
             $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
                 success: true,
@@ -367,7 +367,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $specRunner = fn(string $path): array => [0, '1 pass'];
             $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
                 success: false,
@@ -403,7 +403,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $specRunner = fn(string $path): array => [0, '1 pass'];
             $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
                 success: true,
@@ -438,7 +438,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $specRunner = fn(string $path): array => [0, '1 pass'];
             $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
                 success: true,
@@ -473,7 +473,7 @@ describe(Refactor::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $specRunner = fn(string $path): array => [0, '1 pass'];
             $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
                 success: false,

@@ -88,7 +88,7 @@ final class Application extends BaseApplication
      */
     public function getDefaultCommands(): array
     {
-        $config = new Configuration('.', configFile: Configuration::configPathFromArgv($this->argv));
+        $config = Configuration::load('.', configFile: Configuration::configPathFromArgv($this->argv));
 
         $config->registerAutoloaders();
         $extensionLoader = new ExtensionLoader($config);

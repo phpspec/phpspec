@@ -52,7 +52,7 @@ function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRun
     return new CommandDispatcher(
         new SpecGenerator('spec', $fs),
         new ClassGenerator(SourceLayout::under('src'), $fs),
-        new Configuration('.', $fs),
+        Configuration::load('.', $fs),
         $pairOutput,
         false,
         $fs,
@@ -71,7 +71,7 @@ describe(CommandDispatcher::class, function () {
 
     let('buffer', fn() => new BufferedOutput());
     let('pairOutput', fn() => new PairOutput($this->buffer));
-    let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
+    let('config', fn(Filesystem $fs) => Configuration::load('.', $fs));
     let('specRunner', fn() => new CommandDispatcherFakeRunner());
     let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),
@@ -403,7 +403,7 @@ describe(CommandDispatcher::class, function () {
             });
             allow($fs->mkdir())->toReturn(null);
 
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
 
             return new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
@@ -654,7 +654,7 @@ describe(CommandDispatcher::class, function () {
                 $written[$p] = $c;
             });
 
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $replay = new ReplayProvider([
                 new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"])]),
             ]);
@@ -701,7 +701,7 @@ describe(CommandDispatcher::class, function () {
                 }
             };
 
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
@@ -743,7 +743,7 @@ describe(CommandDispatcher::class, function () {
                 }
             };
 
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
@@ -785,7 +785,7 @@ describe(CommandDispatcher::class, function () {
                 }
             };
 
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
@@ -867,8 +867,8 @@ describe(CommandDispatcher::class, function () {
         let('app', function () {
             $app = new Application('phpspec', '1.0');
             $app->setAutoExit(false);
-            $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Next(new Configuration('.')));
-            $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Refactor(new Configuration('.')));
+            $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Next(new Configuration()));
+            $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Refactor(new Configuration()));
             return $app;
         });
         let('appDispatcher', fn(Filesystem $fs) => new CommandDispatcher(
@@ -924,7 +924,7 @@ describe(CommandDispatcher::class, function () {
             $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Pair(
                 new SpecGenerator('spec'),
                 new ClassGenerator(SourceLayout::under('src')),
-                new Configuration('.'),
+                new Configuration(),
             ));
             $this->appDispatcher->dispatch('/help');
             $output = $this->buffer->fetch();
@@ -936,7 +936,7 @@ describe(CommandDispatcher::class, function () {
             $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Pair(
                 new SpecGenerator('spec'),
                 new ClassGenerator(SourceLayout::under('src')),
-                new Configuration('.'),
+                new Configuration(),
             ));
             $result = $this->appDispatcher->dispatch('/pair');
             expect($result)->toBe(CommandDispatcher::CONTINUE);

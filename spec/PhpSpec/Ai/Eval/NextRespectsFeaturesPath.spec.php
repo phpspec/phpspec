@@ -58,7 +58,7 @@ describe('E11 next: discovers features under the configured features_path', func
 
             return ['type' => 'info', 'target' => '', 'reason' => 'ok'];
         };
-        $cmd = new Next(new Configuration('.', $fs), $fs, $suggestFn, $runner);
+        $cmd = new Next(Configuration::load('.', $fs), $fs, $suggestFn, $runner);
 
         (new CommandTester($cmd))->execute([]);
 

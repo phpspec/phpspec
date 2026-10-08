@@ -20,29 +20,37 @@ use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Reads and provides access to project configuration from phpspec.yaml, phpspec.yml,
- * phpspec.json, or phpspec.php (in priority order), or from an explicit config
- * file passed with --config.
+ * A project's configuration: its settings, the root its paths are relative
+ * to, and the PSR-4 mappings its composer.json declares. Built from values it
+ * touches no disk; {@see load()} reads what a project states.
  */
 final class Configuration
 {
-    /** @var array<string, mixed> parsed configuration values */
-    private array $config = [];
+    /**
+     * @param array<string, mixed> $config the settings, as a config file states them
+     * @param string $rootDir the project root the paths are relative to
+     * @param array<string, string> $composerMappings PSR-4 prefix to directory, as composer.json declares them
+     */
+    public function __construct(
+        private array $config = [],
+        private string $rootDir = '.',
+        private array $composerMappings = [],
+    ) {}
 
     /**
-     * @param string $rootDir project root directory containing config files
-     * @param Filesystem|null $filesystem injectable filesystem for testability
+     * What a project states: phpspec.yaml, phpspec.yml, phpspec.json or
+     * phpspec.php under the root, the first found, or the file --config names;
+     * and the PSR-4 mappings of its composer.json.
+     *
+     * @param string $rootDir project root directory containing the config files
+     * @param Filesystem|null $filesystem the filesystem to read through
      * @param string|null $configFile explicit config file path; when set, the working directory cascade is skipped
      */
-    private Filesystem $fs;
+    public static function load(string $rootDir = '.', ?Filesystem $filesystem = null, ?string $configFile = null): self
+    {
+        $fs = $filesystem ?? new RealFilesystem();
 
-    public function __construct(
-        private string $rootDir,
-        ?Filesystem $filesystem = null,
-        private readonly ?string $configFile = null,
-    ) {
-        $this->fs = $filesystem ?? new RealFilesystem();
-        $this->load();
+        return new self(self::readSettings($rootDir, $fs, $configFile), $rootDir, self::readComposerMappings($rootDir, $fs));
     }
 
     /**
@@ -81,29 +89,24 @@ final class Configuration
      * Loads the explicit config file when given, otherwise the first config
      * file found in the root directory: yaml > yml > json > php.
      */
-    private function load(): void
+    /**
+     * @return array<string, mixed>
+     */
+    private static function readSettings(string $rootDir, Filesystem $fs, ?string $configFile): array
     {
-        if ($this->configFile !== null) {
-            $this->loadFile($this->configFile);
-
-            return;
+        if ($configFile !== null) {
+            return self::readFile($configFile, $fs);
         }
 
-        $yamlPath = $this->rootDir . '/phpspec.yaml';
-        $ymlPath = $this->rootDir . '/phpspec.yml';
-        $jsonPath = $this->rootDir . '/phpspec.json';
-        $phpPath = $this->rootDir . '/phpspec.php';
+        foreach (['phpspec.yaml', 'phpspec.yml', 'phpspec.json', 'phpspec.php'] as $name) {
+            $path = $rootDir . '/' . $name;
 
-        if ($this->fs->exists($yamlPath)) {
-            $this->config = Yaml::parse($this->fs->read($yamlPath)) ?? [];
-        } elseif ($this->fs->exists($ymlPath)) {
-            $this->config = Yaml::parse($this->fs->read($ymlPath)) ?? [];
-        } elseif ($this->fs->exists($jsonPath)) {
-            $content = $this->fs->read($jsonPath);
-            $this->config = json_decode($content, true) ?? [];
-        } elseif ($this->fs->exists($phpPath)) {
-            $this->config = $this->fs->requirePhp($phpPath);
+            if ($fs->exists($path)) {
+                return self::readFile($path, $fs);
+            }
         }
+
+        return [];
     }
 
     /**
@@ -113,20 +116,48 @@ final class Configuration
      * @param string $path the config file path
      * @throws RuntimeException when the file does not exist or has an unsupported extension
      */
-    private function loadFile(string $path): void
+    /**
+     * @return array<string, mixed>
+     */
+    private static function readFile(string $path, Filesystem $fs): array
     {
-        if (!$this->fs->exists($path)) {
+        if (!$fs->exists($path)) {
             throw new RuntimeException("Configuration file not found: $path");
         }
 
-        $this->config = match (pathinfo($path, PATHINFO_EXTENSION)) {
-            'yaml', 'yml' => Yaml::parse($this->fs->read($path)) ?? [],
-            'json' => json_decode($this->fs->read($path), true) ?? [],
-            'php' => $this->fs->requirePhp($path),
+        return match (pathinfo($path, PATHINFO_EXTENSION)) {
+            'yaml', 'yml' => Yaml::parse($fs->read($path)) ?? [],
+            'json' => json_decode($fs->read($path), true) ?? [],
+            'php' => $fs->requirePhp($path),
             default => throw new RuntimeException("Unsupported configuration file type: $path"),
         };
     }
 
+    /**
+     * @return array<string, string>
+     */
+    private static function readComposerMappings(string $rootDir, Filesystem $fs): array
+    {
+        $path = rtrim($rootDir, '/') . '/composer.json';
+
+        if (!$fs->exists($path)) {
+            return [];
+        }
+
+        $composer = json_decode($fs->read($path), true);
+        $declared = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
+        $mappings = [];
+
+        foreach (is_array($declared) ? $declared : [] as $prefix => $directory) {
+            $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
+
+            if (is_string($prefix) && is_string($directory) && $directory !== '') {
+                $mappings[$prefix] = ltrim($directory, './');
+            }
+        }
+
+        return $mappings;
+    }
     /**
      * Retrieves a configuration value by key.
      *
@@ -217,25 +248,7 @@ final class Configuration
      */
     private function composerMappings(): array
     {
-        $path = rtrim($this->rootDir, '/') . '/composer.json';
-
-        if (!$this->fs->exists($path)) {
-            return [];
-        }
-
-        $composer = json_decode($this->fs->read($path), true);
-        $declared = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
-        $mappings = [];
-
-        foreach (is_array($declared) ? $declared : [] as $prefix => $directory) {
-            $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
-
-            if (is_string($prefix) && is_string($directory) && $directory !== '') {
-                $mappings[$prefix] = ltrim($directory, './');
-            }
-        }
-
-        return $mappings;
+        return $this->composerMappings;
     }
 
     /**
@@ -290,28 +303,13 @@ final class Configuration
      */
     private function composerLayout(): ?array
     {
-        $path = rtrim($this->rootDir, '/') . '/composer.json';
-
-        if (!$this->fs->exists($path)) {
+        if ($this->composerMappings === []) {
             return null;
         }
 
-        $composer = json_decode($this->fs->read($path), true);
-        $mappings = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
+        $prefix = (string) array_key_first($this->composerMappings);
 
-        if (!is_array($mappings) || $mappings === []) {
-            return null;
-        }
-
-        $prefix = (string) array_key_first($mappings);
-        $directory = $mappings[$prefix];
-        $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
-
-        if (!is_string($directory) || $directory === '') {
-            return null;
-        }
-
-        return ['src' => rtrim($directory, '/'), 'prefix' => rtrim($prefix, '\\')];
+        return ['src' => rtrim($this->composerMappings[$prefix], '/'), 'prefix' => rtrim($prefix, '\\')];
     }
 
     /**

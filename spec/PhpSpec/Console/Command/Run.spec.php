@@ -17,7 +17,7 @@ describe(Run::class, function () {
         });
 
         it('runs with empty spec directory', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -27,7 +27,7 @@ describe(Run::class, function () {
         });
 
         it('runs with dot format', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -37,7 +37,7 @@ describe(Run::class, function () {
         });
 
         it('runs with tap format', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -47,7 +47,7 @@ describe(Run::class, function () {
         });
 
         it('runs with junit format', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -57,7 +57,7 @@ describe(Run::class, function () {
         });
 
         it('runs with html format', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -66,7 +66,7 @@ describe(Run::class, function () {
         });
 
         it('names every format it accepts in the help of --format', function (Filesystem $execFs) {
-            $cmd = new Run(new Loader($execFs), new Runner(), new Configuration('.', $execFs));
+            $cmd = new Run(new Loader($execFs), new Runner(), Configuration::load('.', $execFs));
 
             $help = $cmd->getDefinition()->getOption('format')->getDescription();
 
@@ -76,7 +76,7 @@ describe(Run::class, function () {
         });
 
         it('rejects unknown formats', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -86,7 +86,7 @@ describe(Run::class, function () {
         });
 
         it('stops when a path it was given does not exist, naming it', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -97,7 +97,7 @@ describe(Run::class, function () {
 
         it('pairs each -o file with its format by position', function (Filesystem $execFs) {
             $dir = sys_get_temp_dir() . '/phpspec_reports_' . uniqid();
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             try {
@@ -121,7 +121,7 @@ describe(Run::class, function () {
 
         it('defaults the console to pretty when every format writes to a file', function (Filesystem $execFs) {
             $dir = sys_get_temp_dir() . '/phpspec_fileonly_' . uniqid();
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             try {
@@ -142,7 +142,7 @@ describe(Run::class, function () {
         });
 
         it('runs with profile option', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -151,7 +151,7 @@ describe(Run::class, function () {
         });
 
         it('runs with random order', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -161,7 +161,7 @@ describe(Run::class, function () {
         });
 
         it('runs with stop-on-failure', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -170,7 +170,7 @@ describe(Run::class, function () {
         });
 
         it('runs with filter option', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -195,7 +195,7 @@ describe(Run::class, function () {
             });
             PHP);
 
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader(), new Runner(), $config);
 
             try {
@@ -225,7 +225,7 @@ describe(Run::class, function () {
             });
             PHP);
 
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader(), new Runner(), $config);
 
             try {
@@ -246,7 +246,7 @@ describe(Run::class, function () {
             $tmpBootstrap = tempnam(sys_get_temp_dir(), 'phpspec_bs_') . '.php';
             file_put_contents($tmpBootstrap, '<?php // bootstrap loaded');
 
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -256,7 +256,7 @@ describe(Run::class, function () {
         });
 
         it('returns error for non-existent bootstrap', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -265,7 +265,7 @@ describe(Run::class, function () {
         });
 
         it('runs with the parallel option on an empty suite', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -275,7 +275,7 @@ describe(Run::class, function () {
         });
 
         it('errors when the paths file does not exist', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -288,7 +288,7 @@ describe(Run::class, function () {
             $pathsFile = tempnam(sys_get_temp_dir(), 'phpspec_paths_') . '.txt';
             file_put_contents($pathsFile, sys_get_temp_dir() . "\n\n");
 
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             try {
@@ -305,7 +305,7 @@ describe(Run::class, function () {
             $pathsFile = tempnam(sys_get_temp_dir(), 'phpspec_paths_') . '.txt';
             file_put_contents($pathsFile, "spec/App/NotThere.spec.php\n");
 
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             try {
@@ -321,7 +321,7 @@ describe(Run::class, function () {
         it('registers PSR-4 autoloader from config', function (Filesystem $execFs) {
             allow($execFs->exists())->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
             allow($execFs->read())->toReturn(json_encode(['autoload' => ['TestNs\\' => 'src/']]));
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -338,7 +338,7 @@ describe(Run::class, function () {
 
             allow($execFs->exists())->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
             allow($execFs->read())->toReturn(json_encode(['autoload' => [$ns => $tmpDir . '/']]));
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -353,7 +353,7 @@ describe(Run::class, function () {
         it('PSR-4 autoloader skips non-matching prefix', function (Filesystem $execFs) {
             allow($execFs->exists())->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
             allow($execFs->read())->toReturn(json_encode(['autoload' => ['SpecificPrefix\\' => '/tmp/']]));
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -366,7 +366,7 @@ describe(Run::class, function () {
         it('uses config format when CLI format is pretty', function (Filesystem $execFs) {
             allow($execFs->exists())->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
             allow($execFs->read())->toReturn(json_encode(['format' => 'dot']));
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -376,7 +376,7 @@ describe(Run::class, function () {
         });
 
         it('runs with random order without explicit seed', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -386,7 +386,7 @@ describe(Run::class, function () {
         });
 
         it('returns 0 for passing suite', function (Filesystem $execFs) {
-            $config = new Configuration('.', $execFs);
+            $config = Configuration::load('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);

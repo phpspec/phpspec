@@ -26,7 +26,7 @@ describe('E10 generate: inferred paths respect the project layout', function () 
         allow($fs->mkdir())->toReturn(null);
         allow($fs->write())->toReturn(null);
 
-        return new Agent(new Configuration('.', $fs), $fs, $replay);
+        return new Agent(Configuration::load('.', $fs), $fs, $replay);
     };
 
     $editCall = fn(string $path, string $content): ReplayProvider => new ReplayProvider([

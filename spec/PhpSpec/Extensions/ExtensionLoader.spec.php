@@ -23,7 +23,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -41,7 +41,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -51,7 +51,7 @@ describe(ExtensionLoader::class, function () {
     it('returns false for unknown formatter', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => false);
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -69,7 +69,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
         $loader->load(); // second call should be a no-op
@@ -88,7 +88,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -107,7 +107,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -126,7 +126,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -155,7 +155,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -185,7 +185,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -203,7 +203,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -221,7 +221,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -243,7 +243,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -273,7 +273,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -297,7 +297,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -317,7 +317,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -334,7 +334,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -344,7 +344,7 @@ describe(ExtensionLoader::class, function () {
     it('has no browser opinion when none is registered', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
@@ -361,7 +361,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
 
         expect(fn() => $loader->load())->toThrow(
@@ -379,7 +379,7 @@ describe(ExtensionLoader::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json');
         allow($fs->read())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json' ? $installed : '');
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
 
         expect(fn() => $loader->load())->toThrow(
@@ -400,7 +400,7 @@ describe(ExtensionLoader::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 

@@ -57,7 +57,7 @@ final class Accept extends Command
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->book = $book ?? new OfferBook($this->filesystem, $baseDir);
-        $this->config = $config ?? new Configuration($baseDir ?? '.', $this->filesystem);
+        $this->config = $config ?? Configuration::load($baseDir ?? '.', $this->filesystem);
 
         parent::__construct();
     }

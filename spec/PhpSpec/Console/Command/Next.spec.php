@@ -43,7 +43,7 @@ describe(Next::class, function () {
     });
 
     it('instantiates', function (Filesystem $fs) {
-        $config = new Configuration('.', $fs);
+        $config = Configuration::load('.', $fs);
         $cmd = new Next($config, $fs);
         expect($cmd)->toBeAnInstanceOf(Next::class);
     });
@@ -51,7 +51,7 @@ describe(Next::class, function () {
     context('command execution', function () {
 
         it('returns error when AI config is missing', function (Filesystem $fs) {
-            $config = new Configuration('.', $fs);
+            $config = Configuration::load('.', $fs);
             $cmd = new Next($config, $fs);
 
             $tester = new CommandTester($cmd);
@@ -73,7 +73,7 @@ describe(Next::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'spec',
                 'target' => 'App\\UserRepository',
@@ -104,7 +104,7 @@ describe(Next::class, function () {
                 return $path === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'spec',
                 'target' => 'App\\Existing',
@@ -135,7 +135,7 @@ describe(Next::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'feature',
                 'target' => 'user registration',
@@ -161,7 +161,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'feature',
                 'target' => 'deleting_a_task',
@@ -216,7 +216,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'feature',
                 'target' => 'deleting_a_task',
@@ -248,7 +248,7 @@ describe(Next::class, function () {
             });
             allow($fs->mtime())->toReturn(900);
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'refactor',
                 'target' => 'App\\TodoList',
@@ -280,7 +280,7 @@ describe(Next::class, function () {
             });
             allow($fs->mtime())->toReturn(1100);
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'refactor',
                 'target' => 'App\\TodoList',
@@ -311,7 +311,7 @@ describe(Next::class, function () {
             });
             allow($fs->mtime())->toReturn(900);
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'refactor',
                 'target' => 'App\\TaskQueue',
@@ -360,7 +360,7 @@ describe(Next::class, function () {
             $replay = new ReplayProvider([
                 new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'feature', 'target' => 'clearing completed tasks', 'reason' => 'The list only grows; nothing clears what is done.'])]),
             ]);
-            $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
+            $cmd = new Next(Configuration::load('.', $fs), $fs, null, $runner, $replay);
 
             $app = new Application();
             method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
@@ -379,7 +379,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'refactor',
                 'target' => 'App\\TodoList',
@@ -421,7 +421,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'refactor',
                 'target' => 'App\\TodoList',
@@ -442,7 +442,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'example',
                 'target' => 'App\\Calculator',
@@ -484,7 +484,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'example',
                 'target' => 'App\\TodoList',
@@ -525,7 +525,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'example',
                 'target' => 'App\\Calculator',
@@ -552,7 +552,7 @@ describe(Next::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'info',
                 'target' => '',
@@ -579,7 +579,7 @@ describe(Next::class, function () {
                 return '';
             });
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'spec',
                 'target' => '',
@@ -619,7 +619,7 @@ describe(Next::class, function () {
 
                 return ['type' => 'info', 'target' => '', 'reason' => 'ok'];
             };
-            $cmd = new Next(new Configuration('.', $fs), $fs, $suggestFn, $runner);
+            $cmd = new Next(Configuration::load('.', $fs), $fs, $suggestFn, $runner);
 
             $tester = new CommandTester($cmd);
             $tester->execute([]);
@@ -636,7 +636,7 @@ describe(Next::class, function () {
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $runner = new NextFakeRunner();
-            $cmd = new Next(new Configuration('.', $fs), $fs, fn(array $aiConfig): array => ['type' => 'info', 'target' => '', 'reason' => 'ok'], $runner);
+            $cmd = new Next(Configuration::load('.', $fs), $fs, fn(array $aiConfig): array => ['type' => 'info', 'target' => '', 'reason' => 'ok'], $runner);
 
             $tester = new CommandTester($cmd);
             $tester->execute([]);
@@ -667,7 +667,7 @@ describe(Next::class, function () {
             $replay = new ReplayProvider([
                 new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'feature', 'target' => 'listing tasks', 'reason' => 'Adding is done; nothing shows the list yet.'])]),
             ]);
-            $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
+            $cmd = new Next(Configuration::load('.', $fs), $fs, null, $runner, $replay);
 
             $app = new Application();
             method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
@@ -718,7 +718,7 @@ describe(Next::class, function () {
             $replay = new ReplayProvider([
                 new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'implement', 'target' => 'App\\TodoList', 'reason' => 'The step calls getTasks() but the class only has tasks().'])]),
             ]);
-            $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
+            $cmd = new Next(Configuration::load('.', $fs), $fs, null, $runner, $replay);
 
             $app = new Application();
             method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
@@ -752,7 +752,7 @@ describe(Next::class, function () {
             ));
 
             $replay = new ReplayProvider([new Response('should never be consulted')]);
-            $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
+            $cmd = new Next(Configuration::load('.', $fs), $fs, null, $runner, $replay);
 
             $app = new Application();
             method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
@@ -771,7 +771,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'steps',
                 'target' => 'features/adding.feature',
@@ -812,7 +812,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'implement',
                 'target' => 'App\\TodoList',
@@ -853,7 +853,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'implement',
                 'target' => 'deleting_a_task',
@@ -874,7 +874,7 @@ describe(Next::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'feature',
                 'target' => 'deleting_a_task',
@@ -910,7 +910,7 @@ describe(Next::class, function () {
             });
             allow($fs->mtime())->toReturn(900);
 
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'refactor',
                 'target' => 'App\\TodoList',
@@ -940,7 +940,7 @@ describe(Next::class, function () {
             });
 
             $receivedConfig = null;
-            $configWithAi = new Configuration('.', $fs);
+            $configWithAi = Configuration::load('.', $fs);
             $suggestFn = function (array $aiConfig) use (&$receivedConfig): array {
                 $receivedConfig = $aiConfig;
                 return ['type' => 'info', 'target' => '', 'reason' => 'ok'];

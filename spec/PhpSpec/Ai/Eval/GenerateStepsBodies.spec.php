@@ -41,7 +41,7 @@ describe('E13 generate: step bodies come from the model when the scaffold is com
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-steps-bodies.json'), true);
         $replay = ReplayProvider::fromRecording($rec);
 
-        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
         $outcome = $agent->chat('generate', $rec['instruction']);
 
         $context = $replay->requests[0]['messages'][1]->content;

@@ -97,7 +97,7 @@ describe(Agent::class, function () {
         });
     });
 
-    let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
+    let('config', fn(Filesystem $fs) => Configuration::load('.', $fs));
 
     it('consults the model for a named new feature and keeps the derived path over its content', function (Filesystem $fs) {
         $replay = new ReplayProvider([
@@ -157,7 +157,7 @@ describe(Agent::class, function () {
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
-        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
 
         $agent->chat('generate', 'a spec for a Coupon');
 
@@ -171,7 +171,7 @@ describe(Agent::class, function () {
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
-        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
 
         $agent->chat('generate', 'a spec for a Coupon');
 

@@ -24,7 +24,7 @@ describe('E4 generate: code by intent', function () {
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-code-by-intent.json'), true);
         $replay = ReplayProvider::fromRecording($rec);
 
-        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
         $outcome = $agent->chat('generate', $rec['instruction']);
 
         expect($outcome->proposals[0]->path)->toMatch('~^src/.*\.php$~');        // under src/

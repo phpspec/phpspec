@@ -29,7 +29,7 @@ describe(Generate::class, function () {
     };
 
     it('errors without AI configuration', function (Filesystem $fs) {
-        $cmd = new Generate(new Configuration('.', $fs));
+        $cmd = new Generate(Configuration::load('.', $fs));
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['a', 'Calc']], ['interactive' => false]);
@@ -56,7 +56,7 @@ describe(Generate::class, function () {
             $written[$p] = $c;
         });
 
-        $cmd = new Generate(new Configuration('.', $fs), $fs, $proposing());
+        $cmd = new Generate(Configuration::load('.', $fs), $fs, $proposing());
         $tester = new CommandTester($cmd);
 
         // Nobody to ask is not the same as a yes.
@@ -76,7 +76,7 @@ describe(Generate::class, function () {
             $written[$p] = $c;
         });
 
-        $cmd = new Generate(new Configuration('.', $fs), $fs, $proposing());
+        $cmd = new Generate(Configuration::load('.', $fs), $fs, $proposing());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
@@ -95,7 +95,7 @@ describe(Generate::class, function () {
             $stored[$p] = $c;
         });
 
-        $cmd = new Generate(new Configuration('.', $fs), $fs, $proposing());
+        $cmd = new Generate(Configuration::load('.', $fs), $fs, $proposing());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
@@ -108,7 +108,7 @@ describe(Generate::class, function () {
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {
         $withAi($fs);
         allow($fs->write());
-        $cmd = new Generate(new Configuration('.', $fs), $fs, new ReplayProvider());
+        $cmd = new Generate(Configuration::load('.', $fs), $fs, new ReplayProvider());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['x']], ['interactive' => false]);

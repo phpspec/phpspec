@@ -88,7 +88,7 @@ final class Run extends Command
     public function __construct(
         private readonly Loader $loader,
         private readonly Runner $runner,
-        private readonly Configuration $config = new Configuration('.'),
+        private readonly Configuration $config = new Configuration(),
         private readonly ?ExtensionLoader $extensionLoader = null,
         ?OfferBook $offers = null,
     ) {

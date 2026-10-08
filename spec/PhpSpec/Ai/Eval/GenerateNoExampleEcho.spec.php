@@ -26,7 +26,7 @@ describe('E7 generate: the prompt example never leaks into the path', function (
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-spec-echo-calculator.json'), true);
         $replay = ReplayProvider::fromRecording($rec);
 
-        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+        $agent = new Agent(Configuration::load('.', $fs), $fs, $replay);
         $outcome = $agent->chat('generate', $rec['instruction']);
 
         expect($outcome->proposals[0]->path)->toContain('Coupon');               // the instruction's subject

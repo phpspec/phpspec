@@ -48,7 +48,7 @@ describe('E12 pair: navigator offer, replayed from a live session', function () 
 
     it('renders the recorded offer as a diff and applies it on yes', function (Filesystem $fs) {
         $replay = ReplayProvider::fromConversation($this->recording);
-        $assistant = new AiAssistant($replay, new Configuration('.', $fs), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant = new AiAssistant($replay, Configuration::load('.', $fs), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
 
         $this->answers = ['1'];
         $assistant->handle($this->recording['turns'][0]['instruction']);
@@ -61,7 +61,7 @@ describe('E12 pair: navigator offer, replayed from a live session', function () 
 
     it('keeps a declined offer unwritten and hands the model the decline steer', function (Filesystem $fs) {
         $replay = ReplayProvider::fromConversation($this->recording);
-        $assistant = new AiAssistant($replay, new Configuration('.', $fs), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant = new AiAssistant($replay, Configuration::load('.', $fs), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
 
         $this->answers = ['3, offer the smallest step first'];
         $assistant->handle($this->recording['turns'][0]['instruction']);

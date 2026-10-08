@@ -43,7 +43,7 @@ describe(AiAssistant::class, function () {
             $this->reads++;
             return array_shift($this->answers) ?? '';
         });
-        $this->config = new Configuration('.', $fs);
+        $this->config = Configuration::load('.', $fs);
 
         // A fresh AI-drives role for the write-focused tests; the default (no
         // role passed) is the human driving / AI navigating, where writes are
@@ -91,7 +91,7 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, new Configuration('.', $fs), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant = new AiAssistant($this->provider, Configuration::load('.', $fs), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
         $assistant->handle('hello');
 
         expect($options['effort'])->toBe('high');
