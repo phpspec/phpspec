@@ -71,11 +71,7 @@ describe(CommandDispatcher::class, function () {
 
     let('buffer', fn() => new BufferedOutput());
     let('pairOutput', fn() => new PairOutput($this->buffer));
-    let('config', function (Filesystem $fs) {
-        allow($fs->exists());
-
-        return new Configuration('.', $fs);
-    });
+    let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
     let('specRunner', fn() => new CommandDispatcherFakeRunner());
     let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),

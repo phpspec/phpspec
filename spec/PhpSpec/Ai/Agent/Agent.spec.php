@@ -97,11 +97,7 @@ describe(Agent::class, function () {
         });
     });
 
-    let('config', function (Filesystem $fs) {
-        allow($fs->exists());
-
-        return new Configuration('.', $fs);
-    });
+    let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
 
     it('consults the model for a named new feature and keeps the derived path over its content', function (Filesystem $fs) {
         $replay = new ReplayProvider([
