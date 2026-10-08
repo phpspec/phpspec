@@ -2,6 +2,13 @@
 
 use PhpSpec\Specification\ExampleError;
 
+// Code under spec that reaches into PhpSpec: the error is raised beyond the spec.
+define('BLAME_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_blame_outsider_' . getmypid() . '.php');
+if (!function_exists('blame_spec_outsider_reaches_in')) {
+    register_shutdown_function(static fn() => @unlink(BLAME_SPEC_OUTSIDER));
+    file_put_contents(BLAME_SPEC_OUTSIDER, "<?php\nfunction blame_spec_outsider_reaches_in(): void { \\PhpSpec\\Mock\\Double::getInstance('Nope\\Missing'); }\n");
+    require BLAME_SPEC_OUTSIDER;
+}
 describe(ExampleError::class, function() {
 
     it("wraps an exception", function() {
@@ -82,6 +89,20 @@ describe(ExampleError::class, function() {
         $error = new ExampleError("boom", new \RuntimeException("boom"));
 
         expect($error->blame())->toBe(['file' => __FILE__, 'line' => $line]);
+    });
+
+    it("names the line in a given file the error came through: the site when it is there, else the innermost frame in it", function() {
+        try {
+            $line = __LINE__ + 1;
+            blame_spec_outsider_reaches_in();
+        } catch (\LogicException $e) {
+            $error = new ExampleError($e->getMessage(), $e);
+        }
+
+        expect($error->blame())->toBe(['file' => realpath(BLAME_SPEC_OUTSIDER), 'line' => 2]);
+        expect($error->lineIn(__FILE__))->toBe($line);
+        expect($error->lineIn(realpath(BLAME_SPEC_OUTSIDER)))->toBe(2);
+        expect($error->lineIn('/nowhere/Else.spec.php'))->toBeNull();
     });
 
     it("blames the first frame in the spec when the error was thrown inside PhpSpec itself", function() {

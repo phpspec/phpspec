@@ -31,7 +31,33 @@ class AgentSpecProcessEnd implements ProcessEnd
     }
 }
 
+// Code under spec that reaches into PhpSpec: the error is raised beyond the spec.
+define('BLAME_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_blame_outsider_' . getmypid() . '.php');
+if (!function_exists('blame_spec_outsider_reaches_in')) {
+    register_shutdown_function(static fn() => @unlink(BLAME_SPEC_OUTSIDER));
+    file_put_contents(BLAME_SPEC_OUTSIDER, "<?php\nfunction blame_spec_outsider_reaches_in(): void { \\PhpSpec\\Mock\\Double::getInstance('Nope\\Missing'); }\n");
+    require BLAME_SPEC_OUTSIDER;
+}
 describe(Agent::class, function () {
+
+    it("addresses an error raised beyond the spec at the spec line it came through, the rerun at the declaring line", function () {
+        try {
+            $line = __LINE__ + 1;
+            blame_spec_outsider_reaches_in();
+        } catch (\LogicException $e) {
+            $error = new ExampleError($e->getMessage(), $e);
+        }
+        $example = new ExampleResult("reaches in", [], true);
+        $example->declaredAt(__FILE__, $line - 5);
+        $example->setError($error);
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$example])]));
+
+        $entry = json_decode(explode("\n", trim($output->fetch()))[1], true, flags: JSON_THROW_ON_ERROR);
+        expect($entry['spec'])->toEndWith('Agent.spec.php:' . $line);
+        expect($entry['rerun'])->toEndWith('Agent.spec.php:' . ($line - 5));
+    });
 
     // The run answers in JSON Lines. Decoding a line at a time and filing each
     // event by its kind is the whole of what a reader does, so the spec reads

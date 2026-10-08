@@ -218,8 +218,8 @@ final class PrettyViews
     }
 
     /**
-     * Where an error is blamed, followed by the frames the trace holds beyond
-     * that place. A trace that starts at the blamed place repeats nothing.
+     * Where an error is blamed, followed by the other frames of the trace,
+     * innermost first. The blamed place itself is not repeated.
      *
      * @param array{file: string, line: int} $at
      * @param array<int, array{file?: string, line?: int}> $trace
@@ -228,15 +228,12 @@ final class PrettyViews
     {
         $output->write(PHP_EOL . '  at ' . $at['file'] . ':' . $at['line'] . PHP_EOL);
 
-        foreach ($trace as $index => $frame) {
-            if (($frame['file'] ?? null) === $at['file'] && ($frame['line'] ?? null) === $at['line']) {
-                $trace = array_slice($trace, $index + 1);
+        $others = array_filter(
+            $trace,
+            static fn(array $frame): bool => ($frame['file'] ?? null) !== $at['file'] || ($frame['line'] ?? null) !== $at['line'],
+        );
 
-                break;
-            }
-        }
-
-        foreach (array_slice($trace, 0, 5) as $frame) {
+        foreach (array_slice($others, 0, 5) as $frame) {
             $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
         }
     }

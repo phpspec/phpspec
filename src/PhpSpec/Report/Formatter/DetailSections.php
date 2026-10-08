@@ -186,8 +186,16 @@ final class DetailSections
             : null;
         $isSite = $blame !== null && $blame['file'] === $error->getFile() && $blame['line'] === $error->getLine();
 
-        if ($blame !== null && ($isSite || $declared === null || $blame['file'] === $declared['file'])) {
+        if ($blame !== null && ($isSite || $declared === null)) {
             return $blame;
+        }
+
+        if ($declared !== null) {
+            $inSpec = $error->lineIn($declared['file']);
+
+            if ($inSpec !== null) {
+                return ['file' => $declared['file'], 'line' => $inSpec];
+            }
         }
 
         return $declared ?? $blame ?? ['file' => $error->getFile(), 'line' => $error->getLine()];

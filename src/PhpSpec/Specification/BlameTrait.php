@@ -49,6 +49,31 @@ trait BlameTrait
     }
 
     /**
+     * The line in one file the error came through: the site when it is in
+     * that file, else the innermost frame of the trace that is; null when the
+     * file is nowhere on the way.
+     */
+    public function lineIn(string $file): ?int
+    {
+        if ($this->file !== '' && self::samePath($this->file, $file)) {
+            return $this->line;
+        }
+
+        foreach ($this->getFilteredTrace() as $frame) {
+            if (isset($frame['file'], $frame['line']) && self::samePath($frame['file'], $file)) {
+                return (int) $frame['line'];
+            }
+        }
+
+        return null;
+    }
+
+    private static function samePath(string $a, string $b): bool
+    {
+        return $a === $b || (realpath($a) ?: $a) === (realpath($b) ?: $b);
+    }
+
+    /**
      * Returns source code lines surrounding the blamed line.
      *
      * @param int $before number of lines before the line

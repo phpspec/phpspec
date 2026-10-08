@@ -522,8 +522,8 @@ final class Agent extends AbstractFormatter
             // Mirrored, so one field answers "what went wrong" whatever the
             // state: the exception adds the class and the site, not the text.
             $entry['message'] = $error?->getMessage();
-            $this->address($entry, $example, $error?->getFile(), $error?->getLine());
-            // A missing class/method/interface the error names becomes a concrete
+            $specLine = $error !== null && $example->getFile() !== null ? $error->lineIn($example->getFile()) : null;
+            $this->address($entry, $example, $specLine === null ? $error?->getFile() : $example->getFile(), $specLine ?? $error?->getLine());            // A missing class/method/interface the error names becomes a concrete
             // offer to generate it, right on the example that hit it. Only present
             // when the error actually maps to something a generator can create.
             $offer = Offers::forError($error?->getMessage() ?? '');
