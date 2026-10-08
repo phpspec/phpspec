@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Specification\Context;
 use PhpSpec\Specification\Rebindable;
 use PhpSpec\Specification\SpecFileCache;
@@ -12,6 +13,23 @@ describe(SpecFileCache::class, function () {
     beforeEach(function () {
         $this->file = sys_get_temp_dir() . '/phpspec_cache_' . uniqid() . '.spec.php';
         register_shutdown_function(fn() => @unlink($this->file));
+    });
+
+    it('tells where arranging code lives that the file it loads is spec code', function () {
+        file_put_contents($this->file, "<?php\ndescribe('Loaded', function () { it('a', function () {}); });\n");
+        $saved = [ArrangingCode::roots(), ArrangingCode::loadedFiles()];
+        ArrangingCode::reset();
+        ArrangingCode::under(__DIR__);
+
+        try {
+            SpecFileCache::templates($this->file);
+
+            expect(ArrangingCode::includes($this->file))->toBeTrue();
+        } finally {
+            ArrangingCode::reset();
+            ArrangingCode::under(...$saved[0]);
+            ArrangingCode::loaded(...$saved[1]);
+        }
     });
 
     it('parses a spec file into its top-level blocks', function () {

@@ -716,6 +716,32 @@ final class Run extends Command
      * @throws RandomException
      * @throws \RuntimeException when the loader rejects a duplicate step title
      */
+    /**
+     * The folders the spec code is kept in: the configured spec, features and
+     * steps paths, every suite's paths, and the paths this run was given, a
+     * file standing for its folder.
+     *
+     * @param string $files the paths this run targets, as the loader takes them
+     * @return list<string>
+     */
+    private function specCodeRoots(string $files): array
+    {
+        $roots = [$this->config->getSpecPath(), $this->config->getFeaturesPath(), $this->config->getStepsPath()];
+
+        foreach ($this->config->getSuites() as $suite) {
+            foreach ($suite['paths'] ?? [] as $path) {
+                $roots[] = $path;
+            }
+        }
+
+        foreach (array_map('trim', explode(',', $files)) as $given) {
+            $path = preg_replace('/(:\d+)+$/', '', $given) ?? $given;
+            $roots[] = is_file($path) ? dirname($path) : $path;
+        }
+
+        return array_values(array_filter($roots, static fn(mixed $root): bool => is_string($root) && $root !== ''));
+    }
+
     private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files, bool $collectingCoverage = false): SuiteResult
     {
         $filter = $input->getOption('filter');
@@ -724,7 +750,7 @@ final class Run extends Command
             FilterRegistry::activate(new TitleFilter($filter));
         }
 
-        ArrangingCode::under(...array_filter([$this->config->getSpecPath(), $this->config->getFeaturesPath(), $this->config->getStepsPath()]));
+        ArrangingCode::under(...$this->specCodeRoots($files));
 
         $suite = $this->loader->load($files, $filter);
 

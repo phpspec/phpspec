@@ -357,6 +357,31 @@ describe(Loader::class, function () {
         expect($features[0]->run()->getResults())->toHaveCount(2);
     });
 
+    it("tells where arranging code lives that the support files it loads are spec code", function () {
+        $root = sys_get_temp_dir() . '/phpspec_support_' . uniqid();
+        mkdir($root . '/features/support', 0777, true);
+        file_put_contents($root . '/features/support/Helper.php', "<?php\nfinal class PhpspecLoaderSpecHelper {}\n");
+        file_put_contents($root . '/features/time.feature', "Feature: Time\n  Scenario: Noon\n    Given it is noon\n");
+        $saved = [\PhpSpec\Mock\ArrangingCode::roots(), \PhpSpec\Mock\ArrangingCode::loadedFiles()];
+        \PhpSpec\Mock\ArrangingCode::reset();
+        \PhpSpec\Mock\ArrangingCode::under(__DIR__);
+
+        try {
+            (new Loader(new \PhpSpec\RealFilesystem(), featuresPath: $root . '/features'))->load($root . '/features');
+
+            expect(\PhpSpec\Mock\ArrangingCode::includes($root . '/features/support/Helper.php'))->toBeTrue();
+        } finally {
+            \PhpSpec\Mock\ArrangingCode::reset();
+            \PhpSpec\Mock\ArrangingCode::under(...$saved[0]);
+            \PhpSpec\Mock\ArrangingCode::loaded(...$saved[1]);
+            unlink($root . '/features/support/Helper.php');
+            unlink($root . '/features/time.feature');
+            rmdir($root . '/features/support');
+            rmdir($root . '/features');
+            rmdir($root);
+        }
+    });
+
     it("stops on a support file that cannot load, naming the file and the reason", function () {
         $root = sys_get_temp_dir() . '/phpspec_support_' . uniqid();
         mkdir($root . '/features/support', 0777, true);

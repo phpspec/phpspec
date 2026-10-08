@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 use PhpSpec\EventDispatcher\DispatcherRegistry;
+use PhpSpec\Mock\ArrangingCode;
 
 /**
  * @internal
@@ -57,6 +58,7 @@ final class SpecFileCache
     public static function templates(string $path): array
     {
         $realPath = realpath($path) ?: $path;
+        ArrangingCode::loaded($realPath);
         $signature = self::signature($realPath);
         $entry = self::$entries[$realPath] ?? null;
 

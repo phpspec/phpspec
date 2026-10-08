@@ -55,7 +55,7 @@ final class InProcessRunner
         $savedStoryBDD = StoryBDDRegistry::saveState();
         $savedBrowser = BrowserRegistry::saveState();
         $savedCoverage = CoverageRegistry::collector();
-        $savedArranging = ArrangingCode::roots();
+        $savedArranging = [ArrangingCode::roots(), ArrangingCode::loadedFiles()];
         $savedVerbosity = [getenv('SHELL_VERBOSITY'), $_ENV['SHELL_VERBOSITY'] ?? null, $_SERVER['SHELL_VERBOSITY'] ?? null];
 
         // Reset for inner run — fresh Dispatcher for the nested Application
@@ -93,7 +93,9 @@ final class InProcessRunner
             MockExpectation::$lastCallForAllow = $savedLastCallForAllow;
             StoryBDDRegistry::restoreState($savedStoryBDD);
             BrowserRegistry::restoreState($savedBrowser);
-            ArrangingCode::under(...$savedArranging);
+            ArrangingCode::reset();
+            ArrangingCode::under(...$savedArranging[0]);
+            ArrangingCode::loaded(...$savedArranging[1]);
             self::restoreShellVerbosity($savedVerbosity);
 
             if ($savedCoverage !== null) {

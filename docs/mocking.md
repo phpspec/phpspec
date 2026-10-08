@@ -92,8 +92,10 @@ instance of it built without its constructor, for `allow()` to replace; a
 ## Calls the spec never declared
 
 A double is strict towards the code under spec. A call that no `allow()` or
-`expect()` declared, made from anywhere outside the spec and features folders,
-fails the example at once:
+`expect()` declared, made from anywhere outside the spec code, fails the
+example at once. The spec code is every file PhpSpec loaded as a spec, step or
+support file, wherever it sits, and whatever sits in the spec, features and
+suite folders, or the folder of a path the run was given:
 
 ```
 App\Stock::reserve("tea", 2) was called but not expected, at src/App/Checkout.php:8.
