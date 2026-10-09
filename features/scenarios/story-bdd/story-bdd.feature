@@ -63,7 +63,7 @@ Feature: Story BDD with Gherkin
     Then the output should contain "undefined"
     And the exit code should be 1
 
-  Scenario: Pending steps are reported
+  Scenario: Pending steps are reported, with the reason they gave
     Given a feature file "features/pending.feature":
       """
       Feature: Pending
@@ -74,11 +74,32 @@ Feature: Story BDD with Gherkin
       """
       <?php
       given("a pending step", function () {
-          pending();
+          pending('Needs the payment gateway');
       });
       """
     When I run phpspec run "features/"
-    Then the output should contain "pending"
+    Then the output should contain "○ Given a pending step (Needs the payment gateway)"
+    And the output should contain "Pending:"
+    And the output should contain "Needs the payment gateway"
+    And the exit code should be 0
+
+  Scenario: A skipped step is reported with the reason it gave
+    Given a feature file "features/offline.feature":
+      """
+      Feature: Offline
+        Scenario: Printing
+          Given a printer
+      """
+    And a step file "features/steps/offline.steps.php":
+      """
+      <?php
+      given("a printer", function () {
+          skip('No printer here');
+      });
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "- Given a printer (No printer here)"
+    And the output should contain "Skipped:"
     And the exit code should be 0
 
   Scenario: A step that throws is an error and skips the remaining steps

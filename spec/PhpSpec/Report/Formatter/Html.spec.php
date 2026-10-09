@@ -129,6 +129,21 @@ describe(Html::class, function() {
         expect($text)->toContain('<li class="example skipped">posts the order <span class="reason">No network here</span></li>');
     });
 
+    it("shows the reason a pending or skipped step gave beside its title", function() {
+        $output = new BufferedOutput();
+        $formatter = new Html($output);
+
+        $scenario = new ScenarioResult("Checkout", [
+            new StepResult("When I pay", "pending", "Needs the <payment> gateway"),
+            new StepResult("Then I see a receipt", "skipped", "No printer here"),
+        ]);
+        $formatter->format(new SuiteResult([new FeatureResult("Shop", [$scenario])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain('<li class="example pending">When I pay <span class="reason">Needs the &lt;payment&gt; gateway</span></li>');
+        expect($text)->toContain('<li class="example skipped">Then I see a receipt <span class="reason">No printer here</span></li>');
+    });
+
     it("opens groups containing failures and collapses passing ones", function() {
         $output = new BufferedOutput();
         $formatter = new Html($output);

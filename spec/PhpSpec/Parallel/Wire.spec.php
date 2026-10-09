@@ -187,7 +187,7 @@ describe(Wire::class, function () {
         $errored = new StepResult('When I add a ghost', 'error');
         $errored->setError($stepError);
         $errored->setWarnings([['severity' => E_WARNING, 'message' => 'w', 'file' => __FILE__, 'line' => 1]]);
-        $scenario = new ScenarioResult('Paying', [$passed, $failed, $errored, new StepResult('And later', 'skipped'), new StepResult('And unknown', 'undefined'), new StepResult('And pending', 'pending')], 7, ['log' => 'x']);
+        $scenario = new ScenarioResult('Paying', [$passed, $failed, $errored, new StepResult('And later', 'skipped', 'No printer here'), new StepResult('And unknown', 'undefined'), new StepResult('And pending', 'pending', 'Needs the gateway')], 7, ['log' => 'x']);
 
         $back = $roundTrip(new FeatureResult('Checkout', [$scenario], 'features/checkout.feature'));
 
@@ -208,6 +208,9 @@ describe(Wire::class, function () {
         expect($steps[2]->getError()->getLine())->toBe($line);
         expect($steps[2]->getError()->lineIn(__FILE__))->toBe($line);
         expect($steps[2]->getWarnings())->toBe($errored->getWarnings());
+        expect($steps[3]->getReason())->toBe('No printer here');
+        expect($steps[4]->getReason())->toBeNull();
+        expect($steps[5]->getReason())->toBe('Needs the gateway');
     });
 
     it("answers null for a line that is not on the wire, and true for the line that ends it", function () {

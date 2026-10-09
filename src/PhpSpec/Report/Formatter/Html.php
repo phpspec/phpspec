@@ -260,10 +260,13 @@ final class Html extends AbstractFormatter
             return $this->collapsedLeaf($step->getState(), $step->getTitle(), $detail);
         }
 
+        $reason = $step->getReason();
+
         return sprintf(
-            "<li class=\"example %s\">%s</li>\n",
+            "<li class=\"example %s\">%s%s</li>\n",
             $this->escape($step->getState()),
             $this->escape($step->getTitle()),
+            $reason === null ? '' : ' <span class="reason">' . $this->escape($reason) . '</span>',
         );
     }
 

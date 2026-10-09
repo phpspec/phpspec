@@ -122,10 +122,10 @@ describe(Feature::class, function () {
         expect($steps[0]->isUndefined())->toBeTrue();
     });
 
-    it("marks pending steps", function () {
+    it("marks pending steps, keeping the reason they gave", function () {
         $registry = new StepRegistry();
         $registry->addStep("a pending step", function () {
-            pending();
+            pending('Needs the payment gateway');
         });
 
         $feature = new Feature('test.feature', new FeatureNode(
@@ -140,6 +140,7 @@ describe(Feature::class, function () {
         $result = $feature->run();
         $steps = $result->getResults()[0]->getResults();
         expect($steps[0]->isPending())->toBeTrue();
+        expect($steps[0]->getReason())->toBe('Needs the payment gateway');
     });
 
     it("marks a throwing step as an error, not a failure, and skips remaining", function () {
@@ -236,7 +237,9 @@ describe(Feature::class, function () {
         $result = $feature->run();
         $steps = $result->getResults()[0]->getResults();
         expect($steps[0]->isSkipped())->toBeTrue();
+        expect($steps[0]->getReason())->toBe('environment not available');
         expect($steps[1]->isSkipped())->toBeTrue();
+        expect($steps[1]->getReason())->toBeNull();
         expect($ran)->toBeFalse();
     });
 

@@ -225,6 +225,12 @@ final class DetailSections
                         $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
                     };
                     $this->attachPrinted('Failures', $step->getOutput());
+                } elseif ($step->isPending()) {
+                    $this->sections['Pending'][] = self::reasonEntry('yellow', $title, $step->getReason());
+                } elseif ($step->isSkipped() && $step->getReason() !== null) {
+                    // A step skipped behind a failure or a pending step said
+                    // nothing of its own; the step it stands behind is listed.
+                    $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $step->getReason());
                 }
 
                 foreach ($step->getWarnings() as $warning) {

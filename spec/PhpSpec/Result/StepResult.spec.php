@@ -42,6 +42,12 @@ describe(StepResult::class, function () {
         expect($result->isSkipped())->toBeTrue();
     });
 
+    it("carries the reason it was left pending or skipped for, and none unless given one", function () {
+        expect((new StepResult("When I pay", "pending", "Needs the payment gateway"))->getReason())->toBe("Needs the payment gateway");
+        expect((new StepResult("When I pay", "skipped", "No printer here"))->getReason())->toBe("No printer here");
+        expect((new StepResult("When I pay", "skipped"))->getReason())->toBeNull();
+    });
+
     it("returns the state string", function () {
         $result = new StepResult("step", "pending");
         expect($result->getState())->toBe("pending");

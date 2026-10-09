@@ -123,6 +123,21 @@ describe(Junit::class, function() {
             expect($text)->toContain('name="Then they see dashboard"');
         });
 
+        it('gives a pending or skipped step\'s skipped element the reason the step gave', function () {
+            $output = new BufferedOutput();
+            $formatter = new Junit($output);
+
+            $scenario = new ScenarioResult('Checkout', [
+                new StepResult('When I pay', 'pending', 'Needs the payment gateway'),
+                new StepResult('Then I see a receipt', 'skipped', 'No printer here'),
+            ]);
+            $formatter->format(new SuiteResult([new FeatureResult('Shop', [$scenario])]));
+
+            $text = $output->fetch();
+            expect($text)->toContain('<skipped message="Needs the payment gateway"/>');
+            expect($text)->toContain('<skipped message="No printer here"/>');
+        });
+
         it('formats pending steps with skipped element', function () {
             $output = new BufferedOutput();
             $formatter = new Junit($output);

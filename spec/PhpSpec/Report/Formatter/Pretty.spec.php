@@ -528,6 +528,31 @@ describe(Pretty::class, function() {
         expect($text)->toContain("expected:");
     });
 
+    it("shows the reason a pending or skipped step gave beside it and under its section, leaving a step skipped behind a failure out of the section", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $failed = new StepResult("When it breaks", "failure");
+        $failed->setError(new StepError("something broke", new \RuntimeException("something broke")));
+        $feature = new FeatureResult("Shop", [
+            new ScenarioResult("Checkout", [
+                new StepResult("Given a basket", "passed"),
+                new StepResult("When I pay", "pending", "Needs the payment gateway"),
+                new StepResult("Then I see a receipt", "skipped", "No printer here"),
+            ]),
+            new ScenarioResult("Broken", [$failed, new StepResult("Then cascade", "skipped")]),
+        ]);
+        $formatter->format(new SuiteResult([$feature]));
+
+        $text = $output->fetch();
+        expect($text)->toContain("○ When I pay (Needs the payment gateway)");
+        expect($text)->toContain("- Then I see a receipt (No printer here)");
+        expect($text)->toContain("- Then cascade\n");
+        expect($text)->toContain("Pending:\n\n  • Shop > Checkout > When I pay\n    Needs the payment gateway\n");
+        expect($text)->toContain("Skipped:\n\n  • Shop > Checkout > Then I see a receipt\n    No printer here\n");
+        expect($text)->not()->toContain("• Shop > Broken > Then cascade");
+    });
+
     it("formats a feature with passing steps", function () {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

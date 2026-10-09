@@ -129,11 +129,11 @@ final class PrettyViews
         } elseif ($step->isFailure() || $step->isError()) {
             self::outcome($output, 'red', '✘', $step->getTitle());
         } elseif ($step->isPending()) {
-            self::outcome($output, 'yellow', '○', $step->getTitle());
+            self::outcome($output, 'yellow', '○', $step->getTitle(), $step->getReason());
         } elseif ($step->isUndefined()) {
             self::outcome($output, 'bright-blue', '?', $step->getTitle());
         } elseif ($step->isSkipped()) {
-            self::outcome($output, 'cyan', '-', $step->getTitle());
+            self::outcome($output, 'cyan', '-', $step->getTitle(), $step->getReason());
         }
 
         if (!$step->isFailure() && !$step->isError()) {

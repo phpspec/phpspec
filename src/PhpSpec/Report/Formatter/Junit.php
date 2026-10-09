@@ -178,7 +178,11 @@ final class Junit extends AbstractFormatter
                 $testcase->setAttribute('classname', $feature->getTitle());
 
                 if ($step->isPending() || $step->isUndefined() || $step->isSkipped()) {
-                    $testcase->appendChild($xml->createElement('skipped'));
+                    $skip = $xml->createElement('skipped');
+                    if ($step->getReason() !== null) {
+                        $skip->setAttribute('message', $step->getReason());
+                    }
+                    $testcase->appendChild($skip);
                 } elseif ($step->isError()) {
                     $error = $xml->createElement('error');
                     $error->setAttribute('message', $step->getError()?->getMessage() ?? 'Errored');

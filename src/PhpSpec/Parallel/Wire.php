@@ -246,6 +246,7 @@ final class Wire
         $node = [
             'step' => $step->getTitle(),
             'state' => $step->getState(),
+            'reason' => $step->getReason(),
             'warnings' => $step->getWarnings(),
             'output' => $step->getOutput(),
             'duration' => $step->getDuration(),
@@ -468,7 +469,11 @@ final class Wire
      */
     private function stepFrom(array $node): StepResult
     {
-        $step = new StepResult((string) ($node['step'] ?? ''), (string) ($node['state'] ?? 'passed'));
+        $step = new StepResult(
+            (string) ($node['step'] ?? ''),
+            (string) ($node['state'] ?? 'passed'),
+            isset($node['reason']) ? (string) $node['reason'] : null,
+        );
         $step->setWarnings($this->notesFrom($node['warnings'] ?? null));
         $step->setOutput((string) ($node['output'] ?? ''));
         $step->setDuration((float) ($node['duration'] ?? 0.0));

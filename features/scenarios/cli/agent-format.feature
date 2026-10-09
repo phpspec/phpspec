@@ -889,6 +889,24 @@ Feature: Agent output format
     And a class file "src/App/Calculator.php" should be generated
     And it should contain "return 3"
 
+  Scenario: A pending step's reason reaches the scenario entry and the step
+    Given a feature file "features/pending.feature":
+      """
+      Feature: Pending
+        Scenario: Work in progress
+          Given a pending step
+      """
+    And a step file "features/steps/pending.steps.php":
+      """
+      <?php
+      given("a pending step", function () {
+          pending('Needs the payment gateway');
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Needs the payment gateway"
+
   Scenario: A pending or skipped entry carries the reason the example gave
     Given a spec file "spec/App/Reasons.spec.php":
       """

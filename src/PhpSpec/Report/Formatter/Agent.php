@@ -734,6 +734,9 @@ final class Agent extends AbstractFormatter
             if ($stepState === 'failing' && $step->getError() !== null) {
                 $reported['message'] = $step->getError()->getMessage();
                 $message ??= $step->getError()->getMessage();
+            } elseif ($step->getReason() !== null) {
+                $reported['message'] = $step->getReason();
+                $message ??= $step->getReason();
             }
 
             // An expectation that did not hold puts its two values on the step,

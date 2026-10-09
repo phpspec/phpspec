@@ -772,6 +772,23 @@ describe(Agent::class, function () {
         expect($result['offers'][0]['id'])->toStartWith('o_');
     });
 
+    it('carries the reason a pending or skipped step gave on the step, and on the scenario when nothing failed', function () use ($render) {
+        $feature = new FeatureResult('Shopping', [
+            new ScenarioResult('Checkout', [
+                new StepResult('Given a basket', 'passed'),
+                new StepResult('When I pay', 'pending', 'Needs the payment gateway'),
+                new StepResult('Then I see a receipt', 'skipped', 'No printer here'),
+            ]),
+        ], '/features/shopping.feature');
+
+        $doc = $render(new SuiteResult([$feature]));
+
+        expect($doc['examples'][0]['state'])->toBe('pending');
+        expect($doc['examples'][0]['message'])->toBe('Needs the payment gateway');
+        expect($doc['examples'][0]['steps'][0])->toBe(['title' => 'When I pay', 'state' => 'pending', 'message' => 'Needs the payment gateway']);
+        expect($doc['examples'][0]['steps'][1])->toBe(['title' => 'Then I see a receipt', 'state' => 'skipped', 'message' => 'No printer here']);
+    });
+
     it('counts a story run in scenarios and steps, never in examples', function () use ($render) {
         $step = new StepResult('Given a basket', 'failure');
         $step->setError(new \PhpSpec\StoryBDD\StepError('step went wrong', new \RuntimeException('step went wrong')));

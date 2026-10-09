@@ -295,9 +295,9 @@ final readonly class Feature implements SpecBlock
             }
             $printed->around(fn() => $match->callback->call($world, ...$args));
         } catch (PendingException $e) {
-            return new StepResult($title, 'pending');
+            return new StepResult($title, 'pending', $e->getMessage());
         } catch (SkippedException $e) {
-            return new StepResult($title, 'skipped');
+            return new StepResult($title, 'skipped', $e->getMessage());
         } catch (\Throwable $e) {
             $result = new StepResult($title, 'error');
             $result->setError(new StepError($e->getMessage(), $e));
