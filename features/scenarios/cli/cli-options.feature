@@ -734,6 +734,26 @@ Feature: CLI options
     And the output should contain "1 example"
     And the output should contain "1 scenario"
 
+  Scenario: A run with only features points at the flags that run them
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/only.feature":
+      """
+      Feature: Only
+        Scenario: One
+          Given nothing
+      """
+    And a step file "features/steps/only.steps.php":
+      """
+      <?php
+      given('nothing', function () {});
+      """
+    When I run phpspec run
+    Then the output should contain "No specs found. The features under features/ run with --story, or with --all alongside the specs."
+
+  Scenario: --story on a project without features says so
+    When I run phpspec run with option "--story"
+    Then the output should contain "No features found under features/."
+
   Scenario: Run only features with --story flag
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a spec file "spec/App/StoryOnly.spec.php":

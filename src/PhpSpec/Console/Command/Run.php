@@ -181,8 +181,14 @@ final class Run extends Command
      */
     protected function execute(Input $input, Output $output): int
     {
+        // Resolved once, here: it is what the run targets, and it recovers the
+        // positional path a "--parallel features" swallows, so asking twice
+        // would answer differently the second time.
+        $given = $this->givenPaths($input);
+        $files = $this->suitePaths($input, $given);
+
         $format = $this->resolveFormat($input);
-        $formatter = $this->createFormatter($format, $output);
+        $formatter = $this->createFormatter($format, $output, $this->nothingFoundLine($input, $given));
         // The agent document IS the console under --format=agent, so every human
         // line the command would otherwise print (the seed, the profile table, the
         // coverage verdict, an error) is routed off the console: what an agent
@@ -190,12 +196,6 @@ final class Run extends Command
         // For every other format the two are the same stream.
         $document = $formatter instanceof Agent ? $formatter : null;
         $prose = $document !== null ? new BufferedOutput() : $output;
-
-        // Resolved once, here: it is what the run targets, and it recovers the
-        // positional path a "--parallel features" swallows, so asking twice
-        // would answer differently the second time.
-        $given = $this->givenPaths($input);
-        $files = $this->suitePaths($input, $given);
         $document?->targets($files);
 
         // PHP prints a fatal to standard output as well as the error stream, and
@@ -935,14 +935,43 @@ final class Run extends Command
         return $this->resolveOutputs($input)['console'];
     }
 
-    private function createFormatter(string $format, Output $output): Formatter
+    /**
+     * What a run that found nothing to run ends with: which suite it looked
+     * for, and where the other one is when it exists.
+     *
+     * @param list<string> $given the paths the caller named outright
+     */
+    private function nothingFoundLine(Input $input, array $given): string
+    {
+        $featuresPath = rtrim($this->config->getFeaturesPath(), '/') . '/';
+
+        if ($given !== []) {
+            return 'No specs found.';
+        }
+
+        if ($input->getOption('story')) {
+            return sprintf('No features found under %s.', $featuresPath);
+        }
+
+        if ($input->getOption('all')) {
+            return 'No specs or features found.';
+        }
+
+        if ($this->loader->holdsFeatures()) {
+            return sprintf('No specs found. The features under %s run with --story, or with --all alongside the specs.', $featuresPath);
+        }
+
+        return 'No specs found.';
+    }
+
+    private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
     {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
             return new FormatterBridge($this->extensionLoader->getFormatter($format), $output);
         }
 
         return match ($format) {
-            'dot' => new Dot($output),
+            'dot' => new Dot($output, $nothingFound),
             'tap' => new Tap($output),
             'junit' => new Junit($output),
             'html' => new Html($output),
@@ -951,7 +980,7 @@ final class Run extends Command
                 fn(SuiteResult $results) => $this->candidates($results)->toArray(),
                 new ShutdownProcessEnd(),
             ),
-            default => new Pretty($output),
+            default => new Pretty($output, $nothingFound),
         };
     }
 

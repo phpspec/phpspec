@@ -353,6 +353,18 @@ final class Loader
     }
 
     /**
+     * Whether the features path holds a feature file, however deep.
+     */
+    public function holdsFeatures(): bool
+    {
+        $features = [];
+        $steps = [];
+        $this->scanFeatures(rtrim($this->featuresPath, '/'), $features, $steps);
+
+        return $features !== [];
+    }
+
+    /**
      * Recursively discovers .feature files and step definition files.
      *
      * @param string $path directory or file to scan

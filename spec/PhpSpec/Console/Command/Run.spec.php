@@ -26,6 +26,37 @@ describe(Run::class, function () {
             expect($output)->toContain('No specs found');
         });
 
+        it('points at the features when a plain run finds no specs but features exist', function (Filesystem $execFs) {
+            allow($execFs->isDir())->toReturnUsing(fn(string $p) => $p === './features');
+            allow($execFs->scandir())->toReturnUsing(fn(string $p) => $p === './features' ? ['.', '..', 'only.feature'] : []);
+            allow($execFs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+            $cmd = new Run(new Loader($execFs), new Runner(), new Configuration());
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $tester->execute([]);
+
+            expect($tester->getDisplay())->toContain('No specs found. The features under features/ run with --story, or with --all alongside the specs.');
+        });
+
+        it('says no features were found when --story finds none', function (Filesystem $execFs) {
+            $cmd = new Run(new Loader($execFs), new Runner(), new Configuration());
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $tester->execute(['--story' => true]);
+
+            expect($tester->getDisplay())->toContain('No features found under features/.');
+            expect($tester->getDisplay())->not()->toContain('No specs found');
+        });
+
+        it('says neither suite was found when --all finds nothing', function (Filesystem $execFs) {
+            $cmd = new Run(new Loader($execFs), new Runner(), new Configuration());
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $tester->execute(['--all' => true]);
+
+            expect($tester->getDisplay())->toContain('No specs or features found.');
+        });
+
         it('runs with dot format', function (Filesystem $execFs) {
             $config = new Configuration();
             $cmd = new Run(new Loader($execFs), new Runner(), $config);

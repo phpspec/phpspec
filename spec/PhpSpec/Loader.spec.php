@@ -108,6 +108,21 @@ describe(Loader::class, function () {
         expect($suite)->toBeAnInstanceOf(Suite::class);
     });
 
+    it("knows whether its features path holds any feature, however deep", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+        allow($fs->isDir())->toReturnUsing(fn(string $p) => in_array($p, ['./features', './features/nested'], true));
+        allow($fs->scandir())->toReturnUsing(fn(string $p) => $p === './features' ? ['.', '..', 'nested', 'readme.md'] : ['.', '..', 'deep.feature']);
+
+        expect((new Loader($fs))->holdsFeatures())->toBeTrue();
+    });
+
+    it("knows its features path holds no feature when the directory is missing", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturn(false);
+        allow($fs->isDir())->toReturn(false);
+
+        expect((new Loader($fs))->holdsFeatures())->toBeFalse();
+    });
+
     it("detects feature path by extension", function (Filesystem $fs) {
         allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
         allow($fs->isDir())->toReturnUsing(fn(string $p) => false);

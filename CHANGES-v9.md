@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A run that finds no specs says where the features are and that `--story` or `--all` runs them; `--story` with no features says "No features found" and `--all` with neither says so, instead of "No specs found" for every case
  - `describe` says a spec already exists instead of "created" when it wrote nothing, and `exemplify` says an example already exists instead of "added"
  - `expect()` verifies a call to a method whose return type allows null, which used to fall out of the mock routing
  - A generated class, interface or method lands in the directory its own namespace is mapped to, by `composer.json` or the `autoload` map, the longest prefix winning, instead of the first mapping's directory for every class; a class under no mapping keeps its whole name under the source path, where the next run finds it
