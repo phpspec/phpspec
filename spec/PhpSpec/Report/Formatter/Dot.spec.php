@@ -86,7 +86,7 @@ describe(Dot::class, function() {
         $skipped = new ExampleResult("posts the order", [], isSkipped: true, reason: "No network here");
         $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
 
-        $text = $output->fetch();
+        $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("Pending:\n\n  • MySpec > fetches the rates\n    Needs the rates API\n");
         expect($text)->toContain("Skipped:\n\n  • MySpec > posts the order\n    No network here\n");
     });
@@ -237,7 +237,7 @@ describe(Dot::class, function() {
         $risky->markRisky();
         (new Dot($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky])]));
 
-        $text = $output->fetch();
+        $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("R");
         expect($text)->toContain("1 risky");
         expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");

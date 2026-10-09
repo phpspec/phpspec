@@ -16,7 +16,7 @@ describe(ClassGenerator::class, function () {
 
         (new ClassGenerator(filesystem: $fs))->generate('App\\Basket');
 
-        expect($written)->toEndWith("class Basket\n{\n}\n");
+        expect(str_replace("\r\n", "\n", $written))->toEndWith("class Basket\n{\n}\n");
     });
 
     let('generator', fn(Filesystem $fs) => new ClassGenerator(SourceLayout::under('src'), $fs));

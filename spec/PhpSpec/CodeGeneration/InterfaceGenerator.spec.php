@@ -32,7 +32,7 @@ describe(InterfaceGenerator::class, function () {
 
         (new InterfaceGenerator(filesystem: $fs))->generate('App\\Catalogue');
 
-        expect($written)->toEndWith("interface Catalogue\n{\n}\n");
+        expect(str_replace("\r\n", "\n", $written))->toEndWith("interface Catalogue\n{\n}\n");
     });
 
     it("generates interface file without namespace", function (Filesystem $fs) {

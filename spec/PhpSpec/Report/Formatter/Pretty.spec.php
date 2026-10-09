@@ -274,7 +274,7 @@ describe(Pretty::class, function() {
         $crossed = new ExampleResult("is crossed out", [], isPending: true);
         $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped, $crossed])]));
 
-        $text = $output->fetch();
+        $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("○ fetches the rates (Needs the rates API)");
         expect($text)->toContain("- posts the order (No network here)");
         expect($text)->toContain("○ is crossed out\n");
@@ -567,7 +567,7 @@ describe(Pretty::class, function() {
         ]);
         $formatter->format(new SuiteResult([$feature]));
 
-        $text = $output->fetch();
+        $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("○ When I pay (Needs the payment gateway)");
         expect($text)->toContain("- Then I see a receipt (No printer here)");
         expect($text)->toContain("- Then cascade\n");
@@ -593,7 +593,7 @@ describe(Pretty::class, function() {
         ]);
         $formatter->format(new SuiteResult([$feature]));
 
-        $text = $output->fetch();
+        $text = str_replace("\r\n", "\n", $output->fetch());
         expect(substr_count($text, "RuntimeException: fixture down"))->toBe(1);
         expect($text)->toContain("• Checkout > Given a broken fixture\n    in Paying by card, Paying by cash and Printing\n");
         expect($text)->not()->toContain("• Checkout > Paying by card > Given a broken fixture");
@@ -601,12 +601,11 @@ describe(Pretty::class, function() {
 
     it("reports a risky example as one that checked nothing, lists it under Risky and counts it apart", function () {
         $output = new BufferedOutput();
-        $risky = new ExampleResult("calls the code", [MatchResult::passed()]);
         $risky = new ExampleResult("calls the code", []);
         $risky->markRisky();
         (new Pretty($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky, new ExampleResult("checks", [MatchResult::passed()])])]));
 
-        $text = $output->fetch();
+        $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("! calls the code (no expectation)");
         expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");
         expect($text)->toContain("1 passes, 1 risky");
