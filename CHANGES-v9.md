@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A config file with a mistyped key (one a known key is near), a value of the wrong kind or a syntax error stops every command in one line naming the file and the key meant, instead of being taken in silence or boxed as a parser exception; a key none of PhpSpec's own is near stays the project's
  - A run that finds no specs says where the features are and that `--story` or `--all` runs them; `--story` with no features says "No features found" and `--all` with neither says so, instead of "No specs found" for every case
  - `describe` says a spec already exists instead of "created" when it wrote nothing, and `exemplify` says an example already exists instead of "added"
  - `expect()` verifies a call to a method whose return type allows null, which used to fall out of the mock routing

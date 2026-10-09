@@ -23,6 +23,7 @@ use PhpSpec\BrowserAdapter;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
+use PhpSpec\ConfigurationException;
 use PhpSpec\Console\Command\Accept;
 use PhpSpec\Console\Command\Api;
 use PhpSpec\Console\Command\Describe;
@@ -39,7 +40,9 @@ use PhpSpec\Runner;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @internal
@@ -86,6 +89,22 @@ final class Application extends BaseApplication
      *
      * @return array<Command> the list of default console commands
      */
+    /**
+     * A configuration that cannot be taken as written is said in one line,
+     * naming the file, where the console would otherwise box the exception
+     * with the source file it was thrown from.
+     */
+    public function doRun(InputInterface $input, OutputInterface $output): int
+    {
+        try {
+            return parent::doRun($input, $output);
+        } catch (ConfigurationException $e) {
+            $output->writeln(sprintf('<fg=red>%s</>', $e->getMessage()));
+
+            return 1;
+        }
+    }
+
     public function getDefaultCommands(): array
     {
         $config = Configuration::load('.', configFile: Configuration::configPathFromArgv($this->argv));

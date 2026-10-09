@@ -43,6 +43,37 @@ Feature: Configuration
     Then the output should contain "."
     And all examples should pass
 
+  Scenario: A mistyped config key stops the run, naming the file and the nearest key
+    Given a phpspec.yaml config:
+      """
+      formatt: dot
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "phpspec.yaml: unknown key"
+    And the output should contain "Did you mean"
+    And the output should contain "format"
+    And the output should not contain "In Configuration.php"
+
+  Scenario: A wrong-typed config value stops the run, naming what the key expects
+    Given a phpspec.yaml config:
+      """
+      stop_on_failure: maybe
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "stop_on_failure expects true or false"
+
+  Scenario: A config file that cannot be parsed is named
+    Given a phpspec.yaml config:
+      """
+      formatt: [
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "phpspec.yaml could not be read: "
+    And the output should not contain "In Parser.php"
+
   Scenario: Configure stop on failure
     Given a phpspec.json config:
       """

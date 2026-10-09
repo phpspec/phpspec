@@ -1,10 +1,62 @@
 <?php
 
 use PhpSpec\Configuration;
+use PhpSpec\ConfigurationException;
 use PhpSpec\Filesystem;
 use PhpSpec\StopConditions;
 
 describe(Configuration::class, function () {
+
+    context('what a project states is checked as it is read', function () {
+        $yaml = function (Filesystem $fs, string $content): void {
+            allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
+            allow($fs->read())->toReturn($content);
+        };
+
+        it('refuses an unknown key, naming the file and the nearest known key', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "formatt: dot\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: unknown key "formatt". Did you mean "format"?',
+            );
+        });
+
+        it("takes a key none of PhpSpec's own is near as the project's, read through get()", function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "zebra: true\n");
+
+            expect(Configuration::load('/app', $fs)->get('zebra'))->toBe(true);
+        });
+
+        it('refuses a value of the wrong type, naming what the key expects', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "stop_on_failure: maybe\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: stop_on_failure expects true or false, "maybe" given.',
+            );
+        });
+
+        it('names the file that could not be parsed', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "formatt: [\n");
+
+            try {
+                Configuration::load('/app', $fs);
+                expect(false)->toBeTrue();
+            } catch (ConfigurationException $e) {
+                expect($e->getMessage())->toStartWith('/app/phpspec.yaml could not be read: ');
+            }
+        });
+
+        it('refuses a file that does not hold a map of settings', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "just a string\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml does not hold a map of settings.',
+            );
+        });
+    });
 
     it('is built from values and touches no disk', function () {
         $config = new Configuration(['spec_path' => 'tests', 'autoload' => ['Brew\\' => 'lib/Brew']], '/app', ['App\\' => 'src/']);

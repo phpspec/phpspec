@@ -16,7 +16,6 @@ namespace PhpSpec;
 
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\SourceLayout;
-use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -26,6 +25,30 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class Configuration
 {
+    /** @var array<string, string> every key a config file may state, and the kind of value it takes */
+    private const KNOWN_KEYS = [
+        'spec_path' => 'string',
+        'src_path' => 'string',
+        'psr4_prefix' => 'string',
+        'spec_suffix' => 'string',
+        'features_path' => 'string',
+        'steps_path' => 'string',
+        'format' => 'string',
+        'bootstrap' => 'string',
+        'base_url' => 'string',
+        'default_namespace' => 'string',
+        'stop_on_failure' => 'bool',
+        'stop_on_error' => 'bool',
+        'stop_on_warning' => 'bool',
+        'stop_on_notice' => 'bool',
+        'stop_on_deprecation' => 'bool',
+        'stop_on_skipped' => 'bool',
+        'autoload' => 'array',
+        'suites' => 'array',
+        'extensions' => 'array',
+        'ai' => 'array',
+        'guard' => 'array',
+    ];
     /**
      * @param array<string, mixed> $config the settings, as a config file states them
      * @param string $rootDir the project root the paths are relative to
@@ -49,8 +72,10 @@ final class Configuration
     public static function load(string $rootDir = '.', ?Filesystem $filesystem = null, ?string $configFile = null): self
     {
         $fs = $filesystem ?? new RealFilesystem();
+        $path = $configFile ?? self::settingsFile($rootDir, $fs);
+        $settings = $path === null ? [] : self::readFile($path, $fs);
 
-        return new self(self::readSettings($rootDir, $fs, $configFile), $rootDir, self::readComposerMappings($rootDir, $fs));
+        return new self($settings, $rootDir, self::readComposerMappings($rootDir, $fs));
     }
 
     /**
@@ -86,51 +111,91 @@ final class Configuration
     }
 
     /**
-     * Loads the explicit config file when given, otherwise the first config
-     * file found in the root directory: yaml > yml > json > php.
+     * The config file a project keeps under its root, the first found of
+     * phpspec.yaml, phpspec.yml, phpspec.json and phpspec.php, or null.
      */
-    /**
-     * @return array<string, mixed>
-     */
-    private static function readSettings(string $rootDir, Filesystem $fs, ?string $configFile): array
+    private static function settingsFile(string $rootDir, Filesystem $fs): ?string
     {
-        if ($configFile !== null) {
-            return self::readFile($configFile, $fs);
-        }
-
         foreach (['phpspec.yaml', 'phpspec.yml', 'phpspec.json', 'phpspec.php'] as $name) {
             $path = $rootDir . '/' . $name;
 
             if ($fs->exists($path)) {
-                return self::readFile($path, $fs);
+                return $path;
             }
         }
 
-        return [];
+        return null;
     }
 
     /**
-     * Loads configuration from an explicit file, resolving the parser from
-     * the file extension.
+     * The settings a file states, checked key by key: a file that does not
+     * parse, a key one of PhpSpec's own is near (a typo, read by nothing) or
+     * a value of the wrong kind is refused naming the file, since taking it
+     * silently would run something other than what was written. A key none
+     * of PhpSpec's own is near is the project's, read through get().
      *
-     * @param string $path the config file path
-     * @throws RuntimeException when the file does not exist or has an unsupported extension
-     */
-    /**
      * @return array<string, mixed>
      */
     private static function readFile(string $path, Filesystem $fs): array
     {
         if (!$fs->exists($path)) {
-            throw new RuntimeException("Configuration file not found: $path");
+            throw new ConfigurationException("Configuration file not found: $path");
         }
 
-        return match (pathinfo($path, PATHINFO_EXTENSION)) {
-            'yaml', 'yml' => Yaml::parse($fs->read($path)) ?? [],
-            'json' => json_decode($fs->read($path), true) ?? [],
-            'php' => $fs->requirePhp($path),
-            default => throw new RuntimeException("Unsupported configuration file type: $path"),
-        };
+        try {
+            $settings = match (pathinfo($path, PATHINFO_EXTENSION)) {
+                'yaml', 'yml' => Yaml::parse($fs->read($path)),
+                'json' => json_decode($fs->read($path), true, 512, JSON_THROW_ON_ERROR),
+                'php' => $fs->requirePhp($path),
+                default => throw new ConfigurationException("Unsupported configuration file type: $path"),
+            };
+        } catch (ConfigurationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new ConfigurationException(sprintf('%s could not be read: %s', $path, $e->getMessage()), 0, $e);
+        }
+
+        if ($settings === null) {
+            return [];
+        }
+
+        if (!is_array($settings)) {
+            throw new ConfigurationException(sprintf('%s does not hold a map of settings.', $path));
+        }
+
+        foreach ($settings as $key => $value) {
+            $expected = self::KNOWN_KEYS[$key] ?? null;
+
+            if ($expected === null) {
+                $nearest = self::nearestOf((string) $key, array_keys(self::KNOWN_KEYS));
+
+                if ($nearest !== null) {
+                    throw new ConfigurationException(sprintf('%s: unknown key "%s". Did you mean "%s"?', $path, $key, $nearest));
+                }
+
+                continue;
+            }
+
+            $wellTyped = match ($expected) {
+                'bool' => is_bool($value),
+                'string' => is_string($value),
+                default => is_array($value),
+            };
+
+            if (!$wellTyped) {
+                throw new ConfigurationException(sprintf(
+                    '%s: %s expects %s, %s given.',
+                    $path,
+                    $key,
+                    match ($expected) {
+                        'bool' => 'true or false', 'string' => 'a string', default => 'a map'
+                    },
+                    is_scalar($value) ? '"' . $value . '"' : get_debug_type($value),
+                ));
+            }
+        }
+
+        return $settings;
     }
 
     /**
@@ -603,21 +668,44 @@ final class Configuration
 
     private function unknownGuardKey(string $key): string
     {
+        return ucfirst(self::unknownKey($key, array_keys(self::GUARD_DEFAULTS), 'guard key'));
+    }
+
+    /**
+     * A key nothing reads, with the known key it most likely meant when one
+     * is near, else all of them.
+     *
+     * @param list<string> $known
+     */
+    private static function unknownKey(string $key, array $known, string $what): string
+    {
+        $closest = self::nearestOf($key, $known);
+
+        if ($closest !== null) {
+            return sprintf('unknown %s "%s". Did you mean "%s"?', $what, $key, $closest);
+        }
+
+        return sprintf('unknown %s "%s". The known keys are %s.', $what, $key, self::naturalList($known));
+    }
+
+    /**
+     * The known key a few letters away from the given one, or null when none is.
+     *
+     * @param list<string> $known
+     */
+    private static function nearestOf(string $key, array $known): ?string
+    {
         $closest = null;
         $best = 4;
-        foreach (array_keys(self::GUARD_DEFAULTS) as $known) {
-            $distance = levenshtein($key, $known);
+        foreach ($known as $candidate) {
+            $distance = levenshtein($key, $candidate);
             if ($distance < $best) {
                 $best = $distance;
-                $closest = $known;
+                $closest = $candidate;
             }
         }
 
-        if ($closest !== null) {
-            return sprintf('Unknown guard key "%s". Did you mean "%s"?', $key, $closest);
-        }
-
-        return sprintf('Unknown guard key "%s". The known keys are %s.', $key, self::naturalList(array_keys(self::GUARD_DEFAULTS)));
+        return $closest;
     }
 
     /**
