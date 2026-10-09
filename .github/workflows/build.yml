@@ -71,7 +71,7 @@ jobs:
 
             - name: Run features
               run: php bin/phpspec run features/
-              continue-on-error: ${{ matrix.composer-flags == '--prefer-lowest' || matrix.operating-system == 'windows-latest' }}
+              continue-on-error: ${{ matrix.composer-flags == '--prefer-lowest' }}
 
             - name: Check coverage
               if: matrix.operating-system == 'ubuntu-latest' && matrix.composer-flags == ''
