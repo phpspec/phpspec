@@ -88,7 +88,7 @@ Scenario Outline is its own entry, named by its values
 |---|---|
 | `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
-| `state` | `failing`, `error`, `pending`, or `skipped`; `passing` only under `-v`. |
+| `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` only under `-v`. |
 | `message` | What went wrong, whatever the state; for `pending` and `skipped`, the reason the example gave, when it gave one. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
@@ -255,7 +255,7 @@ the server actually said.
 
 ### `summary`
 
-The counts (`passing`, `failing`, `errors`, `pending`, `skipped`) are for the
+The counts (`passing`, `failing`, `errors`, `pending`, `skipped`, `risky`) are for the
 whole run, in the units the entries are reported in: one per example, one per
 scenario. `steps` is a size, not a verdict. The one number to branch on is
 **`actionable`** = failing + errors + pending, plus a coverage gate the run
@@ -461,6 +461,8 @@ its `event`:
     class and the site. If the entry has an `offer`, PhpSpec can generate the
     missing piece.
   - `pending` — an unimplemented example; implement it.
+  - `risky` — an example that made no expectation, so it checked nothing;
+    give it one. Not actionable: nothing is red.
 - `output` on an entry is what the code printed while it ran: read it, it is
   often the whole diagnosis for a scenario that drove a process of its own.
 - `attachments` on an entry is context the spec handed over about itself, by

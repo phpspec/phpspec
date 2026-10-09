@@ -143,6 +143,7 @@ final class Wire
             'errored' => $example->isError(),
             'pending' => $example->isPending(),
             'skipped' => $example->isSkipped(),
+            'risky' => $example->isRisky(),
             'reason' => $example->getReason(),
             'file' => $example->getFile(),
             'line' => $example->getLine(),
@@ -358,6 +359,10 @@ final class Wire
 
         if (isset($node['file'], $node['line'])) {
             $example->declaredAt((string) $node['file'], (int) $node['line']);
+        }
+
+        if ($node['risky'] ?? false) {
+            $example->markRisky();
         }
 
         $example->setDuration((float) ($node['duration'] ?? 0.0));

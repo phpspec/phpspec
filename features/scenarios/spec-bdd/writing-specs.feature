@@ -165,3 +165,24 @@ Feature: Writing specs
     When I run phpspec run
     Then all examples should pass
     And no file "noisy-was-built.txt" should be generated
+
+  Scenario: An example that makes no expectation is reported as risky, and the run stays green
+    Given a spec file "spec/App/Risky.spec.php":
+      """
+      <?php
+      describe('Risky', function () {
+          it('calls the code and checks nothing', function () {
+              strtoupper('tea');
+          });
+
+          it('checks something', function () {
+              expect(strtoupper('tea'))->toBe('TEA');
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "! calls the code and checks nothing (no expectation)"
+    And the output should contain "Risky:"
+    And the output should contain "1 risky"
+    And the output should contain "1 passes"
+    And the exit code should be 0

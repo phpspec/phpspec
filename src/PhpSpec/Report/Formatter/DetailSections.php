@@ -33,7 +33,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  * The end-of-run detail, grouped by kind: Failures, Errors, Warnings,
- * Deprecations, Pending and Skipped, each section printed only when it has entries.
+ * Deprecations, Risky, Pending and Skipped, each section printed only when it has entries.
  * Shared by the pretty and dot formatters so both tell the same story. A
  * failure reads as its sentence, then the value wanted under "expected" and
  * the value produced under "got", whatever the matcher.
@@ -51,7 +51,7 @@ final class DetailSections
      */
     public function render(OutputInterface $output, SuiteResult $results): void
     {
-        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Pending' => [], 'Skipped' => []];
+        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Risky' => [], 'Pending' => [], 'Skipped' => []];
 
         foreach ($results->getResults() as $node) {
             if ($node instanceof FeatureResult) {
@@ -61,7 +61,7 @@ final class DetailSections
             }
         }
 
-        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Pending' => 'yellow', 'Skipped' => 'cyan'];
+        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Risky' => 'yellow', 'Pending' => 'yellow', 'Skipped' => 'cyan'];
         foreach ($this->sections as $name => $entries) {
             if ($entries === []) {
                 continue;
@@ -139,6 +139,8 @@ final class DetailSections
             $this->sections['Pending'][] = self::reasonEntry('yellow', $title, $example->getReason());
         } elseif ($example->isSkipped()) {
             $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $example->getReason());
+        } elseif ($example->isRisky()) {
+            $this->sections['Risky'][] = self::reasonEntry('yellow', $title, 'No expectation in this example.');
         }
 
         foreach ($example->getWarnings() as $warning) {

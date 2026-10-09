@@ -275,6 +275,10 @@ class Example implements ExampleResultRegistry, Rebindable
         DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
         $this->exampleResult->setOutput($printed->text());
+
+        if (!$this->isError && $this->exampleResult->getResults() === []) {
+            $this->exampleResult->markRisky();
+        }
         $unique = [];
         foreach ($warnings as $w) {
             $key = $w['message'] . ':' . $w['file'] . ':' . $w['line'];

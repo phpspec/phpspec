@@ -128,6 +128,9 @@ final class Dot extends AbstractFormatter
             if ($c['passes']) {
                 $parts[] = "<fg=green>{$c['passes']} passes</>";
             }
+            if ($c['risky']) {
+                $parts[] = "<fg=yellow>{$c['risky']} risky</>";
+            }
             if ($c['failures']) {
                 $parts[] = "<fg=red>{$c['failures']} failures</>";
             }
@@ -217,6 +220,8 @@ final class Dot extends AbstractFormatter
             $this->output->write('<fg=red>E</>');
         } elseif ($example->isFailure()) {
             $this->output->write('<fg=red>F</>');
+        } elseif ($example->isRisky()) {
+            $this->output->write('<fg=yellow>R</>');
         } else {
             $this->output->write('<fg=green>.</>');
         }

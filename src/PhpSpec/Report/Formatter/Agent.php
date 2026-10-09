@@ -340,6 +340,8 @@ final class Agent extends AbstractFormatter
             'errors' => $errors,
             'pending' => $pending,
             'skipped' => $this->counts['skipped'] ?? 0,
+            // Checked nothing, but nothing is red: counted, never actionable.
+            'risky' => $this->counts['risky'] ?? 0,
             // The one number an agent checks: everything red or unfinished
             // (failures + errors + pending), plus a missed coverage gate and
             // anything that stopped the run. Zero means nothing to do.
@@ -534,6 +536,9 @@ final class Agent extends AbstractFormatter
             if ($example->getReason() !== null) {
                 $entry['message'] = $example->getReason();
             }
+        } elseif ($state === 'risky') {
+            $entry['message'] = 'No expectation in this example.';
+            $this->address($entry, $example, null, null);
         } elseif ($state === 'passing') {
             $this->address($entry, $example, null, null);
         }
@@ -638,6 +643,7 @@ final class Agent extends AbstractFormatter
             $example->isSkipped() => 'skipped',
             $example->isError() => 'error',
             $example->isFailure() => 'failing',
+            $example->isRisky() => 'risky',
             default => 'passing',
         };
     }

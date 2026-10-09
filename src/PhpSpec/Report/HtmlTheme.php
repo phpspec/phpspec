@@ -154,8 +154,8 @@ final class HtmlTheme
         color:var(--ps-green-ink)}
         .example.failed,.example.failure,.example.error{border-left-color:var(--ps-red);
         background:var(--ps-red-tint);color:var(--ps-red)}
-        .example.pending{border-left-color:var(--ps-amber);background:var(--ps-amber-tint);
-        color:var(--ps-amber)}
+        .example.pending,.example.risky{border-left-color:var(--ps-amber);
+        background:var(--ps-amber-tint);color:var(--ps-amber)}
         .example.skipped,.example.undefined{border-left-color:var(--ps-slate);
         background:var(--ps-slate-tint);color:var(--ps-slate)}
         .example+.example{margin-top:2px}

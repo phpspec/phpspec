@@ -51,6 +51,8 @@ final class ExampleResult implements Results
     /** @var int|null The line the example is declared on */
     private ?int $line = null;
 
+    private bool $risky = false;
+
     /**
      * @param string $title the example description
      * @param array<MatchResult> $matchResults array of MatchResult instances from this example
@@ -215,6 +217,20 @@ final class ExampleResult implements Results
     public function getReason(): ?string
     {
         return $this->reason;
+    }
+
+    /**
+     * Says the example ran to the end without making a single expectation:
+     * it checked nothing, whatever the code did.
+     */
+    public function markRisky(): void
+    {
+        $this->risky = true;
+    }
+
+    public function isRisky(): bool
+    {
+        return $this->risky;
     }
 
     /**

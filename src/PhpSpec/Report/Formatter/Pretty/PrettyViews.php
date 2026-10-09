@@ -73,6 +73,8 @@ final class PrettyViews
             self::outcome($output, 'cyan', '-', $example->getTitle(), $example->getReason());
         } elseif ($example->isError() || $example->isFailure()) {
             self::outcome($output, 'red', '✘', $example->getTitle());
+        } elseif ($example->isRisky()) {
+            self::outcome($output, 'yellow', '!', $example->getTitle(), 'no expectation');
         } else {
             self::outcome($output, 'green', '✓', $example->getTitle());
             if ($verbose) {
@@ -275,6 +277,9 @@ final class PrettyViews
             $exParts = [];
             if ($counts['passes']) {
                 $exParts[] = '<fg=green>' . $counts['passes'] . ' passes</>';
+            }
+            if ($counts['risky']) {
+                $exParts[] = '<fg=yellow>' . $counts['risky'] . ' risky</>';
             }
             if ($counts['failures']) {
                 $exParts[] = '<fg=red>' . $counts['failures'] . ' failures</>';

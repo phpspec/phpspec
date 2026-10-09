@@ -599,6 +599,19 @@ describe(Pretty::class, function() {
         expect($text)->not()->toContain("• Checkout > Paying by card > Given a broken fixture");
     });
 
+    it("reports a risky example as one that checked nothing, lists it under Risky and counts it apart", function () {
+        $output = new BufferedOutput();
+        $risky = new ExampleResult("calls the code", [MatchResult::passed()]);
+        $risky = new ExampleResult("calls the code", []);
+        $risky->markRisky();
+        (new Pretty($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky, new ExampleResult("checks", [MatchResult::passed()])])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain("! calls the code (no expectation)");
+        expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");
+        expect($text)->toContain("1 passes, 1 risky");
+    });
+
     it("formats a feature with passing steps", function () {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

@@ -208,6 +208,7 @@ final class Html extends AbstractFormatter
             $example->isFailure() => 'failed',
             $example->isPending() => 'pending',
             $example->isSkipped() => 'skipped',
+            $example->isRisky() => 'risky',
             default => 'passed',
         };
 
@@ -232,7 +233,7 @@ final class Html extends AbstractFormatter
             return $this->collapsedLeaf($state, $example->getTitle(), $detail);
         }
 
-        $reason = $example->getReason();
+        $reason = $state === 'risky' ? 'no expectation' : $example->getReason();
 
         return sprintf(
             "<li class=\"example %s\">%s%s</li>\n",

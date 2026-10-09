@@ -90,6 +90,21 @@ describe(Example::class, function() {
         expect($copy->containsLine(12))->toBeTrue();
     });
 
+    it("marks an example that ran without a single expectation as risky, and one that recorded a match not", function() {
+        $checksNothing = new Example("checks nothing", function() {
+            strtoupper('tea');
+        });
+        // An expectation made inside the example being run is collected by
+        // the example that is running this spec, so the match is recorded on
+        // the inner example directly, as its subscriber would.
+        $checksSomething = new Example("checks something", function() use (&$checksSomething) {
+            $checksSomething->addMatch(static fn() => \PhpSpec\Result\MatchResult::passed());
+        });
+
+        expect($checksNothing->run()->isRisky())->toBe(true);
+        expect($checksSomething->run()->isRisky())->toBe(false);
+    });
+
     it("tracks focus state", function() {
         $example = new Example("focused", function() {});
         expect($example->isFocused())->toBe(false);
@@ -150,9 +165,11 @@ describe(Example::class, function() {
         });
 
         $result = $example->run();
-        expect($result->isError())->toBe(true);
 
+        // Asserted once the dispatcher this spec reports through is back: an
+        // expectation made against the fresh one is never collected.
         \PhpSpec\EventDispatcher\DispatcherRegistry::set($saved);
+        expect($result->isError())->toBe(true);
     });
 
     it("addExampleResult sets error flag for error results", function() {

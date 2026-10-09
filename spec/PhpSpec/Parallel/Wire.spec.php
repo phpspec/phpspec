@@ -36,14 +36,18 @@ describe(Wire::class, function () {
             new ExampleResult('errors', [], isError: true),
             new ExampleResult('waits', [], isPending: true, reason: 'Needs the rates API'),
             new ExampleResult('stays home', [], isSkipped: true, reason: 'No network here'),
+            $risky = new ExampleResult('checks nothing', []),
         ], 'spec/App/Basket.spec.php');
+        $risky->markRisky();
 
         $back = $roundTrip($spec);
 
         expect($back->getTitle())->toBe('Basket');
         expect($back->getPath())->toBe('spec/App/Basket.spec.php');
         $examples = $back->getResults();
-        expect(array_map(static fn(ExampleResult $e): string => $e->getTitle(), $examples))->toBe(['passes', 'fails', 'errors', 'waits', 'stays home']);
+        expect(array_map(static fn(ExampleResult $e): string => $e->getTitle(), $examples))->toBe(['passes', 'fails', 'errors', 'waits', 'stays home', 'checks nothing']);
+        expect($examples[5]->isRisky())->toBeTrue();
+        expect($examples[0]->isRisky())->toBeFalse();
         expect(count($examples[0]->getResults()))->toBe(2);
         expect($examples[0]->isFailure())->toBeFalse();
         expect($examples[1]->isFailure())->toBeTrue();

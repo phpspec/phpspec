@@ -59,6 +59,25 @@ describe(Agent::class, function () {
         expect($entry['rerun'])->toEndWith('Agent.spec.php:' . ($line - 5));
     });
 
+    it("reports a risky example without being asked, counted apart and never actionable", function () {
+        $risky = new ExampleResult("calls the code", []);
+        $risky->markRisky();
+        $risky->declaredAt(__FILE__, 12);
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky])]));
+
+        $lines = explode("\n", trim($output->fetch()));
+        $entry = json_decode($lines[1], true, flags: JSON_THROW_ON_ERROR);
+        $summary = json_decode($lines[2], true, flags: JSON_THROW_ON_ERROR);
+        expect($entry['state'])->toBe('risky');
+        expect($entry['message'])->toBe('No expectation in this example.');
+        expect($entry['rerun'])->toEndWith('Agent.spec.php:12');
+        expect($summary['risky'])->toBe(1);
+        expect($summary['passing'])->toBe(0);
+        expect($summary['actionable'])->toBe(0);
+    });
+
     it("carries the reason a pending or skipped example gave as its message, and no message without one", function () {
         $pending = new ExampleResult("is pending", [], isPending: true, reason: "Needs the rates API");
         $skipped = new ExampleResult("is skipped", [], isSkipped: true, reason: "No network here");
@@ -176,7 +195,7 @@ describe(Agent::class, function () {
 
         expect($doc['suite']['php'])->toBe(PHP_VERSION);
         expect($doc['suite']['coverage'])->toBeTrue();
-        expect($doc['suite']['guard'])->toBe('stood down');
+        expect($doc['suite']['guard'])->toBe('on');
     });
 
     it('carries the remedy for what stopped the run, when there is one', function () use ($stream) {

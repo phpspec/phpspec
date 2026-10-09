@@ -102,6 +102,14 @@ describe(ExampleResult::class, function() {
         expect($skipped->getReason())->toBe("No network here");
     });
 
+    it("is risky once marked so, and not by default", function() {
+        $result = new ExampleResult("test", []);
+        expect($result->isRisky())->toBe(false);
+
+        $result->markRisky();
+        expect($result->isRisky())->toBe(true);
+    });
+
     it("has no reason unless given one", function() {
         expect((new ExampleResult("test", [], isPending: true))->getReason())->toBeNull();
     });

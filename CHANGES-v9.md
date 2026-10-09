@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - An example that runs to the end without making an expectation is reported as risky: `!` in pretty, `R` in dot, a `Risky:` section, a `risky` count and an agent entry with state `risky`; the exit code is unchanged, nothing is red
  - `--tags` runs the scenarios a Cucumber tag expression selects (`@smoke and not @wip`, `(@a or @b) and not @c`), a feature's tags counting for every scenario in it; tags used to be parsed and nothing could select by them. `--filter` and `--tags` reach every `--parallel` worker, which used to run every example of a file the filter had let through
  - `it("title")` with no body declares a pending example, as `xit()` does, instead of an argument-count error that takes the whole context down
  - `--stop-on-pending`, and `stop_on_pending` in the config, halt the run at the first pending example; `--stop-on-problems` stops on one too
@@ -28,8 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
- - `Configuration` is built from values and touches no disk; `Configuration::load()` reads what a project states, its config file and the PSR-4 mappings of composer.json, as the console does
  - Guard refuses to run when no coverage driver is available, with the remedy and exit code 1, instead of standing down and letting the run pass unjudged; the agent header's `guard` is `on` or `off`
+ - `Configuration` is built from values and touches no disk; `Configuration::load()` reads what a project states, its config file and the PSR-4 mappings of composer.json, as the console does
  - A `let` value is built the first time an example reads it, once per example, instead of before the hooks: a `beforeEach` can arrange a double the let consumes, a let may read one declared after it, and a let nobody reads never runs; the doubles a let asks for are still on `$this` from the start
  - A double is strict towards the code under spec: a call that no `allow()` or `expect()` declared, made from outside the spec code, fails the example at once naming the call and where it came from, instead of answering with a default; the spec code is every file PhpSpec loaded as a spec, step or support file, wherever it sits, and whatever sits in the spec, features and suite folders or in the folder of a path the run was given, which is how `allow()` and `expect()` reach the call they declare
  - `toHaveBeenCalled()` is asked after the act and judged at once from the calls recorded so far, while `toBeCalled()` stays declared before the act and judged when the example ends

@@ -115,6 +115,15 @@ describe(Html::class, function() {
         expect($text)->toContain('class="example skipped"');
     });
 
+    it("marks a risky example and says it checked nothing", function() {
+        $output = new BufferedOutput();
+        $risky = new ExampleResult("calls the code", []);
+        $risky->markRisky();
+        (new Html($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky])]));
+
+        expect($output->fetch())->toContain('<li class="example risky">calls the code <span class="reason">no expectation</span></li>');
+    });
+
     it("shows the reason a pending or skipped example gave beside its title", function() {
         $output = new BufferedOutput();
         $formatter = new Html($output);

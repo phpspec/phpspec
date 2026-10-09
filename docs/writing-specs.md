@@ -166,6 +166,16 @@ it("fetches the rates", function () {
 
 A skipped example is reported with a `-` (an `S` under `--format dot`) and its reason, listed under `Skipped:`, and leaves the run green; `--stop-on-skipped` halts the run at the first one.
 
+## Risky Examples
+
+An example that runs to the end without making a single expectation checked nothing, whatever the code did. It is reported as risky, with a `!` (an `R` under `--format dot`), counted apart from the passes and listed under `Risky:` at the end. It leaves the run green: nothing is red, there is only nothing checked.
+
+```php
+it("converts the total", function () {
+    $this->converter->convert(100);   // risky: no expect()
+});
+```
+
 ## Focused Examples
 
 Run only specific examples or contexts:
