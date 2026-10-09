@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A generated class whose name ends in `Exception` extends `Exception`, imported with a `use` line, where it used to extend nothing and could not be thrown
  - A call on a double that nothing declared names the file it came from relative to the project with forward slashes, as the other messages do, instead of the absolute path spelled the platform's way
  - A class, interface, spec or feature generated from a phpspec checked out with CRLF line endings, as git does on Windows, is written with line feeds alone, as PSR-12 asks and as generated methods and steps already were
  - A generated step definition takes the table or doc string its step carries, as `DataTable $table` or `string $docString` after its pattern's parameters, with the `DataTable` import added once; it used to take neither, and that a doc string arrives as a string is now documented

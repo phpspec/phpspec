@@ -122,9 +122,10 @@ namespace App;
 
 class Calculator
 {
-
 }
 ```
+
+A class whose name ends in `Exception` extends `Exception`, imported with a `use` line, so it can be thrown the moment it exists.
 
 ## Interface Generation
 

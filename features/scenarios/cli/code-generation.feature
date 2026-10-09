@@ -211,6 +211,22 @@ Feature: Code generation
     Then a file "src/App/Notifier.php" should be generated
     And it should contain "interface Notifier"
 
+  Scenario: A generated class named like an exception extends Exception, so it can be thrown
+    Given a spec file "spec/App/PaymentFailedException.spec.php":
+      """
+      <?php
+      describe('App\PaymentFailedException', function () {
+          it('can be thrown', function () {
+              $declined = new App\PaymentFailedException('declined');
+              expect(fn () => throw $declined)->toThrow(App\PaymentFailedException::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the class "src/App/PaymentFailedException.php" should contain "use Exception;"
+    And the class "src/App/PaymentFailedException.php" should contain "class PaymentFailedException extends Exception"
+    When I run phpspec run in a fresh process
+    Then the output should contain "1 example (1 passed)"
   Scenario: A generated class lands where composer.json says its namespace lives
     Given no phpspec.json config
     And a file "composer.json":

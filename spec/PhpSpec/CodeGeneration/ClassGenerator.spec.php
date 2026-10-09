@@ -33,6 +33,32 @@ describe(ClassGenerator::class, function () {
         expect($written)->not()->toContain("\r");
     });
 
+    it('makes a class named like an exception extend Exception, imported, so it can be thrown', function (Filesystem $fs) {
+        $written = '';
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written = $content;
+        });
+
+        (new ClassGenerator(filesystem: $fs))->generate('App\\PaymentFailedException');
+
+        expect($written)->toContain("namespace App;\n\nuse Exception;\n\nclass PaymentFailedException extends Exception\n{\n}\n");
+    });
+
+    it('extends Exception without importing it for an exception in the global namespace', function (Filesystem $fs) {
+        $written = '';
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written = $content;
+        });
+
+        (new ClassGenerator(filesystem: $fs))->generate('TimeoutException');
+
+        expect($written)->toContain("<?php\n\nclass TimeoutException extends Exception\n{\n}\n");
+        expect($written)->not()->toContain('use Exception;');
+    });
     let('generator', fn(Filesystem $fs) => new ClassGenerator(SourceLayout::under('src'), $fs));
 
     it("instantiates", function () {
