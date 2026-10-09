@@ -773,12 +773,18 @@ describe(Double::class, function() {
         expect($lcd->______PhpSpecGetDouble())->toBe($double);
     });
 
-    it("throws when trying to double a final class", function() {
-        expect(fn() => Double::getInstance(DoubleSpecFinalClass::class))->toThrow(\LogicException::class);
+    it("refuses to double a final class, naming the two ways out", function() {
+        expect(fn() => Double::getInstance(DoubleSpecFinalClass::class))->toThrow(
+            \LogicException::class,
+            "Cannot create a test double for final class DoubleSpecFinalClass. Extract an interface and type-hint against it, or make the class non-final.",
+        );
     });
 
-    it("throws when trying to double a readonly class", function() {
-        expect(fn() => Double::getInstance(DoubleSpecReadonlyClass::class))->toThrow(\LogicException::class);
+    it("refuses to double a readonly class the same way", function() {
+        expect(fn() => Double::getInstance(DoubleSpecReadonlyClass::class))->toThrow(
+            \LogicException::class,
+            "Cannot create a test double for readonly class DoubleSpecReadonlyClass. Extract an interface and type-hint against it, or make the class non-final.",
+        );
     });
 
     it("throws when trying to double a trait", function() {
