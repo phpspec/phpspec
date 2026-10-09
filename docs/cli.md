@@ -543,7 +543,9 @@ change while the integration is being finalised.
 ## Dependencies
 
 PhpSpec depends on:
-- `php` ^8.2
-- `symfony/console` ^7.0
+- `php` ^8.2 with `ext-mbstring`, `ext-tokenizer` and `ext-sockets`
+- `symfony/console` and `symfony/yaml` ^7.0 || ^8.0
+- `cucumber/gherkin` ^39
 
-There are no other runtime dependencies. The mocking system is built-in.
+The mocking system is built in. The AI commands (`pair`, `next`, `generate`,
+`refactor`) need the `papi-ai` packages, installed separately; see `pair.md`.
