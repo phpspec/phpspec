@@ -239,7 +239,7 @@ final readonly class CodeGenerator
             }
 
             $specGenerator->generate($specName);
-            $output->writeln(sprintf('  <fg=green>Spec for %s created.</>', $fqcn));
+            $output->writeln(sprintf('  <fg=green>Spec for %s created in %s</>', $fqcn, ProjectRoot::here()->relative($specGenerator->filePath($specName))));
             $applied[] = self::applied('create_spec', $fqcn, $this->specPath . '/' . $specName . $this->specSuffix);
 
             $location = ClassLocation::for($fqcn, $this->layout);

@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - Every generation receipt names its file relative to the project, unquoted: `Method add() generated in src/App/Calculator.php`, `Spec for App\Greeter created in spec/App/Greeter.spec.php`, the feature a pair tool wrote; the method receipt used to quote an absolute path and the spec made from a step named no file
  - `describe --run` runs the spec it just wrote, where it used to run the whole suite
  - A generated class whose name ends in `Exception` extends `Exception`, imported with a `use` line, where it used to extend nothing and could not be thrown
  - A call on a double that nothing declared names the file it came from relative to the project with forward slashes, as the other messages do, instead of the absolute path spelled the platform's way

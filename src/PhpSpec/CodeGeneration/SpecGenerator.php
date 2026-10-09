@@ -161,7 +161,7 @@ final class SpecGenerator
      *
      * @param string $spec the class path using forward slashes
      */
-    private function filePath(string $spec): string
+    public function filePath(string $spec): string
     {
         return getcwd() . DIRECTORY_SEPARATOR .
                $this->specPath . DIRECTORY_SEPARATOR .

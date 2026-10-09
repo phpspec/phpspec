@@ -18,6 +18,7 @@ use PhpSpec\CodeGeneration\PhpName;
 use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Console\Prompt;
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\ExceptionInterface;
@@ -227,7 +228,7 @@ final class Describe extends Command
 
     private function specFile(string $spec): string
     {
-        return $this->generator->getSpecPath() . '/' . $spec . $this->generator->getSpecSuffix();
+        return ProjectRoot::here()->relative($this->generator->filePath($spec));
     }
 
     /**

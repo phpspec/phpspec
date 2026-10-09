@@ -28,6 +28,7 @@ Feature: Code generation
       """
     When I run phpspec run and answer "y" to generation prompts
     Then the class "src/App/Calculator.php" should contain "function add"
+    And the output should contain "Method add() generated in src/App/Calculator.php"
 
   Scenario: A method called statically is generated static, with its arguments
     Given a class "src/App/TaskList.php":

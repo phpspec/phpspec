@@ -33,6 +33,7 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
+use PhpSpec\ProjectRoot;
 use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 use Throwable;
@@ -731,7 +732,7 @@ final class PairToolExecutor implements ToolExecutor
 
             $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_feature'));
 
-            return "Feature file written to $filePath";
+            return 'Feature file written to ' . ProjectRoot::here()->relative($filePath);
         };
     }
 
