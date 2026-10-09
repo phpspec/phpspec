@@ -412,17 +412,19 @@ Failed matches carry a `Detail\Failed` object with expected/actual values, forma
 ## Failure Output
 
 ```
-  ✘ returns the sum of two numbers
+  • Calculator > returns the sum of two numbers
 
-  Failure: Expected 5 to be 6
+  Expected 5 to be 6
 
-    expected: 6
-         got: 5
+  expected: 6
+       got: 5
 
-  12  |     it("returns the sum of two numbers", function() {
-  13  |         $calc = new Calculator();
-> 14  |         expect($calc->add(2, 3))->toBe(6);
-  15  |     });
+   12  |     it("returns the sum of two numbers", function() {
+   13  |         $calc = new Calculator();
+ > 14  |         expect($calc->add(2, 3))->toBe(6);
+   15  |     });
 
   at spec/App/Calculator.spec.php:14
 ```
+
+`expected` is the value the matcher wanted and `got` the value the code produced, whatever the matcher; the sentence above names the relation.

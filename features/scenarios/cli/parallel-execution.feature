@@ -141,8 +141,9 @@ Feature: Parallel execution
       });
       """
     When I run phpspec run with option "--parallel=1"
-    Then the output should contain "expected: 1"
-    And the output should contain "to be: 2"
+    Then the output should contain "Expected 1 to be 2"
+    And the output should contain "expected: 2"
+    And the output should contain "got: 1"
     And the output should contain "expect(1)->toBe(2)"
     And the output should contain "Failing.spec.php:5"
     And the output should contain "printed by the example"

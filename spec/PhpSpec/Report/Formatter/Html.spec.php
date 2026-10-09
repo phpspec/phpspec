@@ -62,8 +62,7 @@ describe(Html::class, function() {
         $text = $output->fetch();
         expect($text)->toContain('<details class="example failed">');
         expect($text)->toContain('<summary>fails</summary>');
-        expect($text)->toContain('expected:');
-        expect($text)->toContain('got:');
+        expect($text)->toContain('<dt>expected:</dt><dd>&quot;b&quot;</dd><dt>got:</dt><dd>&quot;a&quot;</dd>');
         expect($text)->toContain('at ' . __FILE__ . ':' . $line);
         expect($text)->toContain('class="snippet"');
         expect($text)->toContain('MatchResult::failed');

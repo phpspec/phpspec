@@ -35,8 +35,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  * The end-of-run detail, grouped by kind: Failures, Errors, Warnings,
  * Deprecations, Pending and Skipped, each section printed only when it has entries.
  * Shared by the pretty and dot formatters so both tell the same story. A
- * failure whose matcher has a relation reads as a labeled pair (expected /
- * to be contained in) instead of a sentence embedding the values.
+ * failure reads as its sentence, then the value wanted under "expected" and
+ * the value produced under "got", whatever the matcher.
  */
 final class DetailSections
 {
@@ -246,47 +246,45 @@ final class DetailSections
     }
 
     /**
-     * One failed expectation: a named matcher reads as a labeled pair, its
-     * label inferred from the matcher's own name (toContain reads "expected X
-     * to contain Y"); an anonymous failure keeps its message with the generic
-     * pair beneath.
+     * One failed expectation: the sentence that says what went wrong, then
+     * the value the matcher wanted under "expected" and the value the code
+     * produced under "got", so the two words mean the same whatever the
+     * matcher. A mock verification reads as the call wanted and the calls
+     * received, in words.
      */
     private function matchFailure(OutputInterface $output, MatchResult $failure): void
     {
-        // The constructor's parameter names are crossed: callers pass the
-        // SUBJECT first (stored as "expected") and the matcher's target value
-        // second (stored as "actual"), so the view uncrosses them.
-        $subject = $failure->getExpected();
-        $target = $failure->getActual();
-        $matcher = $failure->getMatcher();
+        // The constructor's parameter names are crossed: callers pass the value
+        // the code PRODUCED first (stored as "expected") and the value the
+        // matcher WANTED second (stored as "actual"), so the view uncrosses them.
+        $produced = $failure->getExpected();
+        $wanted = $failure->getActual();
 
-        // A target the matcher's own name already states ("to be true") is not
-        // read back as a label and a value, which says the same thing twice.
-        // The message says it once, and the pair beneath names both sides.
-        if ($matcher !== null && $target !== null && !$failure->isTargetImplied()) {
-            $label = ($failure->isNegated() ? 'not ' : '') . self::phrase($matcher);
+        $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
 
-            // Two long strings that are meant to be equal part at one place,
-            // and the pair shows that place rather than two heads and tails
-            // that read alike.
-            $offset = in_array($matcher, self::EQUALITY_MATCHERS, true) && is_string($subject) && is_string($target)
-                && max(strlen($subject), strlen($target)) > Typed::STRING_MAX
-                ? FirstDifference::between($target, $subject)['offset'] ?? null
-                : null;
+        // A matcher with no target has nothing to put opposite the value, and
+        // "expected: N/A" is a line that tells the reader nothing.
+        if (($produced !== null || $wanted !== null) && $wanted !== Expectation::NO_TARGET) {
+            $label = ($failure->isNegated() ? 'not ' : '') . 'expected';
 
-            if (is_int($offset)) {
-                $this->pair($output, 'expected', self::window($subject, $offset), $label, self::window($target, $offset));
-                $output->write('  first difference at offset ' . $offset . PHP_EOL);
+            if (is_array($wanted) && is_array($produced) && isset($wanted['method'], $wanted['times'], $produced['calls'])) {
+                [$call, $calls] = self::callPair($produced, $wanted);
+                $this->pair($output, $label, $call, 'got', $calls);
             } else {
-                $this->pair($output, 'expected', Typed::value($subject), $label, Typed::value($target));
-            }
-        } else {
-            $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
+                // Two long strings that are meant to be equal part at one place,
+                // and the pair shows that place rather than two heads and tails
+                // that read alike.
+                $offset = in_array($failure->getMatcher(), self::EQUALITY_MATCHERS, true) && is_string($produced) && is_string($wanted)
+                    && max(strlen($produced), strlen($wanted)) > Typed::STRING_MAX
+                    ? FirstDifference::between($wanted, $produced)['offset'] ?? null
+                    : null;
 
-            // A matcher with no target has nothing to put opposite the subject,
-            // and "expected: N/A" is a line that tells the reader nothing.
-            if (($subject !== null || $target !== null) && $target !== Expectation::NO_TARGET) {
-                $this->pair($output, 'expected', Typed::value($target), 'got', Typed::value($subject));
+                if (is_int($offset)) {
+                    $this->pair($output, $label, self::window($wanted, $offset), 'got', self::window($produced, $offset));
+                    $output->write('  first difference at offset ' . $offset . PHP_EOL);
+                } else {
+                    $this->pair($output, $label, Typed::value($wanted), 'got', Typed::value($produced));
+                }
             }
         }
 
@@ -299,12 +297,36 @@ final class DetailSections
     }
 
     /**
-     * The matcher's name as words: "toContain" reads "to contain",
-     * "toBeGreaterThan" reads "to be greater than".
+     * A mock verification's two sides in words: the call wanted and how often,
+     * and the calls the double received, instead of the arrays that carry them.
+     *
+     * @param array<string, mixed> $received what the double received: the method and its calls, each with its arguments
+     * @param array<string, mixed> $wanted the call wanted: the method, its arguments when they matter, and how often
+     * @return array{string, string}
      */
-    private static function phrase(string $matcher): string
+    private static function callPair(array $received, array $wanted): array
     {
-        return strtolower(trim((string) preg_replace('/(?<!^)[A-Z]/', ' $0', $matcher)));
+        $times = (string) $wanted['times'];
+        $count = preg_match('/(\d+)$/', $times, $digits) === 1 ? (int) $digits[1] : 1;
+        $arguments = is_array($wanted['arguments'] ?? null) ? array_values($wanted['arguments']) : null;
+        $call = sprintf('%s call%s to %s', $times, $count === 1 ? '' : 's', self::call((string) $wanted['method'], $arguments));
+
+        $calls = [];
+        foreach (is_array($received['calls']) ? $received['calls'] : [] as $made) {
+            if (is_array($made) && is_array($made['arguments'] ?? null)) {
+                $calls[] = self::call((string) $received['method'], array_values($made['arguments']));
+            }
+        }
+
+        return [$call, $calls === [] ? 'no calls' : implode(', ', $calls)];
+    }
+
+    /**
+     * @param list<mixed>|null $arguments the arguments, or null when any will do
+     */
+    private static function call(string $method, ?array $arguments): string
+    {
+        return $method . '(' . ($arguments === null ? 'any arguments' : implode(', ', array_map(Typed::value(...), $arguments))) . ')';
     }
 
     /**

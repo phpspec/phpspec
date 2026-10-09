@@ -518,8 +518,8 @@ describe(Dot::class, function() {
         $text = $output->fetch();
         expect($text)->toContain("Failures:");
         expect($text)->toContain("MySpec > fails");
-        expect($text)->toContain('expected: "the haystack text"');
-        expect($text)->toContain('to contain: "the needle"');
+        expect($text)->toContain('expected: "the needle"');
+        expect($text)->toContain('got: "the haystack text"');
         expect($text)->toContain("Skipped:");
         expect($text)->toContain("MySpec > skipped one");
     });

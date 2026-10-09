@@ -300,10 +300,12 @@ final class Html extends AbstractFormatter
     {
         $html = sprintf("<p class=\"message\">%s</p>\n", $this->escape((string) $match->getMessage()));
 
+        // The match's accessors are crossed: getExpected() is the value the code
+        // produced and getActual() the value the matcher wanted.
         $html .= sprintf(
             "<dl class=\"kv\"><dt>expected:</dt><dd>%s</dd><dt>got:</dt><dd>%s</dd></dl>\n",
-            $this->escape($this->formatValue($match->getExpected())),
             $this->escape($this->formatValue($match->getActual())),
+            $this->escape($this->formatValue($match->getExpected())),
         );
 
         $code = $match->getCode();
