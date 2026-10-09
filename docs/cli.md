@@ -146,7 +146,7 @@ bin/phpspec describe <class> [options]
 
 **Options:**
 - `-e`, `--exemplify=METHOD` -- Include an example for the specified method.
-- `-r`, `--run` -- Run the specs after generating.
+- `-r`, `--run` -- Run the spec just generated, not the whole suite.
 - `--agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
 
 **Examples:**

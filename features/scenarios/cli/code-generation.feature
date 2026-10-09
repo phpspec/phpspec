@@ -339,6 +339,19 @@ Feature: Code generation
     Then a spec file "spec/App/Formatter.spec.php" should be generated
     And it should contain a describe block for "App\Formatter"
 
+  Scenario: Describe with run runs the spec it created, not the whole suite
+    Given a spec file "spec/App/Other.spec.php":
+      """
+      <?php
+      describe('App\Other', function () {
+          it('lives elsewhere', fn () => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec describe "App\Formatter" with option "-r -n"
+    Then the output should contain "1 spec"
+    And the output should not contain "2 specs"
+    And the output should not contain "lives elsewhere"
+
   Scenario: Describe with run under the agent format runs the new spec and reports it
     When I run phpspec describe "App\Formatter" with option "-r --format=agent -n"
     Then the output should contain "run_started"

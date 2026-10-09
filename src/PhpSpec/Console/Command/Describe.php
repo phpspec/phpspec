@@ -62,7 +62,7 @@ final class Describe extends Command
                 ),
             ])
             ->addOption('exemplify', 'e', Option::VALUE_REQUIRED, 'Add an example for a method')
-            ->addOption('run', 'r', Option::VALUE_NONE, 'Run specs after generating')
+            ->addOption('run', 'r', Option::VALUE_NONE, 'Run the spec after generating it')
             ->addOption('agent', null, Option::VALUE_NONE, 'Deprecated alias of --format=agent')
             ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty')
             ->setDescription('Generate spec for a class');
@@ -121,16 +121,16 @@ final class Describe extends Command
         }
 
         if ($input->getOption('run')) {
-            return $this->runAfter($input, $output, []);
+            return $this->runAfter($input, $output, ['files' => [$this->specFile($spec)]]);
         }
 
         return 0;
     }
 
     /**
-     * Runs the suite the way it was asked for, in the format the describe was
-     * asked in, so a reader of the receipt reads the run that followed it on
-     * the same channel and gets the run's exit code.
+     * Runs the spec just written, in the format the describe was asked in, so
+     * a reader of the receipt reads the run that followed it on the same
+     * channel and gets the run's exit code.
      *
      * @param array<string, mixed> $arguments the run command's arguments
      */
@@ -297,7 +297,7 @@ final class Describe extends Command
         $output->write($json . "\n", false, Output::OUTPUT_RAW);
 
         if ($input->getOption('run')) {
-            return $this->runAfter($input, $output, ['--format' => 'agent']);
+            return $this->runAfter($input, $output, ['files' => [$this->specFile($spec)], '--format' => 'agent']);
         }
 
         return 0;
