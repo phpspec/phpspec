@@ -37,17 +37,21 @@ describe(Wire::class, function () {
             new ExampleResult('waits', [], isPending: true, reason: 'Needs the rates API'),
             new ExampleResult('stays home', [], isSkipped: true, reason: 'No network here'),
             $risky = new ExampleResult('checks nothing', []),
+            $leftOut = new ExampleResult('left out', [], isPending: true, reason: 'left out by focus'),
         ], 'spec/App/Basket.spec.php');
         $risky->markRisky();
+        $leftOut->markLeftOutByFocus();
 
         $back = $roundTrip($spec);
 
         expect($back->getTitle())->toBe('Basket');
         expect($back->getPath())->toBe('spec/App/Basket.spec.php');
         $examples = $back->getResults();
-        expect(array_map(static fn(ExampleResult $e): string => $e->getTitle(), $examples))->toBe(['passes', 'fails', 'errors', 'waits', 'stays home', 'checks nothing']);
+        expect(array_map(static fn(ExampleResult $e): string => $e->getTitle(), $examples))->toBe(['passes', 'fails', 'errors', 'waits', 'stays home', 'checks nothing', 'left out']);
         expect($examples[5]->isRisky())->toBeTrue();
         expect($examples[0]->isRisky())->toBeFalse();
+        expect($examples[6]->isLeftOutByFocus())->toBeTrue();
+        expect($examples[3]->isLeftOutByFocus())->toBeFalse();
         expect(count($examples[0]->getResults()))->toBe(2);
         expect($examples[0]->isFailure())->toBeFalse();
         expect($examples[1]->isFailure())->toBeTrue();

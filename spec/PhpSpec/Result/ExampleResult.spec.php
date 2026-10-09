@@ -102,6 +102,14 @@ describe(ExampleResult::class, function() {
         expect($skipped->getReason())->toBe("No network here");
     });
 
+    it("knows when it was left out by a focus elsewhere, and is not by default", function() {
+        $result = new ExampleResult("test", [], isPending: true);
+        expect($result->isLeftOutByFocus())->toBe(false);
+
+        $result->markLeftOutByFocus();
+        expect($result->isLeftOutByFocus())->toBe(true);
+    });
+
     it("is risky once marked so, and not by default", function() {
         $result = new ExampleResult("test", []);
         expect($result->isRisky())->toBe(false);

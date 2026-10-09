@@ -270,6 +270,7 @@ missed and anything that stopped it.
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
+| `focused` | the spec focused with `fit` or `fdescribe` | How many examples were left out, pending. This run is not the suite; the exit code does not say so to an agent, this does. |
 | `applied` | `--accept-offers` was asked to write | `{ "offers": [{ "id", "action", "target", "file", "applied", "reason"? }], "files", "verified": false }`: what was written after the run, under the ids the offers carried, and what could not be, with `applied: false` and the `reason`. `files` names only what changed. The counts describe the code before it, so run again to verify. |
 
 ### `fatal`: when the run could not finish

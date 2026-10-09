@@ -398,6 +398,19 @@ final class Run extends Command
             $this->recordOffers($results);
         }
 
+        $leftOut = $results->leftOutByFocus();
+
+        if ($leftOut > 0) {
+            $prose->writeln(sprintf('<fg=yellow>Focused: %d example%s left out by fit() or fdescribe(). Remove the focus to run the whole suite.</>', $leftOut, $leftOut === 1 ? '' : 's'));
+
+            // A run with no terminal is CI, where a focus is one somebody forgot,
+            // and a focused run must not pass as the suite there. An agent reads
+            // the count in its summary and decides for itself.
+            if (!$input->isInteractive() && !$formatter instanceof Agent) {
+                return max(1, $results->status());
+            }
+        }
+
         return $results->status();
     }
 

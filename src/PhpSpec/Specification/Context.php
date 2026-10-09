@@ -395,7 +395,7 @@ class Context implements ExampleRegistry, Rebindable
         if ($hasFocusedChild) {
             foreach ($this->specBlocks as $block) {
                 if ($block instanceof Example && !$block->isFocused()) {
-                    $block->setPending(true);
+                    $block->leaveOutByFocus();
                 }
             }
         }

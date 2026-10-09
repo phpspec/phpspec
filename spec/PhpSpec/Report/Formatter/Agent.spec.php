@@ -59,6 +59,21 @@ describe(Agent::class, function () {
         expect($entry['rerun'])->toEndWith('Agent.spec.php:' . ($line - 5));
     });
 
+    it("says in the summary how many examples a focus left out, and nothing when none was", function () {
+        $leftOut = new ExampleResult("left out", [], isPending: true, reason: 'left out by focus');
+        $leftOut->markLeftOutByFocus();
+        $output = new BufferedOutput();
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$leftOut, new ExampleResult("runs", [MatchResult::passed()])])]));
+        $summary = json_decode(array_slice(explode("\n", trim($output->fetch())), -1)[0], true, flags: JSON_THROW_ON_ERROR);
+        expect($summary['focused'])->toBe(1);
+        expect($summary['pending'])->toBe(1);
+
+        $plain = new BufferedOutput();
+        (new Agent($plain))->format(new SuiteResult([new SpecificationResult("MySpec", [new ExampleResult("runs", [MatchResult::passed()])])]));
+        $summary = json_decode(array_slice(explode("\n", trim($plain->fetch())), -1)[0], true, flags: JSON_THROW_ON_ERROR);
+        expect($summary)->not()->toHaveKey('focused');
+    });
+
     it("reports a risky example without being asked, counted apart and never actionable", function () {
         $risky = new ExampleResult("calls the code", []);
         $risky->markRisky();

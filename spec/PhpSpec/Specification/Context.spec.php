@@ -266,6 +266,11 @@ describe(Context::class, function() {
         expect($log)->toBe(['focused']);
         expect($result->getResults())->toHaveCount(2);
         expect($result->getResults()[0]->isPending())->toBe(true);
+        // Left out by the focus, and said so: the run can then warn, and a
+        // reader does not take the sibling for work deferred on purpose.
+        expect($result->getResults()[0]->isLeftOutByFocus())->toBe(true);
+        expect($result->getResults()[0]->getReason())->toBe('left out by focus');
+        expect($result->getResults()[1]->isLeftOutByFocus())->toBe(false);
     });
 
     it("runs beforeAll once before all examples", function() {

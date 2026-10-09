@@ -53,7 +53,7 @@ Feature: Pending and focused examples
     When I run phpspec run
     Then the output should contain "2 pending"
 
-  Scenario: Focused example with fit runs only that example
+  Scenario: Focused example with fit runs only that example, and a terminal is warned
     Given a spec file "spec/App/Focused.spec.php":
       """
       <?php
@@ -67,11 +67,49 @@ Feature: Pending and focused examples
           });
       });
       """
-    When I run phpspec run
+    When I run phpspec run in a fresh process
     Then all examples should pass
     And the output should contain "1 pass"
+    And the output should contain "Focused: 1 example left out by fit() or fdescribe()."
 
-  Scenario: Focused describe block with fdescribe
+  Scenario: A forgotten focus fails a run with no terminal to warn
+    Given a spec file "spec/App/Forgotten.spec.php":
+      """
+      <?php
+      describe('Forgotten', function () {
+          fit('runs this one', function () {
+              expect(1)->toBe(1);
+          });
+
+          it('is left out', function () {
+              expect(true)->toBe(false);
+          });
+      });
+      """
+    When I run phpspec run with option "--no-interaction"
+    Then the output should contain "Focused: 1 example left out"
+    And the exit code should be 1
+
+  Scenario: An agent reads the focus in its summary instead of a failure
+    Given a spec file "spec/App/Forgotten.spec.php":
+      """
+      <?php
+      describe('Forgotten', function () {
+          fit('runs this one', function () {
+              expect(1)->toBe(1);
+          });
+
+          it('is left out', function () {
+              expect(true)->toBe(false);
+          });
+      });
+      """
+    When I run phpspec run with option "--no-interaction --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "focused"
+    And the exit code should be 0
+
+  Scenario: Focused describe block with fdescribe, and a terminal is warned
     Given a spec file "spec/App/FocusedGroup.spec.php":
       """
       <?php
@@ -87,8 +125,9 @@ Feature: Pending and focused examples
           });
       });
       """
-    When I run phpspec run
+    When I run phpspec run in a fresh process
     Then all examples should pass
+    And the output should contain "Focused: 1 example left out"
 
   Scenario: A skipped example shows the reason it gave
     Given a spec file "spec/App/Offline.spec.php":

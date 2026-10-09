@@ -186,7 +186,7 @@ fdescribe("only this group runs", function() { /* ... */ });
 fcontext("only this context runs", function() { /* ... */ });
 ```
 
-When any focused block exists in a context, only focused blocks are executed. This is resolved per-context, not globally.
+When any focused block exists in a context, only focused blocks are executed. This is resolved per-context, not globally. The examples left out are reported pending with "left out by focus" as the reason, and the run ends with a warning saying how many were left out. A run with no terminal, as in CI, fails on a focus instead: a `fit` nobody removed must not pass as the whole suite. Under `--format=agent` the run does not fail; the summary carries `focused`, the number left out.
 
 ## How `$this` Works
 

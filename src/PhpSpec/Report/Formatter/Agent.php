@@ -61,6 +61,9 @@ final class Agent extends AbstractFormatter
     /** How many story scenarios ran: the unit a story run is counted and reported in. */
     private int $scenarioCount = 0;
 
+    /** @var int how many examples a focus elsewhere left out of this run */
+    private int $focusedOut = 0;
+
     /** @var (\Closure(SuiteResult): mixed)|null resolves the run's generation candidates as a plain array */
     private readonly ?\Closure $resolveCandidates;
 
@@ -347,7 +350,9 @@ final class Agent extends AbstractFormatter
             // anything that stopped the run. Zero means nothing to do.
             'actionable' => $failing + $errors + $pending + $shortfall + $stopped + $unguarded,
             'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
-        ];
+            // A focused run is not the suite: the number says how much was left
+            // out, so a reader does not take this run for the whole of it.
+        ] + ($this->focusedOut === 0 ? [] : ['focused' => $this->focusedOut]);
 
         // The one command that re-runs everything this run reported, so a fix
         // is checked against the whole of what it was meant to fix, as a string
@@ -535,6 +540,9 @@ final class Agent extends AbstractFormatter
         } elseif ($state === 'pending' || $state === 'skipped') {
             if ($example->getReason() !== null) {
                 $entry['message'] = $example->getReason();
+            }
+            if ($example->isLeftOutByFocus()) {
+                $this->focusedOut++;
             }
         } elseif ($state === 'risky') {
             $entry['message'] = 'No expectation in this example.';

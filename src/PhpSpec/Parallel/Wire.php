@@ -144,6 +144,7 @@ final class Wire
             'pending' => $example->isPending(),
             'skipped' => $example->isSkipped(),
             'risky' => $example->isRisky(),
+            'leftOutByFocus' => $example->isLeftOutByFocus(),
             'reason' => $example->getReason(),
             'file' => $example->getFile(),
             'line' => $example->getLine(),
@@ -363,6 +364,10 @@ final class Wire
 
         if ($node['risky'] ?? false) {
             $example->markRisky();
+        }
+
+        if ($node['leftOutByFocus'] ?? false) {
+            $example->markLeftOutByFocus();
         }
 
         $example->setDuration((float) ($node['duration'] ?? 0.0));

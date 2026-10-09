@@ -53,6 +53,8 @@ final class ExampleResult implements Results
 
     private bool $risky = false;
 
+    private bool $leftOutByFocus = false;
+
     /**
      * @param string $title the example description
      * @param array<MatchResult> $matchResults array of MatchResult instances from this example
@@ -231,6 +233,20 @@ final class ExampleResult implements Results
     public function isRisky(): bool
     {
         return $this->risky;
+    }
+
+    /**
+     * Says the example was left pending because a sibling was focused with
+     * fit() or fdescribe(), not because anyone deferred it.
+     */
+    public function markLeftOutByFocus(): void
+    {
+        $this->leftOutByFocus = true;
+    }
+
+    public function isLeftOutByFocus(): bool
+    {
+        return $this->leftOutByFocus;
     }
 
     /**

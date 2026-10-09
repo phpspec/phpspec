@@ -70,6 +70,18 @@ final class SuiteResult implements Results
     }
 
     /**
+     * How many examples were left out because something else was focused:
+     * a run that focused is not the suite, and it should not pass for one.
+     */
+    public function leftOutByFocus(): int
+    {
+        $examples = [];
+        $this->collectExamples($this, $examples);
+
+        return count(array_filter($examples, static fn(ExampleResult $example): bool => $example->isLeftOutByFocus()));
+    }
+
+    /**
      * Returns all specification and feature results.
      */
     public function getResults(): array

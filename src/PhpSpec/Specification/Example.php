@@ -55,6 +55,9 @@ class Example implements ExampleResultRegistry, Rebindable
     /** @var bool whether this example is focused for exclusive execution */
     private bool $focused = false;
 
+    /** @var bool whether this example is pending only because a sibling is focused */
+    private bool $leftOutByFocus = false;
+
     /** @var array{string, int}|null where the spec declared this example, when not where its closure is */
     private ?array $declaration = null;
 
@@ -77,6 +80,7 @@ class Example implements ExampleResultRegistry, Rebindable
         $copy = new self($this->title, Closure::bind($this->example, $world, $world));
         $copy->pending = $this->pending;
         $copy->focused = $this->focused;
+        $copy->leftOutByFocus = $this->leftOutByFocus;
         $copy->declaration = $this->declaration;
 
         return $copy;
@@ -119,6 +123,16 @@ class Example implements ExampleResultRegistry, Rebindable
     public function setPending(bool $pending): void
     {
         $this->pending = $pending;
+    }
+
+    /**
+     * Leaves this example out of the run because a sibling is focused: it is
+     * pending, and says why, so the run can warn that it was focused.
+     */
+    public function leaveOutByFocus(): void
+    {
+        $this->pending = true;
+        $this->leftOutByFocus = true;
     }
 
     /**
@@ -221,7 +235,10 @@ class Example implements ExampleResultRegistry, Rebindable
 
         if ($this->pending) {
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
-            $this->exampleResult = new ExampleResult($this->title, [], false, true);
+            $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $this->leftOutByFocus ? 'left out by focus' : null);
+            if ($this->leftOutByFocus) {
+                $this->exampleResult->markLeftOutByFocus();
+            }
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
