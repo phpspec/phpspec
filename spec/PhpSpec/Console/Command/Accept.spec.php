@@ -60,6 +60,19 @@ describe(Accept::class, function () {
         expect($this->written)->toBe([]);
     });
 
+    it('refuses an offer that has been on the table for longer than a day, and says how long one stays', function (Filesystem $fs) {
+        $made = 1_700_000_000;
+        $offer = Offer::generate('create_class', 'App\\Coupon', []);
+        (new OfferBook($fs, '/project', static fn(): int => $made))->record($offer);
+
+        $tester = new CommandTester(new Accept($fs, new OfferBook($fs, '/project', static fn(): int => $made + 13 * 86_400), '/project'));
+        $tester->execute(['offer' => [$offer->id]], ['interactive' => false]);
+
+        expect($tester->getStatusCode())->toBe(1);
+        expect($tester->getDisplay())->toContain('No offer "' . $offer->id . '" is on the table; an offer stays for a day.');
+        expect($this->written)->toBe([]);
+    });
+
     it('refuses an offer the code has moved past', function () {
         $offer = Offer::write('src/App/Basket.php', '<?php the proposal', false, 'the content when offered');
         $this->book->record($offer);

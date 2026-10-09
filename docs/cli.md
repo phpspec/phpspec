@@ -100,7 +100,9 @@ The id is derived from the offer itself, so it is stable while the offer stands.
 An unknown id is refused, and so is an offer whose file has changed since it was
 made. `--format=agent` returns the receipt as JSON, naming each offer's target
 and the files it wrote. Offers live in `.phpspec/offers.json`; the fifty most
-recent stay on the table.
+recent stay on the table, each for a day from when it was last made, so an
+offer left by an earlier session, or by an earlier project in the same
+directory, is not applied to this one.
 
 ### `guard`
 

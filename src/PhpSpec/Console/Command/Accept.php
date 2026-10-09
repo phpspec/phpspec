@@ -86,7 +86,7 @@ final class Accept extends Command
 
             if ($offer === null) {
                 return $this->refuse(
-                    sprintf('No offer "%s" is on the table. Offers are made by the command that proposes the change; run it again to get a fresh one.', $id),
+                    sprintf('No offer "%s" is on the table; an offer stays for a day. Offers are made by the command that proposes the change; run it again to get a fresh one.', $id),
                     $forAgent,
                     $output,
                 );

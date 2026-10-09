@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Offers;
 
+use Closure;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 
@@ -22,26 +23,40 @@ use PhpSpec\RealFilesystem;
  * Where offers wait between being made and being taken.
  *
  * A reader accepts an offer in a later command than the one that made it, so
- * the offer has to outlive its own process. The book keeps the most recent ones
- * and nothing else: it is a place to look something up by id, not a history.
+ * the offer has to outlive its own process, but not by much: an offer is a
+ * decision about the project as it was read, and a day later, or a project
+ * later in the same directory, it is about something else. The book keeps the
+ * most recent ones for a day and nothing else: it is a place to look something
+ * up by id, not a history.
  */
 final class OfferBook
 {
     /** How many offers stay on the table. Older ones are forgotten. */
     private const KEPT = 50;
 
+    /** How long an offer stays on the table, in seconds: a day. */
+    public const SHELF_LIFE = 86_400;
+
     private const PATH = '.phpspec/offers.json';
 
     private readonly Filesystem $filesystem;
 
-    public function __construct(?Filesystem $filesystem = null, private readonly ?string $baseDir = null)
+    /** @var Closure(): int the time now, as a Unix time */
+    private readonly Closure $now;
+
+    /**
+     * @param Closure(): int|null $now the clock, the system's when not given
+     */
+    public function __construct(?Filesystem $filesystem = null, private readonly ?string $baseDir = null, ?Closure $now = null)
     {
         $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->now = $now ?? static fn(): int => time();
     }
 
     /**
      * Puts offers on the table, newest last, without recording the same offer
-     * twice: an offer that is made again is the one that was already there.
+     * twice: an offer that is made again is the one that was already there,
+     * made now.
      */
     public function record(Offer ...$offers): void
     {
@@ -50,10 +65,11 @@ final class OfferBook
         }
 
         $book = $this->all();
+        $now = ($this->now)();
 
         foreach ($offers as $offer) {
             unset($book[$offer->id]);
-            $book[$offer->id] = $offer;
+            $book[$offer->id] = $offer->madeAt($now);
         }
 
         $this->store(array_slice($book, -self::KEPT, null, true));
@@ -69,7 +85,8 @@ final class OfferBook
     }
 
     /**
-     * Every offer still on the table, oldest first, keyed by id.
+     * Every offer still on the table, oldest first, keyed by id. One made
+     * longer ago than the shelf life, or never stamped, is off the table.
      *
      * @return array<string, Offer>
      */
@@ -88,10 +105,16 @@ final class OfferBook
         }
 
         $offers = [];
+        $since = ($this->now)() - self::SHELF_LIFE;
 
         foreach ($stored['offers'] as $one) {
-            if (is_array($one)) {
-                $offer = Offer::fromArray($one);
+            if (!is_array($one)) {
+                continue;
+            }
+
+            $offer = Offer::fromArray($one);
+
+            if ($offer->made !== null && $offer->made > $since) {
                 $offers[$offer->id] = $offer;
             }
         }

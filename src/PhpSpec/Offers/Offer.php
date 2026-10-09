@@ -39,6 +39,7 @@ final readonly class Offer
      * @param string $action what accepting does, in the reader's terms
      * @param string $target what it affects: a file path, a class, or an invocation
      * @param array<string, mixed> $data everything else the kind needs to be carried out
+     * @param int|null $made when the offer was put on the table, as a Unix time; null until it is
      */
     private function __construct(
         public string $id,
@@ -46,7 +47,16 @@ final readonly class Offer
         public string $action,
         public string $target,
         public array $data = [],
+        public ?int $made = null,
     ) {}
+
+    /**
+     * The same offer, put on the table at this time.
+     */
+    public function madeAt(int $time): self
+    {
+        return new self($this->id, $this->kind, $this->action, $this->target, $this->data, $time);
+    }
 
     /**
      * An offer to write a file, remembering the file as it stands so a stale
@@ -135,7 +145,7 @@ final readonly class Offer
             'action' => $this->action,
             'target' => $this->target,
             'data' => $this->data,
-        ];
+        ] + ($this->made === null ? [] : ['made' => $this->made]);
     }
 
     /**
@@ -149,6 +159,7 @@ final readonly class Offer
             (string) ($stored['action'] ?? 'update'),
             (string) ($stored['target'] ?? ''),
             is_array($stored['data'] ?? null) ? $stored['data'] : [],
+            is_int($stored['made'] ?? null) ? $stored['made'] : null,
         );
     }
 
