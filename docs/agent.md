@@ -61,9 +61,9 @@ in between. A run that never started still emits both.
 `suite` is what the run targets, as the paths were given; `seed` is the
 random-order seed when one was used, else `null`. `php` is the version that
 ran, `coverage` says whether coverage is being collected, so a `coverage`
-verdict will follow, and `guard` is `on`, `off` or `stood down` (guard is on
-but there is no coverage driver to judge with, so no verdict will come). The
-totals are not here: at this point nothing has run yet, and the `summary`
+verdict will follow, and `guard` is `on` or `off`; a guard that is on with no
+coverage driver to judge with stops the run instead, as a `fatal` with the
+remedy. The totals are not here: at this point nothing has run yet, and the `summary`
 carries them.
 
 ### `example` — only what needs attention

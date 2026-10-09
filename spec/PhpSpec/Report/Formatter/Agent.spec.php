@@ -170,7 +170,7 @@ describe(Agent::class, function () {
     it('states in the header the mode it runs in, so a reader knows upfront what verdicts to expect', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
-        $formatter->runningWith(coverage: true, guard: 'stood down');
+        $formatter->runningWith(coverage: true, guard: 'on');
         $formatter->format(new SuiteResult([]));
         $doc = $stream($output->fetch());
 

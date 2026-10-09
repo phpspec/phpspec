@@ -297,21 +297,18 @@ final class Run extends Command
                 return $this->stopped($prose, $formatter, $coverageReporter, self::coverageRemedy());
             }
 
-            // Coverage was guard's idea, not the caller's. A machine without a
-            // driver must still be able to run its specs, so guard stands down
-            // and says so rather than failing a run it cannot judge.
-            $prose->writeln('<fg=yellow>Guard cannot judge this run: ' . $coverageReporter . '</>');
-            $guardStoodDown = true;
-            $guard = null;
-            $coverageReporter = null;
+            // Guard judges what the run covered; with nothing to judge with,
+            // a run it cannot judge is not a run it can let pass.
+            return $this->stopped(
+                $prose,
+                $formatter,
+                'Guard is on but no coverage driver is available, so this run cannot be judged: ' . lcfirst($coverageReporter) . '.',
+                self::coverageRemedy(),
+            );
         }
 
         if ($formatter instanceof Agent) {
-            $formatter->runningWith($coverageReporter !== null, match (true) {
-                $guard !== null => 'on',
-                $guardStoodDown ?? false => 'stood down',
-                default => 'off',
-            });
+            $formatter->runningWith($coverageReporter !== null, $guard !== null ? 'on' : 'off');
         }
 
         try {

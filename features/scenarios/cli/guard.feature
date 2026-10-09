@@ -554,3 +554,20 @@ Feature: Guard
     And I run phpspec guard
     Then the output should contain "Guard is on"
     And the file ".phpspec/guard/baseline.json" should contain "recorded"
+
+  Scenario: Guard refuses to run without a coverage driver, rather than judging nothing
+    Given a PSR-4 project with "spec" and "src" directories
+    And a spec file "spec/App/Thing.spec.php":
+      """
+      <?php
+      describe('Thing', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec guard
+    And I run phpspec run in a fresh process
+    Then the output should contain "Guard is on but no coverage driver is available"
+    And the output should not contain "stands down"
+    And the exit code should be 1
