@@ -21,8 +21,8 @@ Feature: Generate code from a natural-language instruction
       {"v": 1, "offers": [{"id": "o_1df049d1", "kind": "generate", "action": "create_class", "target": "App\\Coupon", "data": {"candidates": []}, "made": 1000000000}]}
       """
     When I run phpspec command "accept o_1df049d1"
-    Then the output should contain "No offer"
-    And the output should contain "an offer stays for a day"
+    Then the output should contain "has expired"
+    And the output should contain "an offer stays for 20 minutes"
     And the exit code should be 1
 
   Scenario: generate analyses the instruction when AI is configured

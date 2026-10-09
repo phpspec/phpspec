@@ -24,18 +24,18 @@ use PhpSpec\RealFilesystem;
  *
  * A reader accepts an offer in a later command than the one that made it, so
  * the offer has to outlive its own process, but not by much: an offer is a
- * decision about the project as it was read, and a day later, or a project
- * later in the same directory, it is about something else. The book keeps the
- * most recent ones for a day and nothing else: it is a place to look something
- * up by id, not a history.
+ * decision about the project as it was read, and twenty minutes later, or a
+ * project later in the same directory, it is about something else. The book
+ * keeps the most recent ones for twenty minutes and nothing else: it is a
+ * place to look something up by id, not a history.
  */
 final class OfferBook
 {
     /** How many offers stay on the table. Older ones are forgotten. */
     private const KEPT = 50;
 
-    /** How long an offer stays on the table, in seconds: a day. */
-    public const SHELF_LIFE = 86_400;
+    /** How long an offer stays on the table, in seconds: twenty minutes. */
+    public const SHELF_LIFE = 1_200;
 
     private const PATH = '.phpspec/offers.json';
 
@@ -76,12 +76,25 @@ final class OfferBook
     }
 
     /**
-     * The offer with this id, or null when the table never held it or has since
-     * forgotten it.
+     * The offer with this id, or null when the table never held it, has since
+     * forgotten it, or it has expired.
      */
     public function find(string $id): ?Offer
     {
         return $this->all()[$id] ?? null;
+    }
+
+    /**
+     * How long ago the offer with this id was made, in seconds, expired or
+     * not; null once the book has been written without it, or when it never
+     * held it. What tells a reader an id is stale apart from one that is
+     * made up.
+     */
+    public function ageOf(string $id): ?int
+    {
+        $made = ($this->stored()[$id] ?? null)?->made;
+
+        return $made === null ? null : ($this->now)() - $made;
     }
 
     /**
@@ -91,6 +104,18 @@ final class OfferBook
      * @return array<string, Offer>
      */
     private function all(): array
+    {
+        $since = ($this->now)() - self::SHELF_LIFE;
+
+        return array_filter($this->stored(), static fn(Offer $offer): bool => $offer->made !== null && $offer->made > $since);
+    }
+
+    /**
+     * Every offer the book holds on disk, expired or not, keyed by id.
+     *
+     * @return array<string, Offer>
+     */
+    private function stored(): array
     {
         $path = $this->file();
 
@@ -105,16 +130,10 @@ final class OfferBook
         }
 
         $offers = [];
-        $since = ($this->now)() - self::SHELF_LIFE;
 
         foreach ($stored['offers'] as $one) {
-            if (!is_array($one)) {
-                continue;
-            }
-
-            $offer = Offer::fromArray($one);
-
-            if ($offer->made !== null && $offer->made > $since) {
+            if (is_array($one)) {
+                $offer = Offer::fromArray($one);
                 $offers[$offer->id] = $offer;
             }
         }

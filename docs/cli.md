@@ -100,9 +100,10 @@ The id is derived from the offer itself, so it is stable while the offer stands.
 An unknown id is refused, and so is an offer whose file has changed since it was
 made. `--format=agent` returns the receipt as JSON, naming each offer's target
 and the files it wrote. Offers live in `.phpspec/offers.json`; the fifty most
-recent stay on the table, each for a day from when it was last made, so an
-offer left by an earlier session, or by an earlier project in the same
-directory, is not applied to this one.
+recent stay on the table, each for twenty minutes from when it was last made,
+so an offer left by an earlier session, or by an earlier project in the same
+directory, is not applied to this one: an older id is refused as expired,
+saying when it was made, as an `error` to an agent.
 
 ### `guard`
 
@@ -244,8 +245,9 @@ bin/phpspec run --format=junit > results.xml
 ```
 
 Each spec is a `testsuite` and each example a `testcase` named by its title,
-with `classname` naming the describe and the contexts around it
-(`HappyHour > at 5pm`), so one title in two contexts reads apart. A feature is
+with `classname` naming the file, the describe and the contexts around it
+(`HappyHour > HappyHour > at 5pm`, as the pretty sections name an example), so
+one title in two contexts reads apart. A feature is
 a `testsuite` of scenario suites, each step a `testcase` under its scenario. A
 pending or skipped case carries the reason as the `skipped` element's
 `message`. Every case and suite carries `time`, in seconds.

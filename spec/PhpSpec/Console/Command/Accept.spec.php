@@ -60,7 +60,7 @@ describe(Accept::class, function () {
         expect($this->written)->toBe([]);
     });
 
-    it('refuses an offer that has been on the table for longer than a day, and says how long one stays', function (Filesystem $fs) {
+    it('refuses an offer that expired, saying when it was made and how long one stays', function (Filesystem $fs) {
         $made = 1_700_000_000;
         $offer = Offer::generate('create_class', 'App\\Coupon', []);
         (new OfferBook($fs, '/project', static fn(): int => $made))->record($offer);
@@ -69,8 +69,22 @@ describe(Accept::class, function () {
         $tester->execute(['offer' => [$offer->id]], ['interactive' => false]);
 
         expect($tester->getStatusCode())->toBe(1);
-        expect($tester->getDisplay())->toContain('No offer "' . $offer->id . '" is on the table; an offer stays for a day.');
+        expect($tester->getDisplay())->toContain('Offer "' . $offer->id . '" has expired: it was made 13 days ago and an offer stays for 20 minutes.');
         expect($this->written)->toBe([]);
+    });
+
+    it('tells an agent an offer expired, as an error on its own channel', function (Filesystem $fs) {
+        $made = 1_700_000_000;
+        $offer = Offer::generate('create_class', 'App\\Coupon', []);
+        (new OfferBook($fs, '/project', static fn(): int => $made))->record($offer);
+
+        $tester = new CommandTester(new Accept($fs, new OfferBook($fs, '/project', static fn(): int => $made + 25 * 60), '/project'));
+        $tester->execute(['offer' => [$offer->id], '--format' => 'agent'], ['interactive' => false]);
+
+        $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        expect($document['accepted'])->toBe([]);
+        expect($document['error'])->toContain('has expired: it was made 25 minutes ago and an offer stays for 20 minutes.');
+        expect($tester->getStatusCode())->toBe(1);
     });
 
     it('refuses an offer the code has moved past', function () {

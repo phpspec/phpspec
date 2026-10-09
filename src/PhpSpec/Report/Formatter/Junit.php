@@ -110,9 +110,9 @@ final class Junit extends AbstractFormatter
         foreach ($examples as $example) {
             $testcase = $xml->createElement('testcase');
             $testcase->setAttribute('name', $example['title']);
-            // The contexts name the class, as the agent format names an example:
-            // the describe and what nests in it, the file's own title left out.
-            $testcase->setAttribute('classname', $example['context'] === '' ? $name : $example['context']);
+            // The file's title, then the contexts, as the pretty sections name
+            // an example: one title under two contexts reads apart.
+            $testcase->setAttribute('classname', $example['context'] === '' ? $name : $name . ' > ' . $example['context']);
             $testcase->setAttribute('time', self::seconds($example['duration']));
             $time += $example['duration'];
 

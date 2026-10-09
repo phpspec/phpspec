@@ -227,10 +227,9 @@ describe(Junit::class, function() {
 
         $formatter->format(new SuiteResult([$spec]));
         $text = $output->fetch();
-        expect($text)->toContain('<testcase name="opens" classname="HappyHour"');
-        expect($text)->not()->toContain('HappyHour &gt; HappyHour');
-        expect($text)->toContain('<testcase name="takes 20% off" classname="HappyHour &gt; at 5pm"');
-        expect($text)->toContain('<testcase name="takes 20% off" classname="HappyHour &gt; at 9am &gt; on a Monday"');
+        expect($text)->toContain('<testcase name="opens" classname="HappyHour &gt; HappyHour"');
+        expect($text)->toContain('<testcase name="takes 20% off" classname="HappyHour &gt; HappyHour &gt; at 5pm"');
+        expect($text)->toContain('<testcase name="takes 20% off" classname="HappyHour &gt; HappyHour &gt; at 9am &gt; on a Monday"');
     });
 
     it("records how long each example and the suite ran, in seconds, as time", function() {

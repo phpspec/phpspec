@@ -85,8 +85,12 @@ final class Accept extends Command
             $offer = $this->book->find($id);
 
             if ($offer === null) {
+                $age = $this->book->ageOf($id);
+
                 return $this->refuse(
-                    sprintf('No offer "%s" is on the table; an offer stays for a day. Offers are made by the command that proposes the change; run it again to get a fresh one.', $id),
+                    $age === null
+                        ? sprintf('No offer "%s" is on the table. Offers are made by the command that proposes the change; run it again to get a fresh one.', $id)
+                        : sprintf('Offer "%s" has expired: it was made %s ago and an offer stays for %d minutes. Run the command that made it again to get a fresh one.', $id, self::spelled($age), intdiv(OfferBook::SHELF_LIFE, 60)),
                     $forAgent,
                     $output,
                 );
@@ -209,6 +213,22 @@ final class Accept extends Command
         $output->writeln(sprintf('<fg=red>%s</>', $problem));
 
         return 1;
+    }
+
+    /**
+     * A span of seconds in the largest unit that keeps it whole enough to
+     * read: "25 minutes", "13 days".
+     */
+    private static function spelled(int $seconds): string
+    {
+        [$count, $unit] = match (true) {
+            $seconds < 60 => [$seconds, 'second'],
+            $seconds < 3_600 => [intdiv($seconds, 60), 'minute'],
+            $seconds < 86_400 => [intdiv($seconds, 3_600), 'hour'],
+            default => [intdiv($seconds, 86_400), 'day'],
+        };
+
+        return $count . ' ' . $unit . ($count === 1 ? '' : 's');
     }
 
     /**
