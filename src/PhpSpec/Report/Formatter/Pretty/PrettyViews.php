@@ -202,7 +202,7 @@ final class PrettyViews
     /**
      * @param array<int, string> $surroundingCode
      */
-    public static function surroundingCode(OutputInterface $output, array $surroundingCode, int $errorLine): void
+    public static function surroundingCode(OutputInterface $output, array $surroundingCode, int $errorLine, bool $blamed = true): void
     {
         end($surroundingCode);
         $decimalPlace = strlen((string) key($surroundingCode));
@@ -211,7 +211,9 @@ final class PrettyViews
         foreach ($surroundingCode as $line => $code) {
             $indent = strlen((string) $line) < $decimalPlace ? ' ' : '';
 
-            if ($errorLine === $line) {
+            if ($errorLine === $line && !$blamed) {
+                $output->write(" > {$indent}<options=bold>$line</>  <fg=gray>|</> $code");
+            } elseif ($errorLine === $line) {
                 $output->write(" <fg=red>></> {$indent}<options=bold>$line</>  <fg=gray>|</> <fg=red>$code</>");
             } else {
                 $output->write("   {$indent}<fg=gray>$line  |</> $code");

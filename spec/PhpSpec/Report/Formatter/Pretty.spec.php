@@ -13,6 +13,7 @@ use PhpSpec\Result\ContextResult;
 use PhpSpec\Specification\ExampleError;
 use PhpSpec\StoryBDD\StepError;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
 final class PrettySpecPoint
 {
@@ -274,6 +275,16 @@ describe(Pretty::class, function() {
 
         expect($output->fetch())->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec\n1 example (1 passed)\n");
     });
+    it("shows a code window with the line in bold and nothing painted red when no error is blamed on it", function () {
+        $output = new BufferedOutput(OutputInterface::VERBOSITY_NORMAL, true);
+        PrettyViews::surroundingCode($output, [1 => "<?php\n", 2 => "describe('X', function () {\n", 3 => "});\n"], 1, blamed: false);
+
+        $text = $output->fetch();
+        expect($text)->toContain("\e[1m1\e[22m");
+        expect($text)->not()->toContain("\e[31m");
+        expect($text)->toContain(" > \e[1m1");
+    });
+
     it("prints no section headers when everything passes", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - A line target that reaches no example shows, under the pretty and dot formatters, the seven lines around it with the target number in bold, so an off-by-one line can be corrected by sight
  - A run focused with `fit()` or `fdescribe()` says how many examples it left out, each pending with "left out by focus" as the reason; without a terminal, as in CI, the run fails on a focus, except under `--format=agent`, where the summary carries `focused` instead
  - An example that runs to the end without making an expectation is reported as risky: `!` in pretty, `R` in dot, a `Risky:` section, a `risky` count and an agent entry with state `risky`; the exit code is unchanged, nothing is red
  - `--tags` runs the scenarios a Cucumber tag expression selects (`@smoke and not @wip`, `(@a or @b) and not @c`), a feature's tags counting for every scenario in it; tags used to be parsed and nothing could select by them. `--filter` and `--tags` reach every `--parallel` worker, which used to run every example of a file the filter had let through

@@ -369,7 +369,8 @@ targeting a `Scenario Outline:` line runs every row of its examples table,
 while targeting a single examples row runs just that expansion. A line that
 reaches no example at all stops the run with `No example at <path:LINE>` and
 exit code 1: an explicit line is a precise ask, and running nothing is not an
-answer to it.
+answer to it. The pretty and dot formatters then show the seven lines around
+the target, its number in bold, since most misses are off by a line or two.
 
 Several selectors run each addressed block once, whether they name lines of
 one file or of many, so the `rerun` command an agent summary carries can be

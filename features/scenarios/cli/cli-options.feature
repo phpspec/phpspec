@@ -159,6 +159,21 @@ Feature: CLI options
     Then the output should contain "No example at spec/App/Calc.spec.php:9999"
     And the exit code should be 1
 
+  Scenario: A line that is no example shows the code around it, so the line can be corrected
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php:1"
+    Then the output should contain "No example at spec/App/Calc.spec.php:1"
+    And the output should contain " > 1  | <?php"
+    And the output should contain "   2  | describe("
+    And the output should contain "   3  |     it("
+    And the exit code should be 1
+
   Scenario: Run several examples of one file by their line numbers
     Given a spec file "spec/App/Trio.spec.php":
       """

@@ -16,6 +16,7 @@ namespace PhpSpec\Console\Command;
 
 use DOMException;
 use InvalidArgumentException;
+use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
@@ -49,6 +50,7 @@ use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Html;
 use PhpSpec\Report\Formatter\Junit;
 use PhpSpec\Report\Formatter\Pretty;
+use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Report\Formatter\Tap;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ScenarioResult;
@@ -322,12 +324,18 @@ final class Run extends Command
         }
 
         if ($this->selectedNothing($given, $results)) {
-            return $this->stopped(
+            $status = $this->stopped(
                 $prose,
                 $formatter,
                 'No example at ' . implode(', ', $given),
                 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.',
             );
+
+            if ($formatter instanceof Pretty || $formatter instanceof Dot) {
+                $this->showCodeAround($prose, $given);
+            }
+
+            return $status;
         }
 
         $this->writeReportFiles($input, $prose, $results);
@@ -449,6 +457,29 @@ final class Run extends Command
 
         foreach ($outputs['extraConsole'] as $format) {
             $this->createFormatter($format, $output)->format($results);
+        }
+    }
+
+    /**
+     * The lines around each targeted line, the target in bold, so the line
+     * can be corrected by sight: most misses are off by one or two.
+     *
+     * @param list<string> $given
+     */
+    private function showCodeAround(Output $prose, array $given): void
+    {
+        foreach ($given as $target) {
+            if (preg_match('/^(.*):(\d+)$/', $target, $at) !== 1) {
+                continue;
+            }
+
+            $lines = (new SurroundingCode($at[1], (int) $at[2]))->toArray();
+            if ($lines === []) {
+                continue;
+            }
+
+            $prose->writeln('');
+            PrettyViews::surroundingCode($prose, $lines, (int) $at[2], blamed: false);
         }
     }
 
