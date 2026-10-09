@@ -11,6 +11,9 @@ Feature: Generate code from a natural-language instruction
       """
     When I run phpspec command "generate an example for App/Calculator that adds"
     Then the output should contain "AI configuration required"
+    And the output should contain "section to phpspec.yaml, for example:"
+    And the output should contain "provider:"
+    And the output should contain "api_key: YOUR_API_KEY"
 
   Scenario: generate analyses the instruction when AI is configured
     Given a phpspec.yaml config:

@@ -60,19 +60,20 @@ See [Pair Programming & AI](pair.md#the-refactor-command) for full documentation
 ### `generate`
 
 Turns a natural-language instruction into ONE artifact: a Gherkin feature, step
-definitions, a spec, or implementation code. The current TDD step is resolved
-deterministically from your words (an explicit path, or feature/steps/spec/code
-wording), and fully determined artifacts are generated without any model call: a
-feature request becomes a Gherkin skeleton, and `generate the steps` writes the
-step definitions for the last-touched feature by parsing it. Everything else is
+definitions, a spec, or implementation code. The command needs the `ai` section
+of the config (see [Configuration](configuration.md#ai-assistant)); without it,
+it refuses, naming the file to add the section to. The current TDD step is
+resolved deterministically from your words (an explicit path, or
+feature/steps/spec/code wording). A feature request becomes a Gherkin skeleton
+and `generate the steps` writes the step definitions for the last-touched
+feature by parsing it, so those two make no model call; everything else is
 authored by the AI. Each proposal is shown as a diff and written after a `[Y/n]`
 confirmation. With no terminal to ask, nothing is written: the change is offered
-under an id for [`accept`](#accept) to apply. Requires an AI provider (see
-[Configuration](configuration.md#ai)).
+under an id for [`accept`](#accept) to apply.
 
 ```bash
-bin/phpspec generate a feature for adding a task    # Gherkin under features/, no model call
-bin/phpspec generate the steps                      # steps for the last-touched feature, no model call
+bin/phpspec generate a feature for adding a task    # Gherkin skeleton under features/
+bin/phpspec generate the steps                      # steps for the last-touched feature, parsed from it
 bin/phpspec generate a spec for a Coupon that reduces a total
 bin/phpspec generate implement Calculator::add to return the sum of its arguments
 ```

@@ -61,6 +61,17 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->toContain('AI configuration required');
         });
 
+        it('refuses in JSON under the agent format when AI config is missing', function (Filesystem $fs) {
+            $tester = new CommandTester(new Next(Configuration::load('.', $fs), $fs));
+
+            $exitCode = $tester->execute(['--format' => 'agent']);
+
+            $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+            expect($document['action'])->toBe('next');
+            expect($document['error'])->toContain('AI configuration required');
+            expect($exitCode)->toBe(1);
+        });
+
         it('displays a spec suggestion with target and reason', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {

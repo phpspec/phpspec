@@ -494,6 +494,41 @@ describe(Configuration::class, function () {
         ]);
     });
 
+    it('names the config file to add the ai section to, and shows one', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("spec_path: spec\n");
+
+        $problem = Configuration::load('/app', $fs)->aiConfigProblem();
+
+        expect($problem)->toStartWith('AI configuration required. Add an "ai" section to phpspec.yaml, for example:');
+        expect($problem)->toContain("\nai:\n  provider: ");
+        expect($problem)->toContain("\n  api_key: YOUR_API_KEY");
+    });
+
+    it('shows the ai section in the shape of the config file the project has', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.json' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn('{"spec_path": "spec"}');
+
+        $problem = Configuration::load('/app', $fs)->aiConfigProblem();
+
+        expect($problem)->toContain('Add an "ai" section to phpspec.json, for example:');
+        expect($problem)->toContain('"ai": {"provider": "');
+        expect($problem)->toContain('"api_key": "YOUR_API_KEY"}');
+    });
+
+    it('says which file to create when the project has no config file at all', function () {
+        $problem = (new Configuration())->aiConfigProblem();
+
+        expect($problem)->toStartWith('AI configuration required. Create phpspec.yaml with an "ai" section, for example:');
+        expect($problem)->toContain("\nai:\n  provider: ");
+    });
+
     it('names the missing key when the ai section exists without api_key', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
@@ -597,7 +632,7 @@ describe(Configuration::class, function () {
 
         $config = Configuration::load('/app', $fs);
 
-        expect($config->aiConfigProblem())->toBe('AI configuration required. Add an "ai" section to your phpspec config.');
+        expect($config->aiConfigProblem())->toStartWith('AI configuration required. Add an "ai" section to phpspec.yaml, for example:');
     });
 
     it('reports no ai config problem when the section is usable', function (Filesystem $fs) {

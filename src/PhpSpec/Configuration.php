@@ -54,11 +54,13 @@ final class Configuration
      * @param array<string, mixed> $config the settings, as a config file states them
      * @param string $rootDir the project root the paths are relative to
      * @param array<string, string> $composerMappings PSR-4 prefix to directory, as composer.json declares them
+     * @param string|null $settingsFile the file the settings were read from, when there is one
      */
     public function __construct(
         private array $config = [],
         private string $rootDir = '.',
         private array $composerMappings = [],
+        private ?string $settingsFile = null,
     ) {}
 
     /**
@@ -76,7 +78,7 @@ final class Configuration
         $path = $configFile ?? self::settingsFile($rootDir, $fs);
         $settings = $path === null ? [] : self::readFile($path, $fs);
 
-        return new self($settings, $rootDir, self::readComposerMappings($rootDir, $fs));
+        return new self($settings, $rootDir, self::readComposerMappings($rootDir, $fs), $path);
     }
 
     /**
@@ -810,10 +812,35 @@ final class Configuration
     {
         $ai = $this->normalisedAiSection();
         if ($ai === null) {
-            return 'AI configuration required. Add an "ai" section to your phpspec config.';
+            return $this->missingAiSection();
         }
 
         return $this->aiSectionGap($ai);
+    }
+
+    /**
+     * Which file to put the ai section in, and what one looks like in that
+     * file's own notation, with the installed provider when there is one.
+     */
+    private function missingAiSection(): string
+    {
+        $installed = ProviderFactory::installed();
+        $provider = count($installed) === 1 ? $installed[0] : 'anthropic';
+        $file = $this->settingsFile ?? $this->rootDir . '/phpspec.yaml';
+        $shown = str_starts_with($file, $this->rootDir . '/') ? substr($file, strlen($this->rootDir) + 1) : $file;
+
+        $example = match (pathinfo($file, PATHINFO_EXTENSION)) {
+            'json' => sprintf('"ai": {"provider": "%s", "api_key": "YOUR_API_KEY"}', $provider),
+            'php' => sprintf("'ai' => ['provider' => '%s', 'api_key' => 'YOUR_API_KEY'],", $provider),
+            default => sprintf("ai:\n  provider: %s\n  api_key: YOUR_API_KEY", $provider),
+        };
+
+        return sprintf(
+            "AI configuration required. %s an \"ai\" section%s, for example:\n\n%s",
+            $this->settingsFile === null ? 'Create ' . $shown . ' with' : 'Add',
+            $this->settingsFile === null ? '' : ' to ' . $shown,
+            $example,
+        );
     }
 
     /**

@@ -32,6 +32,7 @@ use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
+use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -93,7 +94,17 @@ final class Next extends Command
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $output->writeln('<fg=red>' . $this->config->aiConfigProblem() . '</>');
+            $problem = (string) $this->config->aiConfigProblem();
+
+            if ($forAgent) {
+                $json = json_encode(['v' => Schema::V, 'action' => 'next', 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+                $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+                return 1;
+            }
+
+            $output->writeln('<fg=red>' . $problem . '</>');
+
             return 1;
         }
 

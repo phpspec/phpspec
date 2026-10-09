@@ -28,7 +28,19 @@ describe(Generate::class, function () {
 
         $tester->execute(['instruction' => ['a', 'Calc']], ['interactive' => false]);
 
-        expect($tester->getDisplay())->toContain('AI configuration required');
+        expect($tester->getDisplay())->toContain('AI configuration required. Create phpspec.yaml with an "ai" section');
+        expect($tester->getStatusCode())->toBe(1);
+    });
+
+    it('refuses in JSON under the agent format, naming the file to configure', function () {
+        $tester = new CommandTester(new Generate(new Configuration()));
+
+        $tester->execute(['instruction' => ['a', 'Calc'], '--format' => 'agent'], ['interactive' => false]);
+
+        $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        expect($document['action'])->toBe('generate');
+        expect($document['error'])->toContain('Create phpspec.yaml with an "ai" section');
+        expect($tester->getStatusCode())->toBe(1);
     });
 
     $proposing = fn(): ReplayProvider => new ReplayProvider([
