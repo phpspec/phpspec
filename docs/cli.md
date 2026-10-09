@@ -191,7 +191,7 @@ See [Coding Agents](agent.md) for the `--agent` receipts and
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
 | `-v` | Verbose mode -- shows the duration of each example and step; `--format=agent` reports the passing entries too |
 | `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
-| `--profile[=N]` | Show the N slowest examples (default: 10) |
+| `--profile[=N]` | Show the N slowest examples, each by its path of titles (default: 10) |
 
 #### Pretty Formatter (default)
 
@@ -304,7 +304,7 @@ rejected with an error rather than silently falling back.
 
 | Option | Description |
 |---|---|
-| `--filter=PATTERN` | Only run specs/scenarios whose file path, example title, or scenario title contains PATTERN |
+| `--filter=PATTERN` | Only run specs/scenarios whose file path, or whose path of titles (`describe > context > example`, `Feature > Scenario`), contains PATTERN |
 | `--tags=EXPRESSION` | Only run the scenarios a Cucumber tag expression selects: `@smoke`, `@smoke and not @wip`, `(@a or @b) and not @c`. A feature's tags count for every scenario in it; a spec has no tags and does not run |
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--all` | Run all suites -- both specs and features |
@@ -332,6 +332,8 @@ the same way (useful for tight feedback loops and CI):
 bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
 bin/phpspec run --filter "should be good"        # Example/scenario titles matching a phrase
 bin/phpspec run --filter "it should be good"     # Leading "it" on the filter is ignored
+bin/phpspec run --filter "when empty"            # A context title selects everything in it
+bin/phpspec run --filter "when empty > starts"   # Titles joined by > narrow to one example
 bin/phpspec run --tags "@smoke and not @wip"      # Scenarios tagged @smoke, unless also @wip
 bin/phpspec run --paths-from specs.txt            # Run the specs listed in specs.txt
 bin/phpspec run --stop-on-failure                 # Stop on first failing spec

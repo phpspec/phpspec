@@ -1071,12 +1071,8 @@ final class Run extends Command
         }
         $output->writeln('');
         $output->writeln("Top $count slowest examples:");
-        foreach ($slowest as $example) {
-            $output->writeln(sprintf(
-                '  <fg=yellow>%.4fs</> %s',
-                $example->getDuration(),
-                $example->getTitle(),
-            ));
+        foreach ($slowest as $timing) {
+            $output->writeln(sprintf('  <fg=yellow>%.4fs</> %s', $timing->duration, $timing->path));
         }
     }
 

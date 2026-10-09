@@ -110,16 +110,40 @@ final class SuiteResult implements Results
     }
 
     /**
-     * Returns the slowest examples sorted by duration descending, for profiling output.
+     * The slowest examples, slowest first, each named by its title path, for
+     * profiling output.
      *
      * @param int $count maximum number of examples to return
-     * @return ExampleResult[] the slowest non-pending examples
+     * @return list<ExampleTiming> the slowest non-pending examples
      */
     public function getSlowestExamples(int $count = 10): array
     {
-        $examples = array_filter($this->getAllExamples(), fn(ExampleResult $e) => !$e->isPending());
-        usort($examples, fn(ExampleResult $a, ExampleResult $b) => $b->getDuration() <=> $a->getDuration());
-        return array_slice($examples, 0, $count);
+        $timings = [];
+        $this->collectTimings($this, '', $timings);
+        usort($timings, fn(ExampleTiming $a, ExampleTiming $b) => $b->duration <=> $a->duration);
+
+        return array_slice($timings, 0, $count);
+    }
+
+    /**
+     * @param list<ExampleTiming> $timings
+     */
+    private function collectTimings(Results $results, string $path, array &$timings): void
+    {
+        foreach ($results->getResults() as $result) {
+            if ($result instanceof ExampleResult) {
+                if (!$result->isPending()) {
+                    $timings[] = new ExampleTiming(self::under($path, $result->getTitle()), $result->getDuration());
+                }
+            } elseif ($result instanceof SpecificationResult || $result instanceof ContextResult || $result instanceof FeatureResult || $result instanceof ScenarioResult) {
+                $this->collectTimings($result, self::under($path, $result->getTitle()), $timings);
+            }
+        }
+    }
+
+    private static function under(string $path, string $title): string
+    {
+        return $path === '' ? $title : $path . ' > ' . $title;
     }
 
     /**

@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - `--filter` matches the path of titles an example or scenario sits under, joined by `>`: a context title selects everything in it, `when empty > starts` one example; a context the filter empties is no longer printed
  - A class a spec needs but does not describe is offered spec first, then the class, the way a class missing from a step always was; the class question names its file relative to the project
  - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec
  - Guard refuses to run when no coverage driver is available, with the remedy and exit code 1, instead of standing down and letting the run pass unjudged; the agent header's `guard` is `on` or `off`
@@ -48,6 +49,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `--profile` names each slow example by its path of titles, as the detail sections do, instead of the bare example title; the dot formatter fits its lines to the terminal while results stream in, where it used to size them only once the run was over
  - Every generation receipt names its file relative to the project, unquoted: `Method add() generated in src/App/Calculator.php`, `Spec for App\Greeter created in spec/App/Greeter.spec.php`, the feature a pair tool wrote; the method receipt used to quote an absolute path and the spec made from a step named no file
  - `describe --run` runs the spec it just wrote, where it used to run the whole suite
  - A generated class whose name ends in `Exception` extends `Exception`, imported with a `use` line, where it used to extend nothing and could not be thrown

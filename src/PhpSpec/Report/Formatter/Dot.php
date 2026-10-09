@@ -40,27 +40,28 @@ final class Dot extends AbstractFormatter
     private bool $blocked = false;
 
     /**
-     * Calculates line widths and delegates to the parent format pipeline.
+     * Sizes the subtotal column to the whole suite before the pipeline starts;
+     * results streamed in one by one keep the default width.
      */
     public function format(SuiteResult $results): void
     {
-        $totalExamples = $this->countExamples($results);
-        $this->subtotalWidth = strlen((string) $totalExamples);
+        $this->subtotalWidth = strlen((string) $this->countExamples($results));
 
+        parent::format($results);
+    }
+
+    /**
+     * Fits the dots to the terminal before the first result arrives.
+     */
+    public function begin(): void
+    {
         $width = (new Terminal())->getWidth() ?: 80;
         $lineWidth = (int) floor($width * 0.9);
         // Suffix is " (NNN)" = 3 + subtotalWidth
         $this->dotsPerLine = max(1, $lineWidth - 3 - $this->subtotalWidth);
         $this->col = 0;
         $this->total = 0;
-
-        parent::format($results);
     }
-
-    /**
-     * Outputs an initial blank line before the progress dots.
-     */
-    public function begin(): void {}
 
     /**
      * Outputs progress characters for each example or step in the result tree.
