@@ -143,6 +143,23 @@ describe(ResultScanner::class, function () {
             expect($result[0]['methodName'])->toBe('newMethod');
         });
 
+        it('sites the call at the spec line the error came through, not in the double\'s generated code, so the arguments can be counted there', function () {
+            $error = ExampleError::fromReport(
+                'Call to undefined method ResultScannerTestInterface::newMethod()',
+                'Error',
+                "/vendor/phpspec/src/PhpSpec/Mock/Double.php(194) : eval()'d code",
+                14,
+                [['file' => '/project/spec/Pricing.spec.php', 'line' => 5, 'function' => '{closure}']],
+            );
+            $example = new ExampleResult('test', [], isError: true);
+            $example->setError($error);
+
+            $result = $this->scanner->collectUndefinedMockInterfaceMethods(new SuiteResult([new SpecificationResult('spec', [$example])]));
+
+            expect($result[0]['file'])->toBe('/project/spec/Pricing.spec.php');
+            expect($result[0]['line'])->toBe(5);
+        });
+
         it('leaves a method undefined on a class to the class collector', function () {
             $error = new ExampleError(
                 "Call to undefined method SomeRegularClass::newMethod()",
@@ -201,6 +218,28 @@ describe(ResultScanner::class, function () {
             expect($result['/features/test.feature'])->toHaveCount(2);
             expect($result['/features/test.feature'][0]['keyword'])->toBe('When');
             expect($result['/features/test.feature'][0]['text'])->toBe('an undefined step');
+        });
+
+        it('notes the table or doc string an undefined step carries, read from its feature file', function () {
+            $feature = sys_get_temp_dir() . '/phpspec_scanner_' . getmypid() . '.feature';
+            file_put_contents($feature, "Feature: Menu\n  Scenario: Reading\n    Given the menu:\n      | item |\n      | tea  |\n    And the note:\n      \"\"\"\n      Closed\n      \"\"\"\n    When I read the menu\n");
+            $scenario = new ScenarioResult('Reading', [
+                new StepResult('Given the menu:', 'undefined'),
+                new StepResult('And the note:', 'undefined'),
+                new StepResult('When I read the menu', 'undefined'),
+            ]);
+
+            try {
+                $steps = $this->scanner->collectUndefinedSteps(new SuiteResult([new FeatureResult('Menu', [$scenario], $feature)]))[$feature];
+            } finally {
+                unlink($feature);
+            }
+
+            expect($steps)->toBe([
+                ['keyword' => 'Given', 'text' => 'the menu:', 'table' => true],
+                ['keyword' => 'Given', 'text' => 'the note:', 'docString' => true],
+                ['keyword' => 'When', 'text' => 'I read the menu'],
+            ]);
         });
 
         it('returns empty array when no undefined steps', function () {

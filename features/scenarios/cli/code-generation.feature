@@ -181,6 +181,22 @@ Feature: Code generation
     Then a file "src/App/Logger.php" should be generated
     And it should contain "interface Logger"
 
+  Scenario: A method generated on a mocked interface takes the arguments the spec called it with
+    Given a spec file "spec/App/Pricing.spec.php":
+      """
+      <?php
+      describe('App\Pricing', function () {
+          it('prices tea', function () {
+              $catalogue = mock(App\Catalogue::class);
+              allow($catalogue->priceOf('tea'))->toReturn(2);
+              expect($catalogue->priceOf('tea'))->toBe(2);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    And I run phpspec run with option "--accept-offers"
+    Then the file "src/App/Catalogue.php" should contain "public function priceOf($argument1);"
+
   Scenario: Generate an interface from a type-hinted injection
     Given a spec file "spec/App/Service.spec.php":
       """

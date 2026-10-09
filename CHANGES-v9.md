@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A generated step definition takes the table or doc string its step carries, as `DataTable $table` or `string $docString` after its pattern's parameters, with the `DataTable` import added once; it used to take neither, and that a doc string arrives as a string is now documented
+ - A method generated on an interface a double stands for takes the arguments the spec called it with, as one generated on a class does; the call was looked for in the double's generated code instead of at the spec line. A generated class or interface no longer opens with an empty line, and its first method sits right under the brace
  - An offer stays on the table for a day from when it was last made; `accept` refuses an older one, saying so, instead of applying a decision taken about an earlier session or an earlier project in the same directory
  - A step that breaks the same way in several scenarios, as a failing `Background` step does, is reported once under `Errors:` or `Failures:`, naming the scenarios it took down, instead of one identical block per scenario
  - An AI command run without an `ai` section says which config file to add it to and shows one in that file's notation, instead of "your phpspec config"; `generate` and `next` refuse in JSON under `--format=agent`. The docs no longer suggest `generate` runs without the `ai` section

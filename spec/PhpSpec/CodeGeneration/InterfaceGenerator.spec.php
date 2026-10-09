@@ -22,6 +22,19 @@ describe(InterfaceGenerator::class, function () {
         expect($result)->toBe("Interface Acme\\Math\\Calculator generated in src/Acme/Math/Calculator.php");
     });
 
+    it("leaves no empty line inside an empty body", function (Filesystem $fs) {
+        $written = '';
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written = $content;
+        });
+
+        (new InterfaceGenerator(filesystem: $fs))->generate('App\\Catalogue');
+
+        expect($written)->toEndWith("interface Catalogue\n{\n}\n");
+    });
+
     it("generates interface file without namespace", function (Filesystem $fs) {
         allow($fs->mkdir());
         allow($fs->exists())->toReturn(false);

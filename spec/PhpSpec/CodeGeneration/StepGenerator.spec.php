@@ -72,6 +72,52 @@ describe(StepGenerator::class, function () {
         ]);
     });
 
+    it('notes the doc string or the table a step carries, so the definition can take it', function () {
+        $steps = StepGenerator::parseSteps(<<<'GHERKIN'
+        Feature: Menu
+          Scenario: Reading the menu
+            Given the menu:
+              | item | price |
+              | tea  | 2     |
+            And the note:
+              """
+              Closed on Sundays
+              """
+            When I read the menu
+        GHERKIN);
+
+        expect($steps)->toBe([
+            ['keyword' => 'Given', 'text' => 'the menu:', 'table' => true],
+            ['keyword' => 'And', 'text' => 'the note:', 'docString' => true],
+            ['keyword' => 'When', 'text' => 'I read the menu'],
+        ]);
+    });
+
+    it('gives a step its table as a DataTable and its doc string as a string, after the parameters of its pattern', function () {
+        $content = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'the menu:', 'table' => true],
+            ['keyword' => 'And', 'text' => 'a note for "Monday":', 'docString' => true],
+        ]);
+
+        expect($content)->toStartWith("<?php\n\nuse PhpSpec\\StoryBDD\\DataTable;\n");
+        expect($content)->toContain('given("the menu:", function (DataTable $table)');
+        expect($content)->toContain('given("a note for {string}:", function (string $arg1, string $docString)');
+    });
+
+    it('imports DataTable once, however many steps take a table, and not at all when none does', function () {
+        $twice = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'the menu:', 'table' => true],
+            ['keyword' => 'And', 'text' => 'the prices:', 'table' => true],
+        ]);
+        $existing = "<?php\n\nuse PhpSpec\\StoryBDD\\DataTable;\n\ngiven(\"the menu:\", function (DataTable \$table) {\n    pending();\n});\n";
+        $appended = (new StepGenerator($this->filesystem))->skeleton([['keyword' => 'Given', 'text' => 'the prices:', 'table' => true]], $existing);
+        $none = (new StepGenerator($this->filesystem))->skeleton([['keyword' => 'Given', 'text' => 'a basket']]);
+
+        expect(substr_count($twice, 'use PhpSpec\\StoryBDD\\DataTable;'))->toBe(1);
+        expect(substr_count($appended, 'use PhpSpec\\StoryBDD\\DataTable;'))->toBe(1);
+        expect($none)->not()->toContain('DataTable');
+    });
+
     it('drafts a complete steps file from parsed steps without touching disk', function () {
         $content = (new StepGenerator($this->filesystem))->skeleton([
             ['keyword' => 'Given', 'text' => 'I have a todo list'],

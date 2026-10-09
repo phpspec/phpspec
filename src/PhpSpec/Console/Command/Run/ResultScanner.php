@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Run;
 
+use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -93,11 +94,15 @@ final readonly class ResultScanner
                     && preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)
                     && $onType($matches[1])
                 ) {
+                    // The call is counted where the spec made it: a double's
+                    // generated code is where the error was thrown, not where
+                    // the arguments are.
+                    $site = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
                     $errors[] = [
                         'className' => $matches[1],
                         'methodName' => $matches[2],
-                        'file' => $error->getFile(),
-                        'line' => $error->getLine(),
+                        'file' => $site['file'],
+                        'line' => $site['line'],
                     ];
                 }
             } elseif ($result instanceof Results) {
@@ -166,10 +171,36 @@ final readonly class ResultScanner
     }
 
     /**
+     * What each step of a feature carries under it, by the step's text: a
+     * result knows a step by its title alone, and the feature file is where
+     * the table or doc string under it is written.
+     *
+     * @return array<string, array{table?: bool, docString?: bool}>
+     */
+    private static function carriedByStep(string $featurePath): array
+    {
+        if (!is_file($featurePath)) {
+            return [];
+        }
+
+        $carried = [];
+
+        foreach (StepGenerator::parseSteps((string) file_get_contents($featurePath)) as $step) {
+            $extras = array_intersect_key($step, ['table' => true, 'docString' => true]);
+
+            if ($extras !== []) {
+                $carried[$step['text']] = $extras;
+            }
+        }
+
+        return $carried;
+    }
+
+    /**
      * Collects undefined step definitions grouped by feature file path.
      *
      * @param Results $results the results tree to scan
-     * @return array<string, array<array{keyword: string, text: string}>> steps grouped by feature path
+     * @return array<string, array<array{keyword: string, text: string, table?: bool, docString?: bool}>> steps grouped by feature path, each noting the table or doc string it carries
      */
     public function collectUndefinedSteps(Results $results): array
     {
@@ -177,6 +208,7 @@ final readonly class ResultScanner
         foreach ($results->getResults() as $result) {
             if ($result instanceof FeatureResult) {
                 $featurePath = $result->getPath();
+                $carried = self::carriedByStep($featurePath);
                 foreach ($result->getResults() as $scenario) {
                     if ($scenario instanceof ScenarioResult) {
                         // "And"/"But" continue the last primary keyword — tracked
@@ -198,10 +230,8 @@ final readonly class ResultScanner
                             }
 
                             if ($step->isUndefined()) {
-                                $byFeature[$featurePath][] = [
-                                    'keyword' => $keyword,
-                                    'text' => $parts[1] ?? $title,
-                                ];
+                                $text = $parts[1] ?? $title;
+                                $byFeature[$featurePath][] = ['keyword' => $keyword, 'text' => $text] + ($carried[$text] ?? []);
                             }
                         }
                     }

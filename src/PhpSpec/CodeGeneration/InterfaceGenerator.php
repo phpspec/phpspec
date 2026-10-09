@@ -53,7 +53,6 @@ final class InterfaceGenerator
 
         interface {$interfaceName}
         {
-
         }
 
         EOD;

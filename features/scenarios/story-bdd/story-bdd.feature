@@ -102,6 +102,26 @@ Feature: Story BDD with Gherkin
     And the output should contain "Skipped:"
     And the exit code should be 0
 
+  Scenario: A generated step definition takes the table or doc string its step carries
+    Given a feature file "features/menu.feature":
+      """
+      Feature: Menu
+        Scenario: Reading the menu
+          Given the menu:
+            | item | price |
+            | tea  | 2     |
+          And the note:
+            \"\"\"
+            Closed on Sundays
+            \"\"\"
+          When I read the menu
+      """
+    When I run phpspec run with option "features/ --accept-offers"
+    Then the file "features/steps/menu.steps.php" should contain "use PhpSpec\StoryBDD\DataTable;"
+    And the file "features/steps/menu.steps.php" should contain "function (DataTable $table)"
+    And the file "features/steps/menu.steps.php" should contain "function (string $docString)"
+    And the file "features/steps/menu.steps.php" should contain "function ()" exactly 1 times
+
   Scenario: A Background step that fails is reported once, naming the scenarios it took down
     Given a feature file "features/background.feature":
       """

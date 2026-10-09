@@ -6,6 +6,19 @@ use PhpSpec\Filesystem;
 
 describe(ClassGenerator::class, function () {
 
+    it('leaves no empty line inside an empty body', function (Filesystem $fs) {
+        $written = '';
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written = $content;
+        });
+
+        (new ClassGenerator(filesystem: $fs))->generate('App\\Basket');
+
+        expect($written)->toEndWith("class Basket\n{\n}\n");
+    });
+
     let('generator', fn(Filesystem $fs) => new ClassGenerator(SourceLayout::under('src'), $fs));
 
     it("instantiates", function () {

@@ -187,6 +187,29 @@ given('the following users:', function (DataTable $table) {
 
 `DataTable` implements `ArrayAccess`, `Iterator`, and `Countable`. Use `$table->asClass(User::class)` to hydrate rows into objects.
 
+## Doc Strings
+
+A block of text under a step reaches the definition as a `string`, after the
+parameters of the step's pattern:
+
+```gherkin
+Scenario: Posting a note
+  Given a note titled "Opening hours":
+    """
+    Closed on Sundays
+    """
+```
+
+```php
+given('a note titled {string}:', function (string $title, string $note) {
+    $this->notes[$title] = $note;
+});
+```
+
+A table is passed the same way, as a `DataTable`. The step definitions PhpSpec
+generates for undefined steps take the table or doc string their step carries,
+and import `DataTable` once when a step takes one.
+
 ## Tags
 
 Add `@tag` annotations to features and scenarios:
