@@ -26,7 +26,15 @@ final readonly class SpecificationResult implements Results
      * @param string $title the specification file title
      * @param array<Results> $exampleResults child ContextResult, ExampleResult, and other Results instances
      */
-    public function __construct(private string $title, private array $exampleResults) {}
+    public function __construct(private string $title, private array $exampleResults, private string $path = '') {}
+
+    /**
+     * The path of the spec file, from the project root; blank when not known.
+     */
+    public function getPath(): string
+    {
+        return $this->path;
+    }
 
     /**
      * Returns the specification file title.

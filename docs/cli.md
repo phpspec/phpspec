@@ -397,8 +397,12 @@ bin/phpspec run --parallel        # one worker per CPU core
 bin/phpspec run --parallel=4      # four workers
 ```
 
-Each worker runs a slice of the spec files in its own process and reports back
-via JUnit; the parent merges the results before rendering. Coverage
+Each worker runs a slice of the spec files in its own process and reports each
+result back whole, over PhpSpec's own wire (`--format=wire`, one JSON line per
+spec or feature); the parent renders them as they arrive, in whichever format
+was asked for, with everything a single process would show: a failure's values
+and code, an error's site, what an example printed. A worker that dies is
+reported as an error on the file it was running, naming its exit code. Coverage
 (`--coverage*`) composes with `--parallel` -- workers collect per-example
 coverage and the parent merges it. `--format=agent` is parallel-safe too: the
 parent emits each event as a worker reports it, so entries arrive in completion

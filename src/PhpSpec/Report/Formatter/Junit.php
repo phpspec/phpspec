@@ -151,8 +151,8 @@ final class Junit extends AbstractFormatter
         $featureSuite->setAttribute('name', $feature->getTitle());
         $featureSuite->setAttribute('type', 'feature');
 
-        // Where each scenario lives travels with the report, so a parallel run
-        // rebuilding results from a worker's XML can still say how to re-run one.
+        // Where each scenario lives travels with the report, so a reader of it
+        // can say how to re-run one.
         if ($feature->getPath() !== '') {
             $featureSuite->setAttribute('file', $feature->getPath());
         }

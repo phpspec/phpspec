@@ -16,6 +16,7 @@ namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\HtmlTheme;
+use PhpSpec\Report\ReportedObject;
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -345,6 +346,7 @@ final class Html extends AbstractFormatter
             is_string($value) => '"' . $value . '"',
             is_scalar($value) => (string) $value,
             is_array($value) => 'Array(' . count($value) . ')',
+            $value instanceof ReportedObject => $value->shown,
             is_object($value) => $value::class . '#' . spl_object_id($value),
             default => get_debug_type($value),
         };

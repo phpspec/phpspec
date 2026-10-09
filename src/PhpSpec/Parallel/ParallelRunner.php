@@ -21,8 +21,8 @@ use PhpSpec\StopConditions;
  * @internal
  * Runs spec files in parallel using child processes managed by Fibers for non-blocking I/O.
  *
- * Each worker process runs a partition of spec files via `phpspec run -f junit`,
- * and results are parsed from the JUnit XML output.
+ * Each worker process runs a partition of spec files via `phpspec run -f wire`
+ * and reports each result back whole, on its own line, as it completes.
  */
 final class ParallelRunner
 {
@@ -110,20 +110,23 @@ final class ParallelRunner
 
         while (!empty($fibers)) {
             foreach ($fibers as $key => $fiber) {
-                if ($fiber->isTerminated()) {
-                    $results = $fiber->getReturn();
-                    foreach ($results as $result) {
-                        yield $result;
-                        if ($this->stop->metBy($result)) {
-                            foreach ($processes as $p) {
-                                $p->terminate();
-                            }
-                            return;
-                        }
-                    }
-                    unset($fibers[$key]);
-                } elseif ($fiber->isSuspended()) {
+                if ($fiber->isSuspended()) {
                     $fiber->resume();
+                }
+
+                $results = $fiber->isTerminated() ? $fiber->getReturn() : $processes[$key]->takeResults();
+                foreach ($results as $result) {
+                    yield $result;
+                    if ($this->stop->metBy($result)) {
+                        foreach ($processes as $p) {
+                            $p->terminate();
+                        }
+                        return;
+                    }
+                }
+
+                if ($fiber->isTerminated()) {
+                    unset($fibers[$key]);
                 }
             }
             if (!empty($fibers)) {

@@ -4,6 +4,18 @@ use PhpSpec\StoryBDD\StepError;
 
 describe(StepError::class, function () {
 
+    it('keeps the site and the frames a report carried', function () {
+        $error = StepError::fromReport('no such product', 'RuntimeException', '/project/src/App/Catalogue.php', 30, [
+            ['file' => '/project/src/App/Catalogue.php', 'line' => 30],
+            ['file' => '/project/features/steps/basket.steps.php', 'line' => 9],
+        ]);
+
+        expect($error->getFile())->toBe('/project/src/App/Catalogue.php');
+        expect($error->getLine())->toBe(30);
+        expect($error->getType())->toBe('RuntimeException');
+        expect($error->lineIn('/project/features/steps/basket.steps.php'))->toBe(9);
+    });
+
     it("wraps an exception message", function () {
         $ex = new \RuntimeException("step failed");
         $error = new StepError("step failed", $ex);

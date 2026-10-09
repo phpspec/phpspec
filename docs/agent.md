@@ -26,12 +26,10 @@ Standard output carries one JSON object per line, with no ANSI and no prose.
 Decode a line, act on it, decode the next: on a long suite the first failure
 reaches you while the rest is still running.
 
-It is `--parallel`-safe, with one caveat: workers report back through JUnit,
-which carries the outcome, the message and a scenario's line, and nothing else.
-Entries from a parallel run therefore arrive in completion order and without
-`expectation` or `output`; a spec example, failing or passing, also arrives
-without `spec` and `rerun`, which JUnit has no room for. Run without
-`--parallel` when you want the whole of the detail.
+It is `--parallel`-safe: a worker reports every result back over PhpSpec's own
+wire, so an entry from a parallel run carries the same detail as one from a
+single process, `expectation`, `output`, `spec` and `rerun` included. Entries
+arrive in completion order rather than file order.
 
 ## The stream
 

@@ -38,6 +38,7 @@ use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
+use PhpSpec\Parallel\WireFormatter;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
@@ -923,7 +924,7 @@ final class Run extends Command
      */
     private function unknownFormats(Input $input): array
     {
-        $known = ['pretty', 'dot', 'tap', 'junit', 'html', 'agent'];
+        $known = ['pretty', 'dot', 'tap', 'junit', 'html', 'agent', 'wire'];
 
         return array_values(array_filter(
             (array) $input->getOption('format'),
@@ -977,6 +978,7 @@ final class Run extends Command
             'tap' => new Tap($output),
             'junit' => new Junit($output),
             'html' => new Html($output),
+            'wire' => new WireFormatter($output),
             'agent' => new Agent(
                 $output,
                 fn(SuiteResult $results) => $this->candidates($results)->toArray(),

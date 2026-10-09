@@ -654,9 +654,9 @@ final class Agent extends AbstractFormatter
      * the target.
      *
      * A failure that came back without its site came back without its detail:
-     * a parallel worker reports through JUnit, which carries the message and
-     * nothing else, and its stand-in expectation compares null with null. Only
-     * the site tells that apart from a real failure whose values are null,
+     * a result rebuilt from a report that carried no site has a stand-in
+     * expectation comparing null with null. Only the site tells that apart
+     * from a real failure whose values are null,
      * which is a comparison worth reporting: an anonymous matcher (any
      * __call-based custom or predicate matcher) has no name to give either.
      *
@@ -871,9 +871,9 @@ final class Agent extends AbstractFormatter
     /**
      * Renders a file:line as a project-relative, forward-slashed location, or
      * null when either part is missing. A blank file or a line of zero is
-     * missing too: a result that came back without its site (a parallel worker
-     * reports through JUnit, which carries none) must not be dressed up as
-     * ":0", which reads like a location and re-runs like nonsense.
+     * missing too: a result rebuilt from a report that carried no site must
+     * not be dressed up as ":0", which reads like a location and re-runs like
+     * nonsense.
      */
     private function location(?string $file, ?int $line): ?string
     {
