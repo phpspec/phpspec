@@ -12,7 +12,8 @@ describe(UnexpectedCallException::class, function () {
         expect(UnexpectedCallException::to('App\Menu', 'priceOf', [], $spelledByWindows, 8)->getMessage())->toContain(' at src/App/Till.php:8.');
     });
 
-    it('keeps the whole path of a file outside the project', function () {
+    it('keeps the whole path of a file outside the project, spelled with forward slashes', function () {
         expect(UnexpectedCallException::to('App\Menu', 'priceOf', [], '/elsewhere/Till.php', 8)->getMessage())->toContain(' at /elsewhere/Till.php:8.');
+        expect(UnexpectedCallException::to('App\Menu', 'priceOf', [], 'C:\\elsewhere\\Till.php', 8)->getMessage())->toContain(' at C:/elsewhere/Till.php:8.');
     });
 });
