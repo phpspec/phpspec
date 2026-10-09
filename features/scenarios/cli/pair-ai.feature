@@ -14,6 +14,7 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "/help"
     Then the output should contain "AI assistant"
     And the output should contain "available"
+    And the output should contain "/generate" exactly 1 times
 
   Scenario: Help shows AI as unavailable when the configured provider cannot start
     Given a phpspec.yaml config:
