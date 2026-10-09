@@ -37,6 +37,11 @@ describe(InProcessRunner::class, function () {
             return $ref->getClosure();
         });
 
+        it('keeps a quoted value as one argument, so an expression with spaces reaches its option whole', function () {
+            expect(InProcessRunner::argv("run --tags='@smoke and not @wip' \"features/\"  spec/"))->toBe(['run', '--tags=@smoke and not @wip', 'features/', 'spec/']);
+            expect(($this->parseArgs)("run --tags='@smoke and not @wip'"))->toBe(['command' => 'run', '--tags' => '@smoke and not @wip']);
+        });
+
         it('parses a simple run command', function () {
             $result = ($this->parseArgs)('run');
             expect($result)->toBe(['command' => 'run']);

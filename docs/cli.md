@@ -305,6 +305,7 @@ rejected with an error rather than silently falling back.
 | Option | Description |
 |---|---|
 | `--filter=PATTERN` | Only run specs/scenarios whose file path, example title, or scenario title contains PATTERN |
+| `--tags=EXPRESSION` | Only run the scenarios a Cucumber tag expression selects: `@smoke`, `@smoke and not @wip`, `(@a or @b) and not @c`. A feature's tags count for every scenario in it; a spec has no tags and does not run |
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--all` | Run all suites -- both specs and features |
 | `--story` | Run only features (Story BDD) |
@@ -331,6 +332,7 @@ the same way (useful for tight feedback loops and CI):
 bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
 bin/phpspec run --filter "should be good"        # Example/scenario titles matching a phrase
 bin/phpspec run --filter "it should be good"     # Leading "it" on the filter is ignored
+bin/phpspec run --tags "@smoke and not @wip"      # Scenarios tagged @smoke, unless also @wip
 bin/phpspec run --paths-from specs.txt            # Run the specs listed in specs.txt
 bin/phpspec run --stop-on-failure                 # Stop on first failing spec
 bin/phpspec run --order random                    # Randomize spec order
@@ -340,6 +342,13 @@ bin/phpspec run --order random --seed 42          # Reproducible random order
 Matching is a case-insensitive substring test. When a spec file's path matches,
 every example in it runs; otherwise only the examples whose title matches run.
 Feature files behave the same with scenario titles.
+
+`--tags` selects scenarios by their tags with a Cucumber tag expression: `and`,
+`or`, `not` and parentheses, `not` binding tightest and `and` before `or`. A tag
+on the feature counts for every scenario in it. Only scenarios run under
+`--tags`, since a spec example has none; an expression that cannot be read is
+refused, naming what was found where. Both `--filter` and `--tags` reach every
+`--parallel` worker.
 
 `--paths-from` is designed for tools that drive PhpSpec programmatically (such as
 mutation testing frameworks): a long list of spec paths passed as arguments can

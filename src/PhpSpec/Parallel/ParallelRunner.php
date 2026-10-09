@@ -39,6 +39,8 @@ final class ParallelRunner
      * @param string|null $phpspecBin absolute path to phpspec binary (null = auto-detect)
      * @param string|null $coveragePartialDir directory for workers to dump raw coverage state to, or null to run without coverage
      * @param string|null $configPath explicit config file path to forward to workers, or null to use the working directory lookup
+     * @param string|null $filter the title filter to forward to workers
+     * @param string|null $tags the tag expression to forward to workers
      */
     public function __construct(
         private readonly array $paths,
@@ -47,6 +49,8 @@ final class ParallelRunner
         ?string $phpspecBin = null,
         private readonly ?string $coveragePartialDir = null,
         private readonly ?string $configPath = null,
+        private readonly ?string $filter = null,
+        private readonly ?string $tags = null,
     ) {
         $this->workers = max(1, $workers ?? self::detectCpuCount());
         $this->phpspecBin = $phpspecBin ?? self::findPhpspecBin();
@@ -92,7 +96,7 @@ final class ParallelRunner
                 $this->coveragePartials[] = $coveragePartial;
             }
 
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->configPath, $this->stop);
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->configPath, $this->stop, $this->filter, $this->tags);
             $processes[] = $process;
 
             $fiber = new \Fiber(function () use ($process) {

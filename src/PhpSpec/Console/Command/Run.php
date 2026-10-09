@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command;
 
 use DOMException;
+use InvalidArgumentException;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
@@ -56,6 +57,7 @@ use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 use PhpSpec\Runner;
 use PhpSpec\StopConditions;
+use PhpSpec\StoryBDD\TagExpression;
 use PhpSpec\TitleFilter;
 use Random\RandomException;
 use Symfony\Component\Console\Command\Command;
@@ -118,6 +120,7 @@ final class Run extends Command
             ->addOption('stop-on-skipped', null, Option::VALUE_NONE, 'Stop on first skipped example')
             ->addOption('stop-on-problems', null, Option::VALUE_NONE, 'Stop on any non-pass result')
             ->addOption('filter', null, Option::VALUE_REQUIRED, 'Run only specs matching pattern')
+            ->addOption('tags', null, Option::VALUE_REQUIRED, 'Run only the scenarios a Cucumber tag expression selects, e.g. "@smoke and not @wip"')
             ->addOption('paths-from', null, Option::VALUE_REQUIRED, 'Read spec/feature paths to run from a file, one per line')
             ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html, agent (JSON Lines for coding agents); repeatable, pair each with -o', [])
             ->addOption('out', 'o', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Report destination for the corresponding --format; "std" is the console', [])
@@ -248,6 +251,16 @@ final class Run extends Command
 
         if ($missing !== null) {
             return $this->stopped($prose, $formatter, "Path not found: $missing", 'Check the path, or give none to run the configured suite.');
+        }
+
+        $tags = $input->getOption('tags');
+
+        if (is_string($tags)) {
+            try {
+                new TagExpression($tags);
+            } catch (InvalidArgumentException $e) {
+                return $this->stopped($prose, $formatter, $e->getMessage(), 'Write it the Cucumber way, for example "@smoke and not @wip".');
+            }
         }
 
         $unknownFormats = $this->unknownFormats($input);
@@ -630,7 +643,8 @@ final class Run extends Command
             return implode(',', $given);
         }
 
-        if ($input->getOption('story')) {
+        // Tags select scenarios, and a spec has none to be selected by.
+        if ($input->getOption('story') || ($input->getOption('tags') !== null && !$input->getOption('all'))) {
             return $this->config->getFeaturesPath();
         }
 
@@ -754,7 +768,8 @@ final class Run extends Command
 
         ArrangingCode::under(...$this->specCodeRoots($files));
 
-        $suite = $this->loader->load($files, $filter);
+        $tags = $input->getOption('tags');
+        $suite = $this->loader->load($files, $filter, is_string($tags) ? $tags : null);
 
         $problems = (bool) $input->getOption('stop-on-problems');
         $configStop = $this->config->getStopConditions();
@@ -812,6 +827,8 @@ final class Run extends Command
                 $stop,
                 coveragePartialDir: $coveragePartialDir,
                 configPath: $configPath,
+                filter: is_string($filter) ? $filter : null,
+                tags: is_string($tags) ? $tags : null,
             );
             $stream = $parallelRunner->stream();
         } else {
@@ -947,6 +964,11 @@ final class Run extends Command
     private function nothingFoundLine(Input $input, array $given): string
     {
         $featuresPath = rtrim($this->config->getFeaturesPath(), '/') . '/';
+        $tags = $input->getOption('tags');
+
+        if (is_string($tags)) {
+            return sprintf('No scenario matches --tags "%s".', $tags);
+        }
 
         if ($given !== []) {
             return 'No specs found.';

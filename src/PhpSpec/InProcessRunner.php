@@ -73,8 +73,7 @@ final class InProcessRunner
         chdir($projectDir);
 
         try {
-            $argv = preg_split('/\s+/', trim($args));
-            $app = new Application('9.0.0', $argv !== false ? $argv : []);
+            $app = new Application('9.0.0', self::argv($args));
             $app->setAutoExit(false);
             $app->setCatchExceptions(true);
 
@@ -175,6 +174,23 @@ final class InProcessRunner
     }
 
     /**
+     * The command line as a shell would hand it over: split on whitespace,
+     * with a single- or double-quoted stretch kept whole and its quotes
+     * dropped, so an option value with spaces in it arrives as one argument.
+     *
+     * @return list<string>
+     */
+    public static function argv(string $args): array
+    {
+        preg_match_all('/(?:[^\s"\']+|"[^"]*"|\'[^\']*\')+/', trim($args), $matches);
+
+        return array_map(
+            static fn(string $token): string => (string) preg_replace('/"([^"]*)"|\'([^\']*)\'/', '$1$2', $token),
+            $matches[0],
+        );
+    }
+
+    /**
      * Parses a raw CLI argument string into an ArrayInput-compatible array.
      *
      * Handles the command name, positional arguments (mapped to their
@@ -185,10 +201,7 @@ final class InProcessRunner
      */
     private static function parseArgs(string $args): array
     {
-        $parts = preg_split('/\s+/', trim($args));
-        if ($parts === false) {
-            return [];
-        }
+        $parts = self::argv($args);
         $result = [];
         $command = null;
         $skipNext = false;

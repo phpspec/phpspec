@@ -50,6 +50,8 @@ final class WorkerProcess
      * @param string|null $coveragePartial file path for the worker to dump raw coverage state to, or null to run without coverage
      * @param string|null $configPath explicit config file path to forward to the worker, or null to use the working directory lookup
      * @param StopConditions $stop the conditions the worker halts on, as its parent does
+     * @param string|null $filter the title filter the parent runs under, forwarded so a worker selects as it did
+     * @param string|null $tags the tag expression the parent runs under, forwarded likewise
      */
     public function __construct(
         private readonly array $paths,
@@ -57,6 +59,8 @@ final class WorkerProcess
         private readonly ?string $coveragePartial = null,
         private readonly ?string $configPath = null,
         private readonly StopConditions $stop = new StopConditions(),
+        private readonly ?string $filter = null,
+        private readonly ?string $tags = null,
     ) {
         $this->wire = new Wire();
     }
@@ -86,6 +90,14 @@ final class WorkerProcess
 
         if ($this->configPath !== null) {
             $command[] = '--config=' . $this->configPath;
+        }
+
+        if ($this->filter !== null) {
+            $command[] = '--filter=' . $this->filter;
+        }
+
+        if ($this->tags !== null) {
+            $command[] = '--tags=' . $this->tags;
         }
 
         array_push($command, ...$this->stop->options());

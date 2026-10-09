@@ -222,7 +222,12 @@ Feature: Tagged feature
     Given a step
 ```
 
-Tags are stored on `FeatureNode::$tags` and `ScenarioNode::$tags`.
+Select scenarios by tag with `--tags` and a Cucumber tag expression; a tag on
+the feature counts for every scenario in it:
+
+```bash
+bin/phpspec run --tags "@smoke and not @wip"
+```
 
 ## Hooks
 

@@ -50,6 +50,21 @@ final readonly class Feature implements SpecBlock
     ) {}
 
     /**
+     * A copy of this feature reduced to the scenarios the tag expression
+     * selects, each scenario carrying the feature's tags with its own, or
+     * null when it selects none.
+     */
+    public function withScenariosTagged(TagExpression $tags): ?self
+    {
+        $scenarios = array_values(array_filter(
+            $this->featureNode->scenarios,
+            fn(ScenarioNode $scenario) => $tags->matches([...$this->featureNode->tags, ...$scenario->tags]),
+        ));
+
+        return $scenarios === [] ? null : $this->withScenarios($scenarios);
+    }
+
+    /**
      * Returns a copy of this feature reduced to the scenarios whose title
      * matches the filter, or null when no scenario matches.
      *
@@ -63,10 +78,14 @@ final readonly class Feature implements SpecBlock
             fn(ScenarioNode $scenario) => $filter->matches($scenario->title),
         ));
 
-        if ($scenarios === []) {
-            return null;
-        }
+        return $scenarios === [] ? null : $this->withScenarios($scenarios);
+    }
 
+    /**
+     * @param list<ScenarioNode> $scenarios
+     */
+    private function withScenarios(array $scenarios): self
+    {
         $featureNode = new FeatureNode(
             $this->featureNode->title,
             $this->featureNode->description,

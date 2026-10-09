@@ -834,6 +834,52 @@ Feature: CLI options
     Then the exit code should be 1
     And the output should contain "missing.txt"
 
+  Scenario: --tags runs the scenarios a Cucumber tag expression matches, a feature's tags counting for every scenario in it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/tagged.feature":
+      """
+      @checkout
+      Feature: Tagged
+        @smoke
+        Scenario: Quick
+          Given a step
+        @smoke @wip
+        Scenario: Unfinished
+          Given a step
+        Scenario: Plain
+          Given a step
+      """
+    And a step file "features/steps/tagged.steps.php":
+      """
+      <?php
+      given("a step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    And a spec file "spec/App/Untagged.spec.php":
+      """
+      <?php
+      describe('Untagged', function () {
+          it('is a spec, which no tag can select', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--tags='@smoke and not @wip'"
+    Then the output should contain "Quick"
+    And the output should not contain "Unfinished"
+    And the output should not contain "Plain"
+    And the output should not contain "Untagged"
+    And the output should contain "1 scenario"
+    When I run phpspec run with option "--tags=@checkout"
+    Then the output should contain "3 scenarios"
+
+  Scenario: --tags refuses an expression it cannot read
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    When I run phpspec run with option "--tags='@smoke and'"
+    Then the output should contain "Tag expression"
+    And the exit code should be 1
+
   Scenario: Stop on problems stops on a pending example
     Given a spec file "spec/App/AAStopPending.spec.php":
       """

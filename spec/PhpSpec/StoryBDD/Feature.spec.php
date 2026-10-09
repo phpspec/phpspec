@@ -2,6 +2,7 @@
 
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\FeatureNode;
+use PhpSpec\StoryBDD\TagExpression;
 use PhpSpec\TitleFilter;
 use PhpSpec\StoryBDD\ScenarioNode;
 use PhpSpec\StoryBDD\ScenarioOutlineNode;
@@ -262,6 +263,30 @@ describe(Feature::class, function () {
         $scenarios = $reduced->run()->getResults();
         expect($scenarios)->toHaveCount(1);
         expect($scenarios[0]->getTitle())->toBe('Wanted path');
+    });
+
+    it("reduces to the scenarios whose tags match, a scenario carrying its feature's tags too", function () {
+        $registry = new StepRegistry();
+        $registry->addStep('a step', function () {});
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Tagged',
+            '',
+            null,
+            [
+                new ScenarioNode('Quick', [new StepNode('Given', 'a step')], ['smoke']),
+                new ScenarioNode('Unfinished', [new StepNode('Given', 'a step')], ['smoke', 'wip']),
+                new ScenarioNode('Plain', [new StepNode('Given', 'a step')]),
+            ],
+            ['checkout'],
+        ), $registry, new HookRegistry());
+
+        $smoke = $feature->withScenariosTagged(new TagExpression('@smoke and not @wip'));
+        expect(array_map(static fn($s) => $s->getTitle(), $smoke->run()->getResults()))->toBe(['Quick']);
+
+        $whole = $feature->withScenariosTagged(new TagExpression('@checkout'));
+        expect($whole->run()->getResults())->toHaveCount(3);
+
+        expect($feature->withScenariosTagged(new TagExpression('@nightly')))->toBeNull();
     });
 
     it("reduces to null when no scenario title matches the filter", function () {

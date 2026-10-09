@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\StoryBDD\Feature;
 use PhpSpec\Loader;
 use PhpSpec\Filesystem;
 use PhpSpec\Suite;
@@ -106,6 +107,29 @@ describe(Loader::class, function () {
         $suite = (new Loader($fs))->load('./spec', 'One');
 
         expect($suite)->toBeAnInstanceOf(Suite::class);
+    });
+
+    it("keeps only the scenarios a tag expression matches, and no spec at all, since a spec has no tags", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature') || str_ends_with($p, '.spec.php'));
+        allow($fs->isDir())->toReturnUsing(fn(string $p) => in_array($p, ['./spec', 'features', 'features/steps'], true));
+        allow($fs->scandir())->toReturnUsing(fn(string $p) => match ($p) {
+            './spec' => ['.', '..', 'One.spec.php'],
+            'features' => ['.', '..', 'tagged.feature', 'plain.feature'],
+            default => ['.', '..'],
+        });
+        allow($fs->read())->toReturnUsing(fn(string $p) => match ($p) {
+            'features/tagged.feature' => "Feature: Tagged\n  @smoke\n  Scenario: Quick\n    Given a step\n  @wip\n  Scenario: Unfinished\n    Given a step\n",
+            'features/plain.feature' => "Feature: Plain\n  Scenario: Plain\n    Given a step\n",
+            default => '',
+        });
+        allow($fs->exists())->toReturn(false);
+
+        $suite = (new Loader($fs))->load('./spec,features', null, '@smoke');
+
+        $blocks = $suite->getSpecifications();
+        expect($blocks)->toHaveCount(1);
+        expect($blocks[0])->toBeAnInstanceOf(Feature::class);
+        expect(array_map(static fn($s) => $s->getTitle(), $blocks[0]->run()->getResults()))->toBe(['Quick']);
     });
 
     it("knows whether its features path holds any feature, however deep", function (Filesystem $fs) {

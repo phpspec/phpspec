@@ -119,6 +119,14 @@ describe(WorkerProcess::class, function () {
             expect($command)->toContain('--config=custom/my-config.json');
         });
 
+        it('forwards the title filter and the tag expression, so a worker selects as the parent did', function () {
+            $command = (new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', filter: 'adds', tags: '@smoke and not @wip'))->buildCommand();
+
+            expect($command)->toContain('--filter=adds');
+            expect($command)->toContain('--tags=@smoke and not @wip');
+            expect((new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec'))->buildCommand())->not()->toContain('--filter=');
+        });
+
         it('forwards the stop conditions to the worker, so it halts as the parent would', function () {
             $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', stop: new StopConditions(onError: true, onSkipped: true));
             $command = $worker->buildCommand();

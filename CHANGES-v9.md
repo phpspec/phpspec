@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - `--tags` runs the scenarios a Cucumber tag expression selects (`@smoke and not @wip`, `(@a or @b) and not @c`), a feature's tags counting for every scenario in it; tags used to be parsed and nothing could select by them. `--filter` and `--tags` reach every `--parallel` worker, which used to run every example of a file the filter had let through
  - `it("title")` with no body declares a pending example, as `xit()` does, instead of an argument-count error that takes the whole context down
  - `--stop-on-pending`, and `stop_on_pending` in the config, halt the run at the first pending example; `--stop-on-problems` stops on one too
  - `describe` asks which mapped namespace a name under none of them belongs to, or keeps it as written; `default_namespace` in the config answers for every such name, in `describe` and `exemplify`; with nobody to answer and no default the name is refused with a remedy, exit code 1
