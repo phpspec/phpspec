@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - A class a spec needs but does not describe is offered spec first, then the class, the way a class missing from a step always was; the class question names its file relative to the project
  - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec
  - Guard refuses to run when no coverage driver is available, with the remedy and exit code 1, instead of standing down and letting the run pass unjudged; the agent header's `guard` is `on` or `off`
  - `Configuration` is built from values and touches no disk; `Configuration::load()` reads what a project states, its config file and the PSR-4 mappings of composer.json, as the console does

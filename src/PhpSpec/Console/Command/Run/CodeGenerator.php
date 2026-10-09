@@ -169,6 +169,7 @@ final readonly class CodeGenerator
     {
         $applied = [];
         $classGenerator = new ClassGenerator($this->layout);
+        $specGenerator = new SpecGenerator($this->specPath, specSuffix: $this->specSuffix);
 
         foreach ($missingClasses as $fqcn => $describes) {
             $location = ClassLocation::for($fqcn, $this->layout);
@@ -187,11 +188,18 @@ final readonly class CodeGenerator
                 continue;
             }
 
+            $described = self::describes($describes, $fqcn);
             $output->writeln('');
-            $output->writeln(sprintf('  <fg=#f59e0b>%s,</>', self::describes($describes, $fqcn)
+            $output->writeln(sprintf('  <fg=#f59e0b>%s,</>', $described
                 ? "Looks like you are trying to spec $fqcn"
                 : "Looks like $describes needs $fqcn"));
             $output->writeln("  <fg=#f59e0b>a class that doesn't exist yet.</>");
+
+            if (!$described) {
+                array_push($applied, ...$this->offerSpecThenClass($output, $fqcn, $specGenerator, $classGenerator));
+
+                continue;
+            }
 
             if (!$this->confirm($output, '  <fg=gray>Would you like me to generate that class for you?</>', 'create-class', 'create classes')) {
                 continue;
@@ -227,40 +235,53 @@ final readonly class CodeGenerator
         $classGenerator = new ClassGenerator($this->layout);
 
         foreach ($missingStepClasses as $fqcn) {
-            $specName = str_replace('\\', '/', $fqcn);
+            $output->writeln('');
+            $output->writeln(sprintf('  <fg=yellow>Class <fg=white>%s</> not found in step.</>', $fqcn));
+            array_push($applied, ...$this->offerSpecThenClass($output, $fqcn, $specGenerator, $classGenerator));
+        }
 
-            $question = sprintf(
-                '  <fg=yellow>Class <fg=white>%s</> not found in step. Do you want me to create a spec for it?</>',
-                $fqcn,
-            );
+        return $applied;
+    }
 
-            if (!$this->confirm($output, $question, 'create-spec', 'create specs')) {
-                continue;
+    /**
+     * Offers a spec for a class that does not exist, then the class, the way
+     * outside-in reads: what the class is for is said before the class is.
+     * A spec that already exists is not offered again.
+     *
+     * @return list<Applied>
+     */
+    private function offerSpecThenClass(Output $output, string $fqcn, SpecGenerator $specGenerator, ClassGenerator $classGenerator): array
+    {
+        $applied = [];
+        $specName = str_replace('\\', '/', $fqcn);
+
+        if (!$this->filesystem->exists($specGenerator->filePath($specName))) {
+            if (!$this->confirm($output, '  <fg=gray>Do you want me to create a spec for it?</>', 'create-spec', 'create specs')) {
+                return [];
             }
 
             $specGenerator->generate($specName);
             $output->writeln(sprintf('  <fg=green>Spec for %s created in %s</>', $fqcn, ProjectRoot::here()->relative($specGenerator->filePath($specName))));
             $applied[] = self::applied('create_spec', $fqcn, $this->specPath . '/' . $specName . $this->specSuffix);
-
-            $location = ClassLocation::for($fqcn, $this->layout);
-
-            if ($location->exists($this->filesystem)) {
-                continue;
-            }
-
-            $question = sprintf(
-                '  <fg=yellow>Do you want me to create class <fg=white>%s</> in <fg=white>%s</>?</>',
-                $fqcn,
-                $location->filePath(),
-            );
-
-            if (!$this->confirm($output, $question, 'create-class', 'create classes')) {
-                continue;
-            }
-
-            $reason = $this->generateOrExplain($output, fn() => $classGenerator->generate($fqcn), $location->filePath());
-            $applied[] = self::applied('create_class', $fqcn, $location->filePath(), $reason);
         }
+
+        $location = ClassLocation::for($fqcn, $this->layout);
+        if ($location->exists($this->filesystem)) {
+            return $applied;
+        }
+
+        $question = sprintf(
+            '  <fg=yellow>Do you want me to create class <fg=white>%s</> in <fg=white>%s</>?</>',
+            $fqcn,
+            ProjectRoot::here()->relative($location->filePath()),
+        );
+
+        if (!$this->confirm($output, $question, 'create-class', 'create classes')) {
+            return $applied;
+        }
+
+        $reason = $this->generateOrExplain($output, fn() => $classGenerator->generate($fqcn), $location->filePath());
+        $applied[] = self::applied('create_class', $fqcn, $location->filePath(), $reason);
 
         return $applied;
     }

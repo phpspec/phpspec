@@ -212,6 +212,22 @@ Feature: Code generation
     Then a file "src/App/Notifier.php" should be generated
     And it should contain "interface Notifier"
 
+  Scenario: A class a spec needs is offered spec first, the way a class a step needs is
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the output should contain "Looks like App\Basket needs App\Coupon,"
+    And the output should contain "Spec for App\Coupon created in spec/App/Coupon.spec.php"
+    And a spec file "spec/App/Coupon.spec.php" should be generated
+    And a class file "src/App/Coupon.php" should be generated
+
   Scenario: A generated class named like an exception extends Exception, so it can be thrown
     Given a spec file "spec/App/PaymentFailedException.spec.php":
       """

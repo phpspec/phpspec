@@ -113,7 +113,7 @@ a class that doesn't exist yet.
 Would you like me to generate that class for you? [Y/n]
 ```
 
-A spec that needs some other class than the one it describes reads `Looks like App\Basket needs App\Coupon, a class that doesn't exist yet.` If confirmed, `ClassGenerator` creates the class and names the file, `src/App/Calculator.php`:
+A spec that needs some other class than the one it describes reads `Looks like App\Basket needs App\Coupon, a class that doesn't exist yet.` and offers a spec for it before the class, the way a class missing from a step is offered: outside-in says what a class is for before the class exists. If confirmed, `ClassGenerator` creates the class and names the file, `src/App/Calculator.php`:
 
 ```php
 <?php
