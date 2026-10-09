@@ -412,6 +412,14 @@ Feature: Code generation
     Then the output should contain "Example for App\Converter::convert added."
     And the spec file should contain an example for "convert"
 
+  Scenario: Describing a spec that already exists says so, and exemplifying the same method twice says so too
+    When I run phpspec describe "App\Converter"
+    And I run phpspec describe "App\Converter"
+    Then the output should contain "Specification for App\Converter already exists in spec/App/Converter.spec.php"
+    When I run phpspec exemplify "App\Converter" "convert"
+    And I run phpspec exemplify "App\Converter" "convert"
+    Then the output should contain "Example for App\Converter::convert already exists."
+    And the output should not contain "added."
   Scenario: Exemplify command creates a spec if it does not exist
     When I run phpspec exemplify "App\Printer" "print"
     Then a spec file "spec/App/Printer.spec.php" should be generated

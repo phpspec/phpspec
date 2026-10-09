@@ -105,18 +105,19 @@ final class Describe extends Command
             return $this->describeForAgent($spec, $input, $output);
         }
 
-        $this->generator->generate($spec);
+        $created = $this->generator->generate($spec);
         $output->writeln('');
         $output->writeln(sprintf(
-            '<fg=green>Specification for <fg=yellow>%s</> created in <fg=yellow>%s</></>',
+            '<fg=green>Specification for <fg=yellow>%s</> %s <fg=yellow>%s</></>',
             $fqcn === str_replace('/', '\\', $class) ? $class : $fqcn,
+            $created ? 'created in' : 'already exists in',
             $this->specFile($spec),
         ));
 
         $method = $input->getOption('exemplify');
         if ($method) {
-            $this->generator->addExample($spec, $method);
-            $output->writeln(sprintf('<fg=green>Example for method <fg=yellow>%s</> added.</>', $method));
+            $added = $this->generator->addExample($spec, $method);
+            $output->writeln(sprintf('<fg=green>Example for method <fg=yellow>%s</> %s</>', $method, $added ? 'added.' : 'already exists.'));
         }
 
         if ($input->getOption('run')) {

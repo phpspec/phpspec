@@ -161,6 +161,31 @@ describe(Describe::class, function() {
         ]);
     });
 
+    it("says the spec already existed, and writes nothing, when it did", function(Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        expect($fs->write())->not()->toBeCalled();
+
+        $output = new BufferedOutput();
+        $this->describe->run(new ArrayInput(['class' => 'App/Basket']), $output);
+
+        $text = $output->fetch();
+        expect($text)->toContain('Specification for App/Basket already exists in spec/App/Basket.spec.php');
+        expect($text)->not()->toContain('created');
+    });
+
+    it("says the example already existed when -e names a method the spec has", function(Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\ndescribe(Spec::class, function() {\n    it(\"should greet\", fn() => null);\n});\n");
+        expect($fs->write())->not()->toBeCalled();
+
+        $output = new BufferedOutput();
+        $this->describe->run(new ArrayInput(['class' => 'Some/Spec', '--exemplify' => 'greet']), $output);
+
+        $text = $output->fetch();
+        expect($text)->toContain('Example for method greet already exists.');
+        expect($text)->not()->toContain('added');
+    });
+
     it("reports created false in the receipt when the spec already exists", function(Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
 

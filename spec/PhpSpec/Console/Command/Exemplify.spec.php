@@ -80,6 +80,19 @@ describe(Exemplify::class, function () {
         ]);
     });
 
+    it('says the example already existed instead of claiming to have added it', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => null);\n});\n");
+        expect($fs->write())->not()->toBeCalled();
+
+        $output = new BufferedOutput();
+        $this->exemplify->run(new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add']), $output);
+
+        $text = $output->fetch();
+        expect($text)->toContain('Example for Acme\Calculator::add already exists.');
+        expect($text)->not()->toContain('added');
+    });
+
     it('reports added false in the receipt when the example already exists', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn(<<<'PHP'
