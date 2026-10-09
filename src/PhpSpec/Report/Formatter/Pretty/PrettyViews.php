@@ -270,22 +270,23 @@ final class PrettyViews
             }
             $output->write(implode(', ', $parts));
             $output->write(')' . PHP_EOL);
-        } elseif (isset($counts['specs'])) {
+        }
+        if (!empty($counts['specs'])) {
             $output->write($counts['specs'] . ' spec' . ($counts['specs'] != 1 ? 's' : '') . PHP_EOL);
         }
         if (isset($counts['examples']) && $counts['examples'] > 0) {
             $exParts = [];
             if ($counts['passes']) {
-                $exParts[] = '<fg=green>' . $counts['passes'] . ' passes</>';
+                $exParts[] = '<fg=green>' . $counts['passes'] . ' passed</>';
             }
             if ($counts['risky']) {
                 $exParts[] = '<fg=yellow>' . $counts['risky'] . ' risky</>';
             }
             if ($counts['failures']) {
-                $exParts[] = '<fg=red>' . $counts['failures'] . ' failures</>';
+                $exParts[] = '<fg=red>' . $counts['failures'] . ' failed</>';
             }
             if ($counts['errors']) {
-                $exParts[] = '<fg=red>' . $counts['errors'] . ' errors</>';
+                $exParts[] = '<fg=red>' . $counts['errors'] . ' errored</>';
             }
             if ($counts['pending']) {
                 $exParts[] = '<fg=yellow>' . $counts['pending'] . ' pending</>';

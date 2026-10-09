@@ -206,7 +206,7 @@ Spec: Calculator
     ✓ subtracts two numbers
 
 1 spec
-2 examples (2 passes)
+2 examples (2 passed)
 Finished in 0.0042 seconds
 ```
 
@@ -219,7 +219,7 @@ Compact one-character-per-example output:
 ```
 ..F.P..E.
 
-9 examples (6 passes, 1 failure, 1 pending, 1 error)
+9 examples (6 passed, 1 failed, 1 pending, 1 errored)
 ```
 
 - `.` pass, `F` failure, `P` pending, `E` error, `S` skipped, `U` undefined step

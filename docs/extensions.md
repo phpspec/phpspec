@@ -88,7 +88,7 @@ class GithubActionsFormatter extends FormatterExtension
 
     public function formatSummary(int $total, int $passed, int $failed, int $pending, int $errors): string
     {
-        return "$total examples ($passed passed, $failed failed, $pending pending, $errors errors)";
+        return sprintf('%d example%s (%d passed, %d failed, %d pending, %d errored)', $total, $total === 1 ? '' : 's', $passed, $failed, $pending, $errors);
     }
 }
 ```

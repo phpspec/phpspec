@@ -64,7 +64,7 @@ Feature: Error reporting
     When I run phpspec run in a fresh process with option "--no-interaction"
     Then the output should contain "still runs"
     And the output should contain "Broken > Broken"
-    And the output should contain "2 examples (1 passes, 1 errors)"
+    And the output should contain "2 examples (1 passed, 1 errored)"
     And the exit code should be 1
 
   Scenario: Error shows file and line number

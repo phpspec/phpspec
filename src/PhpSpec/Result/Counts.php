@@ -59,7 +59,7 @@ final class Counts
     public function toArray(): array
     {
         $this->count($this->results);
-        $specs = count($this->results->getResults());
+        $specs = count(array_filter($this->results->getResults(), static fn($result): bool => $result instanceof SpecificationResult));
 
         return [
             'specs' => $specs,

@@ -222,5 +222,5 @@ Feature: Extensions
       });
       """
     When I run phpspec run
-    Then the output should contain "1 example (1 passes)"
+    Then the output should contain "1 example (1 passed)"
     And the exit code should be 0

@@ -109,7 +109,7 @@ Feature: Code generation
     When I run phpspec run with option "--accept-offers --fake"
     Then the class "src/App/Voucher.php" should contain "return 'B5';"
     When I run phpspec run in a fresh process
-    Then the output should contain "1 example (1 passes)"
+    Then the output should contain "1 example (1 passed)"
 
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
@@ -268,7 +268,7 @@ Feature: Code generation
     Then a class file "src/Acme/Thing.php" should be generated
     And no file "src/Brew/Acme/Thing.php" should be generated
     When I run phpspec run
-    Then the output should contain "1 example (1 passes)"
+    Then the output should contain "1 example (1 passed)"
 
   Scenario: A method lands in the file its class was loaded from, wherever composer says the namespace lives
     Given no phpspec.json config

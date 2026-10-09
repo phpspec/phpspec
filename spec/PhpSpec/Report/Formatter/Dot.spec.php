@@ -29,7 +29,7 @@ describe(Dot::class, function() {
         expect($text)->toContain(".");
         expect($text)->toContain("1 spec");
         expect($text)->toContain("1 example");
-        expect($text)->toContain("1 passes");
+        expect($text)->toContain("1 passed");
     });
 
     it("formats failing results with F", function() {
@@ -44,7 +44,7 @@ describe(Dot::class, function() {
         $formatter->format($suite);
         $text = $output->fetch();
         expect($text)->toContain("F");
-        expect($text)->toContain("1 failures");
+        expect($text)->toContain("1 failed");
         expect($text)->toContain("Expected a to be b");
     });
 
@@ -60,10 +60,22 @@ describe(Dot::class, function() {
         $formatter->format($suite);
         $text = $output->fetch();
         expect($text)->toContain("E");
-        expect($text)->toContain("1 errors");
+        expect($text)->toContain("1 errored");
         expect($text)->toContain("boom");
     });
 
+    it("counts outcomes in the vocabulary the pretty formatter uses, spec count included beside features", function() {
+        $output = new BufferedOutput();
+        $feature = new FeatureResult("Shop", [new ScenarioResult("Checkout", [new StepResult("Given a basket", "passed")])]);
+        $spec = new SpecificationResult("MySpec", [
+            new ExampleResult("works", [MatchResult::passed()]),
+            new ExampleResult("fails", [MatchResult::failed(1, 2, "Expected 1 to be 2", __FILE__, __LINE__)]),
+        ]);
+        (new Dot($output))->format(new SuiteResult([$feature, $spec]));
+
+        $text = str_replace("\r\n", "\n", $output->fetch());
+        expect($text)->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec\n2 examples (1 passed, 1 failed)\n");
+    });
     it("formats pending results with P", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);
@@ -396,7 +408,7 @@ describe(Dot::class, function() {
         $formatter->format($suite);
         $text = $output->fetch();
         expect($text)->toContain("E");
-        expect($text)->toContain("1 errors");
+        expect($text)->toContain("1 errored");
         expect($text)->not()->toContain("Errors:");
         expect($text)->not()->toContain("not found");
     });
@@ -512,7 +524,7 @@ describe(Dot::class, function() {
         expect($text)->toContain("Errors:");
         expect($text)->toContain("Spec > err1");
         expect($text)->toContain("Spec > err2");
-        expect($text)->toContain("2 errors");
+        expect($text)->toContain("2 errored");
     });
 
     it("tells the same detailed story at the bottom as the pretty formatter", function() {

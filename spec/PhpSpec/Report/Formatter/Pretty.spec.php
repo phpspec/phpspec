@@ -252,6 +252,28 @@ describe(Pretty::class, function() {
         expect($positions)->toBe($ordered);
     });
 
+    it("counts outcomes in one vocabulary that reads right in the singular: passed, failed, errored", function () {
+        $output = new BufferedOutput();
+        $errored = new ExampleResult("breaks", [], true);
+        $errored->setError(new ExampleError("boom", new \RuntimeException("boom")));
+        $spec = new SpecificationResult("MySpec", [
+            new ExampleResult("works", [MatchResult::passed()]),
+            new ExampleResult("fails", [MatchResult::failed(1, 2, "Expected 1 to be 2", __FILE__, __LINE__)]),
+            $errored,
+        ]);
+        (new Pretty($output))->format(new SuiteResult([$spec]));
+
+        expect($output->fetch())->toContain("1 spec\n3 examples (1 passed, 1 failed, 1 errored)\n");
+    });
+
+    it("keeps the spec count beside the feature count when both ran", function () {
+        $output = new BufferedOutput();
+        $feature = new FeatureResult("Shop", [new ScenarioResult("Checkout", [new StepResult("Given a basket", "passed")])]);
+        $spec = new SpecificationResult("MySpec", [new ExampleResult("works", [MatchResult::passed()])]);
+        (new Pretty($output))->format(new SuiteResult([$feature, $spec]));
+
+        expect($output->fetch())->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec\n1 example (1 passed)\n");
+    });
     it("prints no section headers when everything passes", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
@@ -608,7 +630,7 @@ describe(Pretty::class, function() {
         $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("! calls the code (no expectation)");
         expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");
-        expect($text)->toContain("1 passes, 1 risky");
+        expect($text)->toContain("1 passed, 1 risky");
     });
 
     it("formats a feature with passing steps", function () {
