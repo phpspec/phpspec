@@ -79,14 +79,15 @@ final class Tap extends AbstractFormatter
      * Outputs a single TAP test line with optional YAML diagnostics.
      *
      * @param int $num the test number
-     * @param array{title: string, pending: bool, error: bool, failure: bool, message: string} $example
+     * @param array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string} $example
      */
     private function outputExample(int $num, array $example): void
     {
         $title = $example['title'];
 
-        if ($example['pending']) {
-            $this->output->writeln("ok {$num} - {$title} # SKIP pending");
+        if ($example['pending'] || $example['skipped']) {
+            $why = $example['reason'] ?? ($example['pending'] ? 'pending' : 'skipped');
+            $this->output->writeln("ok {$num} - {$title} # SKIP {$why}");
         } elseif ($example['error'] || $example['failure']) {
             $this->output->writeln("not ok {$num} - {$title}");
             $this->output->writeln('  ---');
@@ -100,8 +101,8 @@ final class Tap extends AbstractFormatter
     /**
      * Recursively collects all examples into a flat list with context-prefixed titles.
      *
-     * @param array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}> $examples
-     * @return array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}>
+     * @param array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string}> $examples
+     * @return array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array
     {
@@ -110,6 +111,8 @@ final class Tap extends AbstractFormatter
                 $examples[] = [
                     'title' => $prefix ? "{$prefix} {$result->getTitle()}" : $result->getTitle(),
                     'pending' => $result->isPending(),
+                    'skipped' => $result->isSkipped(),
+                    'reason' => $result->getReason(),
                     'error' => $result->isError(),
                     'failure' => $result->isFailure(),
                     'message' => $result->getMessage(),

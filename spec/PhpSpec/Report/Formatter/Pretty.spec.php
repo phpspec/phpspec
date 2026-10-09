@@ -199,7 +199,7 @@ describe(Pretty::class, function() {
         expect($text)->toContain('Y');
     });
 
-    it("groups the detail into Failures, Errors, Warnings, Deprecations, and Skipped sections, in that order", function() {
+    it("groups the detail into Failures, Errors, Warnings, Deprecations, Pending and Skipped sections, in that order", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
 
@@ -212,14 +212,15 @@ describe(Pretty::class, function() {
         $warning->setWarnings([['severity' => E_WARNING, 'message' => 'a warning', 'file' => __FILE__, 'line' => __LINE__]]);
         $deprecated = new ExampleResult("deprecates", [MatchResult::passed()]);
         $deprecated->setDeprecations([['severity' => E_USER_DEPRECATED, 'message' => 'a deprecation', 'file' => __FILE__, 'line' => __LINE__]]);
+        $pending = new ExampleResult("waits", [], isPending: true);
         $skipped = new ExampleResult("skips", [], false, false, true);
-        $spec = new SpecificationResult("MySpec", [$failing, $erroring, $warning, $deprecated, $skipped]);
+        $spec = new SpecificationResult("MySpec", [$failing, $erroring, $warning, $deprecated, $skipped, $pending]);
         $suite = new SuiteResult([$spec]);
 
         $formatter->format($suite);
         $text = $output->fetch();
         $positions = [];
-        foreach (["Failures:", "Errors:", "Warnings:", "Deprecations:", "Skipped:"] as $header) {
+        foreach (["Failures:", "Errors:", "Warnings:", "Deprecations:", "Pending:", "Skipped:"] as $header) {
             expect($text)->toContain($header);
             $positions[] = strpos($text, $header);
         }
@@ -237,7 +238,25 @@ describe(Pretty::class, function() {
 
         $text = $output->fetch();
         expect($text)->not()->toContain("Failures:");
+        expect($text)->not()->toContain("Pending:");
         expect($text)->not()->toContain("Skipped:");
+    });
+
+    it("shows the reason a pending or skipped example gave beside it, and under it in its section", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $pending = new ExampleResult("fetches the rates", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("posts the order", [], isSkipped: true, reason: "No network here");
+        $crossed = new ExampleResult("is crossed out", [], isPending: true);
+        $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped, $crossed])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain("○ fetches the rates (Needs the rates API)");
+        expect($text)->toContain("- posts the order (No network here)");
+        expect($text)->toContain("○ is crossed out\n");
+        expect($text)->toContain("Pending:\n\n  • MySpec > fetches the rates\n    Needs the rates API\n\n  • MySpec > is crossed out\n");
+        expect($text)->toContain("Skipped:\n\n  • MySpec > posts the order\n    No network here\n");
     });
 
     it("formats error results with details", function() {

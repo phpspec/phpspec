@@ -68,9 +68,9 @@ final class PrettyViews
     {
         $output->write(PHP_EOL . str_repeat(' ', $indentation));
         if ($example->isPending()) {
-            self::outcome($output, 'yellow', '○', $example->getTitle());
+            self::outcome($output, 'yellow', '○', $example->getTitle(), $example->getReason());
         } elseif ($example->isSkipped()) {
-            self::outcome($output, 'cyan', '-', $example->getTitle());
+            self::outcome($output, 'cyan', '-', $example->getTitle(), $example->getReason());
         } elseif ($example->isError() || $example->isFailure()) {
             self::outcome($output, 'red', '✘', $example->getTitle());
         } else {
@@ -148,9 +148,9 @@ final class PrettyViews
      * One line for an outcome, glyph and title in the outcome's colour: the
      * same line for an example and for a step.
      */
-    private static function outcome(OutputInterface $output, string $colour, string $glyph, string $title): void
+    private static function outcome(OutputInterface $output, string $colour, string $glyph, string $title, ?string $reason = null): void
     {
-        $output->write('<fg=' . $colour . '>' . $glyph . ' ' . $title . '</>');
+        $output->write('<fg=' . $colour . '>' . $glyph . ' ' . $title . ($reason === null ? '' : ' (' . $reason . ')') . '</>');
     }
 
     private static function duration(OutputInterface $output, float $seconds): void

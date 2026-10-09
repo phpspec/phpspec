@@ -311,6 +311,7 @@ the same way (useful for tight feedback loops and CI):
 | `--stop-on-warning` | warning |
 | `--stop-on-deprecation` | deprecation |
 | `--stop-on-notice` | notice |
+| `--stop-on-pending` | pending example |
 | `--stop-on-skipped` | skipped example |
 | `--stop-on-problems` | any non-passing result |
 

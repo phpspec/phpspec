@@ -81,6 +81,22 @@ describe(Junit::class, function() {
         expect($text)->toContain('skipped="1"');
     });
 
+    it("marks a skipped example skipped too, each with the reason it gave", function() {
+        $output = new BufferedOutput();
+        $formatter = new Junit($output);
+
+        $pending = new ExampleResult("is pending", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("is skipped", [], isSkipped: true, reason: "No network here");
+        $suite = new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+
+        expect($text)->toContain('<skipped message="Needs the rates API"/>');
+        expect($text)->toContain('<skipped message="No network here"/>');
+        expect($text)->toContain('skipped="2"');
+    });
+
     context('feature formatting', function () {
         it('formats a feature with passing steps', function () {
             $output = new BufferedOutput();

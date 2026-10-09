@@ -42,6 +42,7 @@ final class Configuration
         'stop_on_warning' => 'bool',
         'stop_on_notice' => 'bool',
         'stop_on_deprecation' => 'bool',
+        'stop_on_pending' => 'bool',
         'stop_on_skipped' => 'bool',
         'autoload' => 'array',
         'suites' => 'array',
@@ -450,6 +451,14 @@ final class Configuration
     }
 
     /**
+     * Returns whether to stop on pending examples from configuration.
+     */
+    public function getStopOnPending(): bool
+    {
+        return $this->get('stop_on_pending', false);
+    }
+
+    /**
      * Returns whether to stop on skipped examples from configuration.
      */
     public function getStopOnSkipped(): bool
@@ -468,6 +477,7 @@ final class Configuration
             onWarning: $this->getStopOnWarning(),
             onDeprecation: $this->getStopOnDeprecation(),
             onNotice: $this->getStopOnNotice(),
+            onPending: $this->getStopOnPending(),
             onSkipped: $this->getStopOnSkipped(),
         );
     }

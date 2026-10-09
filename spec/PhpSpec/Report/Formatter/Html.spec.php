@@ -116,6 +116,19 @@ describe(Html::class, function() {
         expect($text)->toContain('class="example skipped"');
     });
 
+    it("shows the reason a pending or skipped example gave beside its title", function() {
+        $output = new BufferedOutput();
+        $formatter = new Html($output);
+
+        $pending = new ExampleResult("fetches the rates", [], isPending: true, reason: "Needs the <rates> API");
+        $skipped = new ExampleResult("posts the order", [], isSkipped: true, reason: "No network here");
+        $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain('<li class="example pending">fetches the rates <span class="reason">Needs the &lt;rates&gt; API</span></li>');
+        expect($text)->toContain('<li class="example skipped">posts the order <span class="reason">No network here</span></li>');
+    });
+
     it("opens groups containing failures and collapses passing ones", function() {
         $output = new BufferedOutput();
         $formatter = new Html($output);

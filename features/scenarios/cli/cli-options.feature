@@ -826,3 +826,83 @@ Feature: CLI options
     When I run phpspec run with option "--paths-from=missing.txt"
     Then the exit code should be 1
     And the output should contain "missing.txt"
+
+  Scenario: Stop on problems stops on a pending example
+    Given a spec file "spec/App/AAStopPending.spec.php":
+      """
+      <?php
+      describe('AAStopPending', function () {
+          it('is pending', function () {
+              pending('Later');
+          });
+      });
+      """
+    And a spec file "spec/App/ZZAfterPendingProblem.spec.php":
+      """
+      <?php
+      describe('ZZAfterPendingProblem', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-problems"
+    Then the output should not contain "ZZAfterPendingProblem"
+
+  Scenario: Stop on first pending example
+    Given a spec file "spec/App/AAStopOnPending.spec.php":
+      """
+      <?php
+      describe('AAStopOnPending', function () {
+          xit('is not written yet', function () {
+          });
+      });
+      """
+    And a spec file "spec/App/ZZAfterPending.spec.php":
+      """
+      <?php
+      describe('ZZAfterPending', function () {
+          it('should not run', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-pending"
+    Then the output should contain "1 pending"
+    And the output should not contain "ZZAfterPending"
+    And the exit code should be 0
+
+  Scenario: TAP carries the reason an example was left pending or skipped
+    Given a spec file "spec/App/TapReasons.spec.php":
+      """
+      <?php
+      describe('TapReasons', function () {
+          it('is pending', function () {
+              pending('Needs the rates API');
+          });
+          it('is skipped', function () {
+              skip('No network on this machine');
+          });
+      });
+      """
+    When I run phpspec run with option "--format tap"
+    Then the output should contain "ok 1 - TapReasons is pending # SKIP Needs the rates API"
+    And the output should contain "ok 2 - TapReasons is skipped # SKIP No network on this machine"
+
+  Scenario: JUnit carries the reason an example was left pending or skipped
+    Given a spec file "spec/App/JunitReasons.spec.php":
+      """
+      <?php
+      describe('JunitReasons', function () {
+          it('is pending', function () {
+              pending('Needs the rates API');
+          });
+          it('is skipped', function () {
+              skip('No network on this machine');
+          });
+      });
+      """
+    When I run phpspec run with option "--format junit"
+    Then the output should contain "<skipped" exactly 2 times
+    And the output should contain "Needs the rates API"
+    And the output should contain "No network on this machine"

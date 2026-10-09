@@ -59,6 +59,24 @@ describe(Agent::class, function () {
         expect($entry['rerun'])->toEndWith('Agent.spec.php:' . ($line - 5));
     });
 
+    it("carries the reason a pending or skipped example gave as its message, and no message without one", function () {
+        $pending = new ExampleResult("is pending", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("is skipped", [], isSkipped: true, reason: "No network here");
+        $crossed = new ExampleResult("is crossed out", [], isPending: true);
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped, $crossed])]));
+
+        $lines = explode("\n", trim($output->fetch()));
+        $entries = array_map(static fn(string $line): array => json_decode($line, true, flags: JSON_THROW_ON_ERROR), array_slice($lines, 1, 3));
+        expect($entries[0]['state'])->toBe('pending');
+        expect($entries[0]['message'])->toBe('Needs the rates API');
+        expect($entries[1]['state'])->toBe('skipped');
+        expect($entries[1]['message'])->toBe('No network here');
+        expect($entries[2]['state'])->toBe('pending');
+        expect($entries[2])->not()->toHaveKey('message');
+    });
+
     // The run answers in JSON Lines. Decoding a line at a time and filing each
     // event by its kind is the whole of what a reader does, so the spec reads
     // the output the same way: the header, the entries as they arrived, and the

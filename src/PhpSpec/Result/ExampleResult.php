@@ -57,6 +57,7 @@ final class ExampleResult implements Results
      * @param bool $isError whether the example errored
      * @param bool $isPending whether the example is pending
      * @param bool $isSkipped whether the example is skipped
+     * @param string|null $reason why it was left pending or skipped, when it said
      */
     public function __construct(
         private readonly string $title,
@@ -64,6 +65,7 @@ final class ExampleResult implements Results
         private readonly bool $isError = false,
         private readonly bool $isPending = false,
         private readonly bool $isSkipped = false,
+        private readonly ?string $reason = null,
     ) {}
 
     /**
@@ -205,6 +207,14 @@ final class ExampleResult implements Results
     public function isSkipped(): bool
     {
         return $this->isSkipped;
+    }
+
+    /**
+     * Why the example was left pending or skipped, when it said.
+     */
+    public function getReason(): ?string
+    {
+        return $this->reason;
     }
 
     /**

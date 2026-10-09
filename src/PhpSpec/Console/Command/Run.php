@@ -113,6 +113,7 @@ final class Run extends Command
             ->addOption('stop-on-warning', null, Option::VALUE_NONE, 'Stop on first warning')
             ->addOption('stop-on-deprecation', null, Option::VALUE_NONE, 'Stop on first deprecation')
             ->addOption('stop-on-notice', null, Option::VALUE_NONE, 'Stop on first notice')
+            ->addOption('stop-on-pending', null, Option::VALUE_NONE, 'Stop on first pending example')
             ->addOption('stop-on-skipped', null, Option::VALUE_NONE, 'Stop on first skipped example')
             ->addOption('stop-on-problems', null, Option::VALUE_NONE, 'Stop on any non-pass result')
             ->addOption('filter', null, Option::VALUE_REQUIRED, 'Run only specs matching pattern')
@@ -763,6 +764,7 @@ final class Run extends Command
             onWarning: $input->getOption('stop-on-warning') || $configStop->onWarning || $problems,
             onDeprecation: $input->getOption('stop-on-deprecation') || $configStop->onDeprecation || $problems,
             onNotice: $input->getOption('stop-on-notice') || $configStop->onNotice || $problems,
+            onPending: $input->getOption('stop-on-pending') || $configStop->onPending || $problems,
             onSkipped: $input->getOption('stop-on-skipped') || $configStop->onSkipped || $problems,
         );
 

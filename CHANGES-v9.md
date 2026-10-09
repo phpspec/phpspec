@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - `it("title")` with no body declares a pending example, as `xit()` does, instead of an argument-count error that takes the whole context down
+ - `--stop-on-pending`, and `stop_on_pending` in the config, halt the run at the first pending example; `--stop-on-problems` stops on one too
  - `describe` asks which mapped namespace a name under none of them belongs to, or keeps it as written; `default_namespace` in the config answers for every such name, in `describe` and `exemplify`; with nobody to answer and no default the name is refused with a remedy, exit code 1
  - `dummy()` makes a lenient double for a collaborator whose calls do not matter: it answers every call with a default and still takes stubs
  - `allow()` on its own declares a call as expected, a stub being optional: `allow($stock->reserve('tea', 2));`
@@ -39,6 +41,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - The reason given to `pending()` or `skip()` is shown: beside the example and under `Pending:` or `Skipped:` at the end in the pretty and dot formatters, as `message` in the agent entry, in the TAP `SKIP` directive and the JUnit `skipped` element; TAP and JUnit used to report a skipped example as a plain pass
  - A config file with a mistyped key (one a known key is near), a value of the wrong kind or a syntax error stops every command in one line naming the file and the key meant, instead of being taken in silence or boxed as a parser exception; a key none of PhpSpec's own is near stays the project's
  - A run that finds no specs says where the features are and that `--story` or `--all` runs them; `--story` with no features says "No features found" and `--all` with neither says so, instead of "No specs found" for every case
  - `describe` says a spec already exists instead of "created" when it wrote nothing, and `exemplify` says an example already exists instead of "added"

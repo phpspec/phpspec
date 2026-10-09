@@ -334,6 +334,13 @@ describe(Configuration::class, function () {
         expect($config->getStopOnError())->toBe(true);
     });
 
+    it('reads stop_on_pending into the stop conditions', function () {
+        $config = new Configuration(['stop_on_pending' => true]);
+
+        expect($config->getStopConditions()->onPending)->toBeTrue();
+        expect((new Configuration())->getStopConditions()->onPending)->toBeFalse();
+    });
+
     it('returns StopConditions value object from config', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,

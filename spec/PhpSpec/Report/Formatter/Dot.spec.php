@@ -78,6 +78,19 @@ describe(Dot::class, function() {
         expect($text)->toContain("1 pending");
     });
 
+    it("lists the pending and skipped examples with the reasons they gave, since a letter names none", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $pending = new ExampleResult("fetches the rates", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("posts the order", [], isSkipped: true, reason: "No network here");
+        $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain("Pending:\n\n  • MySpec > fetches the rates\n    Needs the rates API\n");
+        expect($text)->toContain("Skipped:\n\n  • MySpec > posts the order\n    No network here\n");
+    });
+
     it("formats results with nested contexts", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);

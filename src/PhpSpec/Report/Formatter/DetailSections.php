@@ -33,7 +33,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  * The end-of-run detail, grouped by kind: Failures, Errors, Warnings,
- * Deprecations, and Skipped, each section printed only when it has entries.
+ * Deprecations, Pending and Skipped, each section printed only when it has entries.
  * Shared by the pretty and dot formatters so both tell the same story. A
  * failure whose matcher has a relation reads as a labeled pair (expected /
  * to be contained in) instead of a sentence embedding the values.
@@ -60,7 +60,7 @@ final class DetailSections
      */
     public function render(OutputInterface $output, SuiteResult $results): void
     {
-        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Skipped' => []];
+        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Pending' => [], 'Skipped' => []];
 
         foreach ($results->getResults() as $node) {
             if ($node instanceof FeatureResult) {
@@ -70,7 +70,7 @@ final class DetailSections
             }
         }
 
-        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Skipped' => 'cyan'];
+        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Pending' => 'yellow', 'Skipped' => 'cyan'];
         foreach ($this->sections as $name => $entries) {
             if ($entries === []) {
                 continue;
@@ -144,10 +144,10 @@ final class DetailSections
                 $this->attachPrinted('Failures', $example->getOutput());
                 $this->attachHandedOver('Failures', $example->getAttachments());
             }
+        } elseif ($example->isPending()) {
+            $this->sections['Pending'][] = self::reasonEntry('yellow', $title, $example->getReason());
         } elseif ($example->isSkipped()) {
-            $this->sections['Skipped'][] = static function (OutputInterface $output) use ($title): void {
-                $output->write(PHP_EOL . '  <fg=cyan>• ' . $title . '</>' . PHP_EOL);
-            };
+            $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $example->getReason());
         }
 
         foreach ($example->getWarnings() as $warning) {
@@ -446,6 +446,17 @@ final class DetailSections
             $output->write(PHP_EOL . '  <fg=gray>printed:</>');
             PrettyViews::printedOutput($output, $printed, 2);
             $output->write(PHP_EOL);
+        };
+    }
+
+    private static function reasonEntry(string $colour, string $title, ?string $reason): callable
+    {
+        return static function (OutputInterface $output) use ($colour, $title, $reason): void {
+            $output->write(PHP_EOL . '  <fg=' . $colour . '>• ' . $title . '</>' . PHP_EOL);
+
+            if ($reason !== null) {
+                $output->write('    ' . $reason . PHP_EOL);
+            }
         };
     }
 

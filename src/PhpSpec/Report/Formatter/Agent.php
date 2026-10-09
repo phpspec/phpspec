@@ -530,6 +530,10 @@ final class Agent extends AbstractFormatter
             if ($offer !== null) {
                 $entry['offer'] = $offer;
             }
+        } elseif ($state === 'pending' || $state === 'skipped') {
+            if ($example->getReason() !== null) {
+                $entry['message'] = $example->getReason();
+            }
         } elseif ($state === 'passing') {
             $this->address($entry, $example, null, null);
         }

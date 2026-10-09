@@ -94,6 +94,18 @@ describe(ExampleResult::class, function() {
         expect($result->isSkipped())->toBe(false);
     });
 
+    it("carries the reason it was left pending or skipped for", function() {
+        $pending = new ExampleResult("test", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("test", [], isSkipped: true, reason: "No network here");
+
+        expect($pending->getReason())->toBe("Needs the rates API");
+        expect($skipped->getReason())->toBe("No network here");
+    });
+
+    it("has no reason unless given one", function() {
+        expect((new ExampleResult("test", [], isPending: true))->getReason())->toBeNull();
+    });
+
     it("tracks deprecations", function() {
         $result = new ExampleResult("test", []);
         expect($result->hasDeprecations())->toBe(false);

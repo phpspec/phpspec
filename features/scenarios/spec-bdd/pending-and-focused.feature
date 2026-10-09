@@ -32,7 +32,9 @@ Feature: Pending and focused examples
       });
       """
     When I run phpspec run
-    Then the output should contain "1 pending"
+    Then the output should contain "○ marks itself pending at runtime (Work in progress)"
+    And the output should contain "Pending:"
+    And the output should contain "1 pending"
 
   Scenario: Pending describe block with xdescribe
     Given a spec file "spec/App/PendingGroup.spec.php":
@@ -87,3 +89,54 @@ Feature: Pending and focused examples
       """
     When I run phpspec run
     Then all examples should pass
+
+  Scenario: A skipped example shows the reason it gave
+    Given a spec file "spec/App/Offline.spec.php":
+      """
+      <?php
+      describe('Offline', function () {
+          it('fetches the rates', function () {
+              skip('No network on this machine');
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "- fetches the rates (No network on this machine)"
+    And the output should contain "Skipped:"
+    And the output should contain "1 skipped"
+    And the exit code should be 0
+
+  Scenario: An example with no body yet is pending
+    Given a spec file "spec/App/Unwritten.spec.php":
+      """
+      <?php
+      describe('Unwritten', function () {
+          it('totals the prices');
+
+          it('starts empty', function () {
+              expect([])->toBe([]);
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "○ totals the prices"
+    And the output should contain "1 pending"
+    And the output should contain "1 pass"
+    And the output should not contain "ArgumentCountError"
+    And the exit code should be 0
+
+  Scenario: An example with no body is the one a line target reaches
+    Given a spec file "spec/App/UnwrittenTarget.spec.php":
+      """
+      <?php
+      describe('UnwrittenTarget', function () {
+          it('totals the prices');
+
+          it('starts empty', function () {
+              expect([])->toBe([]);
+          });
+      });
+      """
+    When I run phpspec run "spec/App/UnwrittenTarget.spec.php:3"
+    Then the output should contain "1 pending"
+    And the output should not contain "starts empty"

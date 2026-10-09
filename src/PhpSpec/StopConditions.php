@@ -29,6 +29,7 @@ final readonly class StopConditions
      * @param bool $onWarning whether to stop on warnings
      * @param bool $onDeprecation whether to stop on deprecation notices
      * @param bool $onNotice whether to stop on PHP notices
+     * @param bool $onPending whether to stop on pending examples
      * @param bool $onSkipped whether to stop on skipped examples
      */
     public function __construct(
@@ -37,6 +38,7 @@ final readonly class StopConditions
         public bool $onWarning = false,
         public bool $onDeprecation = false,
         public bool $onNotice = false,
+        public bool $onPending = false,
         public bool $onSkipped = false,
     ) {}
 
@@ -50,6 +52,7 @@ final readonly class StopConditions
             || $this->onWarning
             || $this->onDeprecation
             || $this->onNotice
+            || $this->onPending
             || $this->onSkipped;
     }
 
@@ -64,6 +67,7 @@ final readonly class StopConditions
                 || ($this->onWarning && $result->hasWarnings())
                 || ($this->onDeprecation && $result->hasDeprecations())
                 || ($this->onNotice && $result->hasNotices())
+                || ($this->onPending && $result->isPending())
                 || ($this->onSkipped && $result->isSkipped());
         }
 
@@ -95,6 +99,7 @@ final readonly class StopConditions
             '--stop-on-warning' => $this->onWarning,
             '--stop-on-deprecation' => $this->onDeprecation,
             '--stop-on-notice' => $this->onNotice,
+            '--stop-on-pending' => $this->onPending,
             '--stop-on-skipped' => $this->onSkipped,
         ]));
     }
@@ -110,6 +115,7 @@ final readonly class StopConditions
             onWarning: true,
             onDeprecation: true,
             onNotice: true,
+            onPending: true,
             onSkipped: true,
         );
     }

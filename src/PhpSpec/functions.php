@@ -23,15 +23,19 @@ namespace {
     use PhpSpec\Specification\PendingException;
     use PhpSpec\Specification\SkippedException;
 
+    use function PhpSpec\unwritten;
+
     /**
      * Registers a new example (test case) in the current context scope.
      *
+     * One with a title and no body yet is pending.
+     *
      * @param string $title descriptive label for the example
-     * @param Closure $example executable test body
+     * @param Closure|null $example executable test body
      */
-    function it(string $title, Closure $example): void
+    function it(string $title, ?Closure $example = null): void
     {
-        $it = new Example($title, $example);
+        $it = $example === null ? unwritten($title) : new Example($title, $example);
 
         $scope = DispatcherRegistry::dispatcher()->currentScope();
         if ($scope) {
@@ -48,9 +52,9 @@ namespace {
      * Alias for it(). Registers a new example in the current context scope.
      *
      * @param string $title descriptive label for the example
-     * @param Closure $example executable test body
+     * @param Closure|null $example executable test body
      */
-    function its(string $title, Closure $example): void
+    function its(string $title, ?Closure $example = null): void
     {
         it($title, $example);
     }
@@ -198,11 +202,11 @@ namespace {
      * Registers a pending (skipped) example. The example body is not executed.
      *
      * @param string $title descriptive label for the example
-     * @param Closure $example test body (will not run)
+     * @param Closure|null $example test body (will not run)
      */
-    function xit(string $title, Closure $example): void
+    function xit(string $title, ?Closure $example = null): void
     {
-        $it = new Example($title, $example);
+        $it = $example === null ? unwritten($title) : new Example($title, $example);
         $it->setPending(true);
 
         $scope = DispatcherRegistry::dispatcher()->currentScope();
@@ -329,6 +333,29 @@ namespace PhpSpec {
     use Closure;
     use PhpSpec\EventDispatcher\DispatcherRegistry;
     use PhpSpec\EventDispatcher\Event\AttachmentCreated;
+    use PhpSpec\Specification\Example;
+
+    /**
+     * @internal
+     * An example declared by its title alone, pending at the line that
+     * declared it. With no closure to reflect on, the line is read off the
+     * call that brought us here: the first frame outside this file.
+     */
+    function unwritten(string $title): Example
+    {
+        $example = new Example($title, fn() => null);
+        $example->setPending(true);
+
+        foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5) as $frame) {
+            if (isset($frame['file'], $frame['line']) && $frame['file'] !== __FILE__) {
+                $example->declaredAt($frame['file'], $frame['line']);
+
+                break;
+            }
+        }
+
+        return $example;
+    }
 
     /**
      * Hands PhpSpec context it cannot reach on its own, to be reported with the

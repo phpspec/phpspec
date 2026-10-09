@@ -111,8 +111,11 @@ final class Junit extends AbstractFormatter
             $testcase->setAttribute('name', $example['title']);
             $testcase->setAttribute('classname', $name);
 
-            if ($example['pending']) {
+            if ($example['pending'] || $example['skipped']) {
                 $skip = $xml->createElement('skipped');
+                if ($example['reason'] !== null) {
+                    $skip->setAttribute('message', $example['reason']);
+                }
                 $testcase->appendChild($skip);
                 $skipped++;
             } elseif ($example['error']) {
@@ -199,8 +202,8 @@ final class Junit extends AbstractFormatter
     /**
      * Recursively collects all examples into a flat list for testsuite construction.
      *
-     * @param array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string, type: string}> $examples
-     * @return array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string, type: string}>
+     * @param array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}> $examples
+     * @return array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array
     {
@@ -209,6 +212,8 @@ final class Junit extends AbstractFormatter
                 $examples[] = [
                     'title' => $result->getTitle(),
                     'pending' => $result->isPending(),
+                    'skipped' => $result->isSkipped(),
+                    'reason' => $result->getReason(),
                     'error' => $result->isError(),
                     'failure' => $result->isFailure(),
                     'message' => $result->getMessage(),

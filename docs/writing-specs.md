@@ -30,7 +30,7 @@ describe(Calculator::class, function() {
 
 Contexts can be nested to any depth, and the output will indent accordingly.
 
-## `it(string $title, Closure $example)` / `its(...)`
+## `it(string $title, ?Closure $example = null)` / `its(...)`
 
 Defines a single example (test case). The title should read like a sentence -- "it does something".
 
@@ -139,24 +139,32 @@ Hooks inherit to nested contexts. See [Hooks](hooks.md) for details on execution
 
 ## Pending and Skipped
 
-Mark examples or contexts as pending (skipped):
+An example not written yet is pending: give it a title and no body, cross it out with `xit()`, or call `pending()` inside it, with the reason when there is one.
 
 ```php
-xit("not yet implemented", fn() => /* ... */);
-xdescribe("pending feature", function() { /* ... */ });
-xcontext("pending context", function() { /* ... */ });
-```
+it("applies a discount code");
 
-Or mark pending inside an example:
+xit("refunds a cancelled order", function () {
+    // ...
+});
 
-```php
-it("does something", function() {
-    pending();
+it("converts the total", function () {
+    pending("Needs the rates API");
     // code below is not executed
 });
 ```
 
-Pending examples appear in output with a `P` marker and are counted separately.
+`xdescribe()` and `xcontext()` leave a whole group pending. A pending example is reported with a `○` (a `P` under `--format dot`) and its reason, counted apart from the passes and listed under `Pending:` at the end. It leaves the run green; `--stop-on-pending` halts the run at the first one, and so does `--stop-on-problems`.
+
+An example that cannot run here is skipped: call `skip()` with the reason.
+
+```php
+it("fetches the rates", function () {
+    skip("No network on this machine");
+});
+```
+
+A skipped example is reported with a `-` (an `S` under `--format dot`) and its reason, listed under `Skipped:`, and leaves the run green; `--stop-on-skipped` halts the run at the first one.
 
 ## Focused Examples
 

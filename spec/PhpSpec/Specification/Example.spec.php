@@ -47,6 +47,7 @@ describe(Example::class, function() {
 
         expect($ran)->toBe(false);
         expect($result->isPending())->toBe(true);
+        expect($result->getReason())->toBeNull();
     });
 
     it("returns pending result when closure throws PendingException", function() {
@@ -60,6 +61,33 @@ describe(Example::class, function() {
         $result = $example->run();
 
         expect($result->isPending())->toBe(true);
+        expect($result->getReason())->toBe("not done yet");
+    });
+
+    it("is declared where it was told to be, over where its closure is, when it has no body of its own", function() {
+        $example = new Example("unwritten", fn() => null);
+        $example->setPending(true);
+        $example->declaredAt("/project/spec/App/Basket.spec.php", 12);
+
+        expect($example->containsLine(12))->toBeTrue();
+        expect($example->containsLine(13))->toBeFalse();
+
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
+            new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
+        );
+        $result = $example->run();
+
+        expect($result->getFile())->toBe("/project/spec/App/Basket.spec.php");
+        expect($result->getLine())->toBe(12);
+    });
+
+    it("keeps where it was declared on the copy bound to a world", function() {
+        $example = new Example("unwritten", fn() => null);
+        $example->declaredAt("/project/spec/App/Basket.spec.php", 12);
+
+        $copy = $example->withWorld(new \PhpSpec\Specification\Subject());
+
+        expect($copy->containsLine(12))->toBeTrue();
     });
 
     it("tracks focus state", function() {
@@ -109,6 +137,7 @@ describe(Example::class, function() {
         expect($result->isSkipped())->toBe(true);
         expect($result->isPending())->toBe(false);
         expect($result->isError())->toBe(false);
+        expect($result->getReason())->toBe("not applicable");
     });
 
     it("catches errors in closure and marks as error", function() {

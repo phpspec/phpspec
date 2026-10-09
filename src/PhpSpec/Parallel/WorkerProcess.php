@@ -264,7 +264,8 @@ final class WorkerProcess
             $title = (string) $testcase['name'];
 
             if (isset($testcase->skipped)) {
-                $examples[] = new ExampleResult($title, [], false, false, true);
+                $reason = (string) $testcase->skipped['message'];
+                $examples[] = new ExampleResult($title, [], isSkipped: true, reason: $reason === '' ? null : $reason);
             } elseif (isset($testcase->error)) {
                 $message = (string) ($testcase->error['message'] ?? 'Error');
                 $result = new ExampleResult($title, [], true);

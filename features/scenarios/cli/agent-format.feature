@@ -888,3 +888,21 @@ Feature: Agent output format
     Then the exit code should be 0
     And a class file "src/App/Calculator.php" should be generated
     And it should contain "return 3"
+
+  Scenario: A pending or skipped entry carries the reason the example gave
+    Given a spec file "spec/App/Reasons.spec.php":
+      """
+      <?php
+      describe('App\Reasons', function () {
+          it('is pending', function () {
+              pending('Needs the rates API');
+          });
+          it('is skipped', function () {
+              skip('No network on this machine');
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Needs the rates API"
+    And the output should contain "No network on this machine"
