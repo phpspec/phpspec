@@ -211,6 +211,61 @@ describe(Junit::class, function() {
         });
     });
 
+    it("names a testcase's class after the spec and the contexts around it, so one title in two contexts reads apart", function() {
+        $output = new BufferedOutput();
+        $formatter = new Junit($output);
+
+        // A spec file is titled after its name, and the describe inside it
+        // after the class: a case is named by the describe and its contexts.
+        $spec = new SpecificationResult("HappyHour", [
+            new ContextResult("HappyHour", [
+                new ExampleResult("opens", [MatchResult::passed()]),
+                new ContextResult("at 5pm", [new ExampleResult("takes 20% off", [MatchResult::passed()])]),
+                new ContextResult("at 9am", [new ContextResult("on a Monday", [new ExampleResult("takes 20% off", [MatchResult::passed()])])]),
+            ]),
+        ]);
+
+        $formatter->format(new SuiteResult([$spec]));
+        $text = $output->fetch();
+        expect($text)->toContain('<testcase name="opens" classname="HappyHour"');
+        expect($text)->not()->toContain('HappyHour &gt; HappyHour');
+        expect($text)->toContain('<testcase name="takes 20% off" classname="HappyHour &gt; at 5pm"');
+        expect($text)->toContain('<testcase name="takes 20% off" classname="HappyHour &gt; at 9am &gt; on a Monday"');
+    });
+
+    it("records how long each example and the suite ran, in seconds, as time", function() {
+        $output = new BufferedOutput();
+        $formatter = new Junit($output);
+
+        $quick = new ExampleResult("is quick", [MatchResult::passed()]);
+        $quick->setDuration(0.0125);
+        $slow = new ExampleResult("is slow", [MatchResult::passed()]);
+        $slow->setDuration(0.5);
+
+        $formatter->format(new SuiteResult([new SpecificationResult("Timed", [$quick, $slow])]));
+        $text = $output->fetch();
+        expect($text)->toContain('<testcase name="is quick" classname="Timed" time="0.012500"');
+        expect($text)->toContain('<testcase name="is slow" classname="Timed" time="0.500000"');
+        expect($text)->toContain('<testsuite name="Timed" tests="2" failures="0" errors="0" skipped="0" time="0.512500"');
+    });
+
+    it("records how long each step, scenario and feature ran as time", function() {
+        $output = new BufferedOutput();
+        $formatter = new Junit($output);
+
+        $given = new StepResult('Given a basket', 'passed');
+        $given->setDuration(0.25);
+        $when = new StepResult('When I pay', 'passed');
+        $when->setDuration(0.75);
+        $feature = new FeatureResult('Checkout', [new ScenarioResult('Paying', [$given, $when], 3)], 'features/checkout.feature');
+
+        $formatter->format(new SuiteResult([$feature]));
+        $text = $output->fetch();
+        expect($text)->toContain('<testcase name="Given a basket" classname="Checkout &gt; Paying" time="0.250000"');
+        expect($text)->toContain('<testsuite name="Paying" type="scenario" line="3" time="1.000000"');
+        expect($text)->toContain('<testsuite name="Checkout" type="feature" file="features/checkout.feature" time="1.000000"');
+    });
+
     it("formats results with nested contexts", function() {
         $output = new BufferedOutput();
         $formatter = new Junit($output);

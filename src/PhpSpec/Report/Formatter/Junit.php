@@ -105,11 +105,16 @@ final class Junit extends AbstractFormatter
         $failures = 0;
         $errors = 0;
         $skipped = 0;
+        $time = 0.0;
 
         foreach ($examples as $example) {
             $testcase = $xml->createElement('testcase');
             $testcase->setAttribute('name', $example['title']);
-            $testcase->setAttribute('classname', $name);
+            // The contexts name the class, as the agent format names an example:
+            // the describe and what nests in it, the file's own title left out.
+            $testcase->setAttribute('classname', $example['context'] === '' ? $name : $example['context']);
+            $testcase->setAttribute('time', self::seconds($example['duration']));
+            $time += $example['duration'];
 
             if ($example['pending'] || $example['skipped']) {
                 $skip = $xml->createElement('skipped');
@@ -137,7 +142,16 @@ final class Junit extends AbstractFormatter
         $suite->setAttribute('failures', (string) $failures);
         $suite->setAttribute('errors', (string) $errors);
         $suite->setAttribute('skipped', (string) $skipped);
+        $suite->setAttribute('time', self::seconds($time));
         $parent->appendChild($suite);
+    }
+
+    /**
+     * A duration as JUnit's time attribute: seconds, to the microsecond.
+     */
+    private static function seconds(float $duration): string
+    {
+        return sprintf('%.6F', $duration);
     }
 
     /**
@@ -157,6 +171,8 @@ final class Junit extends AbstractFormatter
             $featureSuite->setAttribute('file', $feature->getPath());
         }
 
+        $featureTime = 0.0;
+
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
                 continue;
@@ -169,13 +185,17 @@ final class Junit extends AbstractFormatter
                 $scenarioSuite->setAttribute('line', (string) $scenario->getLine());
             }
 
+            $scenarioTime = 0.0;
+
             foreach ($scenario->getResults() as $step) {
                 if (!$step instanceof StepResult) {
                     continue;
                 }
                 $testcase = $xml->createElement('testcase');
                 $testcase->setAttribute('name', $step->getTitle());
-                $testcase->setAttribute('classname', $feature->getTitle());
+                $testcase->setAttribute('classname', $feature->getTitle() . ' > ' . $scenario->getTitle());
+                $testcase->setAttribute('time', self::seconds($step->getDuration()));
+                $scenarioTime += $step->getDuration();
 
                 if ($step->isPending() || $step->isUndefined() || $step->isSkipped()) {
                     $skip = $xml->createElement('skipped');
@@ -197,17 +217,20 @@ final class Junit extends AbstractFormatter
                 $scenarioSuite->appendChild($testcase);
             }
 
+            $scenarioSuite->setAttribute('time', self::seconds($scenarioTime));
+            $featureTime += $scenarioTime;
             $featureSuite->appendChild($scenarioSuite);
         }
 
+        $featureSuite->setAttribute('time', self::seconds($featureTime));
         $parent->appendChild($featureSuite);
     }
 
     /**
      * Recursively collects all examples into a flat list for testsuite construction.
      *
-     * @param array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}> $examples
-     * @return array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}>
+     * @param array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}> $examples
+     * @return array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array
     {
@@ -215,6 +238,8 @@ final class Junit extends AbstractFormatter
             if ($result instanceof ExampleResult) {
                 $examples[] = [
                     'title' => $result->getTitle(),
+                    'context' => $prefix,
+                    'duration' => $result->getDuration(),
                     'pending' => $result->isPending(),
                     'skipped' => $result->isSkipped(),
                     'reason' => $result->getReason(),

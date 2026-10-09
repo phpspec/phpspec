@@ -310,7 +310,7 @@ Feature: CLI options
     Then the output should contain "TAP version 13"
     And the output should contain "ok 1"
 
-  Scenario: JUnit XML formatter
+  Scenario: JUnit XML formatter names each case after its spec and contexts, with its time
     Given a spec file "spec/App/JunitFormat.spec.php":
       """
       <?php
@@ -318,11 +318,18 @@ Feature: CLI options
           it('passes', function () {
               expect(true)->toBeTrue();
           });
+          context('when nested', function () {
+              it('passes', function () {
+                  expect(true)->toBeTrue();
+              });
+          });
       });
       """
     When I run phpspec run with option "--format junit"
     Then the output should contain "<testsuites>"
     And the output should contain "<testcase"
+    And the output should contain "JunitFormat &gt; when nested"
+    And the output should contain "time="
 
   Scenario: Run features from a nested directory with steps defined at the features root
     Given a PSR-4 project with "spec", "src", and "features" directories
