@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A call on a double that nothing declared names the file it came from relative to the project with forward slashes, as the other messages do, instead of the absolute path spelled the platform's way
+ - A class, interface, spec or feature generated from a phpspec checked out with CRLF line endings, as git does on Windows, is written with line feeds alone, as PSR-12 asks and as generated methods and steps already were
  - A generated step definition takes the table or doc string its step carries, as `DataTable $table` or `string $docString` after its pattern's parameters, with the `DataTable` import added once; it used to take neither, and that a doc string arrives as a string is now documented
  - A method generated on an interface a double stands for takes the arguments the spec called it with, as one generated on a class does; the call was looked for in the double's generated code instead of at the spec line. A generated class or interface no longer opens with an empty line, and its first method sits right under the brace
  - An offer stays on the table for twenty minutes from when it was last made; `accept` refuses an older one as expired, saying when it was made (to an agent as an `error`), instead of applying a decision taken about an earlier session or an earlier project in the same directory

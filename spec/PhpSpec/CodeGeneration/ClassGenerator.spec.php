@@ -16,7 +16,21 @@ describe(ClassGenerator::class, function () {
 
         (new ClassGenerator(filesystem: $fs))->generate('App\\Basket');
 
-        expect(str_replace("\r\n", "\n", $written))->toEndWith("class Basket\n{\n}\n");
+        expect($written)->toEndWith("class Basket\n{\n}\n");
+    });
+
+    it('ends every line with a line feed alone, whatever line ending its own source was checked out with', function (Filesystem $fs) {
+        $written = '';
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written = $content;
+        });
+
+        (new ClassGenerator(filesystem: $fs))->generate('App\\Basket');
+
+        expect($written)->toContain("\n");
+        expect($written)->not()->toContain("\r");
     });
 
     let('generator', fn(Filesystem $fs) => new ClassGenerator(SourceLayout::under('src'), $fs));

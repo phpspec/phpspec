@@ -13,6 +13,13 @@ describe(FeatureGenerator::class, function () {
         expect($content)->toContain('Then ');
     });
 
+    it('ends every line with a line feed alone, whatever line ending its own source was checked out with', function () {
+        $content = (new FeatureGenerator())->skeleton('User adds tasks');
+
+        expect($content)->toContain("\n");
+        expect($content)->not()->toContain("\r");
+    });
+
     it('derives a human title from a feature file path', function () {
         expect(FeatureGenerator::titleFromPath('features/user_adds_tasks.feature'))->toBe('User adds tasks');
     });

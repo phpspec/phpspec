@@ -356,7 +356,7 @@ describe(Double::class, function() {
                 double_spec_outsider_reserves($stock);
             } catch (UnexpectedCallException $e) {
                 expect($e->getMessage())->toContain('DoubleSpecStock::reserve("tea", 2) was called but not expected');
-                expect($e->getMessage())->toContain(realpath(DOUBLE_SPEC_OUTSIDER) . ':2');
+                expect($e->getMessage())->toContain(str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER)) . ':2');
                 expect($e->getMessage())->toContain('allow()');
                 expect($e->getMessage())->toContain('dummy()');
 

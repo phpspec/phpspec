@@ -28,15 +28,15 @@ final class FeatureGenerator
      */
     public function skeleton(string $title): string
     {
-        return <<<GHERKIN
-        Feature: {$title}
-
-          Scenario: {$title}
-            Given a starting context
-            When something happens
-            Then the outcome is checked
-
-        GHERKIN;
+        return implode("\n", [
+            'Feature: ' . $title,
+            '',
+            '  Scenario: ' . $title,
+            '    Given a starting context',
+            '    When something happens',
+            '    Then the outcome is checked',
+            '',
+        ]);
     }
 
     /**

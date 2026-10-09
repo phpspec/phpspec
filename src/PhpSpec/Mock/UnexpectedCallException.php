@@ -15,6 +15,7 @@
 namespace PhpSpec\Mock;
 
 use LogicException;
+use PhpSpec\ProjectRoot;
 
 /**
  * A call on a double, made from outside the spec code, that no allow() or
@@ -32,7 +33,7 @@ final class UnexpectedCallException extends LogicException
             ltrim($class, '\\'),
             $method,
             self::describeAll($arguments),
-            $file,
+            ProjectRoot::here()->relative($file),
             $line,
         ));
     }

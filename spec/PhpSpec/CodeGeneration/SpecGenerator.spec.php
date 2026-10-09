@@ -42,6 +42,13 @@ describe(SpecGenerator::class, function () {
         $this->generator->generate('Calculator');
     });
 
+    it("ends every line with a line feed alone, whatever line ending its own source was checked out with", function () {
+        $skeleton = $this->generator->skeleton('Calculator');
+
+        expect($skeleton)->toContain("\n");
+        expect($skeleton)->not()->toContain("\r");
+    });
+
     it("keeps the newline at the end of a spec it grows by an example", function () {
         $grown = $this->generator->withExample($this->generator->skeleton('Calculator'), 'Calculator', 'add');
 
