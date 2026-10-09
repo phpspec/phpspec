@@ -505,6 +505,12 @@ Feature: CLI options
     Then all examples should pass
     And the output should contain "seed 42"
 
+  Scenario: The help of run leaves out the option only its parallel workers use
+    When I run phpspec run with option "--help"
+    Then the output should contain "--coverage-min"
+    And the output should contain "--parallel"
+    And the output should not contain "coverage-partial"
+
   Scenario: Profile slowest examples
     Given a spec file "spec/App/Profile.spec.php":
       """

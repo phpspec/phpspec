@@ -25,6 +25,7 @@ use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\InternalOptions;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
@@ -75,7 +76,7 @@ use Symfony\Component\Console\Output\StreamOutput;
  * CLI command that runs specs and features, orchestrating the full lifecycle: bootstrap loading,
  * spec loading, execution, result formatting, coverage collection, and interactive code generation.
  */
-final class Run extends Command
+final class Run extends Command implements InternalOptions
 {
     /** @var array<int, string> partial coverage state files written by parallel workers */
     private array $coveragePartials = [];
@@ -1028,6 +1029,11 @@ final class Run extends Command
         }
 
         return 'No specs found.';
+    }
+
+    public function internalOptions(): array
+    {
+        return ['coverage-partial'];
     }
 
     private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
