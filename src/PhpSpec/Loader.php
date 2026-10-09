@@ -21,6 +21,7 @@ use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\GherkinParser;
 use PhpSpec\StoryBDD\ScenarioLineSelector;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
+use PhpSpec\StoryBDD\TagExpression;
 
 /**
  * @internal
@@ -50,10 +51,11 @@ final class Loader
      *
      * @param string|null $files directory or file path; defaults to ./spec
      * @param string|null $filter substring to match against spec file paths
+     * @param string|null $tags a Cucumber tag expression; only the scenarios it selects are loaded
      *
      * @throws \RuntimeException when a steps file registers a step title that is already defined
      */
-    public function load(?string $files, ?string $filter = null): Suite
+    public function load(?string $files, ?string $filter = null, ?string $tags = null): Suite
     {
         if (!$files) {
             $files = './spec';
@@ -74,7 +76,34 @@ final class Loader
             $blocks = $this->filterBlocks($blocks, $filter);
         }
 
+        if ($tags !== null) {
+            $blocks = $this->tagged($blocks, new TagExpression($tags));
+        }
+
         return new Suite($blocks);
+    }
+
+    /**
+     * The features reduced to the scenarios the expression selects; a spec
+     * has no tags, so none is kept.
+     *
+     * @param array<SpecBlock> $blocks
+     * @return list<SpecBlock>
+     */
+    private function tagged(array $blocks, TagExpression $tags): array
+    {
+        $kept = [];
+
+        foreach ($blocks as $block) {
+            if ($block instanceof Feature) {
+                $reduced = $block->withScenariosTagged($tags);
+                if ($reduced !== null) {
+                    $kept[] = $reduced;
+                }
+            }
+        }
+
+        return $kept;
     }
 
     /**
@@ -350,6 +379,18 @@ final class Loader
         sort($files);
 
         return $files;
+    }
+
+    /**
+     * Whether the features path holds a feature file, however deep.
+     */
+    public function holdsFeatures(): bool
+    {
+        $features = [];
+        $steps = [];
+        $this->scanFeatures(rtrim($this->featuresPath, '/'), $features, $steps);
+
+        return $features !== [];
     }
 
     /**

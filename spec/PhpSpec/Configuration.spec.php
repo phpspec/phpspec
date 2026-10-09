@@ -1,14 +1,75 @@
 <?php
 
 use PhpSpec\Configuration;
+use PhpSpec\ConfigurationException;
 use PhpSpec\Filesystem;
 use PhpSpec\StopConditions;
 
 describe(Configuration::class, function () {
 
+    context('what a project states is checked as it is read', function () {
+        $yaml = function (Filesystem $fs, string $content): void {
+            allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
+            allow($fs->read())->toReturn($content);
+        };
+
+        it('refuses an unknown key, naming the file and the nearest known key', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "formatt: dot\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: unknown key "formatt". Did you mean "format"?',
+            );
+        });
+
+        it("takes a key none of PhpSpec's own is near as the project's, read through get()", function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "zebra: true\n");
+
+            expect(Configuration::load('/app', $fs)->get('zebra'))->toBe(true);
+        });
+
+        it('refuses a value of the wrong type, naming what the key expects', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "stop_on_failure: maybe\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: stop_on_failure expects true or false, "maybe" given.',
+            );
+        });
+
+        it('names the file that could not be parsed', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "formatt: [\n");
+
+            try {
+                Configuration::load('/app', $fs);
+                expect(false)->toBeTrue();
+            } catch (ConfigurationException $e) {
+                expect($e->getMessage())->toStartWith('/app/phpspec.yaml could not be read: ');
+            }
+        });
+
+        it('refuses a file that does not hold a map of settings', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "just a string\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml does not hold a map of settings.',
+            );
+        });
+    });
+
+    it('is built from values and touches no disk', function () {
+        $config = new Configuration(['spec_path' => 'tests', 'autoload' => ['Brew\\' => 'lib/Brew']], '/app', ['App\\' => 'src/']);
+
+        expect($config->getSpecPath())->toBe('tests');
+        expect($config->getSourceLayout()->mappings())->toBe(['Brew' => 'lib/Brew']);
+        expect((new Configuration())->getSourceLayout()->mappings())->toBe([]);
+        expect((new Configuration([], '/app', ['App\\' => 'src/']))->getSourceLayout()->mappings())->toBe(['App' => 'src']);
+    });
+
     it('returns defaults when no config file exists', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecPath())->toBe('./spec');
         expect($config->getSrcPath())->toBe('./src');
@@ -22,7 +83,7 @@ describe(Configuration::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
         allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/', 'Tests\\' => 'tests/']]]));
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSrcPath())->toBe('src');
         expect($config->getPsr4Prefix())->toBe('Tasker');
@@ -32,7 +93,7 @@ describe(Configuration::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
         allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Brew\\' => 'src/Brew/', 'Another\\' => ['src/Another/', 'lib/']]]]));
 
-        $layout = (new Configuration('/app', $fs))->getSourceLayout();
+        $layout = (Configuration::load('/app', $fs))->getSourceLayout();
 
         expect($layout->mappings())->toBe(['Brew' => 'src/Brew', 'Another' => 'src/Another']);
         expect($layout->srcPath())->toBe('src');
@@ -43,7 +104,7 @@ describe(Configuration::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
         allow($fs->read())->toReturn("default_namespace: Brew\\Acme\nautoload:\n  Brew\\Acme\\: src/Brew/Acme\n  Another\\Acme\\: src/Another\n");
 
-        $layout = (new Configuration('/app', $fs))->getSourceLayout();
+        $layout = (Configuration::load('/app', $fs))->getSourceLayout();
 
         expect($layout->mappings())->toBe(['Brew\\Acme' => 'src/Brew/Acme', 'Another\\Acme' => 'src/Another']);
         expect($layout->defaultNamespace())->toBe('Brew\\Acme');
@@ -54,7 +115,7 @@ describe(Configuration::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
         allow($fs->read())->toReturn("src_path: lib\npsr4_prefix: App\\\n");
 
-        $layout = (new Configuration('/app', $fs))->getSourceLayout();
+        $layout = (Configuration::load('/app', $fs))->getSourceLayout();
 
         expect($layout->mappings())->toBe(['App' => 'lib']);
         expect($layout->srcPath())->toBe('lib');
@@ -64,7 +125,7 @@ describe(Configuration::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
         allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['App\\' => ['src/', 'lib/']]]]));
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSrcPath())->toBe('src');
         expect($config->getPsr4Prefix())->toBe('App');
@@ -85,7 +146,7 @@ describe(Configuration::class, function () {
     it('loads a class from the path the layout maps its namespace to', function (Filesystem $fs) use ($projectWith) {
         $root = $projectWith($fs, 'src/Tasker/', 'src/Tasker/MappedByPrefix.php', "<?php\nnamespace Tasker;\nclass MappedByPrefix {}\n");
 
-        (new Configuration($root, $fs))->registerAutoloaders();
+        (Configuration::load($root, $fs))->registerAutoloaders();
 
         expect(class_exists('Tasker\\MappedByPrefix'))->toBeTrue();
     });
@@ -93,7 +154,7 @@ describe(Configuration::class, function () {
     it('still loads a class filed under its full namespace path', function (Filesystem $fs) use ($projectWith) {
         $root = $projectWith($fs, 'src/', 'src/Tasker/FiledInFull.php', "<?php\nnamespace Tasker;\nclass FiledInFull {}\n");
 
-        (new Configuration($root, $fs))->registerAutoloaders();
+        (Configuration::load($root, $fs))->registerAutoloaders();
 
         expect(class_exists('Tasker\\FiledInFull'))->toBeTrue();
     });
@@ -104,7 +165,7 @@ describe(Configuration::class, function () {
             ? json_encode(['src_path' => 'lib'])
             : json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/']]]));
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSrcPath())->toBe('lib');
         expect($config->getPsr4Prefix())->toBe('');
@@ -124,7 +185,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn($json);
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecPath())->toBe('./tests');
         expect($config->getFormat())->toBe('dot');
@@ -140,7 +201,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn(json_encode(['custom_key' => 'custom_value']));
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->get('custom_key'))->toBe('custom_value');
         expect($config->get('missing', 'fallback'))->toBe('fallback');
@@ -154,7 +215,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn(json_encode(['format' => 'tap']));
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->toArray())->toBe(['format' => 'tap']);
     });
@@ -167,7 +228,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->requirePhp())->toReturn(['format' => 'junit']);
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getFormat())->toBe('junit');
     });
@@ -179,7 +240,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("spec_path: ./tests\nformat: dot\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecPath())->toBe('./tests');
         expect($config->getFormat())->toBe('dot');
@@ -193,7 +254,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("format: tap\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getFormat())->toBe('tap');
     });
@@ -210,7 +271,7 @@ describe(Configuration::class, function () {
             default => '',
         });
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getFormat())->toBe('yaml_format');
     });
@@ -222,7 +283,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("spec_path: ./tests\nsrc_path: ./lib\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSuites())->toBe([
             'default' => ['paths' => ['./tests'], 'src' => './lib'],
@@ -238,7 +299,7 @@ describe(Configuration::class, function () {
             "suites:\n  unit:\n    paths:\n      - unit_specs\n    src: src\n  acceptance:\n    paths:\n      - features\n    steps:\n      - features/steps\n",
         );
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $suites = $config->getSuites();
 
         expect($suites)->toHaveKey('unit');
@@ -256,7 +317,7 @@ describe(Configuration::class, function () {
             "suites:\n  unit:\n    paths:\n      - unit_specs\n  integration:\n    paths:\n      - integration_specs\n",
         );
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAllLoadPaths())->toBe('unit_specs,integration_specs');
     });
@@ -268,9 +329,16 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("stop_on_error: true\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getStopOnError())->toBe(true);
+    });
+
+    it('reads stop_on_pending into the stop conditions', function () {
+        $config = new Configuration(['stop_on_pending' => true]);
+
+        expect($config->getStopConditions()->onPending)->toBeTrue();
+        expect((new Configuration())->getStopConditions()->onPending)->toBeFalse();
     });
 
     it('returns StopConditions value object from config', function (Filesystem $fs) {
@@ -280,7 +348,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("stop_on_failure: true\nstop_on_warning: true\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         $stop = $config->getStopConditions();
 
         expect($stop)->toBeAnInstanceOf(StopConditions::class);
@@ -297,14 +365,14 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("spec_suffix: Spec.php\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecSuffix())->toBe('Spec.php');
     });
 
     it('returns default spec_suffix when not configured', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecSuffix())->toBe('.spec.php');
     });
@@ -316,7 +384,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("extensions:\n  formatters:\n    - MyFormatter\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getExtensions())->toBe(['formatters' => ['MyFormatter']]);
     });
@@ -325,7 +393,7 @@ describe(Configuration::class, function () {
     // a default, so `guard: {status: active}` is a complete configuration.
     it('leaves guard off when nothing says otherwise', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getGuardConfig())->toBe([
             'status' => 'off',
@@ -345,7 +413,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("guard:\n  status: active\n  scope: story\n  allow: [\"src/Migrations/**\"]\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getGuardConfig())->toBe([
             'status' => 'active',
@@ -364,7 +432,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("guard:\n  status: active\n  detecton: git\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->guardConfigProblem())->toBe('Unknown guard key "detecton". Did you mean "detection"?');
         expect($config->getGuardConfig())->toBeNull();
@@ -377,7 +445,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("guard:\n  status: on\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->guardConfigProblem())->toBe('The guard section\'s status must be active or off, not "on".');
     });
@@ -389,7 +457,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("guard:\n  status: active\n  paths: src\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->guardConfigProblem())->toBe('The guard section\'s paths must be a list of paths.');
     });
@@ -401,7 +469,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  model: gemini-2.5-flash\n  api_key: test-key-123\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBe([
             'provider' => 'google',
@@ -417,13 +485,48 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api-key: test-key-123\n  max-tokens: 32000\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBe([
             'provider' => 'google',
             'maxTokens' => 32000,
             'api_key' => 'test-key-123',
         ]);
+    });
+
+    it('names the config file to add the ai section to, and shows one', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("spec_path: spec\n");
+
+        $problem = Configuration::load('/app', $fs)->aiConfigProblem();
+
+        expect($problem)->toStartWith('AI configuration required. Add an "ai" section to phpspec.yaml, for example:');
+        expect($problem)->toContain("\nai:\n  provider: ");
+        expect($problem)->toContain("\n  api_key: YOUR_API_KEY");
+    });
+
+    it('shows the ai section in the shape of the config file the project has', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.json' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn('{"spec_path": "spec"}');
+
+        $problem = Configuration::load('/app', $fs)->aiConfigProblem();
+
+        expect($problem)->toContain('Add an "ai" section to phpspec.json, for example:');
+        expect($problem)->toContain('"ai": {"provider": "');
+        expect($problem)->toContain('"api_key": "YOUR_API_KEY"}');
+    });
+
+    it('says which file to create when the project has no config file at all', function () {
+        $problem = (new Configuration())->aiConfigProblem();
+
+        expect($problem)->toStartWith('AI configuration required. Create phpspec.yaml with an "ai" section, for example:');
+        expect($problem)->toContain("\nai:\n  provider: ");
     });
 
     it('names the missing key when the ai section exists without api_key', function (Filesystem $fs) {
@@ -433,7 +536,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('The ai section is missing api_key. Add it to your phpspec config.');
@@ -446,7 +549,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  api_key: test-key-123\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('The ai section is missing provider. papi-ai/google is installed, so set provider: google.');
@@ -459,7 +562,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: googel\n  api_key: test-key-123\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('Unknown ai provider "googel". The known providers are google, anthropic, openai, grok, deepseek, and ollama.');
@@ -472,7 +575,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: ollama\n  base_url: http://localhost:11434\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->aiConfigProblem())->toBeNull();
         expect($config->getAiConfig())->toBe([
@@ -488,7 +591,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api_keys: test-key-123\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('Unknown ai key "api_keys". Did you mean "api_key"?');
@@ -501,7 +604,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  max_tokens: plenty\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('The ai section\'s max_tokens must be a positive number.');
@@ -514,7 +617,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: 12345\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('The ai section\'s api_key must be a string. Quote it in your phpspec config.');
@@ -527,9 +630,9 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("spec_path: spec\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
-        expect($config->aiConfigProblem())->toBe('AI configuration required. Add an "ai" section to your phpspec config.');
+        expect($config->aiConfigProblem())->toStartWith('AI configuration required. Add an "ai" section to phpspec.yaml, for example:');
     });
 
     it('reports no ai config problem when the section is usable', function (Filesystem $fs) {
@@ -539,7 +642,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->aiConfigProblem())->toBeNull();
     });
@@ -551,7 +654,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  max_tokens: 32000\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBe([
             'provider' => 'google',
@@ -567,7 +670,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: high\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBe([
             'provider' => 'google',
@@ -577,7 +680,7 @@ describe(Configuration::class, function () {
 
         // A wrong-typed effort is named, never silently dropped.
         allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: 12\n");
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('The ai section\'s effort must be a non-empty string.');
@@ -585,7 +688,7 @@ describe(Configuration::class, function () {
 
     it('returns null for ai config when not configured', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
     });
@@ -597,7 +700,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("ai:\n  provider: google\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
     });
@@ -609,7 +712,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->requirePhp())->toReturn(['spec_path' => 'tests', 'src_path' => 'lib']);
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecPath())->toBe('tests');
         expect($config->getSrcPath())->toBe('lib');
@@ -617,7 +720,7 @@ describe(Configuration::class, function () {
 
     it('returns default features path when not configured', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getFeaturesPath())->toBe('features/');
     });
@@ -629,7 +732,7 @@ describe(Configuration::class, function () {
         });
         allow($fs->read())->toReturn("features_path: tests/features\n");
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getFeaturesPath())->toBe('tests/features');
     });
@@ -643,7 +746,7 @@ describe(Configuration::class, function () {
             "suites:\n  unit:\n    paths:\n      - unit_specs\n    src: lib\n",
         );
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getSrcPath())->toBe('lib');
     });
@@ -654,7 +757,7 @@ describe(Configuration::class, function () {
             default => false,
         });
         allow($fs->read())->toReturn('psr4_prefix: App\\Models\\');
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         expect($config->getPsr4Prefix())->toBe('App\\Models');
     });
 
@@ -664,7 +767,7 @@ describe(Configuration::class, function () {
             default => false,
         });
         allow($fs->read())->toReturn("suites:\n  default:\n    namespace: App\n    src: src");
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         expect($config->getPsr4Prefix())->toBe('App');
     });
 
@@ -672,7 +775,7 @@ describe(Configuration::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'custom/my-config.json');
         allow($fs->read())->toReturn(json_encode(['format' => 'dot']));
 
-        $config = new Configuration('/app', $fs, configFile: 'custom/my-config.json');
+        $config = Configuration::load('/app', $fs, configFile: 'custom/my-config.json');
 
         expect($config->getFormat())->toBe('dot');
     });
@@ -680,7 +783,7 @@ describe(Configuration::class, function () {
     it('throws when the explicit config file does not exist', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
 
-        expect(fn() => new Configuration('/app', $fs, configFile: 'nope.yaml'))
+        expect(fn() => Configuration::load('/app', $fs, configFile: 'nope.yaml'))
             ->toThrow(RuntimeException::class);
     });
 
@@ -693,7 +796,7 @@ describe(Configuration::class, function () {
 
     it('has no steps path by default', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
         expect($config->getStepsPath())->toBeNull();
     });
 
@@ -701,7 +804,7 @@ describe(Configuration::class, function () {
         allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json');
         allow($fs->read())->toReturn(json_encode(['steps_path' => 'acceptance_steps']));
 
-        $config = new Configuration('/app', $fs);
+        $config = Configuration::load('/app', $fs);
 
         expect($config->getStepsPath())->toBe('acceptance_steps');
     });

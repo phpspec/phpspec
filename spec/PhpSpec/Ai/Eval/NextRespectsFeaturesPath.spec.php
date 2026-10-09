@@ -32,15 +32,12 @@ class NextFeaturesPathRunner implements SpecRunner
 describe('E11 next: discovers features under the configured features_path', function () {
 
     it('detects a custom features_path and grounds the suggestion in the feature state', function (Filesystem $fs) {
-        $yaml = './phpspec.yaml';
         $featuresDir = getcwd() . '/acceptance';
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yaml || $p === $featuresDir);
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
         allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
         allow($fs->isFile())->toReturn(false);
         allow($fs->scandir())->toReturn([]);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yaml
-            ? "features_path: acceptance\nai:\n  provider: google\n  api_key: test-key\n"
-            : '');
+        allow($fs->read())->toReturn('');
 
         $runner = new NextFeaturesPathRunner();
         $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -58,7 +55,7 @@ describe('E11 next: discovers features under the configured features_path', func
 
             return ['type' => 'info', 'target' => '', 'reason' => 'ok'];
         };
-        $cmd = new Next(new Configuration('.', $fs), $fs, $suggestFn, $runner);
+        $cmd = new Next(new Configuration(['features_path' => 'acceptance', 'ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $fs, $suggestFn, $runner);
 
         (new CommandTester($cmd))->execute([]);
 

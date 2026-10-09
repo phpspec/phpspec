@@ -260,6 +260,8 @@ class Context implements ExampleRegistry, Rebindable
         foreach (array_keys($this->letMocks) as $name) {
             unset($this->world->$name);
         }
+
+        $this->world->__phpspec_pending_lets = [];
     }
 
     private function printed(ExampleResult $result, string $before, string $after): ExampleResult
@@ -393,7 +395,7 @@ class Context implements ExampleRegistry, Rebindable
         if ($hasFocusedChild) {
             foreach ($this->specBlocks as $block) {
                 if ($block instanceof Example && !$block->isFocused()) {
-                    $block->setPending(true);
+                    $block->leaveOutByFocus();
                 }
             }
         }
@@ -483,13 +485,6 @@ class Context implements ExampleRegistry, Rebindable
         $this->letBindings[] = ['injection', null, $setter];
     }
 
-    /**
-     * Evaluates a named let binding and assigns the result to the world property.
-     */
-    private function evaluateNamedLet(string $property, Closure $setter): void
-    {
-        $this->world->$property = $setter(...$this->resolveClosureArgs($setter));
-    }
 
     /**
      * Evaluates an injection-style let binding, resolving type-hinted mock parameters.
@@ -503,26 +498,31 @@ class Context implements ExampleRegistry, Rebindable
     }
 
     /**
-     * Clears world properties set by let() bindings and re-evaluates all
-     * closures, creating fresh mocks for each example.
+     * Forgets the previous example's let values and arranges this example's.
+     * A named let is built when the example first reads it, after the hooks;
+     * the doubles it asks for are made now, so the hooks and the example find
+     * them on $this before the value exists. An injection let runs now, since
+     * its doubles are all it is for.
      */
     private function reapplyLets(): void
     {
-        // Clear named let return values from World
         foreach ($this->letBindings as $binding) {
             if ($binding[1] !== null) {
                 unset($this->world->{$binding[1]});
             }
         }
         $this->letMocks = [];
-        foreach ($this->letBindings as $binding) {
-            if ($binding[0] === 'named' && $binding[1] !== null) {
-                $this->evaluateNamedLet($binding[1], $binding[2]);
+        $this->world->__phpspec_pending_lets = [];
+
+        foreach ($this->letBindings as [$kind, $property, $setter]) {
+            if ($kind === 'named' && $property !== null) {
+                $args = $this->resolveClosureArgs($setter);
+                $this->world->__phpspec_pending_lets[$property] = static fn(): mixed => $setter(...$args);
             } else {
-                $this->evaluateInjectionLet($binding[2]);
+                $this->evaluateInjectionLet($setter);
             }
         }
-        // Expose letMocks so Example::resolveClosureArgs() can find them
+
         $this->world->__phpspec_let_mocks = $this->letMocks;
     }
 

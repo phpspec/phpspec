@@ -70,6 +70,45 @@ describe(OfferBook::class, function () {
         expect($book->find($offers[count($offers) - 1]->id))->not()->toBeNull();
     });
 
+    it('forgets an offer after twenty minutes, so a stale one is not taken', function (Filesystem $fs) {
+        $made = 1_700_000_000;
+        $offer = Offer::generate('create_class', 'App\\Coupon', []);
+        (new OfferBook($fs, null, static fn(): int => $made))->record($offer);
+
+        expect((new OfferBook($fs, null, static fn(): int => $made + 1_199))->find($offer->id))->not()->toBeNull();
+        expect((new OfferBook($fs, null, static fn(): int => $made + 1_200))->find($offer->id))->toBeNull();
+    });
+
+    it('still says when an expired offer was made, until the book is next written', function (Filesystem $fs) {
+        $made = 1_700_000_000;
+        $offer = Offer::generate('create_class', 'App\\Coupon', []);
+        (new OfferBook($fs, null, static fn(): int => $made))->record($offer);
+
+        $later = new OfferBook($fs, null, static fn(): int => $made + 3_000);
+        expect($later->find($offer->id))->toBeNull();
+        expect($later->ageOf($offer->id))->toBe(3_000);
+        expect($later->ageOf('o_nothing'))->toBeNull();
+    });
+
+    it('counts the twenty minutes from when the offer was last made', function (Filesystem $fs) {
+        $made = 1_700_000_000;
+        $offer = Offer::generate('create_class', 'App\\Coupon', []);
+        (new OfferBook($fs, null, static fn(): int => $made))->record($offer);
+        (new OfferBook($fs, null, static fn(): int => $made + 1_000))->record($offer);
+
+        expect((new OfferBook($fs, null, static fn(): int => $made + 1_500))->find($offer->id))->not()->toBeNull();
+    });
+
+    it('leaves what has expired out of the book when it stores', function (Filesystem $fs) {
+        $made = 1_700_000_000;
+        (new OfferBook($fs, null, static fn(): int => $made))->record(Offer::write('src/App/Old.php', '<?php', true, ''));
+        (new OfferBook($fs, null, static fn(): int => $made + 2 * 1_200))->record(Offer::write('src/App/New.php', '<?php', true, ''));
+
+        $stored = json_decode($this->stored, true)['offers'];
+        expect($stored)->toHaveLength(1);
+        expect($stored[0]['target'])->toBe('src/App/New.php');
+    });
+
     it('survives a book that was damaged on disk', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn('not json at all');

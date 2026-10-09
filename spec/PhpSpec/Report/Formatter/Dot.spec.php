@@ -78,6 +78,19 @@ describe(Dot::class, function() {
         expect($text)->toContain("1 pending");
     });
 
+    it("lists the pending and skipped examples with the reasons they gave, since a letter names none", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $pending = new ExampleResult("fetches the rates", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("posts the order", [], isSkipped: true, reason: "No network here");
+        $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
+
+        $text = str_replace("\r\n", "\n", $output->fetch());
+        expect($text)->toContain("Pending:\n\n  • MySpec > fetches the rates\n    Needs the rates API\n");
+        expect($text)->toContain("Skipped:\n\n  • MySpec > posts the order\n    No network here\n");
+    });
+
     it("formats results with nested contexts", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);
@@ -216,6 +229,18 @@ describe(Dot::class, function() {
         $formatter->format($suite);
         $text = $output->fetch();
         expect($text)->toContain("Nested deprecation");
+    });
+
+    it("marks a risky example R and counts it apart", function() {
+        $output = new BufferedOutput();
+        $risky = new ExampleResult("calls the code", []);
+        $risky->markRisky();
+        (new Dot($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky])]));
+
+        $text = str_replace("\r\n", "\n", $output->fetch());
+        expect($text)->toContain("R");
+        expect($text)->toContain("1 risky");
+        expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");
     });
 
     it("formats skipped results with S", function() {
@@ -505,8 +530,8 @@ describe(Dot::class, function() {
         $text = $output->fetch();
         expect($text)->toContain("Failures:");
         expect($text)->toContain("MySpec > fails");
-        expect($text)->toContain('expected: "the haystack text"');
-        expect($text)->toContain('to contain: "the needle"');
+        expect($text)->toContain('expected: "the needle"');
+        expect($text)->toContain('got: "the haystack text"');
         expect($text)->toContain("Skipped:");
         expect($text)->toContain("MySpec > skipped one");
     });

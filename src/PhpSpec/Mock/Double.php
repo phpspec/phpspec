@@ -90,7 +90,7 @@ final class Double
             $modifier = $reflectionClass->isReadOnly() ? 'readonly' : 'final';
             throw new LogicException(
                 "Cannot create a test double for $modifier class $class. "
-                    . 'Extract an interface and type-hint against it instead.',
+                    . 'Extract an interface and type-hint against it, or make the class non-final.',
             );
         }
 

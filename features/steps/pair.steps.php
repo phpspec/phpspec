@@ -62,7 +62,7 @@ if (!function_exists('_pair_exec')) {
     use PhpSpec\Console\Command\Pair\PairOutput;
     use Symfony\Component\Console\Output\StreamOutput;
 
-    $config = new Configuration(__DIR__);
+    $config = Configuration::load(__DIR__);
     $specSuffix = $config->getSpecSuffix();
     $output = new StreamOutput(fopen('php://stdout', 'w'));
     $pairOutput = new PairOutput($output);

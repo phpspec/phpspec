@@ -94,7 +94,7 @@ Feature: Parallel execution
     Then the output should contain "1 example ("
     And the output should not contain "✓"
 
-  Scenario: An error under --parallel carries no location it cannot know
+  Scenario: An error under --parallel is addressed at its spec line, as it is in one process
     Given a spec file "spec/App/Halting.spec.php":
       """
       <?php
@@ -108,7 +108,79 @@ Feature: Parallel execution
     Then the output should be valid JSON
     And the output should contain "RuntimeException"
     And the output should not contain "WorkerProcess"
-    And the output should not contain "rerun"
+    And the output should contain "spec/App/Halting.spec.php:4"
+    And the output should contain "rerun"
+
+  Scenario: A failure under --parallel carries its expectation and the way to re-run it
+    Given a spec file "spec/App/Failing.spec.php":
+      """
+      <?php
+      describe('Failing', function () {
+          it('fails', function () {
+              expect(1)->toBe(2);
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=1 --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "toBe"
+    And the output should contain "expected"
+    And the output should contain "actual"
+    And the output should contain "spec/App/Failing.spec.php:4"
+    And the output should contain "rerun"
+
+  Scenario: A failure under --parallel shows its values and the code around it
+    Given a spec file "spec/App/Failing.spec.php":
+      """
+      <?php
+      describe('Failing', function () {
+          it('fails', function () {
+              echo 'printed by the example';
+              expect(1)->toBe(2);
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=1"
+    Then the output should contain "Expected 1 to be 2"
+    And the output should contain "expected: 2"
+    And the output should contain "got: 1"
+    And the output should contain "expect(1)->toBe(2)"
+    And the output should contain "Failing.spec.php:5"
+    And the output should contain "printed by the example"
+
+  Scenario: Pending and skipped examples stay apart under --parallel, each with its reason
+    Given a spec file "spec/App/Waiting.spec.php":
+      """
+      <?php
+      describe('Waiting', function () {
+          it('is pending', function () {
+              pending('Later');
+          });
+          it('is skipped', function () {
+              skip('No network');
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=1"
+    Then the output should contain "1 pending"
+    And the output should contain "1 skipped"
+    And the output should contain "(Later)"
+    And the output should contain "(No network)"
+
+  Scenario: A worker that dies is reported on the file it was running
+    Given a spec file "spec/App/Dying.spec.php":
+      """
+      <?php
+      describe('Dying', function () {
+          it('takes the worker down', function () {
+              exit(3);
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=1"
+    Then the output should contain "exited with code 3"
+    And the output should contain "Dying.spec.php"
+    And the exit code should not be 0
 
   Scenario: Parallel with profile does not crash
     Given a spec file "spec/App/Slow.spec.php":

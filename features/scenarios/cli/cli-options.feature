@@ -310,7 +310,7 @@ Feature: CLI options
     Then the output should contain "TAP version 13"
     And the output should contain "ok 1"
 
-  Scenario: JUnit XML formatter
+  Scenario: JUnit XML formatter names each case after its spec and contexts, with its time
     Given a spec file "spec/App/JunitFormat.spec.php":
       """
       <?php
@@ -318,11 +318,18 @@ Feature: CLI options
           it('passes', function () {
               expect(true)->toBeTrue();
           });
+          context('when nested', function () {
+              it('passes', function () {
+                  expect(true)->toBeTrue();
+              });
+          });
       });
       """
     When I run phpspec run with option "--format junit"
     Then the output should contain "<testsuites>"
     And the output should contain "<testcase"
+    And the output should contain "JunitFormat &gt; when nested"
+    And the output should contain "time="
 
   Scenario: Run features from a nested directory with steps defined at the features root
     Given a PSR-4 project with "spec", "src", and "features" directories
@@ -734,6 +741,26 @@ Feature: CLI options
     And the output should contain "1 example"
     And the output should contain "1 scenario"
 
+  Scenario: A run with only features points at the flags that run them
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/only.feature":
+      """
+      Feature: Only
+        Scenario: One
+          Given nothing
+      """
+    And a step file "features/steps/only.steps.php":
+      """
+      <?php
+      given('nothing', function () {});
+      """
+    When I run phpspec run
+    Then the output should contain "No specs found. The features under features/ run with --story, or with --all alongside the specs."
+
+  Scenario: --story on a project without features says so
+    When I run phpspec run with option "--story"
+    Then the output should contain "No features found under features/."
+
   Scenario: Run only features with --story flag
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a spec file "spec/App/StoryOnly.spec.php":
@@ -806,3 +833,129 @@ Feature: CLI options
     When I run phpspec run with option "--paths-from=missing.txt"
     Then the exit code should be 1
     And the output should contain "missing.txt"
+
+  Scenario: --tags runs the scenarios a Cucumber tag expression matches, a feature's tags counting for every scenario in it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/tagged.feature":
+      """
+      @checkout
+      Feature: Tagged
+        @smoke
+        Scenario: Quick
+          Given a step
+        @smoke @wip
+        Scenario: Unfinished
+          Given a step
+        Scenario: Plain
+          Given a step
+      """
+    And a step file "features/steps/tagged.steps.php":
+      """
+      <?php
+      given("a step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    And a spec file "spec/App/Untagged.spec.php":
+      """
+      <?php
+      describe('Untagged', function () {
+          it('is a spec, which no tag can select', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--tags='@smoke and not @wip'"
+    Then the output should contain "Quick"
+    And the output should not contain "Unfinished"
+    And the output should not contain "Plain"
+    And the output should not contain "Untagged"
+    And the output should contain "1 scenario"
+    When I run phpspec run with option "--tags=@checkout"
+    Then the output should contain "3 scenarios"
+
+  Scenario: --tags refuses an expression it cannot read
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    When I run phpspec run with option "--tags='@smoke and'"
+    Then the output should contain "Tag expression"
+    And the exit code should be 1
+
+  Scenario: Stop on problems stops on a pending example
+    Given a spec file "spec/App/AAStopPending.spec.php":
+      """
+      <?php
+      describe('AAStopPending', function () {
+          it('is pending', function () {
+              pending('Later');
+          });
+      });
+      """
+    And a spec file "spec/App/ZZAfterPendingProblem.spec.php":
+      """
+      <?php
+      describe('ZZAfterPendingProblem', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-problems"
+    Then the output should not contain "ZZAfterPendingProblem"
+
+  Scenario: Stop on first pending example
+    Given a spec file "spec/App/AAStopOnPending.spec.php":
+      """
+      <?php
+      describe('AAStopOnPending', function () {
+          xit('is not written yet', function () {
+          });
+      });
+      """
+    And a spec file "spec/App/ZZAfterPending.spec.php":
+      """
+      <?php
+      describe('ZZAfterPending', function () {
+          it('should not run', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-pending"
+    Then the output should contain "1 pending"
+    And the output should not contain "ZZAfterPending"
+    And the exit code should be 0
+
+  Scenario: TAP carries the reason an example was left pending or skipped
+    Given a spec file "spec/App/TapReasons.spec.php":
+      """
+      <?php
+      describe('TapReasons', function () {
+          it('is pending', function () {
+              pending('Needs the rates API');
+          });
+          it('is skipped', function () {
+              skip('No network on this machine');
+          });
+      });
+      """
+    When I run phpspec run with option "--format tap"
+    Then the output should contain "ok 1 - TapReasons is pending # SKIP Needs the rates API"
+    And the output should contain "ok 2 - TapReasons is skipped # SKIP No network on this machine"
+
+  Scenario: JUnit carries the reason an example was left pending or skipped
+    Given a spec file "spec/App/JunitReasons.spec.php":
+      """
+      <?php
+      describe('JunitReasons', function () {
+          it('is pending', function () {
+              pending('Needs the rates API');
+          });
+          it('is skipped', function () {
+              skip('No network on this machine');
+          });
+      });
+      """
+    When I run phpspec run with option "--format junit"
+    Then the output should contain "<skipped" exactly 2 times
+    And the output should contain "Needs the rates API"
+    And the output should contain "No network on this machine"

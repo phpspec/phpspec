@@ -49,7 +49,7 @@ final class Guard extends Command
         ?Configuration $config = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
-        $this->config = $config ?? new Configuration($baseDir ?? '.', $this->filesystem);
+        $this->config = $config ?? Configuration::load($baseDir ?? '.', $this->filesystem);
 
         parent::__construct('guard');
     }

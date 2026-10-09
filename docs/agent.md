@@ -26,12 +26,10 @@ Standard output carries one JSON object per line, with no ANSI and no prose.
 Decode a line, act on it, decode the next: on a long suite the first failure
 reaches you while the rest is still running.
 
-It is `--parallel`-safe, with one caveat: workers report back through JUnit,
-which carries the outcome, the message and a scenario's line, and nothing else.
-Entries from a parallel run therefore arrive in completion order and without
-`expectation` or `output`; a spec example, failing or passing, also arrives
-without `spec` and `rerun`, which JUnit has no room for. Run without
-`--parallel` when you want the whole of the detail.
+It is `--parallel`-safe: a worker reports every result back over PhpSpec's own
+wire, so an entry from a parallel run carries the same detail as one from a
+single process, `expectation`, `output`, `spec` and `rerun` included. Entries
+arrive in completion order rather than file order.
 
 ## The stream
 
@@ -63,9 +61,9 @@ in between. A run that never started still emits both.
 `suite` is what the run targets, as the paths were given; `seed` is the
 random-order seed when one was used, else `null`. `php` is the version that
 ran, `coverage` says whether coverage is being collected, so a `coverage`
-verdict will follow, and `guard` is `on`, `off` or `stood down` (guard is on
-but there is no coverage driver to judge with, so no verdict will come). The
-totals are not here: at this point nothing has run yet, and the `summary`
+verdict will follow, and `guard` is `on` or `off`; a guard that is on with no
+coverage driver to judge with stops the run instead, as a `fatal` with the
+remedy. The totals are not here: at this point nothing has run yet, and the `summary`
 carries them.
 
 ### `example` — only what needs attention
@@ -90,8 +88,8 @@ Scenario Outline is its own entry, named by its values
 |---|---|
 | `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
-| `state` | `failing`, `error`, `pending`, or `skipped`; `passing` only under `-v`. |
-| `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
+| `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` only under `-v`. |
+| `message` | What went wrong, whatever the state; for `pending` and `skipped`, the reason the example gave, when it gave one. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
@@ -257,7 +255,7 @@ the server actually said.
 
 ### `summary`
 
-The counts (`passing`, `failing`, `errors`, `pending`, `skipped`) are for the
+The counts (`passing`, `failing`, `errors`, `pending`, `skipped`, `risky`) are for the
 whole run, in the units the entries are reported in: one per example, one per
 scenario. `steps` is a size, not a verdict. The one number to branch on is
 **`actionable`** = failing + errors + pending, plus a coverage gate the run
@@ -272,6 +270,7 @@ missed and anything that stopped it.
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
+| `focused` | the spec focused with `fit` or `fdescribe` | How many examples were left out, pending. This run is not the suite; the exit code does not say so to an agent, this does. |
 | `applied` | `--accept-offers` was asked to write | `{ "offers": [{ "id", "action", "target", "file", "applied", "reason"? }], "files", "verified": false }`: what was written after the run, under the ids the offers carried, and what could not be, with `applied: false` and the `reason`. `files` names only what changed. The counts describe the code before it, so run again to verify. |
 
 ### `fatal`: when the run could not finish
@@ -463,6 +462,8 @@ its `event`:
     class and the site. If the entry has an `offer`, PhpSpec can generate the
     missing piece.
   - `pending` — an unimplemented example; implement it.
+  - `risky` — an example that made no expectation, so it checked nothing;
+    give it one. Not actionable: nothing is red.
 - `output` on an entry is what the code printed while it ran: read it, it is
   often the whole diagnosis for a scenario that drove a process of its own.
 - `attachments` on an entry is context the spec handed over about itself, by

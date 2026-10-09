@@ -45,11 +45,22 @@ final class StepResult implements Results
     /**
      * @param string $title the step description
      * @param string $state the outcome state: passed, failure, error, pending, undefined, or skipped
+     * @param string|null $reason why the step was left pending or skipped, when it said
      */
     public function __construct(
         private readonly string $title,
         private readonly string $state, // passed, failure, error, pending, undefined, skipped
+        private readonly ?string $reason = null,
     ) {}
+
+    /**
+     * Why the step was left pending or skipped, when it said; a step skipped
+     * behind a failure said nothing.
+     */
+    public function getReason(): ?string
+    {
+        return $this->reason;
+    }
 
     /**
      * Returns the step description.

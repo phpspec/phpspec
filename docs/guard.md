@@ -230,9 +230,9 @@ pass:
 ## Things worth knowing
 
 - **Guard collects its own coverage.** When it is on, `run` turns coverage on
-  for itself, so the verdict always describes the code as it is now. Without
-  Xdebug in coverage mode it says it cannot judge and stands down; it never
-  fails a run for want of a driver.
+  for itself, so the verdict always describes the code as it is now. Without a
+  coverage driver it refuses to run, naming the remedy, rather than pass a run
+  it cannot judge.
 - **Guard judges what this run exercised.** Code covered only by another suite,
   or by a run in a separate process, reads as untested to the run in front of
   it. Where that is by design, `allow` those paths.

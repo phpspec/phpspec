@@ -38,6 +38,16 @@ describe(Counts::class, function() {
         expect($c['stepErrors'])->toBe(1);
     });
 
+    it("counts a risky example apart from the passes", function() {
+        $risky = new ExampleResult("risky", []);
+        $risky->markRisky();
+        $counts = (new Counts(new SuiteResult([new SpecificationResult("Spec", [$risky, new ExampleResult("passes", [MatchResult::passed()])])])))->toArray();
+
+        expect($counts['risky'])->toBe(1);
+        expect($counts['passes'])->toBe(1);
+        expect($counts['examples'])->toBe(2);
+    });
+
     it("counts failures", function() {
         $passing = new ExampleResult("pass", [MatchResult::passed()]);
         $failing = new ExampleResult("fail", [MatchResult::failed("a", "b", "msg", __FILE__, __LINE__)]);

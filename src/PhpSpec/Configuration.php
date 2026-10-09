@@ -16,33 +16,69 @@ namespace PhpSpec;
 
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\SourceLayout;
-use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Reads and provides access to project configuration from phpspec.yaml, phpspec.yml,
- * phpspec.json, or phpspec.php (in priority order), or from an explicit config
- * file passed with --config.
+ * A project's configuration: its settings, the root its paths are relative
+ * to, and the PSR-4 mappings its composer.json declares. Built from values it
+ * touches no disk; {@see load()} reads what a project states.
  */
 final class Configuration
 {
-    /** @var array<string, mixed> parsed configuration values */
-    private array $config = [];
+    /** @var array<string, string> every key a config file may state, and the kind of value it takes */
+    private const KNOWN_KEYS = [
+        'spec_path' => 'string',
+        'src_path' => 'string',
+        'psr4_prefix' => 'string',
+        'spec_suffix' => 'string',
+        'features_path' => 'string',
+        'steps_path' => 'string',
+        'format' => 'string',
+        'bootstrap' => 'string',
+        'base_url' => 'string',
+        'default_namespace' => 'string',
+        'stop_on_failure' => 'bool',
+        'stop_on_error' => 'bool',
+        'stop_on_warning' => 'bool',
+        'stop_on_notice' => 'bool',
+        'stop_on_deprecation' => 'bool',
+        'stop_on_pending' => 'bool',
+        'stop_on_skipped' => 'bool',
+        'autoload' => 'array',
+        'suites' => 'array',
+        'extensions' => 'array',
+        'ai' => 'array',
+        'guard' => 'array',
+    ];
+    /**
+     * @param array<string, mixed> $config the settings, as a config file states them
+     * @param string $rootDir the project root the paths are relative to
+     * @param array<string, string> $composerMappings PSR-4 prefix to directory, as composer.json declares them
+     * @param string|null $settingsFile the file the settings were read from, when there is one
+     */
+    public function __construct(
+        private array $config = [],
+        private string $rootDir = '.',
+        private array $composerMappings = [],
+        private ?string $settingsFile = null,
+    ) {}
 
     /**
-     * @param string $rootDir project root directory containing config files
-     * @param Filesystem|null $filesystem injectable filesystem for testability
+     * What a project states: phpspec.yaml, phpspec.yml, phpspec.json or
+     * phpspec.php under the root, the first found, or the file --config names;
+     * and the PSR-4 mappings of its composer.json.
+     *
+     * @param string $rootDir project root directory containing the config files
+     * @param Filesystem|null $filesystem the filesystem to read through
      * @param string|null $configFile explicit config file path; when set, the working directory cascade is skipped
      */
-    private Filesystem $fs;
+    public static function load(string $rootDir = '.', ?Filesystem $filesystem = null, ?string $configFile = null): self
+    {
+        $fs = $filesystem ?? new RealFilesystem();
+        $path = $configFile ?? self::settingsFile($rootDir, $fs);
+        $settings = $path === null ? [] : self::readFile($path, $fs);
 
-    public function __construct(
-        private string $rootDir,
-        ?Filesystem $filesystem = null,
-        private readonly ?string $configFile = null,
-    ) {
-        $this->fs = $filesystem ?? new RealFilesystem();
-        $this->load();
+        return new self($settings, $rootDir, self::readComposerMappings($rootDir, $fs), $path);
     }
 
     /**
@@ -78,55 +114,118 @@ final class Configuration
     }
 
     /**
-     * Loads the explicit config file when given, otherwise the first config
-     * file found in the root directory: yaml > yml > json > php.
+     * The config file a project keeps under its root, the first found of
+     * phpspec.yaml, phpspec.yml, phpspec.json and phpspec.php, or null.
      */
-    private function load(): void
+    private static function settingsFile(string $rootDir, Filesystem $fs): ?string
     {
-        if ($this->configFile !== null) {
-            $this->loadFile($this->configFile);
+        foreach (['phpspec.yaml', 'phpspec.yml', 'phpspec.json', 'phpspec.php'] as $name) {
+            $path = $rootDir . '/' . $name;
 
-            return;
+            if ($fs->exists($path)) {
+                return $path;
+            }
         }
 
-        $yamlPath = $this->rootDir . '/phpspec.yaml';
-        $ymlPath = $this->rootDir . '/phpspec.yml';
-        $jsonPath = $this->rootDir . '/phpspec.json';
-        $phpPath = $this->rootDir . '/phpspec.php';
-
-        if ($this->fs->exists($yamlPath)) {
-            $this->config = Yaml::parse($this->fs->read($yamlPath)) ?? [];
-        } elseif ($this->fs->exists($ymlPath)) {
-            $this->config = Yaml::parse($this->fs->read($ymlPath)) ?? [];
-        } elseif ($this->fs->exists($jsonPath)) {
-            $content = $this->fs->read($jsonPath);
-            $this->config = json_decode($content, true) ?? [];
-        } elseif ($this->fs->exists($phpPath)) {
-            $this->config = $this->fs->requirePhp($phpPath);
-        }
+        return null;
     }
 
     /**
-     * Loads configuration from an explicit file, resolving the parser from
-     * the file extension.
+     * The settings a file states, checked key by key: a file that does not
+     * parse, a key one of PhpSpec's own is near (a typo, read by nothing) or
+     * a value of the wrong kind is refused naming the file, since taking it
+     * silently would run something other than what was written. A key none
+     * of PhpSpec's own is near is the project's, read through get().
      *
-     * @param string $path the config file path
-     * @throws RuntimeException when the file does not exist or has an unsupported extension
+     * @return array<string, mixed>
      */
-    private function loadFile(string $path): void
+    private static function readFile(string $path, Filesystem $fs): array
     {
-        if (!$this->fs->exists($path)) {
-            throw new RuntimeException("Configuration file not found: $path");
+        if (!$fs->exists($path)) {
+            throw new ConfigurationException("Configuration file not found: $path");
         }
 
-        $this->config = match (pathinfo($path, PATHINFO_EXTENSION)) {
-            'yaml', 'yml' => Yaml::parse($this->fs->read($path)) ?? [],
-            'json' => json_decode($this->fs->read($path), true) ?? [],
-            'php' => $this->fs->requirePhp($path),
-            default => throw new RuntimeException("Unsupported configuration file type: $path"),
-        };
+        try {
+            $settings = match (pathinfo($path, PATHINFO_EXTENSION)) {
+                'yaml', 'yml' => Yaml::parse($fs->read($path)),
+                'json' => json_decode($fs->read($path), true, 512, JSON_THROW_ON_ERROR),
+                'php' => $fs->requirePhp($path),
+                default => throw new ConfigurationException("Unsupported configuration file type: $path"),
+            };
+        } catch (ConfigurationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new ConfigurationException(sprintf('%s could not be read: %s', $path, $e->getMessage()), 0, $e);
+        }
+
+        if ($settings === null) {
+            return [];
+        }
+
+        if (!is_array($settings)) {
+            throw new ConfigurationException(sprintf('%s does not hold a map of settings.', $path));
+        }
+
+        foreach ($settings as $key => $value) {
+            $expected = self::KNOWN_KEYS[$key] ?? null;
+
+            if ($expected === null) {
+                $nearest = self::nearestOf((string) $key, array_keys(self::KNOWN_KEYS));
+
+                if ($nearest !== null) {
+                    throw new ConfigurationException(sprintf('%s: unknown key "%s". Did you mean "%s"?', $path, $key, $nearest));
+                }
+
+                continue;
+            }
+
+            $wellTyped = match ($expected) {
+                'bool' => is_bool($value),
+                'string' => is_string($value),
+                default => is_array($value),
+            };
+
+            if (!$wellTyped) {
+                throw new ConfigurationException(sprintf(
+                    '%s: %s expects %s, %s given.',
+                    $path,
+                    $key,
+                    match ($expected) {
+                        'bool' => 'true or false', 'string' => 'a string', default => 'a map'
+                    },
+                    is_scalar($value) ? '"' . $value . '"' : get_debug_type($value),
+                ));
+            }
+        }
+
+        return $settings;
     }
 
+    /**
+     * @return array<string, string>
+     */
+    private static function readComposerMappings(string $rootDir, Filesystem $fs): array
+    {
+        $path = rtrim($rootDir, '/') . '/composer.json';
+
+        if (!$fs->exists($path)) {
+            return [];
+        }
+
+        $composer = json_decode($fs->read($path), true);
+        $declared = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
+        $mappings = [];
+
+        foreach (is_array($declared) ? $declared : [] as $prefix => $directory) {
+            $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
+
+            if (is_string($prefix) && is_string($directory) && $directory !== '') {
+                $mappings[$prefix] = ltrim($directory, './');
+            }
+        }
+
+        return $mappings;
+    }
     /**
      * Retrieves a configuration value by key.
      *
@@ -217,25 +316,7 @@ final class Configuration
      */
     private function composerMappings(): array
     {
-        $path = rtrim($this->rootDir, '/') . '/composer.json';
-
-        if (!$this->fs->exists($path)) {
-            return [];
-        }
-
-        $composer = json_decode($this->fs->read($path), true);
-        $declared = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
-        $mappings = [];
-
-        foreach (is_array($declared) ? $declared : [] as $prefix => $directory) {
-            $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
-
-            if (is_string($prefix) && is_string($directory) && $directory !== '') {
-                $mappings[$prefix] = ltrim($directory, './');
-            }
-        }
-
-        return $mappings;
+        return $this->composerMappings;
     }
 
     /**
@@ -290,28 +371,13 @@ final class Configuration
      */
     private function composerLayout(): ?array
     {
-        $path = rtrim($this->rootDir, '/') . '/composer.json';
-
-        if (!$this->fs->exists($path)) {
+        if ($this->composerMappings === []) {
             return null;
         }
 
-        $composer = json_decode($this->fs->read($path), true);
-        $mappings = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
+        $prefix = (string) array_key_first($this->composerMappings);
 
-        if (!is_array($mappings) || $mappings === []) {
-            return null;
-        }
-
-        $prefix = (string) array_key_first($mappings);
-        $directory = $mappings[$prefix];
-        $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
-
-        if (!is_string($directory) || $directory === '') {
-            return null;
-        }
-
-        return ['src' => rtrim($directory, '/'), 'prefix' => rtrim($prefix, '\\')];
+        return ['src' => rtrim($this->composerMappings[$prefix], '/'), 'prefix' => rtrim($prefix, '\\')];
     }
 
     /**
@@ -387,6 +453,14 @@ final class Configuration
     }
 
     /**
+     * Returns whether to stop on pending examples from configuration.
+     */
+    public function getStopOnPending(): bool
+    {
+        return $this->get('stop_on_pending', false);
+    }
+
+    /**
      * Returns whether to stop on skipped examples from configuration.
      */
     public function getStopOnSkipped(): bool
@@ -405,6 +479,7 @@ final class Configuration
             onWarning: $this->getStopOnWarning(),
             onDeprecation: $this->getStopOnDeprecation(),
             onNotice: $this->getStopOnNotice(),
+            onPending: $this->getStopOnPending(),
             onSkipped: $this->getStopOnSkipped(),
         );
     }
@@ -605,21 +680,44 @@ final class Configuration
 
     private function unknownGuardKey(string $key): string
     {
+        return ucfirst(self::unknownKey($key, array_keys(self::GUARD_DEFAULTS), 'guard key'));
+    }
+
+    /**
+     * A key nothing reads, with the known key it most likely meant when one
+     * is near, else all of them.
+     *
+     * @param list<string> $known
+     */
+    private static function unknownKey(string $key, array $known, string $what): string
+    {
+        $closest = self::nearestOf($key, $known);
+
+        if ($closest !== null) {
+            return sprintf('unknown %s "%s". Did you mean "%s"?', $what, $key, $closest);
+        }
+
+        return sprintf('unknown %s "%s". The known keys are %s.', $what, $key, self::naturalList($known));
+    }
+
+    /**
+     * The known key a few letters away from the given one, or null when none is.
+     *
+     * @param list<string> $known
+     */
+    private static function nearestOf(string $key, array $known): ?string
+    {
         $closest = null;
         $best = 4;
-        foreach (array_keys(self::GUARD_DEFAULTS) as $known) {
-            $distance = levenshtein($key, $known);
+        foreach ($known as $candidate) {
+            $distance = levenshtein($key, $candidate);
             if ($distance < $best) {
                 $best = $distance;
-                $closest = $known;
+                $closest = $candidate;
             }
         }
 
-        if ($closest !== null) {
-            return sprintf('Unknown guard key "%s". Did you mean "%s"?', $key, $closest);
-        }
-
-        return sprintf('Unknown guard key "%s". The known keys are %s.', $key, self::naturalList(array_keys(self::GUARD_DEFAULTS)));
+        return $closest;
     }
 
     /**
@@ -714,10 +812,35 @@ final class Configuration
     {
         $ai = $this->normalisedAiSection();
         if ($ai === null) {
-            return 'AI configuration required. Add an "ai" section to your phpspec config.';
+            return $this->missingAiSection();
         }
 
         return $this->aiSectionGap($ai);
+    }
+
+    /**
+     * Which file to put the ai section in, and what one looks like in that
+     * file's own notation, with the installed provider when there is one.
+     */
+    private function missingAiSection(): string
+    {
+        $installed = ProviderFactory::installed();
+        $provider = count($installed) === 1 ? $installed[0] : 'anthropic';
+        $file = $this->settingsFile ?? $this->rootDir . '/phpspec.yaml';
+        $shown = str_starts_with($file, $this->rootDir . '/') ? substr($file, strlen($this->rootDir) + 1) : $file;
+
+        $example = match (pathinfo($file, PATHINFO_EXTENSION)) {
+            'json' => sprintf('"ai": {"provider": "%s", "api_key": "YOUR_API_KEY"}', $provider),
+            'php' => sprintf("'ai' => ['provider' => '%s', 'api_key' => 'YOUR_API_KEY'],", $provider),
+            default => sprintf("ai:\n  provider: %s\n  api_key: YOUR_API_KEY", $provider),
+        };
+
+        return sprintf(
+            "AI configuration required. %s an \"ai\" section%s, for example:\n\n%s",
+            $this->settingsFile === null ? 'Create ' . $shown . ' with' : 'Add',
+            $this->settingsFile === null ? '' : ' to ' . $shown,
+            $example,
+        );
     }
 
     /**

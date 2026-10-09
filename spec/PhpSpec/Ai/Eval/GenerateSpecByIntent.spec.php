@@ -26,7 +26,7 @@ describe('E3 generate: spec by intent', function () {
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-spec-by-intent.json'), true);
         $replay = ReplayProvider::fromRecording($rec);
 
-        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+        $agent = new Agent(new Configuration(), $fs, $replay);
         $outcome = $agent->chat('generate', $rec['instruction']);
 
         expect($outcome->proposals[0]->path)->toMatch('~^spec/.*\.spec\.php$~'); // a spec, at a spec path

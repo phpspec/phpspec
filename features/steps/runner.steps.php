@@ -32,7 +32,7 @@ if (!function_exists('_phpspec_exec')) {
 
     function _phpspec_exec_subprocess(object $world, string $args, bool $interactive = false, string $xdebugMode = 'off', ?string $answers = null): void
     {
-        $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...preg_split('/\s+/', $args)];
+        $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...\PhpSpec\InProcessRunner::argv($args)];
 
         // The error stream goes to a file rather than a second pipe: reading
         // two pipes one after the other deadlocks once the child fills the one

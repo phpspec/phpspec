@@ -24,7 +24,7 @@ describe(Api::class, function () {
     it('reflects each function with its real signature and a summary', function () {
         $byName = array_column($this->document['dsl'], null, 'name');
 
-        expect($byName['it']['signature'])->toBe('it(string $title, Closure $example): void');
+        expect($byName['it']['signature'])->toBe('it(string $title, ?Closure $example = null): void');
         expect($byName['let']['signature'])->toBe('let(Closure|string $propertyOrSetter, ?Closure $setter = null): void');
         expect($byName['attach']['signature'])->toBe('PhpSpec\attach(string $name, Closure|string $value): void');
         expect($byName['it']['summary'])->toBe('Registers a new example (test case) in the current context scope.');

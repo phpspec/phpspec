@@ -15,9 +15,9 @@
 namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\CodeGeneration\SurroundingCode;
-use PhpSpec\ObjectName;
 use PhpSpec\Report\FirstDifference;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
+use PhpSpec\Report\Typed;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -33,22 +33,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  * The end-of-run detail, grouped by kind: Failures, Errors, Warnings,
- * Deprecations, and Skipped, each section printed only when it has entries.
+ * Deprecations, Risky, Pending and Skipped, each section printed only when it has entries.
  * Shared by the pretty and dot formatters so both tell the same story. A
- * failure whose matcher has a relation reads as a labeled pair (expected /
- * to be contained in) instead of a sentence embedding the values.
+ * failure reads as its sentence, then the value wanted under "expected" and
+ * the value produced under "got", whatever the matcher.
  */
 final class DetailSections
 {
-    /** How many elements of an array a pair shows before saying how many are left. */
-    private const ARRAY_MAX = 10;
-
-    /** How long a string gets before the pair caps it. */
-    private const STRING_MAX = 60;
-
-    /** How deep an object's properties are shown. */
-    private const OBJECT_DEPTH = 3;
-
     /** The matchers that want two values to be the same, where a first difference means something. */
     private const EQUALITY_MATCHERS = ['toBe', 'toEqual', 'toBeLike'];
 
@@ -60,7 +51,7 @@ final class DetailSections
      */
     public function render(OutputInterface $output, SuiteResult $results): void
     {
-        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Skipped' => []];
+        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Risky' => [], 'Pending' => [], 'Skipped' => []];
 
         foreach ($results->getResults() as $node) {
             if ($node instanceof FeatureResult) {
@@ -70,7 +61,7 @@ final class DetailSections
             }
         }
 
-        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Skipped' => 'cyan'];
+        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Risky' => 'yellow', 'Pending' => 'yellow', 'Skipped' => 'cyan'];
         foreach ($this->sections as $name => $entries) {
             if ($entries === []) {
                 continue;
@@ -144,10 +135,12 @@ final class DetailSections
                 $this->attachPrinted('Failures', $example->getOutput());
                 $this->attachHandedOver('Failures', $example->getAttachments());
             }
+        } elseif ($example->isPending()) {
+            $this->sections['Pending'][] = self::reasonEntry('yellow', $title, $example->getReason());
         } elseif ($example->isSkipped()) {
-            $this->sections['Skipped'][] = static function (OutputInterface $output) use ($title): void {
-                $output->write(PHP_EOL . '  <fg=cyan>• ' . $title . '</>' . PHP_EOL);
-            };
+            $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $example->getReason());
+        } elseif ($example->isRisky()) {
+            $this->sections['Risky'][] = self::reasonEntry('yellow', $title, 'No expectation in this example.');
         }
 
         foreach ($example->getWarnings() as $warning) {
@@ -203,6 +196,11 @@ final class DetailSections
 
     private function collectFeature(FeatureResult $feature): void
     {
+        // A step that breaks the same way in several scenarios, as a Background
+        // step does, is one broken step: its block is printed once, naming the
+        // scenarios it took down, instead of once per scenario.
+        $seen = [];
+
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
                 continue;
@@ -218,9 +216,15 @@ final class DetailSections
                 // A step whose code threw is an error, exactly like an example
                 // whose code threw; only a failed expectation is a failure.
                 $error = $step->getError();
-                if ($step->isError() && $error !== null) {
-                    $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
-                        $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
+                $broken = ($step->isError() || $step->isFailure()) && $error !== null;
+                $key = $broken ? implode("\0", [$step->getState(), $step->getTitle(), $error->getType(), $error->getMessage(), json_encode($error->blame())]) : null;
+
+                if ($key !== null && isset($seen[$key])) {
+                    $seen[$key][] = $scenario->getTitle();
+                } elseif ($step->isError() && $error !== null) {
+                    $seen[$key] = [$scenario->getTitle()];
+                    $this->sections['Errors'][] = static function (OutputInterface $output) use ($feature, $step, $error, $key, &$seen): void {
+                        self::brokenStep($output, $feature, $step, $seen[$key]);
                         $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
                         $blame = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
                         PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $blame['line']);
@@ -228,12 +232,19 @@ final class DetailSections
                     };
                     $this->attachPrinted('Errors', $step->getOutput());
                 } elseif ($step->isFailure() && $error !== null) {
+                    $seen[$key] = [$scenario->getTitle()];
                     $message = $error->getMessage();
-                    $this->sections['Failures'][] = static function (OutputInterface $output) use ($title, $message): void {
-                        $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
+                    $this->sections['Failures'][] = static function (OutputInterface $output) use ($feature, $step, $message, $key, &$seen): void {
+                        self::brokenStep($output, $feature, $step, $seen[$key]);
                         $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
                     };
                     $this->attachPrinted('Failures', $step->getOutput());
+                } elseif ($step->isPending()) {
+                    $this->sections['Pending'][] = self::reasonEntry('yellow', $title, $step->getReason());
+                } elseif ($step->isSkipped() && $step->getReason() !== null) {
+                    // A step skipped behind a failure or a pending step said
+                    // nothing of its own; the step it stands behind is listed.
+                    $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $step->getReason());
                 }
 
                 foreach ($step->getWarnings() as $warning) {
@@ -249,47 +260,65 @@ final class DetailSections
     }
 
     /**
-     * One failed expectation: a named matcher reads as a labeled pair, its
-     * label inferred from the matcher's own name (toContain reads "expected X
-     * to contain Y"); an anonymous failure keeps its message with the generic
-     * pair beneath.
+     * The title line of a broken step: under its scenario when it broke in
+     * one, under the feature with the scenarios listed when it broke the same
+     * way in several.
+     *
+     * @param list<string> $scenarios the scenarios the step broke in
+     */
+    private static function brokenStep(OutputInterface $output, FeatureResult $feature, StepResult $step, array $scenarios): void
+    {
+        if (count($scenarios) === 1) {
+            $output->write(PHP_EOL . '  <fg=red>• ' . $feature->getTitle() . ' > ' . $scenarios[0] . ' > ' . $step->getTitle() . '</>' . PHP_EOL);
+
+            return;
+        }
+
+        $last = array_pop($scenarios);
+        $output->write(PHP_EOL . '  <fg=red>• ' . $feature->getTitle() . ' > ' . $step->getTitle() . '</>' . PHP_EOL);
+        $output->write('    in ' . implode(', ', $scenarios) . ' and ' . $last . PHP_EOL);
+    }
+
+    /**
+     * One failed expectation: the sentence that says what went wrong, then
+     * the value the matcher wanted under "expected" and the value the code
+     * produced under "got", so the two words mean the same whatever the
+     * matcher. A mock verification reads as the call wanted and the calls
+     * received, in words.
      */
     private function matchFailure(OutputInterface $output, MatchResult $failure): void
     {
-        // The constructor's parameter names are crossed: callers pass the
-        // SUBJECT first (stored as "expected") and the matcher's target value
-        // second (stored as "actual"), so the view uncrosses them.
-        $subject = $failure->getExpected();
-        $target = $failure->getActual();
-        $matcher = $failure->getMatcher();
+        // The constructor's parameter names are crossed: callers pass the value
+        // the code PRODUCED first (stored as "expected") and the value the
+        // matcher WANTED second (stored as "actual"), so the view uncrosses them.
+        $produced = $failure->getExpected();
+        $wanted = $failure->getActual();
 
-        // A target the matcher's own name already states ("to be true") is not
-        // read back as a label and a value, which says the same thing twice.
-        // The message says it once, and the pair beneath names both sides.
-        if ($matcher !== null && $target !== null && !$failure->isTargetImplied()) {
-            $label = ($failure->isNegated() ? 'not ' : '') . self::phrase($matcher);
+        $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
 
-            // Two long strings that are meant to be equal part at one place,
-            // and the pair shows that place rather than two heads and tails
-            // that read alike.
-            $offset = in_array($matcher, self::EQUALITY_MATCHERS, true) && is_string($subject) && is_string($target)
-                && max(strlen($subject), strlen($target)) > self::STRING_MAX
-                ? FirstDifference::between($target, $subject)['offset'] ?? null
-                : null;
+        // A matcher with no target has nothing to put opposite the value, and
+        // "expected: N/A" is a line that tells the reader nothing.
+        if (($produced !== null || $wanted !== null) && $wanted !== Expectation::NO_TARGET) {
+            $label = ($failure->isNegated() ? 'not ' : '') . 'expected';
 
-            if (is_int($offset)) {
-                $this->pair($output, 'expected', self::window($subject, $offset), $label, self::window($target, $offset));
-                $output->write('  first difference at offset ' . $offset . PHP_EOL);
+            if (is_array($wanted) && is_array($produced) && isset($wanted['method'], $wanted['times'], $produced['calls'])) {
+                [$call, $calls] = self::callPair($produced, $wanted);
+                $this->pair($output, $label, $call, 'got', $calls);
             } else {
-                $this->pair($output, 'expected', self::value($subject), $label, self::value($target));
-            }
-        } else {
-            $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
+                // Two long strings that are meant to be equal part at one place,
+                // and the pair shows that place rather than two heads and tails
+                // that read alike.
+                $offset = in_array($failure->getMatcher(), self::EQUALITY_MATCHERS, true) && is_string($produced) && is_string($wanted)
+                    && max(strlen($produced), strlen($wanted)) > Typed::STRING_MAX
+                    ? FirstDifference::between($wanted, $produced)['offset'] ?? null
+                    : null;
 
-            // A matcher with no target has nothing to put opposite the subject,
-            // and "expected: N/A" is a line that tells the reader nothing.
-            if (($subject !== null || $target !== null) && $target !== Expectation::NO_TARGET) {
-                $this->pair($output, 'expected', self::value($target), 'got', self::value($subject));
+                if (is_int($offset)) {
+                    $this->pair($output, $label, self::window($wanted, $offset), 'got', self::window($produced, $offset));
+                    $output->write('  first difference at offset ' . $offset . PHP_EOL);
+                } else {
+                    $this->pair($output, $label, Typed::value($wanted), 'got', Typed::value($produced));
+                }
             }
         }
 
@@ -302,12 +331,36 @@ final class DetailSections
     }
 
     /**
-     * The matcher's name as words: "toContain" reads "to contain",
-     * "toBeGreaterThan" reads "to be greater than".
+     * A mock verification's two sides in words: the call wanted and how often,
+     * and the calls the double received, instead of the arrays that carry them.
+     *
+     * @param array<string, mixed> $received what the double received: the method and its calls, each with its arguments
+     * @param array<string, mixed> $wanted the call wanted: the method, its arguments when they matter, and how often
+     * @return array{string, string}
      */
-    private static function phrase(string $matcher): string
+    private static function callPair(array $received, array $wanted): array
     {
-        return strtolower(trim((string) preg_replace('/(?<!^)[A-Z]/', ' $0', $matcher)));
+        $times = (string) $wanted['times'];
+        $count = preg_match('/(\d+)$/', $times, $digits) === 1 ? (int) $digits[1] : 1;
+        $arguments = is_array($wanted['arguments'] ?? null) ? array_values($wanted['arguments']) : null;
+        $call = sprintf('%s call%s to %s', $times, $count === 1 ? '' : 's', self::call((string) $wanted['method'], $arguments));
+
+        $calls = [];
+        foreach (is_array($received['calls']) ? $received['calls'] : [] as $made) {
+            if (is_array($made) && is_array($made['arguments'] ?? null)) {
+                $calls[] = self::call((string) $received['method'], array_values($made['arguments']));
+            }
+        }
+
+        return [$call, $calls === [] ? 'no calls' : implode(', ', $calls)];
+    }
+
+    /**
+     * @param list<mixed>|null $arguments the arguments, or null when any will do
+     */
+    private static function call(string $method, ?array $arguments): string
+    {
+        return $method . '(' . ($arguments === null ? 'any arguments' : implode(', ', array_map(Typed::value(...), $arguments))) . ')';
     }
 
     /**
@@ -322,47 +375,15 @@ final class DetailSections
     }
 
     /**
-     * A value as the pair shows it, typed: a string in quotes, a number bare
-     * and a float at full precision, so "42" and 42, null and "null", 0.3 and
-     * 0.30000000000000004 read apart. A long string is capped to its first
-     * thirty and last thirty characters around a [...] marker, because the
-     * pair names the difference, not the whole blob.
-     */
-    private static function value(mixed $value, int $depth = 0): string
-    {
-        if (is_string($value)) {
-            $capped = strlen($value) > self::STRING_MAX
-                ? substr($value, 0, 30) . '[...]' . substr($value, -30)
-                : $value;
-
-            return '"' . self::escaped($capped) . '"';
-        }
-
-        return match (true) {
-            is_bool($value) => $value ? 'true' : 'false',
-            is_null($value) => 'null',
-            is_float($value) => is_finite($value) ? var_export($value, true) : (string) $value,
-            is_array($value) => self::listing($value, $depth),
-            is_object($value) => self::object($value, $depth),
-            default => (string) $value,
-        };
-    }
-
-    /**
      * A string from around the place two strings part, so the character that
      * differs is on the line instead of under a [...] marker.
      */
     private static function window(string $value, int $offset): string
     {
         $start = max(0, $offset - 20);
-        $cut = substr($value, $start, self::STRING_MAX);
+        $cut = substr($value, $start, Typed::STRING_MAX);
 
-        return '"' . ($start > 0 ? '[...]' : '') . self::escaped($cut) . (strlen($value) > $start + self::STRING_MAX ? '[...]' : '') . '"';
-    }
-
-    private static function escaped(string $value): string
-    {
-        return str_replace(["\r\n", "\n", "\r"], '\n', $value);
+        return '"' . ($start > 0 ? '[...]' : '') . Typed::escaped($cut) . (strlen($value) > $start + Typed::STRING_MAX ? '[...]' : '') . '"';
     }
 
     /**
@@ -371,46 +392,6 @@ final class DetailSections
      * Point{x: 1, y: 3}, not Point against Point. An enum, a throwable or
      * anything that describes itself is named as it describes itself.
      */
-    private static function object(object $value, int $depth): string
-    {
-        $name = ObjectName::of($value);
-
-        if ($name !== $value::class || $depth >= self::OBJECT_DEPTH) {
-            return $name;
-        }
-
-        $properties = [];
-        foreach (array_slice((array) $value, 0, self::ARRAY_MAX, true) as $key => $item) {
-            $properties[] = preg_replace('/^\0.*\0/', '', (string) $key) . ': ' . self::value($item, $depth + 1);
-        }
-
-        return $properties === [] ? $name : $name . '{' . implode(', ', $properties) . '}';
-    }
-
-    /**
-     * An array by the same rule as anything else in it, element by element. Not
-     * var_export: an array holding an object with a reference back to itself
-     * makes that emit a PHP warning, and a report about a failure must never
-     * become a failure of its own.
-     *
-     * @param array<array-key, mixed> $value
-     */
-    private static function listing(array $value, int $depth = 0): string
-    {
-        $shown = array_slice($value, 0, self::ARRAY_MAX, true);
-        $parts = [];
-
-        foreach ($shown as $key => $item) {
-            $parts[] = is_int($key) ? self::value($item, $depth + 1) : $key . ' => ' . self::value($item, $depth + 1);
-        }
-
-        if (count($value) > self::ARRAY_MAX) {
-            $parts[] = '… ' . (count($value) - self::ARRAY_MAX) . ' more';
-        }
-
-        return '[' . implode(', ', $parts) . ']';
-    }
-
     /**
      * Adds what the spec or scenario handed over about itself, under the name
      * it was handed over with, so a watched log reads next to the failure it
@@ -446,6 +427,17 @@ final class DetailSections
             $output->write(PHP_EOL . '  <fg=gray>printed:</>');
             PrettyViews::printedOutput($output, $printed, 2);
             $output->write(PHP_EOL);
+        };
+    }
+
+    private static function reasonEntry(string $colour, string $title, ?string $reason): callable
+    {
+        return static function (OutputInterface $output) use ($colour, $title, $reason): void {
+            $output->write(PHP_EOL . '  <fg=' . $colour . '>• ' . $title . '</>' . PHP_EOL);
+
+            if ($reason !== null) {
+                $output->write('    ' . $reason . PHP_EOL);
+            }
         };
     }
 

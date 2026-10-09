@@ -40,17 +40,21 @@ final class ExampleError extends \Exception
     }
 
     /**
-     * An error rebuilt from a report that carried its message and type and
-     * nothing else, as a parallel worker's does. It has no site: one made up
+     * An error rebuilt from a report: its message and type, and the site and
+     * the frames of the user's code when the report carried them, as a
+     * parallel worker's does. None is made up when it did not: a site taken
      * from where it was rebuilt would read like a location and re-run like
      * nonsense.
+     *
+     * @param array<int, array<string, mixed>> $trace the frames of the user's code, innermost first
      */
-    public static function fromReport(string $message, string $type): self
+    public static function fromReport(string $message, string $type, string $file = '', int $line = 0, array $trace = []): self
     {
         $error = new self($message, new \RuntimeException($message));
-        $error->file = '';
-        $error->line = 0;
+        $error->file = $file;
+        $error->line = $line;
         $error->type = $type;
+        $error->reportedTrace = $trace;
 
         return $error;
     }

@@ -97,7 +97,7 @@ class Specification implements ExampleRegistry, SpecBlock
             DispatcherRegistry::dispatcher()->restore($subscribers);
         }
 
-        $result = new SpecificationResult($this->getTitle(), $blockResults);
+        $result = new SpecificationResult($this->getTitle(), $blockResults, $this->path);
         DispatcherRegistry::dispatcher()->dispatch(new SpecificationFinished($this->getTitle()), SpecificationFinished::NAME);
         return $result;
     }

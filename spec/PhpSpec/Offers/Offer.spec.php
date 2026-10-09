@@ -37,6 +37,15 @@ describe(Offer::class, function () {
         expect(Offer::fromArray($offer->toArray())->toArray())->toBe($offer->toArray());
     });
 
+    it('remembers when it was made, through storage, and nothing before it is made', function () {
+        $offer = Offer::write('src/App/Basket.php', '<?php', true, '');
+
+        expect($offer->made)->toBeNull();
+        expect($offer->madeAt(1_700_000_000)->made)->toBe(1_700_000_000);
+        expect(Offer::fromArray($offer->madeAt(1_700_000_000)->toArray())->made)->toBe(1_700_000_000);
+        expect($offer->madeAt(1_700_000_000)->id)->toBe($offer->id);
+    });
+
     context('staleness', function () {
         it('stands while the file is as it was when offered', function () {
             $offer = Offer::write('src/App/Basket.php', '<?php new', false, 'the old content');

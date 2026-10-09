@@ -26,6 +26,7 @@ use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\RealFilesystem;
+use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument as Argument;
@@ -70,22 +71,19 @@ final class Generate extends Command
 
     protected function execute(Input $input, Output $output): int
     {
+        $forAgent = $input->getOption('format') === 'agent';
+
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $output->writeln('<fg=red>' . $this->config->aiConfigProblem() . '</>');
-
-            return 1;
+            return $this->refuse((string) $this->config->aiConfigProblem(), $forAgent, $output);
         }
 
         $argument = $input->getArgument('instruction');
         $instruction = trim(implode(' ', is_array($argument) ? $argument : []));
         if ($instruction === '') {
-            $output->writeln('<fg=red>Usage: generate <what to build in plain English></>');
-
-            return 1;
+            return $this->refuse('Usage: generate <what to build in plain English>', $forAgent, $output);
         }
 
-        $forAgent = $input->getOption('format') === 'agent';
         if (!$forAgent) {
             $output->writeln('');
             $output->writeln('  <fg=gray>Generating...</>');
@@ -140,6 +138,24 @@ final class Generate extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Says why nothing will be generated, on the channel the caller reads: a
+     * machine consumer gets the refusal as its receipt, not as prose.
+     */
+    private function refuse(string $problem, bool $forAgent, Output $output): int
+    {
+        if ($forAgent) {
+            $json = json_encode(['v' => Schema::V, 'action' => 'generate', 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+            $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+            return 1;
+        }
+
+        $output->writeln('<fg=red>' . $problem . '</>');
+
+        return 1;
     }
 
     /**

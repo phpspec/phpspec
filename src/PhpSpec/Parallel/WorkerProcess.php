@@ -16,18 +16,14 @@ namespace PhpSpec\Parallel;
 
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
-use PhpSpec\Result\MatchResult;
-use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
-use PhpSpec\Result\StepResult;
 use PhpSpec\Specification\ExampleError;
 use PhpSpec\StopConditions;
-use PhpSpec\StoryBDD\StepError;
 
 /**
  * @internal
- * Wraps a single child process that runs phpspec on a set of spec files
- * and produces JUnit XML output for result parsing.
+ * Wraps a single child process that runs phpspec on a set of spec files and
+ * reports each result back over the wire, one line per spec or feature.
  */
 final class WorkerProcess
 {
@@ -41,12 +37,21 @@ final class WorkerProcess
     private string $stderr = '';
     private ?int $exitCode = null;
 
+    private readonly Wire $wire;
+
+    /** @var list<string> the files the worker has reported so far */
+    private array $reported = [];
+
+    private bool $ended = false;
+
     /**
      * @param string[] $paths spec file paths to run in this worker
      * @param string $phpspecBin absolute path to the phpspec binary
      * @param string|null $coveragePartial file path for the worker to dump raw coverage state to, or null to run without coverage
      * @param string|null $configPath explicit config file path to forward to the worker, or null to use the working directory lookup
      * @param StopConditions $stop the conditions the worker halts on, as its parent does
+     * @param string|null $filter the title filter the parent runs under, forwarded so a worker selects as it did
+     * @param string|null $tags the tag expression the parent runs under, forwarded likewise
      */
     public function __construct(
         private readonly array $paths,
@@ -54,7 +59,11 @@ final class WorkerProcess
         private readonly ?string $coveragePartial = null,
         private readonly ?string $configPath = null,
         private readonly StopConditions $stop = new StopConditions(),
-    ) {}
+        private readonly ?string $filter = null,
+        private readonly ?string $tags = null,
+    ) {
+        $this->wire = new Wire();
+    }
 
     /**
      * Builds the child process command line. Coverage-enabled workers run with
@@ -70,7 +79,7 @@ final class WorkerProcess
             $this->phpspecBin,
             'run',
             ...$this->paths,
-            '-f', 'junit',
+            '-f', 'wire',
             '--no-ansi',
             '--no-interaction',
         ];
@@ -81,6 +90,14 @@ final class WorkerProcess
 
         if ($this->configPath !== null) {
             $command[] = '--config=' . $this->configPath;
+        }
+
+        if ($this->filter !== null) {
+            $command[] = '--filter=' . $this->filter;
+        }
+
+        if ($this->tags !== null) {
+            $command[] = '--tags=' . $this->tags;
         }
 
         array_push($command, ...$this->stop->options());
@@ -198,9 +215,38 @@ final class WorkerProcess
     }
 
     /**
-     * Parses JUnit XML output from the child process into result objects.
+     * The results whose lines have fully arrived since the last take, in the
+     * order the worker reported them. A line still arriving waits for the
+     * next read.
      *
-     * @return array<SpecificationResult|FeatureResult>
+     * @return list<SpecificationResult|FeatureResult>
+     */
+    public function takeResults(): array
+    {
+        $results = [];
+
+        while (($newline = strpos($this->stdout, "\n")) !== false) {
+            $line = rtrim(substr($this->stdout, 0, $newline), "\r");
+            $this->stdout = substr($this->stdout, $newline + 1);
+            $decoded = $this->wire->decode($line);
+
+            if ($decoded === true) {
+                $this->ended = true;
+            } elseif ($decoded !== null) {
+                $this->reported[] = $decoded->getPath();
+                $results[] = $decoded;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Everything the worker still had to report once it is done, and an error
+     * on each file it was running but never reported when it died before
+     * ending its report.
+     *
+     * @return list<SpecificationResult|FeatureResult>
      */
     public function getResults(): array
     {
@@ -211,112 +257,47 @@ final class WorkerProcess
             $this->process = null;
         }
 
-        if ($this->stdout === '') {
-            return [];
-        }
+        $results = $this->takeResults();
 
-        $xmlStart = strpos($this->stdout, '<?xml');
-        if ($xmlStart === false) {
-            return [];
-        }
-
-        $prev = libxml_use_internal_errors(true);
-        try {
-            $xml = new \SimpleXMLElement(substr($this->stdout, $xmlStart));
-        } catch (\Exception) {
-            return [];
-        } finally {
-            libxml_use_internal_errors($prev);
-        }
-
-        return self::parseJunitXml($xml);
+        return $this->ended ? $results : [...$results, ...$this->unreported()];
     }
 
     /**
-     * @return array<SpecificationResult|FeatureResult>
+     * @return list<SpecificationResult>
      */
-    private static function parseJunitXml(\SimpleXMLElement $xml): array
+    private function unreported(): array
     {
+        $reported = array_map(self::samePathKey(...), $this->reported);
         $results = [];
 
-        foreach ($xml->testsuite as $testsuite) {
-            $type = (string) ($testsuite['type'] ?? '');
-
-            if ($type === 'feature') {
-                $results[] = self::parseFeatureSuite($testsuite);
-            } else {
-                $results[] = self::parseSpecSuite($testsuite);
+        foreach ($this->paths as $path) {
+            if (in_array(self::samePathKey($path), $reported, true)) {
+                continue;
             }
+
+            $example = new ExampleResult(basename($path), [], true);
+            $example->setError(ExampleError::fromReport($this->died($path), \RuntimeException::class));
+            $results[] = new SpecificationResult(basename($path), [$example], $path);
         }
 
         return $results;
     }
 
-    /**
-     * Parses a spec-level testsuite element into a SpecificationResult.
-     */
-    private static function parseSpecSuite(\SimpleXMLElement $testsuite): SpecificationResult
+    private function died(string $path): string
     {
-        $suiteName = (string) $testsuite['name'];
-        $examples = [];
+        $message = sprintf(
+            'The worker exited %s before reporting %s.',
+            $this->exitCode === null ? 'without a code' : 'with code ' . $this->exitCode,
+            $path,
+        );
+        $said = trim($this->stderr);
 
-        foreach ($testsuite->testcase as $testcase) {
-            $title = (string) $testcase['name'];
-
-            if (isset($testcase->skipped)) {
-                $examples[] = new ExampleResult($title, [], false, false, true);
-            } elseif (isset($testcase->error)) {
-                $message = (string) ($testcase->error['message'] ?? 'Error');
-                $result = new ExampleResult($title, [], true);
-                $result->setError(ExampleError::fromReport($message, (string) ($testcase->error['type'] ?? 'Error')));
-                $examples[] = $result;
-            } elseif (isset($testcase->failure)) {
-                $message = (string) ($testcase->failure['message'] ?? 'Failed');
-                $examples[] = new ExampleResult($title, [
-                    MatchResult::failed(null, null, $message, '', 0),
-                ]);
-            } else {
-                $examples[] = new ExampleResult($title, []);
-            }
-        }
-
-        return new SpecificationResult($suiteName, $examples);
+        return $said === '' ? $message : $message . "\n" . $said;
     }
 
-    /**
-     * Parses a feature-level testsuite element into a FeatureResult with scenarios and steps.
-     */
-    private static function parseFeatureSuite(\SimpleXMLElement $featureXml): FeatureResult
+    private static function samePathKey(string $path): string
     {
-        $scenarios = [];
-
-        foreach ($featureXml->testsuite as $scenarioXml) {
-            $steps = [];
-
-            foreach ($scenarioXml->testcase as $testcase) {
-                $title = (string) $testcase['name'];
-
-                if (isset($testcase->skipped)) {
-                    $steps[] = new StepResult($title, 'pending');
-                } elseif (isset($testcase->error)) {
-                    $message = (string) ($testcase->error['message'] ?? 'Errored');
-                    $step = new StepResult($title, 'error');
-                    $step->setError(StepError::fromReport($message, (string) ($testcase->error['type'] ?? 'Error')));
-                    $steps[] = $step;
-                } elseif (isset($testcase->failure)) {
-                    $message = (string) ($testcase->failure['message'] ?? 'Failed');
-                    $step = new StepResult($title, 'failure');
-                    $step->setError(StepError::fromReport($message, 'Failure'));
-                    $steps[] = $step;
-                } else {
-                    $steps[] = new StepResult($title, 'passed');
-                }
-            }
-
-            $scenarios[] = new ScenarioResult((string) $scenarioXml['name'], $steps, (int) ($scenarioXml['line'] ?? 0));
-        }
-
-        return new FeatureResult((string) $featureXml['name'], $scenarios, (string) ($featureXml['file'] ?? ''));
+        return realpath($path) ?: $path;
     }
 
     /**

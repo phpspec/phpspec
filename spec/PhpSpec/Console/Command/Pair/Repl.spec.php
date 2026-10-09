@@ -33,19 +33,15 @@ describe(Repl::class, function () {
 
     let('buffer', fn() => new BufferedOutput());
     let('pairOutput', fn() => new PairOutput($this->buffer));
-    let('dispatcher', function (Filesystem $fs) {
-        allow($fs->exists());
-
-        return new CommandDispatcher(
-            new SpecGenerator('spec', $fs),
-            new ClassGenerator(SourceLayout::under('src'), $fs),
-            new Configuration('.', $fs),
-            $this->pairOutput,
-            false,
-            $fs,
-            specRunner: new ReplFakeRunner(),
-        );
-    });
+    let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
+        new SpecGenerator('spec', $fs),
+        new ClassGenerator(SourceLayout::under('src'), $fs),
+        new Configuration(),
+        $this->pairOutput,
+        false,
+        $fs,
+        specRunner: new ReplFakeRunner(),
+    ));
 
     // A LineEditor whose line reader replays a script, then EOF (null → break).
     $scripted = function (PairOutput $out, array $lines): LineEditor {

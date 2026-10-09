@@ -67,6 +67,20 @@ describe(MethodStubGenerator::class, function () {
         (new MethodStubGenerator(SourceLayout::under('lib', 'Acme'), $fs))->generate('PhpSpec\\CodeGeneration\\ClassGenerator', 'spin', 0);
     });
 
+    it("puts the first method right under the opening brace, and a later one a line apart", function (Filesystem $fs) {
+        $content = "<?php\n\nnamespace App;\n\ninterface Catalogue\n{\n}\n";
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturnUsing(function () use (&$content): string { return $content; });
+        allow($fs->write())->toReturnUsing(function (string $path, string $written) use (&$content): void { $content = $written; });
+        $generator = new MethodStubGenerator(filesystem: $fs);
+
+        $generator->generate('App\\Catalogue', 'priceOf', 1);
+        expect($content)->toEndWith("interface Catalogue\n{\n    public function priceOf(\$argument1);\n}\n");
+
+        $generator->generate('App\\Catalogue', 'has', 1);
+        expect($content)->toEndWith("interface Catalogue\n{\n    public function priceOf(\$argument1);\n\n    public function has(\$argument1);\n}\n");
+    });
+
     it("generates interface method stub without body", function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\n\ninterface Calculator\n{\n}\n");

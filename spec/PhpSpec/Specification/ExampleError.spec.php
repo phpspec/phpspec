@@ -74,6 +74,19 @@ describe(ExampleError::class, function() {
         expect($error->missingClass())->toBeNull();
     });
 
+    it("keeps the site and the frames a report carried, so blame and the spec line answer as they did where it was thrown", function() {
+        $error = ExampleError::fromReport("boom", "LogicException", "/project/src/App/Basket.php", 12, [
+            ['file' => '/project/src/App/Basket.php', 'line' => 12, 'function' => 'total'],
+            ['file' => '/project/spec/App/Basket.spec.php', 'line' => 7, 'function' => '{closure}'],
+        ]);
+
+        expect($error->getFile())->toBe('/project/src/App/Basket.php');
+        expect($error->getLine())->toBe(12);
+        expect($error->blame())->toBe(['file' => '/project/src/App/Basket.php', 'line' => 12]);
+        expect($error->lineIn('/project/spec/App/Basket.spec.php'))->toBe(7);
+        expect($error->getFilteredTrace())->toHaveCount(2);
+    });
+
     it("carries no site when rebuilt from a report that had none", function() {
         $error = ExampleError::fromReport("Something went wrong", "LogicException");
 

@@ -16,6 +16,7 @@ namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\HtmlTheme;
+use PhpSpec\Report\ReportedObject;
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -207,6 +208,7 @@ final class Html extends AbstractFormatter
             $example->isFailure() => 'failed',
             $example->isPending() => 'pending',
             $example->isSkipped() => 'skipped',
+            $example->isRisky() => 'risky',
             default => 'passed',
         };
 
@@ -231,10 +233,13 @@ final class Html extends AbstractFormatter
             return $this->collapsedLeaf($state, $example->getTitle(), $detail);
         }
 
+        $reason = $state === 'risky' ? 'no expectation' : $example->getReason();
+
         return sprintf(
-            "<li class=\"example %s\">%s</li>\n",
+            "<li class=\"example %s\">%s%s</li>\n",
             $state,
             $this->escape($example->getTitle()),
+            $reason === null ? '' : ' <span class="reason">' . $this->escape($reason) . '</span>',
         );
     }
 
@@ -256,10 +261,13 @@ final class Html extends AbstractFormatter
             return $this->collapsedLeaf($step->getState(), $step->getTitle(), $detail);
         }
 
+        $reason = $step->getReason();
+
         return sprintf(
-            "<li class=\"example %s\">%s</li>\n",
+            "<li class=\"example %s\">%s%s</li>\n",
             $this->escape($step->getState()),
             $this->escape($step->getTitle()),
+            $reason === null ? '' : ' <span class="reason">' . $this->escape($reason) . '</span>',
         );
     }
 
@@ -293,10 +301,12 @@ final class Html extends AbstractFormatter
     {
         $html = sprintf("<p class=\"message\">%s</p>\n", $this->escape((string) $match->getMessage()));
 
+        // The match's accessors are crossed: getExpected() is the value the code
+        // produced and getActual() the value the matcher wanted.
         $html .= sprintf(
             "<dl class=\"kv\"><dt>expected:</dt><dd>%s</dd><dt>got:</dt><dd>%s</dd></dl>\n",
-            $this->escape($this->formatValue($match->getExpected())),
             $this->escape($this->formatValue($match->getActual())),
+            $this->escape($this->formatValue($match->getExpected())),
         );
 
         $code = $match->getCode();
@@ -342,6 +352,7 @@ final class Html extends AbstractFormatter
             is_string($value) => '"' . $value . '"',
             is_scalar($value) => (string) $value,
             is_array($value) => 'Array(' . count($value) . ')',
+            $value instanceof ReportedObject => $value->shown,
             is_object($value) => $value::class . '#' . spl_object_id($value),
             default => get_debug_type($value),
         };

@@ -31,6 +31,8 @@ final class Counts
     private int $errors = 0;
     private int $broken = 0;
     private int $pending = 0;
+
+    private int $risky = 0;
     private int $warnings = 0;
     private int $deprecations = 0;
     private int $notices = 0;
@@ -67,6 +69,7 @@ final class Counts
             'errors' => $this->errors,
             'broken' => $this->broken,
             'pending' => $this->pending,
+            'risky' => $this->risky,
             'warnings' => $this->warnings,
             'deprecations' => $this->deprecations,
             'notices' => $this->notices,
@@ -108,6 +111,8 @@ final class Counts
                 $this->errors++;
             } elseif ($result->isFailure()) {
                 $this->failures++;
+            } elseif ($result->isRisky()) {
+                $this->risky++;
             } else {
                 $this->passes++;
             }

@@ -97,7 +97,7 @@ describe(Pretty::class, function() {
         expect(substr_count($text, $message))->toBe(1);
     });
 
-    it("renders a toContain failure as an aligned labeled pair, with no sentence repeating the values", function() {
+    it("renders a failure as its sentence, then the value wanted under expected and the value produced under got, colons aligned", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
 
@@ -111,28 +111,51 @@ describe(Pretty::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain('expected: "' . $haystack . '"');
-        expect($text)->toContain('to contain: "' . $needle . '"');
-        expect($text)->not()->toContain('Expected "' . $haystack . '"');   // the sentence is gone
-        expect(substr_count($text, $haystack))->toBe(1);                   // the value appears once
+        expect($text)->toContain('Expected "' . $haystack . '" to contain "' . $needle . '"');
+        expect($text)->toContain('expected: "' . $needle . '"');
+        expect($text)->toContain('got: "' . $haystack . '"');
+        expect($text)->not()->toContain('to contain:');
         // The colons align: both labels end at the same column.
-        expect($text)->toMatch('~ {4}expected: ~');
-        expect($text)->toMatch('~ {2}to contain: ~');
+        expect($text)->toMatch('~ {2}expected: ~');
+        expect($text)->toMatch('~ {7}got: ~');
     });
 
-    it("prefixes the inferred label with not for a negated matcher", function() {
+    it("labels the value a negated matcher did not want as not expected", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
 
         $example = new ExampleResult("rejects the needle", [
-            MatchResult::failed("the haystack", "the needle", "irrelevant", __FILE__, __LINE__, null, "toContain", true),
+            MatchResult::failed("the needle", "the needle", "Expected \"the needle\" not to be \"the needle\"", __FILE__, __LINE__, null, "toBe", true),
         ]);
         $spec = new SpecificationResult("MySpec", [$example]);
         $suite = new SuiteResult([$spec]);
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain('not to contain: "the needle"');
+        expect($text)->toContain('not expected: "the needle"');
+        expect($text)->toContain('         got: "the needle"');
+    });
+
+    it("reads a mock verification as the call wanted and the calls received, not as the arrays that carry them", function() {
+        $output = new BufferedOutput();
+        $received = ['method' => 'ArrayAccess::offsetGet', 'calls' => [['arguments' => ['b']], ['arguments' => []]]];
+        $wanted = ['method' => 'ArrayAccess::offsetGet', 'arguments' => ['a'], 'times' => 'at least 1'];
+        $message = 'Expected ArrayAccess::offsetGet() to be called at least 1 time(s), but was called 0 time(s)';
+        $example = new ExampleResult("verifies", [MatchResult::failed($received, $wanted, $message, __FILE__, __LINE__, null, 'toBeCalled', false)]);
+        $silent = new ExampleResult("verifies nothing", [MatchResult::failed(
+            ['method' => 'ArrayAccess::offsetGet', 'calls' => []],
+            ['method' => 'ArrayAccess::offsetGet', 'times' => 'exactly 2'],
+            $message, __FILE__, __LINE__, null, 'toBeCalledTimes', false,
+        )]);
+        (new Pretty($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$example, $silent])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain($message);
+        expect($text)->toContain('expected: at least 1 call to ArrayAccess::offsetGet("a")');
+        expect($text)->toContain('got: ArrayAccess::offsetGet("b"), ArrayAccess::offsetGet()');
+        expect($text)->toContain('expected: exactly 2 calls to ArrayAccess::offsetGet(any arguments)');
+        expect($text)->toContain('got: no calls');
+        expect($text)->not()->toContain('method =>');
     });
 
     it("caps a long multiline value to head and tail around a marker, newlines escaped", function() {
@@ -148,10 +171,10 @@ describe(Pretty::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain('expected: "\n  Analysing project...\n\n  Ref[...]');
+        expect($text)->toContain('got: "\n  Analysing project...\n\n  Ref[...]');
         expect($text)->toContain('e me to refactor that? [Y/n] "');
         expect($text)->not()->toContain("Analysing project...\n");          // raw newlines never reach the pair
-        expect($text)->toContain('to contain: "Would you like me to run it now?"');
+        expect($text)->toContain('expected: "Would you like me to run it now?"');
     });
 
     // A failing pair, rendered: the two sides as the reader sees them.
@@ -166,29 +189,29 @@ describe(Pretty::class, function() {
     it("tells a string from a number of the same digits", function() use ($pairFor) {
         $text = $pairFor('42', 42);
 
-        expect($text)->toContain('expected: "42"');
-        expect($text)->toContain('to be: 42');
+        expect($text)->toContain('expected: 42');
+        expect($text)->toContain('got: "42"');
     });
 
     it("tells null from the string null", function() use ($pairFor) {
         $text = $pairFor(null, 'null');
 
-        expect($text)->toContain('expected: null');
-        expect($text)->toContain('to be: "null"');
+        expect($text)->toContain('expected: "null"');
+        expect($text)->toContain('got: null');
     });
 
     it("keeps a float's full precision, so 0.1 + 0.2 reads apart from 0.3", function() use ($pairFor) {
         $text = $pairFor(0.1 + 0.2, 0.3);
 
-        expect($text)->toContain('expected: 0.30000000000000004');
-        expect($text)->toContain('to be: 0.3');
+        expect($text)->toContain('expected: 0.3');
+        expect($text)->toContain('got: 0.30000000000000004');
     });
 
     it("shows an object's properties when its name alone tells nothing", function() use ($pairFor) {
         $text = $pairFor(new PrettySpecPoint(1, 2), new PrettySpecPoint(1, 3), 'toBeLike');
 
-        expect($text)->toContain('expected: PrettySpecPoint{x: 1, y: 2}');
-        expect($text)->toContain('to be like: PrettySpecPoint{x: 1, y: 3}');
+        expect($text)->toContain('expected: PrettySpecPoint{x: 1, y: 3}');
+        expect($text)->toContain('got: PrettySpecPoint{x: 1, y: 2}');
     });
 
     it("points at the first difference of two long strings instead of eliding it", function() use ($pairFor) {
@@ -199,7 +222,7 @@ describe(Pretty::class, function() {
         expect($text)->toContain('Y');
     });
 
-    it("groups the detail into Failures, Errors, Warnings, Deprecations, and Skipped sections, in that order", function() {
+    it("groups the detail into Failures, Errors, Warnings, Deprecations, Pending and Skipped sections, in that order", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
 
@@ -212,14 +235,15 @@ describe(Pretty::class, function() {
         $warning->setWarnings([['severity' => E_WARNING, 'message' => 'a warning', 'file' => __FILE__, 'line' => __LINE__]]);
         $deprecated = new ExampleResult("deprecates", [MatchResult::passed()]);
         $deprecated->setDeprecations([['severity' => E_USER_DEPRECATED, 'message' => 'a deprecation', 'file' => __FILE__, 'line' => __LINE__]]);
+        $pending = new ExampleResult("waits", [], isPending: true);
         $skipped = new ExampleResult("skips", [], false, false, true);
-        $spec = new SpecificationResult("MySpec", [$failing, $erroring, $warning, $deprecated, $skipped]);
+        $spec = new SpecificationResult("MySpec", [$failing, $erroring, $warning, $deprecated, $skipped, $pending]);
         $suite = new SuiteResult([$spec]);
 
         $formatter->format($suite);
         $text = $output->fetch();
         $positions = [];
-        foreach (["Failures:", "Errors:", "Warnings:", "Deprecations:", "Skipped:"] as $header) {
+        foreach (["Failures:", "Errors:", "Warnings:", "Deprecations:", "Pending:", "Skipped:"] as $header) {
             expect($text)->toContain($header);
             $positions[] = strpos($text, $header);
         }
@@ -237,7 +261,25 @@ describe(Pretty::class, function() {
 
         $text = $output->fetch();
         expect($text)->not()->toContain("Failures:");
+        expect($text)->not()->toContain("Pending:");
         expect($text)->not()->toContain("Skipped:");
+    });
+
+    it("shows the reason a pending or skipped example gave beside it, and under it in its section", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $pending = new ExampleResult("fetches the rates", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("posts the order", [], isSkipped: true, reason: "No network here");
+        $crossed = new ExampleResult("is crossed out", [], isPending: true);
+        $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped, $crossed])]));
+
+        $text = str_replace("\r\n", "\n", $output->fetch());
+        expect($text)->toContain("○ fetches the rates (Needs the rates API)");
+        expect($text)->toContain("- posts the order (No network here)");
+        expect($text)->toContain("○ is crossed out\n");
+        expect($text)->toContain("Pending:\n\n  • MySpec > fetches the rates\n    Needs the rates API\n\n  • MySpec > is crossed out\n");
+        expect($text)->toContain("Skipped:\n\n  • MySpec > posts the order\n    No network here\n");
     });
 
     it("formats error results with details", function() {
@@ -507,6 +549,66 @@ describe(Pretty::class, function() {
         $formatter->format($suite);
         $text = $output->fetch();
         expect($text)->toContain("expected:");
+    });
+
+    it("shows the reason a pending or skipped step gave beside it and under its section, leaving a step skipped behind a failure out of the section", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $failed = new StepResult("When it breaks", "failure");
+        $failed->setError(new StepError("something broke", new \RuntimeException("something broke")));
+        $feature = new FeatureResult("Shop", [
+            new ScenarioResult("Checkout", [
+                new StepResult("Given a basket", "passed"),
+                new StepResult("When I pay", "pending", "Needs the payment gateway"),
+                new StepResult("Then I see a receipt", "skipped", "No printer here"),
+            ]),
+            new ScenarioResult("Broken", [$failed, new StepResult("Then cascade", "skipped")]),
+        ]);
+        $formatter->format(new SuiteResult([$feature]));
+
+        $text = str_replace("\r\n", "\n", $output->fetch());
+        expect($text)->toContain("○ When I pay (Needs the payment gateway)");
+        expect($text)->toContain("- Then I see a receipt (No printer here)");
+        expect($text)->toContain("- Then cascade\n");
+        expect($text)->toContain("Pending:\n\n  • Shop > Checkout > When I pay\n    Needs the payment gateway\n");
+        expect($text)->toContain("Skipped:\n\n  • Shop > Checkout > Then I see a receipt\n    No printer here\n");
+        expect($text)->not()->toContain("• Shop > Broken > Then cascade");
+    });
+
+    it("reports a step that breaks the same way in several scenarios once, naming the scenarios, instead of one block per scenario", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $broken = static function (): StepResult {
+            $step = new StepResult("Given a broken fixture", "error");
+            $step->setError(new StepError("fixture down", new \RuntimeException("fixture down")));
+
+            return $step;
+        };
+        $feature = new FeatureResult("Checkout", [
+            new ScenarioResult("Paying by card", [$broken(), new StepResult("When I pay", "skipped")]),
+            new ScenarioResult("Paying by cash", [$broken(), new StepResult("When I pay", "skipped")]),
+            new ScenarioResult("Printing", [$broken(), new StepResult("When I print", "skipped")]),
+        ]);
+        $formatter->format(new SuiteResult([$feature]));
+
+        $text = str_replace("\r\n", "\n", $output->fetch());
+        expect(substr_count($text, "RuntimeException: fixture down"))->toBe(1);
+        expect($text)->toContain("• Checkout > Given a broken fixture\n    in Paying by card, Paying by cash and Printing\n");
+        expect($text)->not()->toContain("• Checkout > Paying by card > Given a broken fixture");
+    });
+
+    it("reports a risky example as one that checked nothing, lists it under Risky and counts it apart", function () {
+        $output = new BufferedOutput();
+        $risky = new ExampleResult("calls the code", []);
+        $risky->markRisky();
+        (new Pretty($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky, new ExampleResult("checks", [MatchResult::passed()])])]));
+
+        $text = str_replace("\r\n", "\n", $output->fetch());
+        expect($text)->toContain("! calls the code (no expectation)");
+        expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");
+        expect($text)->toContain("1 passes, 1 risky");
     });
 
     it("formats a feature with passing steps", function () {

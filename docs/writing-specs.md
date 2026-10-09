@@ -30,7 +30,7 @@ describe(Calculator::class, function() {
 
 Contexts can be nested to any depth, and the output will indent accordingly.
 
-## `it(string $title, Closure $example)` / `its(...)`
+## `it(string $title, ?Closure $example = null)` / `its(...)`
 
 Defines a single example (test case). The title should read like a sentence -- "it does something".
 
@@ -139,24 +139,42 @@ Hooks inherit to nested contexts. See [Hooks](hooks.md) for details on execution
 
 ## Pending and Skipped
 
-Mark examples or contexts as pending (skipped):
+An example not written yet is pending: give it a title and no body, cross it out with `xit()`, or call `pending()` inside it, with the reason when there is one.
 
 ```php
-xit("not yet implemented", fn() => /* ... */);
-xdescribe("pending feature", function() { /* ... */ });
-xcontext("pending context", function() { /* ... */ });
-```
+it("applies a discount code");
 
-Or mark pending inside an example:
+xit("refunds a cancelled order", function () {
+    // ...
+});
 
-```php
-it("does something", function() {
-    pending();
+it("converts the total", function () {
+    pending("Needs the rates API");
     // code below is not executed
 });
 ```
 
-Pending examples appear in output with a `P` marker and are counted separately.
+`xdescribe()` and `xcontext()` leave a whole group pending. A pending example is reported with a `○` (a `P` under `--format dot`) and its reason, counted apart from the passes and listed under `Pending:` at the end. It leaves the run green; `--stop-on-pending` halts the run at the first one, and so does `--stop-on-problems`.
+
+An example that cannot run here is skipped: call `skip()` with the reason.
+
+```php
+it("fetches the rates", function () {
+    skip("No network on this machine");
+});
+```
+
+A skipped example is reported with a `-` (an `S` under `--format dot`) and its reason, listed under `Skipped:`, and leaves the run green; `--stop-on-skipped` halts the run at the first one.
+
+## Risky Examples
+
+An example that runs to the end without making a single expectation checked nothing, whatever the code did. It is reported as risky, with a `!` (an `R` under `--format dot`), counted apart from the passes and listed under `Risky:` at the end. It leaves the run green: nothing is red, there is only nothing checked.
+
+```php
+it("converts the total", function () {
+    $this->converter->convert(100);   // risky: no expect()
+});
+```
 
 ## Focused Examples
 
@@ -168,7 +186,7 @@ fdescribe("only this group runs", function() { /* ... */ });
 fcontext("only this context runs", function() { /* ... */ });
 ```
 
-When any focused block exists in a context, only focused blocks are executed. This is resolved per-context, not globally.
+When any focused block exists in a context, only focused blocks are executed. This is resolved per-context, not globally. The examples left out are reported pending with "left out by focus" as the reason, and the run ends with a warning saying how many were left out. A run with no terminal, as in CI, fails on a focus instead: a `fit` nobody removed must not pass as the whole suite. Under `--format=agent` the run does not fail; the summary carries `focused`, the number left out.
 
 ## How `$this` Works
 

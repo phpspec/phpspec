@@ -63,7 +63,7 @@ Feature: Story BDD with Gherkin
     Then the output should contain "undefined"
     And the exit code should be 1
 
-  Scenario: Pending steps are reported
+  Scenario: Pending steps are reported, with the reason they gave
     Given a feature file "features/pending.feature":
       """
       Feature: Pending
@@ -74,12 +74,79 @@ Feature: Story BDD with Gherkin
       """
       <?php
       given("a pending step", function () {
-          pending();
+          pending('Needs the payment gateway');
       });
       """
     When I run phpspec run "features/"
-    Then the output should contain "pending"
+    Then the output should contain "○ Given a pending step (Needs the payment gateway)"
+    And the output should contain "Pending:"
+    And the output should contain "Needs the payment gateway"
     And the exit code should be 0
+
+  Scenario: A skipped step is reported with the reason it gave
+    Given a feature file "features/offline.feature":
+      """
+      Feature: Offline
+        Scenario: Printing
+          Given a printer
+      """
+    And a step file "features/steps/offline.steps.php":
+      """
+      <?php
+      given("a printer", function () {
+          skip('No printer here');
+      });
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "- Given a printer (No printer here)"
+    And the output should contain "Skipped:"
+    And the exit code should be 0
+
+  Scenario: A generated step definition takes the table or doc string its step carries
+    Given a feature file "features/menu.feature":
+      """
+      Feature: Menu
+        Scenario: Reading the menu
+          Given the menu:
+            | item | price |
+            | tea  | 2     |
+          And the note:
+            \"\"\"
+            Closed on Sundays
+            \"\"\"
+          When I read the menu
+      """
+    When I run phpspec run with option "features/ --accept-offers"
+    Then the file "features/steps/menu.steps.php" should contain "use PhpSpec\StoryBDD\DataTable;"
+    And the file "features/steps/menu.steps.php" should contain "function (DataTable $table)"
+    And the file "features/steps/menu.steps.php" should contain "function (string $docString)"
+    And the file "features/steps/menu.steps.php" should contain "function ()" exactly 1 times
+
+  Scenario: A Background step that fails is reported once, naming the scenarios it took down
+    Given a feature file "features/background.feature":
+      """
+      Feature: Background
+        Background:
+          Given a broken fixture
+        Scenario: First
+          When I do one thing
+        Scenario: Second
+          When I do another thing
+      """
+    And a step file "features/steps/background.steps.php":
+      """
+      <?php
+      given("a broken fixture", function () {
+          throw new RuntimeException("fixture down");
+      });
+      when("I do one thing", function () {});
+      when("I do another thing", function () {});
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "RuntimeException: fixture down" exactly 1 times
+    And the output should contain "Background > Given a broken fixture"
+    And the output should contain "in First and Second"
+    And the exit code should be 1
 
   Scenario: A step that throws is an error and skips the remaining steps
     Given a feature file "features/failing.feature":

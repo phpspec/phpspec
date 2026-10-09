@@ -154,8 +154,8 @@ final class HtmlTheme
         color:var(--ps-green-ink)}
         .example.failed,.example.failure,.example.error{border-left-color:var(--ps-red);
         background:var(--ps-red-tint);color:var(--ps-red)}
-        .example.pending{border-left-color:var(--ps-amber);background:var(--ps-amber-tint);
-        color:var(--ps-amber)}
+        .example.pending,.example.risky{border-left-color:var(--ps-amber);
+        background:var(--ps-amber-tint);color:var(--ps-amber)}
         .example.skipped,.example.undefined{border-left-color:var(--ps-slate);
         background:var(--ps-slate-tint);color:var(--ps-slate)}
         .example+.example{margin-top:2px}
@@ -165,6 +165,7 @@ final class HtmlTheme
         details.example>summary::after{content:" ›";font-family:var(--mono);opacity:.7}
         details.example[open]>summary::after{content:" ˅"}
         details.example .detail{padding:.2rem 1.4rem .8rem;border-top:1px dashed var(--ps-line)}
+        .example .reason{opacity:.7;font-size:.85em}
         .message{margin:.35rem 0 .1rem;font-family:var(--mono);font-size:.8rem;
         white-space:pre-wrap;color:var(--ps-red)}
         .kv{display:grid;grid-template-columns:max-content 1fr;gap:.1rem .6rem;

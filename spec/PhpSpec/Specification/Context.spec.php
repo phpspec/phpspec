@@ -54,22 +54,31 @@ describe(Context::class, function() {
         expect($result->isError())->toBe(true);
     });
 
-    it("fails each example whose let binding throws, and still runs the rest", function() {
+    it("fails each example that reads a let whose binding throws, and leaves one that never reads it alone", function() {
         $ctx = new Context("broken let", function() {
             let('money', fn() => throw new \RuntimeException('not yet'));
             it("one", function() { expect($this->money)->toBeNull(); });
             it("two", function() { expect($this->money)->toBeNull(); });
             it("three", function() { expect(true)->toBeTrue(); });
         });
-        $ctx->setWorld(new Subject());
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
 
-        $results = $ctx->run()->getResults();
+        $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+        \PhpSpec\EventDispatcher\DispatcherRegistry::set(new \PhpSpec\EventDispatcher\Dispatcher());
+        try {
+            $results = $ctx->run()->getResults();
+        } finally {
+            \PhpSpec\EventDispatcher\DispatcherRegistry::set($original);
+        }
 
         expect($results)->toHaveCount(3);
         expect($results[0]->isError())->toBeTrue();
         expect($results[0]->getMessage())->toBe('not yet');
         expect($results[0]->getTitle())->toBe('one');
-        expect($results[2]->isError())->toBeTrue();
+        expect($results[1]->isError())->toBeTrue();
+        expect($results[2]->isError())->toBeFalse();
     });
 
     it("fails the example whose beforeEach threw, and goes on to the next", function() {
@@ -257,6 +266,11 @@ describe(Context::class, function() {
         expect($log)->toBe(['focused']);
         expect($result->getResults())->toHaveCount(2);
         expect($result->getResults()[0]->isPending())->toBe(true);
+        // Left out by the focus, and said so: the run can then warn, and a
+        // reader does not take the sibling for work deferred on purpose.
+        expect($result->getResults()[0]->isLeftOutByFocus())->toBe(true);
+        expect($result->getResults()[0]->getReason())->toBe('left out by focus');
+        expect($result->getResults()[1]->isLeftOutByFocus())->toBe(false);
     });
 
     it("runs beforeAll once before all examples", function() {
@@ -345,9 +359,12 @@ describe(Context::class, function() {
                 expect($this->calculator)->toBeAnInstanceOf(\stdClass::class);
             });
         });
-        $ctx->setWorld(new Subject());
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
         $result = $ctx->run();
         expect($result->isError())->toBe(false);
+        expect($result->getResults()[0]->isFailure())->toBe(false);
     });
 
     it("uses its function as alias for it", function() {
@@ -440,11 +457,77 @@ describe(Context::class, function() {
                 });
             });
         });
-        $ctx->setWorld(new Subject());
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
         $result = $ctx->run();
         // The nested context should have 1 child result
         $nestedCtx = $result->getResults()[0];
         expect($nestedCtx->getResults())->toHaveCount(1);
+    });
+
+    it("builds a let when an example first reads it, once for that example, and afresh for the next", function() {
+        $built = 0;
+        $seen = [];
+        $ctx = new Context("lazy let", function() use (&$built, &$seen) {
+            let("val", function() use (&$built) {
+                return ++$built;
+            });
+            it("reads twice", function() use (&$seen) {
+                $seen[] = $this->val;
+                $seen[] = $this->val;
+            });
+            it("reads once more", function() use (&$seen) {
+                $seen[] = $this->val;
+            });
+        });
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
+
+        $ctx->run();
+
+        expect($seen)->toBe([1, 1, 2]);
+        expect($built)->toBe(2);
+    });
+
+    it("leaves a let nobody reads unbuilt", function() {
+        $built = 0;
+        $ctx = new Context("unread let", function() use (&$built) {
+            let("val", function() use (&$built) {
+                return ++$built;
+            });
+            it("looks elsewhere", function() {
+                expect(true)->toBeTrue();
+            });
+        });
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
+
+        $ctx->run();
+
+        expect($built)->toBe(0);
+    });
+
+    it("lets a hook arrange what a let consumes, the let being built after the hooks ran", function() {
+        $ctx = new Context("hook before let", function() {
+            let("answer", fn() => $this->base + 2);
+            beforeEach(function() {
+                $this->base = 40;
+            });
+            it("adds up", function() {
+                expect($this->answer)->toBe(42);
+            });
+        });
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
+
+        $results = $ctx->run()->getResults();
+
+        expect($results[0]->isError())->toBeFalse();
+        expect($results[0]->isFailure())->toBeFalse();
     });
 
     it("re-evaluates let bindings for each example", function() {
@@ -461,10 +544,11 @@ describe(Context::class, function() {
                 expect($this->val)->toBeOfType('int');
             });
         });
-        $ctx->setWorld(new Subject());
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
         $ctx->run();
-        // let should be called once during describe loading + once per example re-apply = 3 total
-        expect($counter)->toBeGreaterThanOrEqualTo(2);
+        expect($counter)->toBe(2);
     });
 
     it("addMatcher registers custom matchers", function() {

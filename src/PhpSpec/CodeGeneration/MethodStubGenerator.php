@@ -74,16 +74,25 @@ final class MethodStubGenerator
         $signature = ($static ? 'public static function ' : 'public function ') . "$methodName($paramString)";
 
         if ($isInterface) {
-            $stub = "\n    $signature;\n";
+            $stub = "    $signature;\n";
         } elseif ($returnExpression !== null) {
-            $stub = "\n    $signature\n    {\n        return $returnExpression;\n    }\n";
+            $stub = "    $signature\n    {\n        return $returnExpression;\n    }\n";
         } else {
-            $stub = "\n    $signature\n    {\n    }\n";
+            $stub = "    $signature\n    {\n    }\n";
         }
 
         $lastBrace = strrpos($content, '}');
         if ($lastBrace === false) {
             throw new RuntimeException("Could not find class closing brace in '$filePath'");
+        }
+
+        // A first member sits right under the opening brace; a later one is
+        // set apart from the member before it by one empty line.
+        if (preg_match('/\b(?:class|interface|trait)\s+\w+[^{]*\{/', $content, $opening, PREG_OFFSET_CAPTURE) === 1) {
+            $bodyStart = $opening[0][1] + strlen($opening[0][0]);
+            if (trim(substr($content, $bodyStart, $lastBrace - $bodyStart)) !== '') {
+                $stub = "\n" . $stub;
+            }
         }
 
         $newContent = substr($content, 0, $lastBrace) . $stub . substr($content, $lastBrace);

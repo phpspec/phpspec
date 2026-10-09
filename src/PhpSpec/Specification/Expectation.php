@@ -190,7 +190,7 @@ class Expectation
     {
         return $this->match(
             fn($expected) => $actual === count($expected),
-            'Expected %s to be %s',
+            'Expected %s to have count %s',
             $this->subject,
             $actual,
             ['__fake' => 'array_fill(0, ' . (int) $actual . ', null)'],

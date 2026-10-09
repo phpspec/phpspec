@@ -94,6 +94,34 @@ describe(ExampleResult::class, function() {
         expect($result->isSkipped())->toBe(false);
     });
 
+    it("carries the reason it was left pending or skipped for", function() {
+        $pending = new ExampleResult("test", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("test", [], isSkipped: true, reason: "No network here");
+
+        expect($pending->getReason())->toBe("Needs the rates API");
+        expect($skipped->getReason())->toBe("No network here");
+    });
+
+    it("knows when it was left out by a focus elsewhere, and is not by default", function() {
+        $result = new ExampleResult("test", [], isPending: true);
+        expect($result->isLeftOutByFocus())->toBe(false);
+
+        $result->markLeftOutByFocus();
+        expect($result->isLeftOutByFocus())->toBe(true);
+    });
+
+    it("is risky once marked so, and not by default", function() {
+        $result = new ExampleResult("test", []);
+        expect($result->isRisky())->toBe(false);
+
+        $result->markRisky();
+        expect($result->isRisky())->toBe(true);
+    });
+
+    it("has no reason unless given one", function() {
+        expect((new ExampleResult("test", [], isPending: true))->getReason())->toBeNull();
+    });
+
     it("tracks deprecations", function() {
         $result = new ExampleResult("test", []);
         expect($result->hasDeprecations())->toBe(false);

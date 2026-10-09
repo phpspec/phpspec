@@ -272,7 +272,7 @@ Feature: Agent output format
     And the output should contain "src/App/Money.php:6"
     And the output should not contain "run src/"
 
-  Scenario: A let binding that throws fails each example that needed it, and the count holds
+  Scenario: A let binding that throws fails each example that reads it, and leaves one that never reads it alone
     Given a spec file "spec/App/Money.spec.php":
       """
       <?php
@@ -286,9 +286,10 @@ Feature: Agent output format
       """
     When I run phpspec run with option "--format=agent"
     Then the output should be valid JSON
-    And the output should have 5 events
+    And the output should have 4 events
     And the output should contain "Money > one"
-    And the output should contain "Money > three"
+    And the output should contain "Money > two"
+    And the output should not contain "Money > three"
     And the output should contain "run spec/App/Money.spec.php:5"
 
   Scenario: A stop flag halts the run at the first example that meets it
@@ -887,3 +888,39 @@ Feature: Agent output format
     Then the exit code should be 0
     And a class file "src/App/Calculator.php" should be generated
     And it should contain "return 3"
+
+  Scenario: A pending step's reason reaches the scenario entry and the step
+    Given a feature file "features/pending.feature":
+      """
+      Feature: Pending
+        Scenario: Work in progress
+          Given a pending step
+      """
+    And a step file "features/steps/pending.steps.php":
+      """
+      <?php
+      given("a pending step", function () {
+          pending('Needs the payment gateway');
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Needs the payment gateway"
+
+  Scenario: A pending or skipped entry carries the reason the example gave
+    Given a spec file "spec/App/Reasons.spec.php":
+      """
+      <?php
+      describe('App\Reasons', function () {
+          it('is pending', function () {
+              pending('Needs the rates API');
+          });
+          it('is skipped', function () {
+              skip('No network on this machine');
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Needs the rates API"
+    And the output should contain "No network on this machine"

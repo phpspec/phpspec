@@ -70,6 +70,23 @@ describe(Tap::class, function() {
         expect($text)->toContain("ok 1 - pending test # SKIP pending");
     });
 
+    it("gives the SKIP directive the reason a pending or skipped example gave", function() {
+        $output = new BufferedOutput();
+        $formatter = new Tap($output);
+
+        $pending = new ExampleResult("is pending", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("is skipped", [], isSkipped: true, reason: "No network here");
+        $bare = new ExampleResult("is skipped bare", [], isSkipped: true);
+        $suite = new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped, $bare])]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+
+        expect($text)->toContain("ok 1 - is pending # SKIP Needs the rates API");
+        expect($text)->toContain("ok 2 - is skipped # SKIP No network here");
+        expect($text)->toContain("ok 3 - is skipped bare # SKIP skipped");
+    });
+
     it("formats results with nested contexts", function() {
         $output = new BufferedOutput();
         $formatter = new Tap($output);

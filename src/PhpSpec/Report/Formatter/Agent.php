@@ -61,6 +61,9 @@ final class Agent extends AbstractFormatter
     /** How many story scenarios ran: the unit a story run is counted and reported in. */
     private int $scenarioCount = 0;
 
+    /** @var int how many examples a focus elsewhere left out of this run */
+    private int $focusedOut = 0;
+
     /** @var (\Closure(SuiteResult): mixed)|null resolves the run's generation candidates as a plain array */
     private readonly ?\Closure $resolveCandidates;
 
@@ -340,12 +343,16 @@ final class Agent extends AbstractFormatter
             'errors' => $errors,
             'pending' => $pending,
             'skipped' => $this->counts['skipped'] ?? 0,
+            // Checked nothing, but nothing is red: counted, never actionable.
+            'risky' => $this->counts['risky'] ?? 0,
             // The one number an agent checks: everything red or unfinished
             // (failures + errors + pending), plus a missed coverage gate and
             // anything that stopped the run. Zero means nothing to do.
             'actionable' => $failing + $errors + $pending + $shortfall + $stopped + $unguarded,
             'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
-        ];
+            // A focused run is not the suite: the number says how much was left
+            // out, so a reader does not take this run for the whole of it.
+        ] + ($this->focusedOut === 0 ? [] : ['focused' => $this->focusedOut]);
 
         // The one command that re-runs everything this run reported, so a fix
         // is checked against the whole of what it was meant to fix, as a string
@@ -530,6 +537,16 @@ final class Agent extends AbstractFormatter
             if ($offer !== null) {
                 $entry['offer'] = $offer;
             }
+        } elseif ($state === 'pending' || $state === 'skipped') {
+            if ($example->getReason() !== null) {
+                $entry['message'] = $example->getReason();
+            }
+            if ($example->isLeftOutByFocus()) {
+                $this->focusedOut++;
+            }
+        } elseif ($state === 'risky') {
+            $entry['message'] = 'No expectation in this example.';
+            $this->address($entry, $example, null, null);
         } elseif ($state === 'passing') {
             $this->address($entry, $example, null, null);
         }
@@ -634,6 +651,7 @@ final class Agent extends AbstractFormatter
             $example->isSkipped() => 'skipped',
             $example->isError() => 'error',
             $example->isFailure() => 'failing',
+            $example->isRisky() => 'risky',
             default => 'passing',
         };
     }
@@ -650,9 +668,9 @@ final class Agent extends AbstractFormatter
      * the target.
      *
      * A failure that came back without its site came back without its detail:
-     * a parallel worker reports through JUnit, which carries the message and
-     * nothing else, and its stand-in expectation compares null with null. Only
-     * the site tells that apart from a real failure whose values are null,
+     * a result rebuilt from a report that carried no site has a stand-in
+     * expectation comparing null with null. Only the site tells that apart
+     * from a real failure whose values are null,
      * which is a comparison worth reporting: an anonymous matcher (any
      * __call-based custom or predicate matcher) has no name to give either.
      *
@@ -730,6 +748,9 @@ final class Agent extends AbstractFormatter
             if ($stepState === 'failing' && $step->getError() !== null) {
                 $reported['message'] = $step->getError()->getMessage();
                 $message ??= $step->getError()->getMessage();
+            } elseif ($step->getReason() !== null) {
+                $reported['message'] = $step->getReason();
+                $message ??= $step->getReason();
             }
 
             // An expectation that did not hold puts its two values on the step,
@@ -867,9 +888,9 @@ final class Agent extends AbstractFormatter
     /**
      * Renders a file:line as a project-relative, forward-slashed location, or
      * null when either part is missing. A blank file or a line of zero is
-     * missing too: a result that came back without its site (a parallel worker
-     * reports through JUnit, which carries none) must not be dressed up as
-     * ":0", which reads like a location and re-runs like nonsense.
+     * missing too: a result rebuilt from a report that carried no site must
+     * not be dressed up as ":0", which reads like a location and re-runs like
+     * nonsense.
      */
     private function location(?string $file, ?int $line): ?string
     {

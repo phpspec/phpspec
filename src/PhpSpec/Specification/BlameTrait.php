@@ -25,6 +25,9 @@ use PhpSpec\CodeGeneration\SurroundingCode;
  */
 trait BlameTrait
 {
+    /** @var array<int, array<string, mixed>>|null the frames a report carried, standing in for the original's */
+    private ?array $reportedTrace = null;
+
     /**
      * The file and line a reader should look at: the site when it is the
      * user's code, else the nearest frame of the user's code; null when the
@@ -98,6 +101,10 @@ trait BlameTrait
      */
     public function getFilteredTrace(): array
     {
+        if ($this->reportedTrace !== null) {
+            return $this->reportedTrace;
+        }
+
         $filtered = [];
 
         foreach ($this->original->getTrace() as $frame) {

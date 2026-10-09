@@ -1,8 +1,10 @@
 <?php
 
+use PhpSpec\Parallel\Wire;
 use PhpSpec\Parallel\WorkerProcess;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
@@ -19,271 +21,87 @@ describe(WorkerProcess::class, function () {
         });
     });
 
-    context('getResults with non-XML output', function () {
-        it('returns empty array when stdout has no XML', function () {
-            $worker = new WorkerProcess([], '/dev/null');
+    context('reading results off the wire', function () {
+        $wire = new Wire();
+        $failing = new SpecificationResult('Basket', [
+            new ExampleResult('fails', [MatchResult::failed(1, 2, 'Expected 1 to be 2', '/project/spec/App/Basket.spec.php', 5, null, 'toBe')]),
+        ], 'spec/App/Basket.spec.php');
+        $feature = new FeatureResult('Checkout', [new ScenarioResult('Paying', [new StepResult('Given a basket', 'passed')], 3)], 'features/checkout.feature');
+
+        it('turns each line on the wire into the result it carries, the whole of it', function () use ($wire, $failing, $feature) {
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php', 'features/checkout.feature'], '/dev/null');
             $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, 'some random output without xml');
-
-            $results = $worker->getResults();
-
-            expect($results)->toHaveCount(0);
-        });
-    });
-
-    context('getResults with invalid XML', function () {
-        it('returns empty array for malformed XML', function () {
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, '<?xml version="1.0"?><broken');
-
-            $results = $worker->getResults();
-
-            expect($results)->toHaveCount(0);
-        });
-    });
-
-    context('parsing spec results from JUnit XML', function () {
-        it('parses passing testcases into ExampleResult', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="Calculator" tests="2" failures="0" errors="0">
-                <testcase name="adds numbers" classname="Calculator"/>
-                <testcase name="subtracts numbers" classname="Calculator"/>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
-
-            $results = $worker->getResults();
-
-            expect($results)->toHaveCount(1);
-            expect($results[0])->toBeAnInstanceOf(SpecificationResult::class);
-            expect($results[0]->getTitle())->toBe('Calculator');
-
-            $examples = $results[0]->getResults();
-            expect($examples)->toHaveCount(2);
-            expect($examples[0]->getTitle())->toBe('adds numbers');
-            expect($examples[0]->isFailure())->toBeFalse();
-            expect($examples[0]->isError())->toBeFalse();
-        });
-
-        it('parses failure testcases', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="Calculator" tests="1" failures="1" errors="0">
-                <testcase name="fails">
-                  <failure message="Expected 1 to be 2"/>
-                </testcase>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
-
-            $results = $worker->getResults();
-            $examples = $results[0]->getResults();
-
-            expect($examples[0]->isFailure())->toBeTrue();
-            expect($examples[0]->getMessage())->toContain('Expected 1 to be 2');
-        });
-
-        it('parses error testcases', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="Calculator" tests="1" failures="0" errors="1">
-                <testcase name="errors">
-                  <error message="Something went wrong" type="LogicException"/>
-                </testcase>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
-
-            $results = $worker->getResults();
-            $examples = $results[0]->getResults();
-
-            expect($examples[0]->isError())->toBeTrue();
-            // The report knows the message and the type, and no site: none is invented.
-            expect($examples[0]->getError()->getType())->toBe('LogicException');
-            expect($examples[0]->getError()->getFile())->toBe('');
-            expect($examples[0]->getError()->getLine())->toBe(0);
-        });
-
-        it('parses skipped testcases', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="Calculator" tests="1" failures="0" errors="0" skipped="1">
-                <testcase name="skipped">
-                  <skipped/>
-                </testcase>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
-
-            $results = $worker->getResults();
-            $examples = $results[0]->getResults();
-
-            expect($examples[0]->isPending() || $examples[0]->isSkipped())->toBeTrue();
-        });
-    });
-
-    context('parsing feature results from JUnit XML', function () {
-        it('parses feature testsuites with type=feature', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="User login" type="feature">
-                <testsuite name="Successful login" type="scenario">
-                  <testcase name="Given a registered user" classname="User login"/>
-                  <testcase name="When the user logs in" classname="User login"/>
-                  <testcase name="Then the user sees the dashboard" classname="User login"/>
-                </testsuite>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
-
-            $results = $worker->getResults();
-
-            expect($results)->toHaveCount(1);
-            expect($results[0])->toBeAnInstanceOf(FeatureResult::class);
-            expect($results[0]->getTitle())->toBe('User login');
-
-            $scenarios = $results[0]->getResults();
-            expect($scenarios)->toHaveCount(1);
-            expect($scenarios[0])->toBeAnInstanceOf(ScenarioResult::class);
-            expect($scenarios[0]->getTitle())->toBe('Successful login');
-
-            $steps = $scenarios[0]->getResults();
-            expect($steps)->toHaveCount(3);
-            expect($steps[0])->toBeAnInstanceOf(StepResult::class);
-            expect($steps[0]->getTitle())->toBe('Given a registered user');
-            expect($steps[0]->isPassed())->toBeTrue();
-        });
-
-        it('parses pending steps with skipped element', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="Feature" type="feature">
-                <testsuite name="Scenario" type="scenario">
-                  <testcase name="Given a pending step" classname="Feature">
-                    <skipped/>
-                  </testcase>
-                </testsuite>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
-
-            $results = $worker->getResults();
-            $steps = $results[0]->getResults()[0]->getResults();
-
-            expect($steps[0]->isPending())->toBeTrue();
-        });
-
-        it('parses failed steps with failure element', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="Feature" type="feature">
-                <testsuite name="Scenario" type="scenario">
-                  <testcase name="Then it fails" classname="Feature">
-                    <failure message="Assertion failed"/>
-                  </testcase>
-                </testsuite>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
-
-            $results = $worker->getResults();
-            $steps = $results[0]->getResults()[0]->getResults();
-
-            expect($steps[0]->isFailure())->toBeTrue();
-            expect($steps[0]->getError()->getMessage())->toBe('Assertion failed');
-        });
-    });
-
-    context('parsing mixed spec and feature results', function () {
-        it('parses both types in a single XML document', function () {
-            $xml = <<<'XML'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-              <testsuite name="Calculator" tests="1">
-                <testcase name="adds" classname="Calculator"/>
-              </testsuite>
-              <testsuite name="User login" type="feature">
-                <testsuite name="Happy path" type="scenario">
-                  <testcase name="Given a user" classname="User login"/>
-                </testsuite>
-              </testsuite>
-            </testsuites>
-            XML;
-
-            $worker = new WorkerProcess([], '/dev/null');
-            $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
+            $ref->setValue($worker, $wire->encode($failing) . "\n" . $wire->encode($feature) . "\n" . $wire->ending() . "\n");
 
             $results = $worker->getResults();
 
             expect($results)->toHaveCount(2);
             expect($results[0])->toBeAnInstanceOf(SpecificationResult::class);
+            $match = $results[0]->getResults()[0]->getResults()[0];
+            expect($match->getExpected())->toBe(1);
+            expect($match->getActual())->toBe(2);
+            expect($match->getMatcher())->toBe('toBe');
+            expect($match->getFile())->toBe('/project/spec/App/Basket.spec.php');
             expect($results[1])->toBeAnInstanceOf(FeatureResult::class);
+            expect($results[1]->getResults()[0]->getLine())->toBe(3);
         });
-    });
 
-    context('getResults strips non-XML prefix', function () {
-        it('finds XML even with leading output', function () {
-            $xml = 'Bootstrap loaded...' . "\n" . '<?xml version="1.0" encoding="UTF-8"?>'
-                . '<testsuites><testsuite name="Spec" tests="1">'
-                . '<testcase name="works" classname="Spec"/>'
-                . '</testsuite></testsuites>';
-
-            $worker = new WorkerProcess([], '/dev/null');
+        it('passes over a line that is not on the wire, such as what a bootstrap file printed', function () use ($wire, $failing) {
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php'], '/dev/null');
             $ref = new \ReflectionProperty($worker, 'stdout');
-            $ref->setValue($worker, $xml);
+            $ref->setValue($worker, "Bootstrap loaded...\n" . $wire->encode($failing) . "\n{\"not\": \"the wire\"}\n" . $wire->ending() . "\n");
+
+            expect($worker->getResults())->toHaveCount(1);
+        });
+
+        it('hands over the results whose lines have fully arrived, and keeps a line still arriving for the next read', function () use ($wire, $failing, $feature) {
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php', 'features/checkout.feature'], '/dev/null');
+            $ref = new \ReflectionProperty($worker, 'stdout');
+            $second = $wire->encode($feature);
+            $ref->setValue($worker, $wire->encode($failing) . "\n" . substr($second, 0, 20));
+
+            expect($worker->takeResults())->toHaveCount(1);
+            expect($worker->takeResults())->toHaveCount(0);
+
+            $ref->setValue($worker, $ref->getValue($worker) . substr($second, 20) . "\n");
+
+            expect($worker->takeResults())->toHaveCount(1);
+        });
+
+        it('reports a file the worker died before reporting as an error on that file, naming the exit code and what the worker said', function () use ($wire, $failing) {
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php', 'spec/App/Coupon.spec.php'], '/dev/null');
+            (new \ReflectionProperty($worker, 'stdout'))->setValue($worker, $wire->encode($failing) . "\n");
+            (new \ReflectionProperty($worker, 'stderr'))->setValue($worker, "PHP Fatal error:  Allowed memory size exhausted\n");
+            (new \ReflectionProperty($worker, 'exitCode'))->setValue($worker, 255);
 
             $results = $worker->getResults();
 
-            expect($results)->toHaveCount(1);
-            expect($results[0]->getTitle())->toBe('Spec');
+            expect($results)->toHaveCount(2);
+            expect($results[1]->getTitle())->toBe('Coupon.spec.php');
+            $example = $results[1]->getResults()[0];
+            expect($example->isError())->toBeTrue();
+            expect($example->getError()->getMessage())->toContain('exited with code 255 before reporting spec/App/Coupon.spec.php');
+            expect($example->getError()->getMessage())->toContain('Allowed memory size exhausted');
+        });
+
+        it('reports nothing missing when the worker ended its report, whatever its exit code', function () use ($wire, $failing) {
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php'], '/dev/null');
+            (new \ReflectionProperty($worker, 'stdout'))->setValue($worker, $wire->encode($failing) . "\n" . $wire->ending() . "\n");
+            (new \ReflectionProperty($worker, 'exitCode'))->setValue($worker, 1);
+
+            expect($worker->getResults())->toHaveCount(1);
         });
     });
 
     context('buildCommand', function () {
-        it('disables xdebug and produces junit output by default', function () {
+        it('disables xdebug and asks for the wire format by default', function () {
             $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec');
             $command = $worker->buildCommand();
 
             expect($command)->toContain('xdebug.mode=off');
             expect($command)->toContain('spec/A.spec.php');
+            expect($command)->toContain('wire');
+            expect($command)->not()->toContain('junit');
         });
 
         it('enables xdebug coverage and requests a partial dump when a coverage partial path is set', function () {
@@ -299,6 +117,14 @@ describe(WorkerProcess::class, function () {
             $command = $worker->buildCommand();
 
             expect($command)->toContain('--config=custom/my-config.json');
+        });
+
+        it('forwards the title filter and the tag expression, so a worker selects as the parent did', function () {
+            $command = (new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', filter: 'adds', tags: '@smoke and not @wip'))->buildCommand();
+
+            expect($command)->toContain('--filter=adds');
+            expect($command)->toContain('--tags=@smoke and not @wip');
+            expect((new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec'))->buildCommand())->not()->toContain('--filter=');
         });
 
         it('forwards the stop conditions to the worker, so it halts as the parent would', function () {

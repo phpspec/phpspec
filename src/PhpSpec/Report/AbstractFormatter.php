@@ -27,7 +27,10 @@ abstract class AbstractFormatter implements Formatter
     /**
      * @param OutputInterface $output the console output to write to
      */
-    public function __construct(protected OutputInterface $output) {}
+    /**
+     * @param string $nothingFound the line a run that found nothing to run ends with
+     */
+    public function __construct(protected OutputInterface $output, protected string $nothingFound = 'No specs found.') {}
 
     /**
      * Default batch format: delegates to begin(), printResult() for each result, then end().

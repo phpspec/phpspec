@@ -59,6 +59,58 @@ describe(Agent::class, function () {
         expect($entry['rerun'])->toEndWith('Agent.spec.php:' . ($line - 5));
     });
 
+    it("says in the summary how many examples a focus left out, and nothing when none was", function () {
+        $leftOut = new ExampleResult("left out", [], isPending: true, reason: 'left out by focus');
+        $leftOut->markLeftOutByFocus();
+        $output = new BufferedOutput();
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$leftOut, new ExampleResult("runs", [MatchResult::passed()])])]));
+        $summary = json_decode(array_slice(explode("\n", trim($output->fetch())), -1)[0], true, flags: JSON_THROW_ON_ERROR);
+        expect($summary['focused'])->toBe(1);
+        expect($summary['pending'])->toBe(1);
+
+        $plain = new BufferedOutput();
+        (new Agent($plain))->format(new SuiteResult([new SpecificationResult("MySpec", [new ExampleResult("runs", [MatchResult::passed()])])]));
+        $summary = json_decode(array_slice(explode("\n", trim($plain->fetch())), -1)[0], true, flags: JSON_THROW_ON_ERROR);
+        expect($summary)->not()->toHaveKey('focused');
+    });
+
+    it("reports a risky example without being asked, counted apart and never actionable", function () {
+        $risky = new ExampleResult("calls the code", []);
+        $risky->markRisky();
+        $risky->declaredAt(__FILE__, 12);
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky])]));
+
+        $lines = explode("\n", trim($output->fetch()));
+        $entry = json_decode($lines[1], true, flags: JSON_THROW_ON_ERROR);
+        $summary = json_decode($lines[2], true, flags: JSON_THROW_ON_ERROR);
+        expect($entry['state'])->toBe('risky');
+        expect($entry['message'])->toBe('No expectation in this example.');
+        expect($entry['rerun'])->toEndWith('Agent.spec.php:12');
+        expect($summary['risky'])->toBe(1);
+        expect($summary['passing'])->toBe(0);
+        expect($summary['actionable'])->toBe(0);
+    });
+
+    it("carries the reason a pending or skipped example gave as its message, and no message without one", function () {
+        $pending = new ExampleResult("is pending", [], isPending: true, reason: "Needs the rates API");
+        $skipped = new ExampleResult("is skipped", [], isSkipped: true, reason: "No network here");
+        $crossed = new ExampleResult("is crossed out", [], isPending: true);
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped, $crossed])]));
+
+        $lines = explode("\n", trim($output->fetch()));
+        $entries = array_map(static fn(string $line): array => json_decode($line, true, flags: JSON_THROW_ON_ERROR), array_slice($lines, 1, 3));
+        expect($entries[0]['state'])->toBe('pending');
+        expect($entries[0]['message'])->toBe('Needs the rates API');
+        expect($entries[1]['state'])->toBe('skipped');
+        expect($entries[1]['message'])->toBe('No network here');
+        expect($entries[2]['state'])->toBe('pending');
+        expect($entries[2])->not()->toHaveKey('message');
+    });
+
     // The run answers in JSON Lines. Decoding a line at a time and filing each
     // event by its kind is the whole of what a reader does, so the spec reads
     // the output the same way: the header, the entries as they arrived, and the
@@ -152,13 +204,13 @@ describe(Agent::class, function () {
     it('states in the header the mode it runs in, so a reader knows upfront what verdicts to expect', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
-        $formatter->runningWith(coverage: true, guard: 'stood down');
+        $formatter->runningWith(coverage: true, guard: 'on');
         $formatter->format(new SuiteResult([]));
         $doc = $stream($output->fetch());
 
         expect($doc['suite']['php'])->toBe(PHP_VERSION);
         expect($doc['suite']['coverage'])->toBeTrue();
-        expect($doc['suite']['guard'])->toBe('stood down');
+        expect($doc['suite']['guard'])->toBe('on');
     });
 
     it('carries the remedy for what stopped the run, when there is one', function () use ($stream) {
@@ -752,6 +804,23 @@ describe(Agent::class, function () {
         expect($result['offers'][0]['action'])->toBe('create_class');
         expect($result['offers'][0]['target'])->toBe('App\\Coupon');
         expect($result['offers'][0]['id'])->toStartWith('o_');
+    });
+
+    it('carries the reason a pending or skipped step gave on the step, and on the scenario when nothing failed', function () use ($render) {
+        $feature = new FeatureResult('Shopping', [
+            new ScenarioResult('Checkout', [
+                new StepResult('Given a basket', 'passed'),
+                new StepResult('When I pay', 'pending', 'Needs the payment gateway'),
+                new StepResult('Then I see a receipt', 'skipped', 'No printer here'),
+            ]),
+        ], '/features/shopping.feature');
+
+        $doc = $render(new SuiteResult([$feature]));
+
+        expect($doc['examples'][0]['state'])->toBe('pending');
+        expect($doc['examples'][0]['message'])->toBe('Needs the payment gateway');
+        expect($doc['examples'][0]['steps'][0])->toBe(['title' => 'When I pay', 'state' => 'pending', 'message' => 'Needs the payment gateway']);
+        expect($doc['examples'][0]['steps'][1])->toBe(['title' => 'Then I see a receipt', 'state' => 'skipped', 'message' => 'No printer here']);
     });
 
     it('counts a story run in scenarios and steps, never in examples', function () use ($render) {

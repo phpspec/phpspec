@@ -79,7 +79,6 @@ final class ClassGenerator
 
         class {$className}
         {
-
         }
 
         EOD;

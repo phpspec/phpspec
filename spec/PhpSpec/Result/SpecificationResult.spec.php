@@ -7,6 +7,11 @@ use PhpSpec\Specification\ExampleError;
 
 describe(SpecificationResult::class, function () {
 
+    it('knows the path of its file when told, and none otherwise', function () {
+        expect((new SpecificationResult('Basket', [], 'spec/App/Basket.spec.php'))->getPath())->toBe('spec/App/Basket.spec.php');
+        expect((new SpecificationResult('Basket', []))->getPath())->toBe('');
+    });
+
     it('is blocked when a describe block could not run for want of a class', function () {
         $error = new ExampleError('Class "App\Calculator" not found', new \Error('Class "App\Calculator" not found'));
         $describe = new ContextResult('App\Calculator', []);

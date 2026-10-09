@@ -62,8 +62,7 @@ describe(Html::class, function() {
         $text = $output->fetch();
         expect($text)->toContain('<details class="example failed">');
         expect($text)->toContain('<summary>fails</summary>');
-        expect($text)->toContain('expected:');
-        expect($text)->toContain('got:');
+        expect($text)->toContain('<dt>expected:</dt><dd>&quot;b&quot;</dd><dt>got:</dt><dd>&quot;a&quot;</dd>');
         expect($text)->toContain('at ' . __FILE__ . ':' . $line);
         expect($text)->toContain('class="snippet"');
         expect($text)->toContain('MatchResult::failed');
@@ -114,6 +113,43 @@ describe(Html::class, function() {
         $text = $output->fetch();
         expect($text)->toContain('class="example pending"');
         expect($text)->toContain('class="example skipped"');
+    });
+
+    it("marks a risky example and says it checked nothing", function() {
+        $output = new BufferedOutput();
+        $risky = new ExampleResult("calls the code", []);
+        $risky->markRisky();
+        (new Html($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$risky])]));
+
+        expect($output->fetch())->toContain('<li class="example risky">calls the code <span class="reason">no expectation</span></li>');
+    });
+
+    it("shows the reason a pending or skipped example gave beside its title", function() {
+        $output = new BufferedOutput();
+        $formatter = new Html($output);
+
+        $pending = new ExampleResult("fetches the rates", [], isPending: true, reason: "Needs the <rates> API");
+        $skipped = new ExampleResult("posts the order", [], isSkipped: true, reason: "No network here");
+        $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain('<li class="example pending">fetches the rates <span class="reason">Needs the &lt;rates&gt; API</span></li>');
+        expect($text)->toContain('<li class="example skipped">posts the order <span class="reason">No network here</span></li>');
+    });
+
+    it("shows the reason a pending or skipped step gave beside its title", function() {
+        $output = new BufferedOutput();
+        $formatter = new Html($output);
+
+        $scenario = new ScenarioResult("Checkout", [
+            new StepResult("When I pay", "pending", "Needs the <payment> gateway"),
+            new StepResult("Then I see a receipt", "skipped", "No printer here"),
+        ]);
+        $formatter->format(new SuiteResult([new FeatureResult("Shop", [$scenario])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain('<li class="example pending">When I pay <span class="reason">Needs the &lt;payment&gt; gateway</span></li>');
+        expect($text)->toContain('<li class="example skipped">Then I see a receipt <span class="reason">No printer here</span></li>');
     });
 
     it("opens groups containing failures and collapses passing ones", function() {

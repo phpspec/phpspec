@@ -105,14 +105,22 @@ final class Junit extends AbstractFormatter
         $failures = 0;
         $errors = 0;
         $skipped = 0;
+        $time = 0.0;
 
         foreach ($examples as $example) {
             $testcase = $xml->createElement('testcase');
             $testcase->setAttribute('name', $example['title']);
-            $testcase->setAttribute('classname', $name);
+            // The file's title, then the contexts, as the pretty sections name
+            // an example: one title under two contexts reads apart.
+            $testcase->setAttribute('classname', $example['context'] === '' ? $name : $name . ' > ' . $example['context']);
+            $testcase->setAttribute('time', self::seconds($example['duration']));
+            $time += $example['duration'];
 
-            if ($example['pending']) {
+            if ($example['pending'] || $example['skipped']) {
                 $skip = $xml->createElement('skipped');
+                if ($example['reason'] !== null) {
+                    $skip->setAttribute('message', $example['reason']);
+                }
                 $testcase->appendChild($skip);
                 $skipped++;
             } elseif ($example['error']) {
@@ -134,7 +142,16 @@ final class Junit extends AbstractFormatter
         $suite->setAttribute('failures', (string) $failures);
         $suite->setAttribute('errors', (string) $errors);
         $suite->setAttribute('skipped', (string) $skipped);
+        $suite->setAttribute('time', self::seconds($time));
         $parent->appendChild($suite);
+    }
+
+    /**
+     * A duration as JUnit's time attribute: seconds, to the microsecond.
+     */
+    private static function seconds(float $duration): string
+    {
+        return sprintf('%.6F', $duration);
     }
 
     /**
@@ -148,11 +165,13 @@ final class Junit extends AbstractFormatter
         $featureSuite->setAttribute('name', $feature->getTitle());
         $featureSuite->setAttribute('type', 'feature');
 
-        // Where each scenario lives travels with the report, so a parallel run
-        // rebuilding results from a worker's XML can still say how to re-run one.
+        // Where each scenario lives travels with the report, so a reader of it
+        // can say how to re-run one.
         if ($feature->getPath() !== '') {
             $featureSuite->setAttribute('file', $feature->getPath());
         }
+
+        $featureTime = 0.0;
 
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
@@ -166,16 +185,24 @@ final class Junit extends AbstractFormatter
                 $scenarioSuite->setAttribute('line', (string) $scenario->getLine());
             }
 
+            $scenarioTime = 0.0;
+
             foreach ($scenario->getResults() as $step) {
                 if (!$step instanceof StepResult) {
                     continue;
                 }
                 $testcase = $xml->createElement('testcase');
                 $testcase->setAttribute('name', $step->getTitle());
-                $testcase->setAttribute('classname', $feature->getTitle());
+                $testcase->setAttribute('classname', $feature->getTitle() . ' > ' . $scenario->getTitle());
+                $testcase->setAttribute('time', self::seconds($step->getDuration()));
+                $scenarioTime += $step->getDuration();
 
                 if ($step->isPending() || $step->isUndefined() || $step->isSkipped()) {
-                    $testcase->appendChild($xml->createElement('skipped'));
+                    $skip = $xml->createElement('skipped');
+                    if ($step->getReason() !== null) {
+                        $skip->setAttribute('message', $step->getReason());
+                    }
+                    $testcase->appendChild($skip);
                 } elseif ($step->isError()) {
                     $error = $xml->createElement('error');
                     $error->setAttribute('message', $step->getError()?->getMessage() ?? 'Errored');
@@ -190,17 +217,20 @@ final class Junit extends AbstractFormatter
                 $scenarioSuite->appendChild($testcase);
             }
 
+            $scenarioSuite->setAttribute('time', self::seconds($scenarioTime));
+            $featureTime += $scenarioTime;
             $featureSuite->appendChild($scenarioSuite);
         }
 
+        $featureSuite->setAttribute('time', self::seconds($featureTime));
         $parent->appendChild($featureSuite);
     }
 
     /**
      * Recursively collects all examples into a flat list for testsuite construction.
      *
-     * @param array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string, type: string}> $examples
-     * @return array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string, type: string}>
+     * @param array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}> $examples
+     * @return array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array
     {
@@ -208,7 +238,11 @@ final class Junit extends AbstractFormatter
             if ($result instanceof ExampleResult) {
                 $examples[] = [
                     'title' => $result->getTitle(),
+                    'context' => $prefix,
+                    'duration' => $result->getDuration(),
                     'pending' => $result->isPending(),
+                    'skipped' => $result->isSkipped(),
+                    'reason' => $result->getReason(),
                     'error' => $result->isError(),
                     'failure' => $result->isFailure(),
                     'message' => $result->getMessage(),

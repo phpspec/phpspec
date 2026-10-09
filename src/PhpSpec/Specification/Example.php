@@ -55,6 +55,12 @@ class Example implements ExampleResultRegistry, Rebindable
     /** @var bool whether this example is focused for exclusive execution */
     private bool $focused = false;
 
+    /** @var bool whether this example is pending only because a sibling is focused */
+    private bool $leftOutByFocus = false;
+
+    /** @var array{string, int}|null where the spec declared this example, when not where its closure is */
+    private ?array $declaration = null;
+
     /**
      * @param string $title descriptive label for the example
      * @param Closure $example executable test body
@@ -74,6 +80,8 @@ class Example implements ExampleResultRegistry, Rebindable
         $copy = new self($this->title, Closure::bind($this->example, $world, $world));
         $copy->pending = $this->pending;
         $copy->focused = $this->focused;
+        $copy->leftOutByFocus = $this->leftOutByFocus;
+        $copy->declaration = $this->declaration;
 
         return $copy;
     }
@@ -97,6 +105,10 @@ class Example implements ExampleResultRegistry, Rebindable
      */
     public function containsLine(int $line): bool
     {
+        if ($this->declaration !== null) {
+            return $this->declaration[1] === $line;
+        }
+
         $reflection = new ReflectionFunction($this->example);
 
         return $line >= $reflection->getStartLine() && $line <= $reflection->getEndLine();
@@ -111,6 +123,25 @@ class Example implements ExampleResultRegistry, Rebindable
     public function setPending(bool $pending): void
     {
         $this->pending = $pending;
+    }
+
+    /**
+     * Leaves this example out of the run because a sibling is focused: it is
+     * pending, and says why, so the run can warn that it was focused.
+     */
+    public function leaveOutByFocus(): void
+    {
+        $this->pending = true;
+        $this->leftOutByFocus = true;
+    }
+
+    /**
+     * Where the spec declared this example, for one declared by its title
+     * alone: there is no closure of its own to read the line off.
+     */
+    public function declaredAt(string $file, int $line): void
+    {
+        $this->declaration = [$file, $line];
     }
 
     /**
@@ -155,6 +186,12 @@ class Example implements ExampleResultRegistry, Rebindable
 
     private function declared(ExampleResult $result): ExampleResult
     {
+        if ($this->declaration !== null) {
+            $result->declaredAt(...$this->declaration);
+
+            return $result;
+        }
+
         $reflection = new ReflectionFunction($this->example);
         $file = $reflection->getFileName();
         $line = $reflection->getStartLine();
@@ -198,7 +235,10 @@ class Example implements ExampleResultRegistry, Rebindable
 
         if ($this->pending) {
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
-            $this->exampleResult = new ExampleResult($this->title, [], false, true);
+            $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $this->leftOutByFocus ? 'left out by focus' : null);
+            if ($this->leftOutByFocus) {
+                $this->exampleResult->markLeftOutByFocus();
+            }
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
@@ -225,7 +265,7 @@ class Example implements ExampleResultRegistry, Rebindable
         } catch (PendingException $e) {
             restore_error_handler();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
-            $this->exampleResult = new ExampleResult($this->title, [], false, true);
+            $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $e->getMessage());
             $this->exampleResult->setWarnings($warnings);
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
@@ -234,7 +274,7 @@ class Example implements ExampleResultRegistry, Rebindable
         } catch (SkippedException $e) {
             restore_error_handler();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
-            $this->exampleResult = new ExampleResult($this->title, [], false, false, true);
+            $this->exampleResult = new ExampleResult($this->title, [], isSkipped: true, reason: $e->getMessage());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
@@ -252,6 +292,10 @@ class Example implements ExampleResultRegistry, Rebindable
         DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
         $this->exampleResult->setOutput($printed->text());
+
+        if (!$this->isError && $this->exampleResult->getResults() === []) {
+            $this->exampleResult->markRisky();
+        }
         $unique = [];
         foreach ($warnings as $w) {
             $key = $w['message'] . ':' . $w['file'] . ':' . $w['line'];

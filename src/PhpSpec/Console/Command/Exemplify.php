@@ -106,9 +106,10 @@ final class Exemplify extends Command
 
         $output->writeln('');
         $output->writeln(sprintf(
-            '<fg=green>Example for <fg=yellow>%s::%s</> added.</>',
+            '<fg=green>Example for <fg=yellow>%s::%s</> %s</>',
             $class,
             $method,
+            $added ? 'added.' : 'already exists.',
         ));
 
         return 0;

@@ -77,7 +77,7 @@ final class Pretty extends AbstractFormatter
     {
         if (!$this->hasResults) {
             if (!$this->blocked) {
-                $this->output->writeln('No specs found.');
+                $this->output->writeln($this->nothingFound);
             }
 
             return;

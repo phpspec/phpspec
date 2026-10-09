@@ -187,6 +187,29 @@ given('the following users:', function (DataTable $table) {
 
 `DataTable` implements `ArrayAccess`, `Iterator`, and `Countable`. Use `$table->asClass(User::class)` to hydrate rows into objects.
 
+## Doc Strings
+
+A block of text under a step reaches the definition as a `string`, after the
+parameters of the step's pattern:
+
+```gherkin
+Scenario: Posting a note
+  Given a note titled "Opening hours":
+    """
+    Closed on Sundays
+    """
+```
+
+```php
+given('a note titled {string}:', function (string $title, string $note) {
+    $this->notes[$title] = $note;
+});
+```
+
+A table is passed the same way, as a `DataTable`. The step definitions PhpSpec
+generates for undefined steps take the table or doc string their step carries,
+and import `DataTable` once when a step takes one.
+
 ## Tags
 
 Add `@tag` annotations to features and scenarios:
@@ -199,7 +222,12 @@ Feature: Tagged feature
     Given a step
 ```
 
-Tags are stored on `FeatureNode::$tags` and `ScenarioNode::$tags`.
+Select scenarios by tag with `--tags` and a Cucumber tag expression; a tag on
+the feature counts for every scenario in it:
+
+```bash
+bin/phpspec run --tags "@smoke and not @wip"
+```
 
 ## Hooks
 
@@ -242,11 +270,13 @@ failed.
 |---|---|---|
 | passed | green | Step executed successfully |
 | failed | red | Step threw an exception or expectation failed |
-| pending | yellow | Step calls `pending()` |
+| pending | yellow | Step calls `pending()`, shown with the reason it gave |
 | undefined | blue | No matching step definition found |
-| skipped | cyan | Skipped because a prior step failed |
+| skipped | cyan | Step calls `skip()`, shown with the reason it gave, or a prior step failed |
 
-After the first failure in a scenario, all remaining steps are skipped.
+After the first failure in a scenario, all remaining steps are skipped. A
+pending or skipped step is listed under `Pending:` or `Skipped:` at the end
+with its reason; a step skipped behind a failure is not, the failure is.
 
 ## Running Features
 

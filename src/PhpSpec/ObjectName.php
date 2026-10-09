@@ -14,6 +14,7 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Report\ReportedObject;
 use Stringable;
 use Throwable;
 use UnitEnum;
@@ -38,6 +39,10 @@ final class ObjectName
      */
     public static function of(object $value): string
     {
+        if ($value instanceof ReportedObject) {
+            return $value->name;
+        }
+
         if ($value instanceof UnitEnum) {
             return $value::class . '::' . $value->name;
         }

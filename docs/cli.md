@@ -60,19 +60,20 @@ See [Pair Programming & AI](pair.md#the-refactor-command) for full documentation
 ### `generate`
 
 Turns a natural-language instruction into ONE artifact: a Gherkin feature, step
-definitions, a spec, or implementation code. The current TDD step is resolved
-deterministically from your words (an explicit path, or feature/steps/spec/code
-wording), and fully determined artifacts are generated without any model call: a
-feature request becomes a Gherkin skeleton, and `generate the steps` writes the
-step definitions for the last-touched feature by parsing it. Everything else is
+definitions, a spec, or implementation code. The command needs the `ai` section
+of the config (see [Configuration](configuration.md#ai-assistant)); without it,
+it refuses, naming the file to add the section to. The current TDD step is
+resolved deterministically from your words (an explicit path, or
+feature/steps/spec/code wording). A feature request becomes a Gherkin skeleton
+and `generate the steps` writes the step definitions for the last-touched
+feature by parsing it, so those two make no model call; everything else is
 authored by the AI. Each proposal is shown as a diff and written after a `[Y/n]`
 confirmation. With no terminal to ask, nothing is written: the change is offered
-under an id for [`accept`](#accept) to apply. Requires an AI provider (see
-[Configuration](configuration.md#ai)).
+under an id for [`accept`](#accept) to apply.
 
 ```bash
-bin/phpspec generate a feature for adding a task    # Gherkin under features/, no model call
-bin/phpspec generate the steps                      # steps for the last-touched feature, no model call
+bin/phpspec generate a feature for adding a task    # Gherkin skeleton under features/
+bin/phpspec generate the steps                      # steps for the last-touched feature, parsed from it
 bin/phpspec generate a spec for a Coupon that reduces a total
 bin/phpspec generate implement Calculator::add to return the sum of its arguments
 ```
@@ -99,7 +100,10 @@ The id is derived from the offer itself, so it is stable while the offer stands.
 An unknown id is refused, and so is an offer whose file has changed since it was
 made. `--format=agent` returns the receipt as JSON, naming each offer's target
 and the files it wrote. Offers live in `.phpspec/offers.json`; the fifty most
-recent stay on the table.
+recent stay on the table, each for twenty minutes from when it was last made,
+so an offer left by an earlier session, or by an earlier project in the same
+directory, is not applied to this one: an older id is refused as expired,
+saying when it was made, as an `error` to an agent.
 
 ### `guard`
 
@@ -240,6 +244,14 @@ Outputs JUnit XML for CI integration:
 bin/phpspec run --format=junit > results.xml
 ```
 
+Each spec is a `testsuite` and each example a `testcase` named by its title,
+with `classname` naming the file, the describe and the contexts around it
+(`HappyHour > HappyHour > at 5pm`, as the pretty sections name an example), so
+one title in two contexts reads apart. A feature is
+a `testsuite` of scenario suites, each step a `testcase` under its scenario. A
+pending or skipped case carries the reason as the `skipped` element's
+`message`. Every case and suite carries `time`, in seconds.
+
 #### HTML Formatter
 
 Outputs a self-contained HTML document with passed/failed examples and a
@@ -293,6 +305,7 @@ rejected with an error rather than silently falling back.
 | Option | Description |
 |---|---|
 | `--filter=PATTERN` | Only run specs/scenarios whose file path, example title, or scenario title contains PATTERN |
+| `--tags=EXPRESSION` | Only run the scenarios a Cucumber tag expression selects: `@smoke`, `@smoke and not @wip`, `(@a or @b) and not @c`. A feature's tags count for every scenario in it; a spec has no tags and does not run |
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--all` | Run all suites -- both specs and features |
 | `--story` | Run only features (Story BDD) |
@@ -311,6 +324,7 @@ the same way (useful for tight feedback loops and CI):
 | `--stop-on-warning` | warning |
 | `--stop-on-deprecation` | deprecation |
 | `--stop-on-notice` | notice |
+| `--stop-on-pending` | pending example |
 | `--stop-on-skipped` | skipped example |
 | `--stop-on-problems` | any non-passing result |
 
@@ -318,6 +332,7 @@ the same way (useful for tight feedback loops and CI):
 bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
 bin/phpspec run --filter "should be good"        # Example/scenario titles matching a phrase
 bin/phpspec run --filter "it should be good"     # Leading "it" on the filter is ignored
+bin/phpspec run --tags "@smoke and not @wip"      # Scenarios tagged @smoke, unless also @wip
 bin/phpspec run --paths-from specs.txt            # Run the specs listed in specs.txt
 bin/phpspec run --stop-on-failure                 # Stop on first failing spec
 bin/phpspec run --order random                    # Randomize spec order
@@ -327,6 +342,13 @@ bin/phpspec run --order random --seed 42          # Reproducible random order
 Matching is a case-insensitive substring test. When a spec file's path matches,
 every example in it runs; otherwise only the examples whose title matches run.
 Feature files behave the same with scenario titles.
+
+`--tags` selects scenarios by their tags with a Cucumber tag expression: `and`,
+`or`, `not` and parentheses, `not` binding tightest and `and` before `or`. A tag
+on the feature counts for every scenario in it. Only scenarios run under
+`--tags`, since a spec example has none; an expression that cannot be read is
+refused, naming what was found where. Both `--filter` and `--tags` reach every
+`--parallel` worker.
 
 `--paths-from` is designed for tools that drive PhpSpec programmatically (such as
 mutation testing frameworks): a long list of spec paths passed as arguments can
@@ -396,8 +418,12 @@ bin/phpspec run --parallel        # one worker per CPU core
 bin/phpspec run --parallel=4      # four workers
 ```
 
-Each worker runs a slice of the spec files in its own process and reports back
-via JUnit; the parent merges the results before rendering. Coverage
+Each worker runs a slice of the spec files in its own process and reports each
+result back whole, over PhpSpec's own wire (`--format=wire`, one JSON line per
+spec or feature); the parent renders them as they arrive, in whichever format
+was asked for, with everything a single process would show: a failure's values
+and code, an error's site, what an example printed. A worker that dies is
+reported as an error on the file it was running, naming its exit code. Coverage
 (`--coverage*`) composes with `--parallel` -- workers collect per-example
 coverage and the parent merges it. `--format=agent` is parallel-safe too: the
 parent emits each event as a worker reports it, so entries arrive in completion

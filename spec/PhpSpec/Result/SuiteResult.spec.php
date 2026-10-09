@@ -20,6 +20,17 @@ describe(SuiteResult::class, function() {
         expect($result->getResults())->toHaveCount(1);
     });
 
+    it("counts the examples a focus left out, anywhere in the tree", function() {
+        $leftOut = new ExampleResult("left out", [], isPending: true);
+        $leftOut->markLeftOutByFocus();
+        $deferred = new ExampleResult("deferred", [], isPending: true);
+        $nested = new ContextResult("inner", [$leftOut]);
+        $suite = new SuiteResult([new SpecificationResult("spec", [$leftOut, $deferred, $nested])]);
+
+        expect($suite->leftOutByFocus())->toBe(2);
+        expect((new SuiteResult([new SpecificationResult("spec", [$deferred])]))->leftOutByFocus())->toBe(0);
+    });
+
     it("returns 0 when all examples pass", function() {
         $example = new ExampleResult("test", []);
         $spec = new SpecificationResult("spec", [$example]);

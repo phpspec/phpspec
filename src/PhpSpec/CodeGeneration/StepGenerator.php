@@ -39,7 +39,7 @@ class StepGenerator
      * Appends to an existing steps file if one already exists.
      *
      * @param string $featurePath absolute path to the .feature file
-     * @param array<int, array{keyword: string, text: string}> $undefinedSteps list of undefined steps, each with 'keyword' and 'text' keys
+     * @param array<int, array{keyword: string, text: string, table?: bool, docString?: bool}> $undefinedSteps list of undefined steps, each with 'keyword' and 'text' keys, and whether a table or a doc string follows it
      * @return string the path to the generated/updated steps file
      */
     public function generate(string $featurePath, array $undefinedSteps): string
@@ -63,9 +63,11 @@ class StepGenerator
     /**
      * Drafts the complete content of a steps file for the given steps without
      * touching disk: existing content (when any) with a placeholder function
-     * appended for every step whose pattern is not already defined.
+     * appended for every step whose pattern is not already defined. A step
+     * that carries a table takes it as a DataTable, one that carries a doc
+     * string takes it as a string, after the parameters of its pattern.
      *
-     * @param array<int, array{keyword: string, text: string}> $steps steps with 'keyword' and 'text' keys
+     * @param array<int, array{keyword: string, text: string, table?: bool, docString?: bool}> $steps steps with 'keyword' and 'text' keys, and whether a table or a doc string follows
      * @param string $existing the current steps-file content, empty for a new file
      * @param list<string> $definedElsewhere titles other steps files already define, never re-scaffolded
      * @return string the complete new steps-file content
@@ -97,9 +99,20 @@ class StepGenerator
             $emitted[$pattern] = true;
             $params = $this->extractParams($pattern);
 
+            if ($step['table'] ?? false) {
+                $params .= ($params === '' ? '' : ', ') . 'DataTable $table';
+                $needsDataTable = true;
+            } elseif ($step['docString'] ?? false) {
+                $params .= ($params === '' ? '' : ', ') . 'string $docString';
+            }
+
             $content .= "\n$keyword(\"$pattern\", function ($params) {\n";
             $content .= "    pending();\n";
             $content .= "});\n";
+        }
+
+        if (($needsDataTable ?? false) && !str_contains($content, 'use PhpSpec\\StoryBDD\\DataTable;')) {
+            $content = (string) preg_replace('/^<\?php\n/', "<?php\n\nuse PhpSpec\\StoryBDD\\DataTable;\n", $content, 1);
         }
 
         return $content;
@@ -116,22 +129,64 @@ class StepGenerator
 
     /**
      * Extracts the Given/When/Then/And/But step lines from a feature's text, in
-     * order, so a steps file can be drafted from the feature alone (no runner).
+     * order, so a steps file can be drafted from the feature alone (no runner),
+     * each noting the table or doc string that follows it. An Examples table
+     * belongs to its outline, not to the step above it.
      *
      * @param string $featureText the raw contents of a .feature file
-     * @return array<int, array{keyword: string, text: string}>
+     * @return array<int, array{keyword: string, text: string, table?: bool, docString?: bool}>
      */
     public static function parseSteps(string $featureText): array
     {
         $steps = [];
+        $keyword = null;
+        $text = '';
+        $table = false;
+        $docString = false;
+        $inDocString = false;
 
         foreach (preg_split('/\R/', $featureText) ?: [] as $line) {
+            $trimmed = trim($line);
+
+            if (str_starts_with($trimmed, '"""')) {
+                $inDocString = !$inDocString;
+                $docString = $docString || $inDocString;
+
+                continue;
+            }
+
+            if ($inDocString) {
+                continue;
+            }
+
             if (preg_match('~^\s*(Given|When|Then|And|But)\s+(.+?)\s*$~', $line, $matches) === 1) {
-                $steps[] = ['keyword' => $matches[1], 'text' => $matches[2]];
+                if ($keyword !== null) {
+                    $steps[] = self::step($keyword, $text, $table, $docString);
+                }
+                [$keyword, $text, $table, $docString] = [$matches[1], $matches[2], false, false];
+            } elseif (str_starts_with($trimmed, '|')) {
+                $table = true;
+            } elseif ($trimmed !== '' && !str_starts_with($trimmed, '#') && $keyword !== null) {
+                $steps[] = self::step($keyword, $text, $table, $docString);
+                $keyword = null;
             }
         }
 
+        if ($keyword !== null) {
+            $steps[] = self::step($keyword, $text, $table, $docString);
+        }
+
         return $steps;
+    }
+
+    /**
+     * @return array{keyword: string, text: string, table?: bool, docString?: bool}
+     */
+    private static function step(string $keyword, string $text, bool $table, bool $docString): array
+    {
+        return ['keyword' => $keyword, 'text' => $text]
+            + ($table ? ['table' => true] : [])
+            + ($docString ? ['docString' => true] : []);
     }
 
     /**

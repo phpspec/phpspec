@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command;
 
 use DOMException;
+use InvalidArgumentException;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
@@ -38,6 +39,7 @@ use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
+use PhpSpec\Parallel\WireFormatter;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
@@ -55,6 +57,7 @@ use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 use PhpSpec\Runner;
 use PhpSpec\StopConditions;
+use PhpSpec\StoryBDD\TagExpression;
 use PhpSpec\TitleFilter;
 use Random\RandomException;
 use Symfony\Component\Console\Command\Command;
@@ -88,7 +91,7 @@ final class Run extends Command
     public function __construct(
         private readonly Loader $loader,
         private readonly Runner $runner,
-        private readonly Configuration $config = new Configuration('.'),
+        private readonly Configuration $config = new Configuration(),
         private readonly ?ExtensionLoader $extensionLoader = null,
         ?OfferBook $offers = null,
     ) {
@@ -113,9 +116,11 @@ final class Run extends Command
             ->addOption('stop-on-warning', null, Option::VALUE_NONE, 'Stop on first warning')
             ->addOption('stop-on-deprecation', null, Option::VALUE_NONE, 'Stop on first deprecation')
             ->addOption('stop-on-notice', null, Option::VALUE_NONE, 'Stop on first notice')
+            ->addOption('stop-on-pending', null, Option::VALUE_NONE, 'Stop on first pending example')
             ->addOption('stop-on-skipped', null, Option::VALUE_NONE, 'Stop on first skipped example')
             ->addOption('stop-on-problems', null, Option::VALUE_NONE, 'Stop on any non-pass result')
             ->addOption('filter', null, Option::VALUE_REQUIRED, 'Run only specs matching pattern')
+            ->addOption('tags', null, Option::VALUE_REQUIRED, 'Run only the scenarios a Cucumber tag expression selects, e.g. "@smoke and not @wip"')
             ->addOption('paths-from', null, Option::VALUE_REQUIRED, 'Read spec/feature paths to run from a file, one per line')
             ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html, agent (JSON Lines for coding agents); repeatable, pair each with -o', [])
             ->addOption('out', 'o', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Report destination for the corresponding --format; "std" is the console', [])
@@ -181,8 +186,14 @@ final class Run extends Command
      */
     protected function execute(Input $input, Output $output): int
     {
+        // Resolved once, here: it is what the run targets, and it recovers the
+        // positional path a "--parallel features" swallows, so asking twice
+        // would answer differently the second time.
+        $given = $this->givenPaths($input);
+        $files = $this->suitePaths($input, $given);
+
         $format = $this->resolveFormat($input);
-        $formatter = $this->createFormatter($format, $output);
+        $formatter = $this->createFormatter($format, $output, $this->nothingFoundLine($input, $given));
         // The agent document IS the console under --format=agent, so every human
         // line the command would otherwise print (the seed, the profile table, the
         // coverage verdict, an error) is routed off the console: what an agent
@@ -190,12 +201,6 @@ final class Run extends Command
         // For every other format the two are the same stream.
         $document = $formatter instanceof Agent ? $formatter : null;
         $prose = $document !== null ? new BufferedOutput() : $output;
-
-        // Resolved once, here: it is what the run targets, and it recovers the
-        // positional path a "--parallel features" swallows, so asking twice
-        // would answer differently the second time.
-        $given = $this->givenPaths($input);
-        $files = $this->suitePaths($input, $given);
         $document?->targets($files);
 
         // PHP prints a fatal to standard output as well as the error stream, and
@@ -248,6 +253,16 @@ final class Run extends Command
             return $this->stopped($prose, $formatter, "Path not found: $missing", 'Check the path, or give none to run the configured suite.');
         }
 
+        $tags = $input->getOption('tags');
+
+        if (is_string($tags)) {
+            try {
+                new TagExpression($tags);
+            } catch (InvalidArgumentException $e) {
+                return $this->stopped($prose, $formatter, $e->getMessage(), 'Write it the Cucumber way, for example "@smoke and not @wip".');
+            }
+        }
+
         $unknownFormats = $this->unknownFormats($input);
 
         if ($unknownFormats !== []) {
@@ -282,21 +297,18 @@ final class Run extends Command
                 return $this->stopped($prose, $formatter, $coverageReporter, self::coverageRemedy());
             }
 
-            // Coverage was guard's idea, not the caller's. A machine without a
-            // driver must still be able to run its specs, so guard stands down
-            // and says so rather than failing a run it cannot judge.
-            $prose->writeln('<fg=yellow>Guard cannot judge this run: ' . $coverageReporter . '</>');
-            $guardStoodDown = true;
-            $guard = null;
-            $coverageReporter = null;
+            // Guard judges what the run covered; with nothing to judge with,
+            // a run it cannot judge is not a run it can let pass.
+            return $this->stopped(
+                $prose,
+                $formatter,
+                'Guard is on but no coverage driver is available, so this run cannot be judged: ' . lcfirst($coverageReporter) . '.',
+                self::coverageRemedy(),
+            );
         }
 
         if ($formatter instanceof Agent) {
-            $formatter->runningWith($coverageReporter !== null, match (true) {
-                $guard !== null => 'on',
-                $guardStoodDown ?? false => 'stood down',
-                default => 'off',
-            });
+            $formatter->runningWith($coverageReporter !== null, $guard !== null ? 'on' : 'off');
         }
 
         try {
@@ -384,6 +396,19 @@ final class Run extends Command
             // A reader that was told about an offer can take it later by id,
             // so what was reported has to still be there when they do.
             $this->recordOffers($results);
+        }
+
+        $leftOut = $results->leftOutByFocus();
+
+        if ($leftOut > 0) {
+            $prose->writeln(sprintf('<fg=yellow>Focused: %d example%s left out by fit() or fdescribe(). Remove the focus to run the whole suite.</>', $leftOut, $leftOut === 1 ? '' : 's'));
+
+            // A run with no terminal is CI, where a focus is one somebody forgot,
+            // and a focused run must not pass as the suite there. An agent reads
+            // the count in its summary and decides for itself.
+            if (!$input->isInteractive() && !$formatter instanceof Agent) {
+                return max(1, $results->status());
+            }
         }
 
         return $results->status();
@@ -628,7 +653,8 @@ final class Run extends Command
             return implode(',', $given);
         }
 
-        if ($input->getOption('story')) {
+        // Tags select scenarios, and a spec has none to be selected by.
+        if ($input->getOption('story') || ($input->getOption('tags') !== null && !$input->getOption('all'))) {
             return $this->config->getFeaturesPath();
         }
 
@@ -752,7 +778,8 @@ final class Run extends Command
 
         ArrangingCode::under(...$this->specCodeRoots($files));
 
-        $suite = $this->loader->load($files, $filter);
+        $tags = $input->getOption('tags');
+        $suite = $this->loader->load($files, $filter, is_string($tags) ? $tags : null);
 
         $problems = (bool) $input->getOption('stop-on-problems');
         $configStop = $this->config->getStopConditions();
@@ -763,6 +790,7 @@ final class Run extends Command
             onWarning: $input->getOption('stop-on-warning') || $configStop->onWarning || $problems,
             onDeprecation: $input->getOption('stop-on-deprecation') || $configStop->onDeprecation || $problems,
             onNotice: $input->getOption('stop-on-notice') || $configStop->onNotice || $problems,
+            onPending: $input->getOption('stop-on-pending') || $configStop->onPending || $problems,
             onSkipped: $input->getOption('stop-on-skipped') || $configStop->onSkipped || $problems,
         );
 
@@ -809,6 +837,8 @@ final class Run extends Command
                 $stop,
                 coveragePartialDir: $coveragePartialDir,
                 configPath: $configPath,
+                filter: is_string($filter) ? $filter : null,
+                tags: is_string($tags) ? $tags : null,
             );
             $stream = $parallelRunner->stream();
         } else {
@@ -921,7 +951,7 @@ final class Run extends Command
      */
     private function unknownFormats(Input $input): array
     {
-        $known = ['pretty', 'dot', 'tap', 'junit', 'html', 'agent'];
+        $known = ['pretty', 'dot', 'tap', 'junit', 'html', 'agent', 'wire'];
 
         return array_values(array_filter(
             (array) $input->getOption('format'),
@@ -935,23 +965,58 @@ final class Run extends Command
         return $this->resolveOutputs($input)['console'];
     }
 
-    private function createFormatter(string $format, Output $output): Formatter
+    /**
+     * What a run that found nothing to run ends with: which suite it looked
+     * for, and where the other one is when it exists.
+     *
+     * @param list<string> $given the paths the caller named outright
+     */
+    private function nothingFoundLine(Input $input, array $given): string
+    {
+        $featuresPath = rtrim($this->config->getFeaturesPath(), '/') . '/';
+        $tags = $input->getOption('tags');
+
+        if (is_string($tags)) {
+            return sprintf('No scenario matches --tags "%s".', $tags);
+        }
+
+        if ($given !== []) {
+            return 'No specs found.';
+        }
+
+        if ($input->getOption('story')) {
+            return sprintf('No features found under %s.', $featuresPath);
+        }
+
+        if ($input->getOption('all')) {
+            return 'No specs or features found.';
+        }
+
+        if ($this->loader->holdsFeatures()) {
+            return sprintf('No specs found. The features under %s run with --story, or with --all alongside the specs.', $featuresPath);
+        }
+
+        return 'No specs found.';
+    }
+
+    private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
     {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
             return new FormatterBridge($this->extensionLoader->getFormatter($format), $output);
         }
 
         return match ($format) {
-            'dot' => new Dot($output),
+            'dot' => new Dot($output, $nothingFound),
             'tap' => new Tap($output),
             'junit' => new Junit($output),
             'html' => new Html($output),
+            'wire' => new WireFormatter($output),
             'agent' => new Agent(
                 $output,
                 fn(SuiteResult $results) => $this->candidates($results)->toArray(),
                 new ShutdownProcessEnd(),
             ),
-            default => new Pretty($output),
+            default => new Pretty($output, $nothingFound),
         };
     }
 

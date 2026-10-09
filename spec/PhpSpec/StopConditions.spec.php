@@ -31,6 +31,13 @@ describe(StopConditions::class, function () {
         expect((new StopConditions(onError: true))->metBy($spec))->toBeFalse();
     });
 
+    it("is met by a pending example only when stopping on pending", function () {
+        $pending = new ExampleResult('pending', [], isPending: true);
+
+        expect((new StopConditions(onPending: true))->metBy($pending))->toBeTrue();
+        expect((new StopConditions(onFailure: true, onSkipped: true))->metBy($pending))->toBeFalse();
+    });
+
     it("is met by a skipped example only when stopping on skipped", function () {
         $skipped = new ExampleResult('skips', [], false, false, true);
 
@@ -64,6 +71,7 @@ describe(StopConditions::class, function () {
         expect($stop->onDeprecation)->toBeFalse();
         expect($stop->onNotice)->toBeFalse();
         expect($stop->onSkipped)->toBeFalse();
+        expect($stop->onPending)->toBeFalse();
         expect($stop->any())->toBeFalse();
     });
 
@@ -78,7 +86,7 @@ describe(StopConditions::class, function () {
     });
 
     it("spells itself as the run options that would set it again", function () {
-        expect((new StopConditions(onError: true, onSkipped: true))->options())->toBe(['--stop-on-error', '--stop-on-skipped']);
+        expect((new StopConditions(onError: true, onPending: true, onSkipped: true))->options())->toBe(['--stop-on-error', '--stop-on-pending', '--stop-on-skipped']);
         expect((new StopConditions())->options())->toBe([]);
     });
 
@@ -90,6 +98,7 @@ describe(StopConditions::class, function () {
         expect($stop->onDeprecation)->toBeTrue();
         expect($stop->onNotice)->toBeTrue();
         expect($stop->onSkipped)->toBeTrue();
+        expect($stop->onPending)->toBeTrue();
         expect($stop->any())->toBeTrue();
     });
 

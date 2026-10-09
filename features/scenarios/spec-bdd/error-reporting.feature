@@ -28,7 +28,23 @@ Feature: Error reporting
       });
       """
     When I run phpspec run
-    Then the output should contain "to be: 42"
+    Then the output should contain "expected: 42"
+    And the output should contain "got:"
+
+  Scenario: A count failure says it is about the count
+    Given a spec file "spec/App/Counted.spec.php":
+      """
+      <?php
+      describe('Counted', function () {
+          it('counts', function () {
+              expect([1])->toHaveCount(2);
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "Expected [1] to have count 2"
+    And the output should contain "expected: 2"
+    And the output should contain "got: [1]"
 
   Scenario: A spec file with a syntax error is reported and its neighbours still run
     Given a spec file "spec/App/Healthy.spec.php":

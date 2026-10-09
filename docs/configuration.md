@@ -176,6 +176,14 @@ Stop execution after the first spec that triggers a notice. Default: `false`. Ov
 stop_on_notice: true
 ```
 
+### `stop_on_pending`
+
+Stop execution after the first pending spec. Default: `false`. Overridden by `--stop-on-pending` CLI flag.
+
+```yaml
+stop_on_pending: true
+```
+
 ### `stop_on_skipped`
 
 Stop execution after the first skipped spec. Default: `false`. Overridden by `--stop-on-skipped` CLI flag.

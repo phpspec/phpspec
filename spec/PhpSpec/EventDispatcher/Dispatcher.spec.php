@@ -127,19 +127,26 @@ describe(Dispatcher::class, function() {
         expect($d->currentScope())->toBeNull();
     });
 
+    // The dispatcher this spec reports through is put back before anything is
+    // expected: an expectation made while another one is current is never
+    // collected, and the example would check nothing.
     it("is accessible via DispatcherRegistry", function() {
         $saved = DispatcherRegistry::dispatcher();
         $d = new Dispatcher();
         DispatcherRegistry::set($d);
-        expect(DispatcherRegistry::dispatcher())->toBe($d);
+        $current = DispatcherRegistry::dispatcher();
         DispatcherRegistry::set($saved);
+
+        expect($current)->toBe($d);
     });
 
     it("gets a fresh instance after DispatcherRegistry::reset()", function() {
         $saved = DispatcherRegistry::dispatcher();
         DispatcherRegistry::reset();
-        expect(DispatcherRegistry::dispatcher())->not()->toBe($saved);
+        $fresh = DispatcherRegistry::dispatcher();
         DispatcherRegistry::set($saved);
+
+        expect($fresh)->not()->toBe($saved);
     });
 
     // A spec file can subscribe anything while it runs. The suite puts the
