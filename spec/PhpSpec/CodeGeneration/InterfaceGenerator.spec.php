@@ -32,7 +32,21 @@ describe(InterfaceGenerator::class, function () {
 
         (new InterfaceGenerator(filesystem: $fs))->generate('App\\Catalogue');
 
-        expect(str_replace("\r\n", "\n", $written))->toEndWith("interface Catalogue\n{\n}\n");
+        expect($written)->toEndWith("interface Catalogue\n{\n}\n");
+    });
+
+    it("ends every line with a line feed alone, whatever line ending its own source was checked out with", function (Filesystem $fs) {
+        $written = '';
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written = $content;
+        });
+
+        (new InterfaceGenerator(filesystem: $fs))->generate('App\\Catalogue');
+
+        expect($written)->toContain("\n");
+        expect($written)->not()->toContain("\r");
     });
 
     it("generates interface file without namespace", function (Filesystem $fs) {

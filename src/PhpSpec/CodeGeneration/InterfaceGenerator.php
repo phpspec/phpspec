@@ -48,14 +48,14 @@ final class InterfaceGenerator
     {
         ['shortName' => $interfaceName, 'namespace' => $namespace, 'filePath' => $filePath] = $this->layout->locate($fqcn);
 
-        $content = <<<EOD
-        <?php$namespace
-
-        interface {$interfaceName}
-        {
-        }
-
-        EOD;
+        $content = implode("\n", [
+            '<?php' . $namespace,
+            '',
+            'interface ' . $interfaceName,
+            '{',
+            '}',
+            '',
+        ]);
 
         $file = ProjectRoot::here()->relative($filePath);
 

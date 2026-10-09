@@ -107,15 +107,15 @@ final class SpecGenerator
         $class = array_pop($pieces);
         $lcClass = lcfirst($class);
 
-        return <<<EOD
-        <?php$use
-
-        describe($class::class, function() {
-            let("$lcClass", fn() => new $class());
-            it("instantiates", fn() => expect(\$this->$lcClass)->toBeAnInstanceOf($class::class));
-        });
-
-        EOD;
+        return implode("\n", [
+            '<?php' . $use,
+            '',
+            'describe(' . $class . '::class, function() {',
+            '    let("' . $lcClass . '", fn() => new ' . $class . '());',
+            '    it("instantiates", fn() => expect($this->' . $lcClass . ')->toBeAnInstanceOf(' . $class . '::class));',
+            '});',
+            '',
+        ]);
     }
 
     /**
