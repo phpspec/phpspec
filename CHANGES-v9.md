@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A step that breaks the same way in several scenarios, as a failing `Background` step does, is reported once under `Errors:` or `Failures:`, naming the scenarios it took down, instead of one identical block per scenario
  - An AI command run without an `ai` section says which config file to add it to and shows one in that file's notation, instead of "your phpspec config"; `generate` and `next` refuse in JSON under `--format=agent`. The docs no longer suggest `generate` runs without the `ai` section
  - JUnit names each testcase's class after its describe and the contexts around it (`HappyHour > at 5pm`), so one title in two contexts reads apart, and each step's after its feature and scenario; every testcase and testsuite carries `time` in seconds
  - A failure's pair means the same whatever the matcher: the sentence that says what went wrong, then the value the matcher wanted under `expected` and the value the code produced under `got`, in the pretty and dot output and in the HTML report, which had the two the other way round; a mock verification reads as the call wanted and the calls received instead of the arrays that carry them

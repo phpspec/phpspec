@@ -102,6 +102,32 @@ Feature: Story BDD with Gherkin
     And the output should contain "Skipped:"
     And the exit code should be 0
 
+  Scenario: A Background step that fails is reported once, naming the scenarios it took down
+    Given a feature file "features/background.feature":
+      """
+      Feature: Background
+        Background:
+          Given a broken fixture
+        Scenario: First
+          When I do one thing
+        Scenario: Second
+          When I do another thing
+      """
+    And a step file "features/steps/background.steps.php":
+      """
+      <?php
+      given("a broken fixture", function () {
+          throw new RuntimeException("fixture down");
+      });
+      when("I do one thing", function () {});
+      when("I do another thing", function () {});
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "RuntimeException: fixture down" exactly 1 times
+    And the output should contain "Background > Given a broken fixture"
+    And the output should contain "in First and Second"
+    And the exit code should be 1
+
   Scenario: A step that throws is an error and skips the remaining steps
     Given a feature file "features/failing.feature":
       """

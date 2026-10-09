@@ -576,6 +576,29 @@ describe(Pretty::class, function() {
         expect($text)->not()->toContain("• Shop > Broken > Then cascade");
     });
 
+    it("reports a step that breaks the same way in several scenarios once, naming the scenarios, instead of one block per scenario", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $broken = static function (): StepResult {
+            $step = new StepResult("Given a broken fixture", "error");
+            $step->setError(new StepError("fixture down", new \RuntimeException("fixture down")));
+
+            return $step;
+        };
+        $feature = new FeatureResult("Checkout", [
+            new ScenarioResult("Paying by card", [$broken(), new StepResult("When I pay", "skipped")]),
+            new ScenarioResult("Paying by cash", [$broken(), new StepResult("When I pay", "skipped")]),
+            new ScenarioResult("Printing", [$broken(), new StepResult("When I print", "skipped")]),
+        ]);
+        $formatter->format(new SuiteResult([$feature]));
+
+        $text = $output->fetch();
+        expect(substr_count($text, "RuntimeException: fixture down"))->toBe(1);
+        expect($text)->toContain("• Checkout > Given a broken fixture\n    in Paying by card, Paying by cash and Printing\n");
+        expect($text)->not()->toContain("• Checkout > Paying by card > Given a broken fixture");
+    });
+
     it("formats a feature with passing steps", function () {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

@@ -194,6 +194,11 @@ final class DetailSections
 
     private function collectFeature(FeatureResult $feature): void
     {
+        // A step that breaks the same way in several scenarios, as a Background
+        // step does, is one broken step: its block is printed once, naming the
+        // scenarios it took down, instead of once per scenario.
+        $seen = [];
+
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
                 continue;
@@ -209,9 +214,15 @@ final class DetailSections
                 // A step whose code threw is an error, exactly like an example
                 // whose code threw; only a failed expectation is a failure.
                 $error = $step->getError();
-                if ($step->isError() && $error !== null) {
-                    $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
-                        $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
+                $broken = ($step->isError() || $step->isFailure()) && $error !== null;
+                $key = $broken ? implode("\0", [$step->getState(), $step->getTitle(), $error->getType(), $error->getMessage(), json_encode($error->blame())]) : null;
+
+                if ($key !== null && isset($seen[$key])) {
+                    $seen[$key][] = $scenario->getTitle();
+                } elseif ($step->isError() && $error !== null) {
+                    $seen[$key] = [$scenario->getTitle()];
+                    $this->sections['Errors'][] = static function (OutputInterface $output) use ($feature, $step, $error, $key, &$seen): void {
+                        self::brokenStep($output, $feature, $step, $seen[$key]);
                         $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
                         $blame = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
                         PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $blame['line']);
@@ -219,9 +230,10 @@ final class DetailSections
                     };
                     $this->attachPrinted('Errors', $step->getOutput());
                 } elseif ($step->isFailure() && $error !== null) {
+                    $seen[$key] = [$scenario->getTitle()];
                     $message = $error->getMessage();
-                    $this->sections['Failures'][] = static function (OutputInterface $output) use ($title, $message): void {
-                        $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
+                    $this->sections['Failures'][] = static function (OutputInterface $output) use ($feature, $step, $message, $key, &$seen): void {
+                        self::brokenStep($output, $feature, $step, $seen[$key]);
                         $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
                     };
                     $this->attachPrinted('Failures', $step->getOutput());
@@ -243,6 +255,26 @@ final class DetailSections
             // step failed, the log the scenario was watching is the same log.
             $this->attachHandedOver('Failures', $scenario->getAttachments());
         }
+    }
+
+    /**
+     * The title line of a broken step: under its scenario when it broke in
+     * one, under the feature with the scenarios listed when it broke the same
+     * way in several.
+     *
+     * @param list<string> $scenarios the scenarios the step broke in
+     */
+    private static function brokenStep(OutputInterface $output, FeatureResult $feature, StepResult $step, array $scenarios): void
+    {
+        if (count($scenarios) === 1) {
+            $output->write(PHP_EOL . '  <fg=red>• ' . $feature->getTitle() . ' > ' . $scenarios[0] . ' > ' . $step->getTitle() . '</>' . PHP_EOL);
+
+            return;
+        }
+
+        $last = array_pop($scenarios);
+        $output->write(PHP_EOL . '  <fg=red>• ' . $feature->getTitle() . ' > ' . $step->getTitle() . '</>' . PHP_EOL);
+        $output->write('    in ' . implode(', ', $scenarios) . ' and ' . $last . PHP_EOL);
     }
 
     /**
