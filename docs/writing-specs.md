@@ -190,6 +190,12 @@ it("converts the total", function () {
 });
 ```
 
+## Warnings, Deprecations and Notices
+
+A PHP warning, deprecation or notice raised while an example or a step runs is kept on it rather than printed wherever it fell: shown under it as `⚠`, `⛔` or `ℹ` with the line that raised it, listed under `Warnings:`, `Deprecations:` or `Notices:` at the end, and counted on the summary line. It leaves the run green, and `--stop-on-warning`, `--stop-on-deprecation` and `--stop-on-notice` halt the run at the first one.
+
+A deprecation a library raises because your code called something deprecated is reported, whether the library raised it with `trigger_error()` or `trigger_deprecation()`. One a library raises for another library's code calling it is left out: nothing you change in your own code makes it go away. A library is anything in a Composer vendor directory or outside the project.
+
 ## Focused Examples
 
 Run only specific examples or contexts:

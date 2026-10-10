@@ -34,6 +34,10 @@ afterScenario(function () {
     if (isset($this->projectDir) && is_dir($this->projectDir)) {
         _phpspec_remove_dir($this->projectDir);
     }
+
+    if (isset($this->libraryDir) && is_dir($this->libraryDir)) {
+        _phpspec_remove_dir($this->libraryDir);
+    }
 });
 
 beforeScenario(function () {
@@ -111,6 +115,20 @@ given('a spec file {string}:', function (string $path, string $content) {
     }
     file_put_contents($full, $content);
     $this->lastFile = $full;
+});
+
+// Code the project depends on but did not write, kept outside it as an
+// installed library is, and loaded by a bootstrap the run is pointed at.
+given('a library file {string} outside the project, loaded by {string}:', function (string $path, string $bootstrap, string $content) {
+    $this->libraryDir = $this->projectDir . '_library';
+    $full = $this->libraryDir . '/' . $path;
+    if (!is_dir(dirname($full))) {
+        mkdir(dirname($full), 0777, true);
+    }
+    file_put_contents($full, $content);
+
+    $loader = $this->projectDir . '/' . $bootstrap;
+    file_put_contents($loader, (is_file($loader) ? '' : "<?php\n") . 'require_once ' . var_export($full, true) . ";\n", FILE_APPEND);
 });
 
 given('a class {string}:', function (string $path, string $content) {

@@ -16,6 +16,7 @@ namespace PhpSpec\Specification;
 
 use Closure;
 use PhpSpec\Attachments;
+use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ExampleCompleted;
@@ -24,6 +25,7 @@ use PhpSpec\EventDispatcher\Event\ExampleRunned;
 use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber;
 use PhpSpec\Mock\Double;
+use PhpSpec\OwnCode;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ExampleResultRegistry;
 use PhpSpec\Results;
@@ -262,16 +264,8 @@ class Example implements ExampleResultRegistry, Rebindable
             return $this->exampleResult;
         }
 
-        $notes = [];
-        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$notes) {
-            $notes[] = [
-                'severity' => $severity,
-                'message' => $message,
-                'file' => $file,
-                'line' => $line,
-            ];
-            return true;
-        }, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
+        $caught = new CapturedNotes(OwnCode::here());
+        $caught->listen();
 
         // What the subject prints belongs to the example that provoked it, not
         // to whatever the terminal happened to be showing at the time.
@@ -281,19 +275,19 @@ class Example implements ExampleResultRegistry, Rebindable
         try {
             $printed->around(fn() => ($this->example)(...$this->resolveClosureArgs($this->example)));
         } catch (PendingException $e) {
-            restore_error_handler();
+            $caught->stop();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $e->getMessage());
-            $this->exampleResult->raised($notes);
+            $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
-            restore_error_handler();
+            $caught->stop();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], isSkipped: true, reason: $e->getMessage());
-            $this->exampleResult->raised($notes);
+            $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
@@ -307,7 +301,7 @@ class Example implements ExampleResultRegistry, Rebindable
 
         $elapsed = (hrtime(true) - $start) / 1e9;
         DispatcherRegistry::dispatcher()->dispatch(new ExampleRunned($this->title), ExampleRunned::NAME);
-        restore_error_handler();
+        $caught->stop();
         DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
         $this->exampleResult->setOutput($printed->text());
@@ -315,7 +309,7 @@ class Example implements ExampleResultRegistry, Rebindable
         if (!$this->isError && $this->exampleResult->getResults() === []) {
             $this->exampleResult->markRisky();
         }
-        $this->exampleResult->raised($notes);
+        $this->exampleResult->raised($caught->notes());
         $this->keepAttachments($attachments);
         DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;

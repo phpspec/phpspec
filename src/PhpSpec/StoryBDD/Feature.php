@@ -15,8 +15,10 @@
 namespace PhpSpec\StoryBDD;
 
 use PhpSpec\Attachments;
+use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
+use PhpSpec\OwnCode;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
@@ -317,26 +319,18 @@ final readonly class Feature implements SpecBlock
         // PHP warnings, deprecations and notices raised inside the step are
         // collected onto its result (the same net examples run under), so they
         // report under their kinds instead of leaking raw to the terminal.
-        $notes = [];
-        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$notes) {
-            $notes[] = [
-                'severity' => $severity,
-                'message' => $message,
-                'file' => $file,
-                'line' => $line,
-            ];
-            return true;
-        }, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
+        $caught = new CapturedNotes(OwnCode::here());
+        $caught->listen();
 
         $start = hrtime(true);
         try {
             $result = $this->executeStep($step, $title, $match, $world, $collector);
         } finally {
-            restore_error_handler();
+            $caught->stop();
         }
 
         $result->setDuration((hrtime(true) - $start) / 1e9);
-        $result->raised($notes);
+        $result->raised($caught->notes());
 
         return $result;
     }

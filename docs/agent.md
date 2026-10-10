@@ -164,7 +164,9 @@ An example carries its own on its entry; a scenario carries each on the step
 that raised it. An example or scenario that passed but raised one is reported
 all the same, `state: passing` with its `spec` and `rerun`, so a note never goes
 by unseen. The keys are present only when non-empty. Sometimes the deprecation
-is the actual clue behind a failure.
+is the actual clue behind a failure. A deprecation a library raised for another
+library's code calling it is left out, as it is on the console (see
+[Warnings, deprecations and notices](writing-specs.md#warnings-deprecations-and-notices)).
 
 ```json
 {"v":2,"event":"example","id":"4c2e34fc4bc4","example":"App\\Ledger > totals the entries","state":"passing","spec":"spec/App/Ledger.spec.php:3","rerun":"run spec/App/Ledger.spec.php:3","warnings":[{"message":"totals are rounded","at":"src/App/Ledger.php:9"}]}
