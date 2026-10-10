@@ -1,6 +1,11 @@
 #!/usr/bin/env php
 <?php
 
+if (PHP_VERSION_ID < 80200) {
+    fwrite(STDERR, sprintf('phpspec 9 needs PHP 8.2 or newer; this is PHP %s.%s', PHP_VERSION, PHP_EOL));
+    exit(1);
+}
+
 (function ($version) {
 
     if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
@@ -14,10 +19,11 @@
     } elseif (is_file($autoload = __DIR__ . '/../../../autoload.php')) {
         require($autoload);
     } else {
-        fwrite(STDERR,
+        fwrite(
+            STDERR,
             'You must set up the project dependencies, run the following commands:' . PHP_EOL .
             'curl -s http://getcomposer.org/installer | php' . PHP_EOL .
-            'php composer.phar install' . PHP_EOL
+            'php composer.phar install' . PHP_EOL,
         );
         exit(1);
     }

@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A checkout resolves its dependencies for PHP 8.2, the floor, whatever PHP runs composer (`config.platform.php`), so a `vendor/` built under a newer PHP no longer carries Symfony 8 into a run on 8.2; `bin/phpspec` refuses PHP older than 8.2 with a sentence instead of a parse error
  - The offer to create an interface names its file relative to the project, as the class offer does
  - `run --help` no longer lists `--coverage-partial`, which only the parallel workers pass; the option still works
  - Pair mode's `/help` lines its descriptions up in one column and lists `/generate` once; the application list below it used to repeat it

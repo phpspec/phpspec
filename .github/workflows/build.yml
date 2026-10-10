@@ -63,6 +63,10 @@ jobs:
                   coverage: xdebug
                   ini-values: "phar.readonly=0"
 
+            - name: Resolve dependencies for this PHP rather than the floor, so the newest Symfony is exercised once
+              if: matrix.php == '8.5'
+              run: composer config platform.php --unset
+
             - name: Install dependencies
               run: composer update --no-progress ${{ matrix.composer-flags }}
 
