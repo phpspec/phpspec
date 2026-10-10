@@ -130,6 +130,7 @@ callable you handed it:
 | `toThrow()` and it did not | `"N/A"` | `"No exception"` |
 | `toThrow(RuntimeException::class)` | `"RuntimeException"` | `"RuntimeException"` |
 | `toThrow(RuntimeException::class, 'boom')` | `"RuntimeException(\"boom\")"` | `"RuntimeException(\"boom\")"` |
+| `toThrow(new RuntimeException('boom'))` | `"RuntimeException(\"boom\")"` | `"RuntimeException(\"boom\")"` |
 | `toThrow(RuntimeException::class)` and it did not | `"RuntimeException"` | `"No exception"` |
 
 `toThrow()` now takes no argument at all, meaning "throw something".

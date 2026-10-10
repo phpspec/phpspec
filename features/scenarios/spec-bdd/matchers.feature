@@ -102,6 +102,27 @@ Feature: Matchers
     When I run the spec
     Then all examples should pass
 
+  Scenario: The exception matcher takes the exception it expects, standing for its class and message
+    Given a spec file "spec/App/Divider.spec.php":
+      """
+      <?php
+      describe('Divider', function () {
+          it('refuses to divide by zero', function () {
+              expect(fn() => throw new \DomainException('Division by zero'))->toThrow(new \DomainException('Division by zero'));
+          });
+          it('says which message it wanted', function () {
+              expect(fn() => throw new \DomainException('Overflow'))->toThrow(new \DomainException('Division by zero'));
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "2 examples (1 passed, 1 failed)"
+    And the output should contain:
+      """
+      expected: "DomainException("Division by zero")"
+             got: DomainException("Overflow")
+      """
+
   Scenario: The exception matcher runs its callable where it is written
     Given a spec with example:
       """

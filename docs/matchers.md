@@ -265,9 +265,11 @@ expect(42)->toSatisfy(fn ($n) => $n % 2 === 0);
 
 ## Exception Matcher
 
-### `toThrow(string $exceptionClass, ?string $message = null)`
+### `toThrow(string|Throwable $exceptionClass = '', ?string $message = null)`
 
 Asserts that calling the subject (a callable) throws the expected exception.
+With no argument, any exception will do. An exception given stands for its
+class and its message.
 
 ```php
 expect(fn () => throw new \RuntimeException('boom'))
@@ -276,6 +278,10 @@ expect(fn () => throw new \RuntimeException('boom'))
 // With message check:
 expect(fn () => throw new \RuntimeException('boom'))
     ->toThrow(\RuntimeException::class, 'boom');
+
+// The same, given the exception expected:
+expect(fn () => throw new \RuntimeException('boom'))
+    ->toThrow(new \RuntimeException('boom'));
 ```
 
 The callable runs where the expectation is written, so the lines after it see

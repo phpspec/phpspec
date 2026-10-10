@@ -93,6 +93,21 @@ describe(Expectation::class, function() {
             expect(fn() => throw new \RuntimeException("boom"))->toThrow(\RuntimeException::class, "boom");
         });
 
+        it("passes toThrow given the exception it expects, which stands for its class and message", function() {
+            expect(fn() => throw new \RuntimeException("boom"))->toThrow(new \RuntimeException("boom"));
+            expect(fn() => throw new \UnexpectedValueException("boom"))->toThrow(new \RuntimeException("boom"));
+        });
+
+        it("does not match an exception given when the one thrown differs in class or message", function() {
+            expect(fn() => throw new \RuntimeException("actual msg"))->not()->toThrow(new \RuntimeException("expected msg"));
+            expect(fn() => throw new \LogicException("boom"))->not()->toThrow(new \RuntimeException("boom"));
+        });
+
+        it("refuses an exception given together with a message, which would say the message twice", function() {
+            expect(fn() => expect(fn() => throw new \RuntimeException("boom"))->toThrow(new \RuntimeException("boom"), "boom"))
+                ->toThrow(\InvalidArgumentException::class, 'toThrow() takes the message inside the exception it is given, or after a class name, not both.');
+        });
+
         it("does not throw when exception not thrown", function() {
             expect(fn() => "no throw")->not()->toThrow(\RuntimeException::class);
         });
