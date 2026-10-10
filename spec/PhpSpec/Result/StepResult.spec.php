@@ -48,6 +48,12 @@ describe(StepResult::class, function () {
         expect((new StepResult("When I pay", "skipped"))->getReason())->toBeNull();
     });
 
+    it("tells a step that skipped itself from one skipped behind another", function () {
+        expect((new StepResult("Given a printer", "skipped", "No printer here"))->isSkippedForAReason())->toBeTrue();
+        expect((new StepResult("Then it prints", "skipped"))->isSkippedForAReason())->toBeFalse();
+        expect((new StepResult("Given a printer", "pending", "later"))->isSkippedForAReason())->toBeFalse();
+    });
+
     it("returns the state string", function () {
         $result = new StepResult("step", "pending");
         expect($result->getState())->toBe("pending");

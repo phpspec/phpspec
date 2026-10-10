@@ -63,6 +63,17 @@ describe(StopConditions::class, function () {
         expect((new StopConditions(onSkipped: true))->metBy($threw))->toBeFalse();
     });
 
+    it("is met by a pending or undefined step when stopping on pending, and by a step that skipped itself when stopping on skipped", function () {
+        expect((new StopConditions(onPending: true))->metBy(new StepResult('Given a step', 'pending', 'later')))->toBeTrue();
+        expect((new StopConditions(onPending: true))->metBy(new StepResult('Given a step', 'undefined')))->toBeTrue();
+        expect((new StopConditions(onSkipped: true))->metBy(new StepResult('Given a printer', 'skipped', 'No printer here')))->toBeTrue();
+        expect((new StopConditions(onFailure: true))->metBy(new StepResult('Given a step', 'pending', 'later')))->toBeFalse();
+    });
+
+    it("is not met by a step skipped behind another, which stopped on its own account", function () {
+        expect((new StopConditions(onSkipped: true))->metBy(new StepResult('Then it prints', 'skipped')))->toBeFalse();
+    });
+
     it("is met by a step that raised a note of the kind it stops on", function () {
         $raising = function (int $severity): StepResult {
             $step = new StepResult('Given the old API', 'passed');

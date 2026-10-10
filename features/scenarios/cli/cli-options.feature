@@ -993,6 +993,59 @@ Feature: CLI options
     And the output should not contain "ZZAfterPending"
     And the exit code should be 0
 
+  Scenario: Stop on the first pending or undefined step
+    Given a feature file "features/a_waiting.feature":
+      """
+      Feature: Waiting
+        Scenario: Waits
+          Given a step written later
+      """
+    And a feature file "features/z_after.feature":
+      """
+      Feature: ZZAfterWaiting
+        Scenario: Never runs
+          Given a done step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a done step", function () {});
+      """
+    When I run phpspec run with option "features/ --stop-on-pending"
+    Then the output should contain "Feature: Waiting"
+    And the output should not contain "ZZAfterWaiting"
+
+  Scenario: Stop on the first step that skipped itself, not on one skipped behind a failure
+    Given a feature file "features/a_broken.feature":
+      """
+      Feature: Broken
+        Scenario: Fails first
+          Given a failing step
+          Then a step behind it
+      """
+    And a feature file "features/b_offline.feature":
+      """
+      Feature: Offline
+        Scenario: Printing
+          Given a printer
+      """
+    And a feature file "features/z_after.feature":
+      """
+      Feature: ZZAfterOffline
+        Scenario: Never runs
+          Given a step behind it
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a failing step", fn () => expect(1)->toBe(2));
+      given("a step behind it", function () {});
+      given("a printer", fn () => skip('No printer here'));
+      """
+    When I run phpspec run with option "features/ --stop-on-skipped"
+    Then the output should contain "Feature: Offline"
+    And the output should not contain "ZZAfterOffline"
+
   Scenario: TAP carries the reason an example was left pending or skipped
     Given a spec file "spec/App/TapReasons.spec.php":
       """

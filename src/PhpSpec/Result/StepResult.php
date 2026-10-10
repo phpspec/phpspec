@@ -126,6 +126,15 @@ final class StepResult implements Results
     }
 
     /**
+     * Whether the step skipped itself, with skip() or by a hook's, rather than
+     * being skipped behind a step that failed or was pending before it.
+     */
+    public function isSkippedForAReason(): bool
+    {
+        return $this->isSkipped() && $this->reason !== null;
+    }
+
+    /**
      * Stores an error that occurred during step execution.
      *
      * @param StepError $error the step error details

@@ -321,11 +321,11 @@ the same way (useful for tight feedback loops and CI):
 |---|---|
 | `--stop-on-failure` | failure or error |
 | `--stop-on-error` | error |
-| `--stop-on-warning` | warning |
-| `--stop-on-deprecation` | deprecation |
-| `--stop-on-notice` | notice |
-| `--stop-on-pending` | pending example |
-| `--stop-on-skipped` | skipped example |
+| `--stop-on-warning` | warning, from an example or a step |
+| `--stop-on-deprecation` | deprecation, from an example or a step |
+| `--stop-on-notice` | notice, from an example or a step |
+| `--stop-on-pending` | pending example, or pending or undefined step |
+| `--stop-on-skipped` | skipped example, or step that skipped itself (not one skipped behind a step that failed or was pending) |
 | `--stop-on-problems` | any non-passing result |
 
 ```bash

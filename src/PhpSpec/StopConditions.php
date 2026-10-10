@@ -72,7 +72,9 @@ final readonly class StopConditions
         if ($result instanceof StepResult) {
             return ($this->onFailure && ($result->isFailure() || $result->isError()))
                 || ($this->onError && $result->isError())
-                || $this->metByNotesOf($result);
+                || $this->metByNotesOf($result)
+                || ($this->onPending && ($result->isPending() || $result->isUndefined()))
+                || ($this->onSkipped && $result->isSkippedForAReason());
         }
 
         foreach ($result->getResults() as $child) {
