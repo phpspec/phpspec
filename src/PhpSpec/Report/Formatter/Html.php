@@ -362,7 +362,7 @@ final class Html extends AbstractFormatter
      * Builds the header meta line from the suite counts.
      *
      * @param array<string, int> $counts the tallied suite counts
-     * @return string e.g. "4 examples · 2 failures"
+     * @return string e.g. "4 examples · 2 failed"
      */
     private function summaryLine(array $counts): string
     {
@@ -376,10 +376,10 @@ final class Html extends AbstractFormatter
             $parts[] = $counts['steps'] . ' step' . ($counts['steps'] !== 1 ? 's' : '');
         }
 
-        $failures = $counts['failures'] + $counts['errors'] + $counts['stepFailures'];
+        $failed = $counts['failures'] + $counts['errors'] + $counts['stepFailures'] + $counts['stepErrors'];
 
-        if ($failures > 0) {
-            $parts[] = $failures . ' failure' . ($failures !== 1 ? 's' : '');
+        if ($failed > 0) {
+            $parts[] = $failed . ' failed';
         }
 
         return implode(' · ', $parts);
@@ -396,23 +396,18 @@ final class Html extends AbstractFormatter
     {
         $parts = [];
         $labels = [
-            'passes' => ['pass', 'passes'],
-            'failures' => ['failure', 'failures'],
-            'errors' => ['error', 'errors'],
+            'passes' => 'passed',
+            'risky' => 'risky',
+            'failures' => 'failed',
+            'errors' => 'errored',
+            'pending' => 'pending',
+            'exampleSkipped' => 'skipped',
         ];
 
-        foreach ($labels as $key => [$singular, $plural]) {
+        foreach ($labels as $key => $label) {
             if ($counts[$key] > 0) {
-                $parts[] = $counts[$key] . ' ' . ($counts[$key] === 1 ? $singular : $plural);
+                $parts[] = $counts[$key] . ' ' . $label;
             }
-        }
-
-        if ($counts['pending'] > 0) {
-            $parts[] = $counts['pending'] . ' pending';
-        }
-
-        if ($counts['exampleSkipped'] > 0) {
-            $parts[] = $counts['exampleSkipped'] . ' skipped';
         }
 
         return sprintf(

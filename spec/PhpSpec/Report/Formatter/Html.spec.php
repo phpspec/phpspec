@@ -46,7 +46,37 @@ describe(Html::class, function() {
         $text = $output->fetch();
         expect($text)->toContain('class="example failed"');
         expect($text)->toContain('Expected a to be b');
-        expect($text)->toContain('1 failure');
+        expect($text)->toContain('<p>1 example (1 failed)</p>');
+    });
+
+    it("words the footer as the console summary does, every outcome counted once", function() {
+        $output = new BufferedOutput();
+        $errored = new ExampleResult("breaks", [], true);
+        $errored->setError(new ExampleError("boom", new \RuntimeException("boom")));
+        $risky = new ExampleResult("checks nothing", []);
+        $risky->markRisky();
+        $spec = new SpecificationResult("MySpec", [
+            new ExampleResult("works", [MatchResult::passed()]),
+            $risky,
+            new ExampleResult("fails", [MatchResult::failed(1, 2, "Expected 1 to be 2", __FILE__, __LINE__)]),
+            $errored,
+            new ExampleResult("waits", [], isPending: true),
+            new ExampleResult("skips", [], isSkipped: true),
+        ]);
+
+        (new Html($output))->format(new SuiteResult([$spec]));
+
+        expect($output->fetch())->toContain('<p>6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)</p>');
+    });
+
+    it("counts an errored step among the failed in the header", function() {
+        $output = new BufferedOutput();
+        $step = new StepResult("Given a broken fixture", "error");
+        $step->setError(new StepError("fixture down", new \RuntimeException("fixture down")));
+
+        (new Html($output))->format(new SuiteResult([new FeatureResult("Story", [new ScenarioResult("Breaks", [$step])])]));
+
+        expect($output->fetch())->toContain('<p class="meta">1 step · 1 failed</p>');
     });
 
     it("collapses the failure details under the failed example", function() {

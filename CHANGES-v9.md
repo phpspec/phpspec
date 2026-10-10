@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - The HTML report words its counts as the console does, `1 example (1 failed)`, `6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)`, where it said `1 pass` and `2 failures` and left risky examples out; its header counts an errored step among the failed, where it counted none
  - A run of specs and features counts pending steps and pending examples apart: a pending example no longer shows in the steps line, nor a pending step in the examples line, the HTML footer or the suite state the AI commands read
  - A step two features share is generated once; it used to land in a steps file per feature, and the second definition failed the next run at load
  - A checkout resolves its dependencies for PHP 8.2, the floor, whatever PHP runs composer (`config.platform.php`), so a `vendor/` built under a newer PHP no longer carries Symfony 8 into a run on 8.2; `bin/phpspec` refuses PHP older than 8.2 with a sentence instead of a parse error
