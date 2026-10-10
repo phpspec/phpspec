@@ -17,7 +17,7 @@ use PhpSpec\StoryBDD\StoryBDDRegistry;
 /**
  * Registers a Given step definition with a pattern and closure.
  *
- * @param string $pattern step pattern with optional {string}/{int}/{word}/{*} placeholders
+ * @param string $pattern step pattern with optional {string}/{int}/{float}/{word}/{*} placeholders
  * @param Closure $fn closure to execute when the pattern matches; bound to StepWorld as $this
  * @return void
  */

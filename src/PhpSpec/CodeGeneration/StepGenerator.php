@@ -193,13 +193,13 @@ class StepGenerator
      * Converts step text into a pattern with typed placeholders for quoted strings and numbers.
      *
      * @param string $text the raw step text
-     * @return string the pattern with {string} and {int} placeholders
+     * @return string the pattern with {string}, {float} and {int} placeholders
      */
     private function extractPattern(string $text): string
     {
-        // Convert quoted strings to {string} placeholders
         $pattern = preg_replace('/"[^"]*"/', '{string}', $text) ?? $text;
-        // Convert standalone numbers to {int} placeholders
+        $pattern = preg_replace('/\b\d+\.\d+\b/', '{float}', $pattern) ?? $pattern;
+
         return preg_replace('/\b(\d+)\b/', '{int}', $pattern) ?? $pattern;
     }
 
@@ -214,12 +214,13 @@ class StepGenerator
         $params = [];
         $index = 0;
 
-        preg_match_all('/{(string|int|word|\*)}/', $pattern, $matches);
+        preg_match_all('/{(string|int|float|word|\*)}/', $pattern, $matches);
 
         foreach ($matches[1] as $type) {
             $index++;
             $paramType = match ($type) {
                 'int' => 'int',
+                'float' => 'float',
                 default => 'string',
             };
             $params[] = "$paramType \$arg$index";

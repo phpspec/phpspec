@@ -79,8 +79,13 @@ Patterns use placeholders that capture values from the step text:
 |---|---|---|
 | `{string}` | Quoted text `"..."` | `string` |
 | `{int}` | Integer `\d+` | `int` |
+| `{float}` | Decimal `\d+.\d+` | `float` |
 | `{word}` | Single word `\w+` | `string` |
 | `{*}` | Anything `.+` | `string` |
+
+A capture reaches the definition as text and takes the type its parameter
+declares: `function (int $count)` receives `5`, `function (float $price)` receives
+`4.5`. Generated definitions declare those types.
 
 ```php
 given('there are {int} cucumbers', function (int $count) {

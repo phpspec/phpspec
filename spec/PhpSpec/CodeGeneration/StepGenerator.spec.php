@@ -151,6 +151,14 @@ describe(StepGenerator::class, function () {
         expect(substr_count($content, 'I add a {string} task {string}'))->toBe(1);
     });
 
+    it('turns a decimal into a {float}, taken as a float, and a whole number into an {int}', function () {
+        $content = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'some 42 stuff costing 4.5'],
+        ]);
+
+        expect($content)->toContain('given("some {int} stuff costing {float}", function (int $arg1, float $arg2) {');
+    });
+
     it('never scaffolds a title another steps file already defines', function () {
         $content = (new StepGenerator($this->filesystem))->skeleton([
             ['keyword' => 'Given', 'text' => 'I have a todo list'],

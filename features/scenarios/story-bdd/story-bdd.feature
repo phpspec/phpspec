@@ -198,6 +198,29 @@ Feature: Story BDD with Gherkin
     When I run phpspec run "features/"
     Then all steps should pass
 
+  Scenario: A decimal in a step is captured by a {float}
+    Given a feature file "features/pricing.feature":
+      """
+      Feature: Pricing
+        Scenario: A tea
+          Given a tea costing 4.5
+          Then the price is 4.5
+      """
+    And a step file "features/steps/pricing.steps.php":
+      """
+      <?php
+      given("a tea costing {float}", function (float $price) {
+          $this->price = $price;
+      });
+
+      then("the price is {float}", function (float $price) {
+          expect($this->price)->toBe($price);
+          expect($price)->toBe(4.5);
+      });
+      """
+    When I run phpspec run "features/"
+    Then all steps should pass
+
   Scenario: Scenario outline expands examples
     Given a feature file "features/outline.feature":
       """
