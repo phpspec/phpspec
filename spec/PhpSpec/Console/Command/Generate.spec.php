@@ -28,7 +28,7 @@ describe(Generate::class, function () {
 
         $tester->execute(['instruction' => ['a', 'Calc']], ['interactive' => false]);
 
-        expect($tester->getDisplay())->toContain('AI configuration required. Create phpspec.yaml with an "ai" section');
+        expect($tester->getDisplay())->toContain('AI configuration required. Create phpspec.yml with an "ai" section');
         expect($tester->getStatusCode())->toBe(1);
     });
 
@@ -39,7 +39,7 @@ describe(Generate::class, function () {
 
         $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         expect($document['action'])->toBe('generate');
-        expect($document['error'])->toContain('Create phpspec.yaml with an "ai" section');
+        expect($document['error'])->toContain('Create phpspec.yml with an "ai" section');
         expect($tester->getStatusCode())->toBe(1);
     });
 

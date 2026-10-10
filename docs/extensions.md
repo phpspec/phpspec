@@ -1,6 +1,6 @@
 # Extensions
 
-PhpSpec has a lightweight extension system. Extensions are Composer packages that provide new formatters, matchers, commands, or event listeners. You install them with Composer and register the class in `phpspec.yaml`.
+PhpSpec has a lightweight extension system. Extensions are Composer packages that provide new formatters, matchers, commands, or event listeners. You install them with Composer and register the class in `phpspec.yml`.
 
 ## Quick Start
 
@@ -10,7 +10,7 @@ PhpSpec has a lightweight extension system. Extensions are Composer packages tha
 composer require --dev acme/phpspec-nyan-formatter
 ```
 
-2. Register it in `phpspec.yaml`:
+2. Register it in `phpspec.yml`:
 
 ```yaml
 extensions:
@@ -28,7 +28,7 @@ That's it. Composer handles autoloading, PhpSpec handles instantiation.
 
 ## Configuration
 
-All extensions are registered under the `extensions` key in `phpspec.yaml`:
+All extensions are registered under the `extensions` key in `phpspec.yml`:
 
 ```yaml
 extensions:
@@ -275,7 +275,7 @@ extensions:
 
 ## Auto-Discovery
 
-Extensions can opt into auto-discovery so users don't need to add them to `phpspec.yaml` manually. Add a `phpspec` key to your package's `composer.json`:
+Extensions can opt into auto-discovery so users don't need to add them to `phpspec.yml` manually. Add a `phpspec` key to your package's `composer.json`:
 
 ```json
 {
@@ -404,6 +404,6 @@ extensions:
 ## Design Principles
 
 - **Composer-native.** Extensions are regular Composer packages with PSR-4 autoloading. No custom loaders, no file paths in config.
-- **Config-driven.** Registration happens in `phpspec.yaml` by FQCN. Auto-discovery via `composer.json` `extra` is optional.
+- **Config-driven.** Registration happens in `phpspec.yml` by FQCN. Auto-discovery via `composer.json` `extra` is optional.
 - **Minimal interfaces.** Base classes have sensible defaults. Override only what you need.
 - **No magic.** Extensions don't modify PhpSpec internals. They plug into defined extension points -- formatters, matchers, commands, and event listeners.

@@ -7,20 +7,22 @@ PhpSpec can be configured via a config file in the project root. The following f
 3. `phpspec.json`
 4. `phpspec.php`
 
-The first file found wins. If none exists, defaults are used.
+The first file found wins. If none exists, defaults are used, and whatever
+phpspec writes on your behalf, an `ai` section or the guard switch, goes to
+`phpspec.yml`. Both YAML extensions are read; the examples here use `.yml`.
 
 Alternatively, pass an explicit path with `--config` (or `-c`) to load exactly
 that file and skip the working directory lookup entirely:
 
 ```bash
-bin/phpspec run --config custom/phpspec.ci.yaml
+bin/phpspec run --config custom/phpspec.ci.yml
 ```
 
 The format is resolved from the file extension, and the command fails if the
 file does not exist. Because the path is explicit, several processes can run
 side by side in the same directory with different configurations.
 
-## phpspec.yaml
+## phpspec.yml
 
 ```yaml
 spec_path: spec
@@ -33,9 +35,9 @@ autoload:
   Acme\: lib/Acme
 ```
 
-## phpspec.yml
+## phpspec.yaml
 
-Same syntax as `phpspec.yaml` — just an alternative extension.
+Same syntax as `phpspec.yml`, an alternative extension.
 
 ## phpspec.json
 

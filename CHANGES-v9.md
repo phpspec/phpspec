@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - The file phpspec names, and writes, when a project has no configuration is `phpspec.yml`, the name the docs use; the lookup order of the four formats is unchanged
  - `--filter` matches the path of titles an example or scenario sits under, joined by `>`: a context title selects everything in it, `when empty > starts` one example; a context the filter empties is no longer printed
  - A class a spec needs but does not describe is offered spec first, then the class, the way a class missing from a step always was; the class question names its file relative to the project
  - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec

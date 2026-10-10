@@ -826,7 +826,7 @@ final class Configuration
     {
         $installed = ProviderFactory::installed();
         $provider = count($installed) === 1 ? $installed[0] : 'anthropic';
-        $file = $this->settingsFile ?? $this->rootDir . '/phpspec.yaml';
+        $file = $this->settingsFile ?? $this->rootDir . '/phpspec.yml';
         $shown = str_starts_with($file, $this->rootDir . '/') ? substr($file, strlen($this->rootDir) + 1) : $file;
 
         $example = match (pathinfo($file, PATHINFO_EXTENSION)) {
