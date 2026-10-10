@@ -84,6 +84,24 @@ describe(TargetResolver::class, function () {
             expect($target->specFile)->toBe('/proj/spec/App/Basket.spec.php');
         });
 
+        it('resolves a short name to the class by that name modified last under the source path', function () {
+            $files = $this->project['files'];
+            $files['/proj/src/App/Legacy/Till.php'] = ["<?php\nnamespace App\\Legacy;\n\nclass Till {}\n", 250];
+            $files['/proj/spec/App/Legacy/Till.spec.php'] = ["<?php\n", 50];
+            $this->project['files'] = $files;
+
+            $target = $this->resolver->resolve('Till::total');
+
+            expect($target->fqcn)->toBe('App\\Legacy\\Till');
+            expect($target->sourceFile)->toBe('/proj/src/App/Legacy/Till.php');
+            expect($target->method)->toBe('total');
+            expect($this->resolver->resolve('Basket')->fqcn)->toBe('App\\Basket');
+        });
+
+        it('refuses a short name no class under the source path answers to, one elsewhere included', function () {
+            expect(fn() => $this->resolver->resolve('Ledger'))->toThrow(UnresolvedTargetException::class, 'No class named Ledger under src. Describe it first: phpspec describe Ledger');
+        });
+
         it('keeps the method a class::method target focuses on', function () {
             $target = $this->resolver->resolve('App\\Basket::total');
 

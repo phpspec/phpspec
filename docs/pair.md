@@ -303,6 +303,7 @@ AI-powered, behaviour-preserving refactoring. The AI analyses your source code, 
 
 ```bash
 bin/phpspec refactor
+bin/phpspec refactor Calculator
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
 bin/phpspec refactor "spec/App/Calculator.spec.php"
@@ -313,6 +314,7 @@ bin/phpspec refactor "spec/App/Calculator.spec.php"
 | Input | Source File | Spec File |
 |---|---|---|
 | none | the source file modified last under `src_path` | the spec of the class it declares |
+| `Calculator` | the `Calculator.php` modified last under `src_path` | the spec of the class it declares |
 | `App\Calculator` | `src/App/Calculator.php` | `spec/App/Calculator.spec.php` |
 | `App\Calculator::sum` | `src/App/Calculator.php` (focused on `sum`) | `spec/App/Calculator.spec.php` |
 | `spec/App/Calculator.spec.php` | `src/App/Calculator.php` (inferred) | `spec/App/Calculator.spec.php` |

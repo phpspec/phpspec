@@ -52,6 +52,7 @@ AI-powered, behaviour-preserving refactoring.
 
 ```bash
 bin/phpspec refactor                       # the source file modified last under src_path
+bin/phpspec refactor Calculator            # the Calculator modified last under src_path
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
 ```

@@ -21,7 +21,8 @@ use PhpSpec\Source\Members;
 
 /**
  * @internal
- * Finds what a refactor run works on: the class named, the class a spec file
+ * Finds what a refactor run works on: the class named in full, the class by
+ * a short name modified last under the source path, the class a spec file
  * describes, or with no target the source modified last under the source
  * path. A target with no spec is refused: nothing would catch a refactoring
  * that broke it.
@@ -63,11 +64,10 @@ final readonly class TargetResolver
 
     private function modifiedLast(): RefactorTarget
     {
-        $srcPath = rtrim(ltrim($this->config->getSrcPath(), './'), '/');
-        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource($this->root . '/' . $srcPath);
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource($this->root . '/' . $this->srcPath());
 
         if ($newest === null) {
-            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $srcPath));
+            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $this->srcPath()));
         }
 
         $fqcn = Members::in($this->filesystem->read($newest))->classes()[0] ?? null;
@@ -99,7 +99,29 @@ final readonly class TargetResolver
 
         $fqcn = ltrim($fqcn, '\\');
 
+        if (!str_contains($fqcn, '\\')) {
+            $fqcn = $this->classNamed($fqcn);
+        }
+
         return new RefactorTarget($fqcn, $this->sourceFileFor($fqcn), $this->specFileFor($fqcn), $method);
+    }
+
+    /**
+     * The class a short name stands for: the one by that name modified last
+     * under the source path.
+     */
+    private function classNamed(string $shortName): string
+    {
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentNamed($this->root . '/' . $this->srcPath(), $shortName . '.php');
+        $declared = $newest === null ? [] : Members::in($this->filesystem->read($newest))->classes();
+
+        foreach ($declared as $fqcn) {
+            if ($fqcn === $shortName || str_ends_with($fqcn, '\\' . $shortName)) {
+                return $fqcn;
+            }
+        }
+
+        throw new UnresolvedTargetException(sprintf('No class named %s under %s. Describe it first: phpspec describe %s', $shortName, $this->srcPath(), $shortName));
     }
 
     /**
@@ -126,6 +148,11 @@ final readonly class TargetResolver
     private function specFileFor(string $fqcn): string
     {
         return $this->root . '/' . $this->specPath() . '/' . str_replace('\\', '/', $fqcn) . $this->config->getSpecSuffix();
+    }
+
+    private function srcPath(): string
+    {
+        return rtrim(ltrim($this->config->getSrcPath(), './'), '/');
     }
 
     private function specPath(): string
