@@ -179,7 +179,8 @@ Feature: Code generation
       });
       """
     When I run phpspec run and answer "y" to generation prompts
-    Then a file "src/App/Logger.php" should be generated
+    Then the output should contain "Do you want me to create interface App\Logger in src/App/Logger.php?"
+    And a file "src/App/Logger.php" should be generated
     And it should contain "interface Logger"
 
   Scenario: A method generated on a mocked interface takes the arguments the spec called it with

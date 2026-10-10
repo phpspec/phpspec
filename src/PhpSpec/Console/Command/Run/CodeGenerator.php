@@ -308,7 +308,7 @@ final readonly class CodeGenerator
             $question = sprintf(
                 '  <fg=yellow>Do you want me to create interface <fg=white>%s</> in <fg=white>%s</>?</>',
                 $fqcn,
-                $location->filePath(),
+                ProjectRoot::here()->relative($location->filePath()),
             );
 
             if (!$this->confirm($output, $question, 'create-interface', 'create interfaces')) {

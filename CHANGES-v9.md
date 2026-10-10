@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - The offer to create an interface names its file relative to the project, as the class offer does
  - `run --help` no longer lists `--coverage-partial`, which only the parallel workers pass; the option still works
  - Pair mode's `/help` lines its descriptions up in one column and lists `/generate` once; the application list below it used to repeat it
  - `--profile` names each slow example by its path of titles, as the detail sections do, instead of the bare example title; the dot formatter fits its lines to the terminal while results stream in, where it used to size them only once the run was over

@@ -129,11 +129,10 @@ A class whose name ends in `Exception` extends `Exception`, imported with a `use
 
 ## Interface Generation
 
-When a mock references a class that doesn't exist, PhpSpec offers to generate it as an interface:
+When a mock references a type that doesn't exist, PhpSpec offers to generate it as an interface, naming the file it would write:
 
 ```
-Looks like you are trying to mock App\UserRepository, a class that doesn't exist yet.
-Would you like me to generate that interface for you? [y/n]
+Do you want me to create interface App\UserRepository in src/App/UserRepository.php? [Y/n]
 ```
 
 If confirmed, `InterfaceGenerator` creates an interface at `src/App/UserRepository.php`:
