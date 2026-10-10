@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `--format=agent` reports an example or scenario that passed but raised a PHP warning, deprecation or notice, each note on the entry or the step that raised it with the line that raised it, and the summary counts `warnings`, `deprecations` and `notices`; none counts in `actionable`
  - `refactor` with no target takes the source file modified last under `src_path`, and the spec of the class it declares
  - `refactor Calculator` takes the class by that short name modified last under `src_path`; a name no class there answers to is refused with the `describe` command
+ - `refactor App/Calculator` reads as `App\Calculator`
 ### Changed
  - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
  - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
@@ -129,6 +130,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `--stop-on-pending` stops at a pending or undefined step and `--stop-on-skipped` at a step that skipped itself, as they did at an example; `--stop-on-problems` stops at them too
  - `/refactor` in pair with no target ran into "Not enough arguments"; it now takes the source file modified last
  - `toThrow(new RuntimeException('boom'))` never matched, the exception read as a class name; an exception given stands for its class and message, as it did for phpspec 2's `shouldThrow()`
+ - A command delegated from the pair prompt lost the backslashes typed into its arguments: `/refactor App\Till` reached refactor as `AppTill`
 
 ## [9.0.0-beta.20](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.20)
 

@@ -21,8 +21,9 @@ use PhpSpec\Source\Members;
 
 /**
  * @internal
- * Finds what a refactor run works on: the class named in full, the class by
- * a short name modified last under the source path, the class a spec file
+ * Finds what a refactor run works on: the class named in full (with
+ * backslashes or slashes), the class by a short name modified last under the
+ * source path, the class a spec file
  * describes, or with no target the source modified last under the source
  * path. A target with no spec is refused: nothing would catch a refactoring
  * that broke it.
@@ -97,7 +98,7 @@ final readonly class TargetResolver
             [$fqcn, $method] = explode('::', $target, 2);
         }
 
-        $fqcn = ltrim($fqcn, '\\');
+        $fqcn = ltrim(str_replace('/', '\\', $fqcn), '\\');
 
         if (!str_contains($fqcn, '\\')) {
             $fqcn = $this->classNamed($fqcn);

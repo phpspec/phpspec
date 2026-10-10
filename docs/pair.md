@@ -315,9 +315,11 @@ bin/phpspec refactor "spec/App/Calculator.spec.php"
 |---|---|---|
 | none | the source file modified last under `src_path` | the spec of the class it declares |
 | `Calculator` | the `Calculator.php` modified last under `src_path` | the spec of the class it declares |
-| `App\Calculator` | `src/App/Calculator.php` | `spec/App/Calculator.spec.php` |
+| `App\Calculator` or `App/Calculator` | `src/App/Calculator.php` | `spec/App/Calculator.spec.php` |
 | `App\Calculator::sum` | `src/App/Calculator.php` (focused on `sum`) | `spec/App/Calculator.spec.php` |
 | `spec/App/Calculator.spec.php` | `src/App/Calculator.php` (inferred) | `spec/App/Calculator.spec.php` |
+
+In pair mode `/refactor` (or `refactor Calculator`) takes the same targets, typed as they are: `/refactor App\Calculator` needs no quoting.
 
 ### How It Works
 

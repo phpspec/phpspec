@@ -627,7 +627,9 @@ final class CommandDispatcher
             return self::CONTINUE;
         }
 
-        $input = new StringInput(trim($name . ' ' . $argString));
+        // What was typed at the prompt is literal, with no shell in front of
+        // it: a backslash is part of a class name, not an escape to resolve.
+        $input = new StringInput(trim($name . ' ' . str_replace('\\', '\\\\', $argString)));
         $input->setInteractive($this->interactive);
 
         try {

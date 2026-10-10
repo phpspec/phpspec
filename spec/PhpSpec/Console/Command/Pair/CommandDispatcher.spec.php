@@ -964,6 +964,26 @@ describe(CommandDispatcher::class, function () {
             expect($output)->not()->toContain('Unknown command');
         });
 
+        it('hands a delegated command what was typed, its backslashes kept', function () {
+            $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new class extends \Symfony\Component\Console\Command\Command {
+                protected function configure(): void
+                {
+                    $this->setName('probe')->addArgument('target');
+                }
+
+                protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+                {
+                    $output->writeln('target=' . $input->getArgument('target'));
+
+                    return 0;
+                }
+            });
+
+            $this->appDispatcher->dispatch('/probe App\\Till');
+
+            expect($this->buffer->fetch())->toContain('target=App\\Till');
+        });
+
         it('shows error when a delegated command fails', function () {
             // An option the command does not know fails while binding the input.
             $result = $this->appDispatcher->dispatch('/refactor --nope');

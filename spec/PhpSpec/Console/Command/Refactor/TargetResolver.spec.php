@@ -102,6 +102,14 @@ describe(TargetResolver::class, function () {
             expect(fn() => $this->resolver->resolve('Ledger'))->toThrow(UnresolvedTargetException::class, 'No class named Ledger under src. Describe it first: phpspec describe Ledger');
         });
 
+        it('resolves a class named with slashes as with backslashes', function () {
+            $target = $this->resolver->resolve('App/Basket::total');
+
+            expect($target->fqcn)->toBe('App\\Basket');
+            expect($target->sourceFile)->toBe('/proj/src/App/Basket.php');
+            expect($target->method)->toBe('total');
+        });
+
         it('keeps the method a class::method target focuses on', function () {
             $target = $this->resolver->resolve('App\\Basket::total');
 

@@ -264,3 +264,38 @@ Feature: AI-powered refactoring
     When I run phpspec command "refactor Nope"
     Then the exit code should be 1
     And the output should contain "No class named Nope under src. Describe it first: phpspec describe Nope"
+
+  Scenario: A class named with slashes resolves as with backslashes
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec command "refactor App/Till"
+    Then the exit code should be 1
+    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
+
+  Scenario: Pair's /refactor resolves a class as the command does, its backslashes kept
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec pair with input "/refactor App\Till"
+    Then the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
