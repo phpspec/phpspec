@@ -15,11 +15,14 @@ describe(PapiProvider::class, function () {
             /** @var array<string, mixed> */
             public array $options = [];
 
+            /** @var array<string, int> */
+            public array $usage = [];
+
             public function chat(array $messages, array $options = []): \PapiAI\Core\Response
             {
                 $this->options = $options;
 
-                return new \PapiAI\Core\Response(text: 'ok');
+                return new \PapiAI\Core\Response(text: 'ok', usage: $this->usage);
             }
 
             public function stream(array $messages, array $options = []): iterable
@@ -83,4 +86,11 @@ describe(PapiProvider::class, function () {
         expect($this->papi->options['maxTokens'])->toBe(64);
     });
 
+    it('carries how many tokens the model wrote, none when the provider does not say', function () {
+        expect($this->provider->chat([Message::user('hi')])->outputTokens)->toBe(0);
+
+        $this->papi->usage = ['input_tokens' => 1200, 'output_tokens' => 340];
+
+        expect($this->provider->chat([Message::user('hi')])->outputTokens)->toBe(340);
+    });
 });

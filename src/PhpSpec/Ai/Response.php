@@ -23,10 +23,12 @@ final readonly class Response
     /**
      * @param string $text the text content of the response
      * @param ToolCall[] $toolCalls tool calls requested by the LLM
+     * @param int $outputTokens how many tokens the model wrote, 0 when the provider does not say
      */
     public function __construct(
         public string $text,
         public array $toolCalls = [],
+        public int $outputTokens = 0,
     ) {}
 
     /**
