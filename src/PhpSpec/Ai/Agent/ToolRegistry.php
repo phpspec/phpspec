@@ -25,6 +25,7 @@ use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
+use PhpSpec\StoryBDD\StepsFile;
 use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 
@@ -358,7 +359,7 @@ final class ToolRegistry
             throw new RuntimeException('The proposed spec uses phpspec 8 ObjectBehavior syntax; phpspec 9 specs use the describe/it/expect DSL, so it was rejected.');
         }
 
-        if (str_ends_with($path, '.steps.php')) {
+        if ((new StepsFile($path))->isStepDefinitions()) {
             $rejection = $this->vocabulary->rejectionFor($content, $path, $this->featuresRoot());
             if ($rejection !== null) {
                 throw new RuntimeException($rejection);
@@ -431,7 +432,7 @@ final class ToolRegistry
             $path = substr($path, 2);
         }
 
-        if (str_contains($path, '/') || str_ends_with($path, '.steps.php')) {
+        if (str_contains($path, '/') || (new StepsFile($path))->isStepDefinitions()) {
             return $path;
         }
 

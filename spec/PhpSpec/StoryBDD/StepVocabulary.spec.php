@@ -39,6 +39,25 @@ describe(StepVocabulary::class, function () {
         expect($titles)->toBe(['I have a todo list' => '/project/features/steps/adding.steps.php']);
     });
 
+    it('reads the titles a steps.php defines', function (Filesystem $fs) {
+        $root = '/project/features';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $root);
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$root, $root . '/steps'], true));
+        allow($fs->isFile())->toReturn(true);
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            $root => ['steps', 'adding.feature'],
+            $root . '/steps' => ['steps.php', 'helpers.php'],
+            default => [],
+        });
+        allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, '/steps.php')
+            ? "<?php\ngiven('I have a todo list', function () {});\n"
+            : "<?php\ngiven('a helper that is no step file', function () {});\n");
+
+        $titles = (new StepVocabulary($fs))->definedTitles($root);
+
+        expect($titles)->toBe(['I have a todo list' => '/project/features/steps/steps.php']);
+    });
+
     it('rejects content defining the same title twice', function (Filesystem $fs) {
         $message = (new StepVocabulary($fs))->rejectionFor(
             "<?php\ngiven('I filter the list', function () {});\nwhen('I filter the list', function () {});\n",

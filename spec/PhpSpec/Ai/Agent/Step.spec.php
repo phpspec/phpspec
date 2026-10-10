@@ -35,6 +35,13 @@ describe(Step::class, function () {
         expect($step->path)->toBe('features/steps/adding.steps.php');
     });
 
+    it('maps the default steps.php to write-steps', function () {
+        $step = Step::resolve('grow the steps in features/steps/steps.php', Grounding::empty());
+
+        expect($step->phase)->toBe(Phase::WriteSteps);
+        expect($step->path)->toBe('features/steps/steps.php');
+    });
+
     it('maps an explicit source .php path to write-code', function () {
         $step = Step::resolve('implement the add method in src/App/TodoList.php', Grounding::empty());
 

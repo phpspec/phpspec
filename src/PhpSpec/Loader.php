@@ -20,6 +20,7 @@ use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\GherkinParser;
 use PhpSpec\StoryBDD\ScenarioLineSelector;
+use PhpSpec\StoryBDD\StepsFile;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
 use PhpSpec\StoryBDD\TagExpression;
 
@@ -488,7 +489,7 @@ final class Loader
             $filePath = self::join($dir, $file);
             if ($this->fs->isDir($filePath)) {
                 $this->collectStepFiles($filePath, $stepFiles);
-            } elseif ($this->fs->isFile($filePath) && str_ends_with($file, '.steps.php')) {
+            } elseif ($this->fs->isFile($filePath) && (new StepsFile($file))->isStepDefinitions()) {
                 $stepFiles[] = $filePath;
             }
         }

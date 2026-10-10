@@ -20,9 +20,9 @@ Feature: Greeting
 
 ## Step Definitions
 
-Define steps in `*.steps.php` files. They are discoverable anywhere inside
-the features folder (conventionally `features/steps/`, but a file beside its
-feature works too), regardless of which feature path you run. An additional
+Define steps in `steps.php` or in `*.steps.php` files. They are discoverable
+anywhere inside the features folder (conventionally `features/steps/`),
+regardless of which feature path you run. An additional
 directory can be searched by setting `steps_path` in the
 [configuration](configuration.md#steps_path).
 

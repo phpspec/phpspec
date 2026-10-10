@@ -112,7 +112,7 @@ final class StepVocabulary
     }
 
     /**
-     * Every *.steps.php file under a directory, recursively.
+     * Every steps file (steps.php or *.steps.php) under a directory, recursively.
      *
      * @return list<string> absolute paths
      */
@@ -135,7 +135,7 @@ final class StepVocabulary
                 continue;
             }
 
-            if (str_ends_with($entry, '.steps.php')) {
+            if ((new StepsFile($entry))->isStepDefinitions()) {
                 $files[] = $path;
             }
         }

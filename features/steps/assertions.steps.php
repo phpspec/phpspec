@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\StoryBDD\StepsFile;
+
 /**
  * Assertion steps — all Then steps that verify command output,
  * exit codes, and generated files.
@@ -356,7 +358,7 @@ then('a step file should be generated with step definitions', function () {
     $found = false;
     if (is_dir($stepsDir)) {
         foreach (scandir($stepsDir) as $file) {
-            if (str_ends_with($file, '.steps.php')) {
+            if ((new StepsFile($file))->isStepDefinitions()) {
                 $content = file_get_contents($stepsDir . '/' . $file);
                 if (str_contains($content, 'given(') || str_contains($content, 'when(') || str_contains($content, 'then(')) {
                     $found = true;

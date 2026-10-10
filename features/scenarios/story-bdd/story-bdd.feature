@@ -198,6 +198,28 @@ Feature: Story BDD with Gherkin
     When I run phpspec run "features/"
     Then all steps should pass
 
+  Scenario: Step definitions in features/steps/steps.php are loaded
+    Given a feature file "features/greeting.feature":
+      """
+      Feature: Greeting
+        Scenario: Hello
+          Given a greeter
+          Then it greets
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a greeter", function () {
+          $this->greeting = 'hello';
+      });
+
+      then("it greets", function () {
+          expect($this->greeting)->toBe('hello');
+      });
+      """
+    When I run phpspec run "features/"
+    Then all steps should pass
+
   Scenario: A decimal in a step is captured by a {float}
     Given a feature file "features/pricing.feature":
       """

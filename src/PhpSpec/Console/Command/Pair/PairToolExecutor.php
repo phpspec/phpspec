@@ -34,6 +34,7 @@ use PhpSpec\Configuration;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
 use PhpSpec\ProjectRoot;
+use PhpSpec\StoryBDD\StepsFile;
 use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 use Throwable;
@@ -431,7 +432,7 @@ final class PairToolExecutor implements ToolExecutor
      */
     private static function specsCanVerify(string $path): bool
     {
-        if (str_ends_with($path, '.steps.php') || str_ends_with($path, '.feature')) {
+        if ((new StepsFile($path))->isStepDefinitions() || str_ends_with($path, '.feature')) {
             return false;
         }
 
@@ -620,7 +621,7 @@ final class PairToolExecutor implements ToolExecutor
      */
     private function proposalFor(string $absPath, string $content, string $origin): Proposal
     {
-        if (str_ends_with($absPath, '.steps.php')) {
+        if ((new StepsFile($absPath))->isStepDefinitions()) {
             $root = getcwd() . '/' . trim($this->config->getFeaturesPath(), './');
             $rejection = (new StepVocabulary($this->filesystem))->rejectionFor($content, $absPath, $root);
             if ($rejection !== null) {
