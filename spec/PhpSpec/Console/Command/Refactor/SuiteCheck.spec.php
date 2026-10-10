@@ -42,6 +42,13 @@ describe(SuiteCheck::class, function () {
         );
     });
 
+    it('counts the examples the run ran, none when it printed no summary', function () {
+        $ran = SuiteCheck::fromStream(($this->stream)(['event' => 'summary', 'examples' => 24, 'actionable' => 0]));
+
+        expect($ran->examples())->toBe(24);
+        expect(SuiteCheck::fromStream('')->examples())->toBe(0);
+    });
+
     it('keeps every failure inside the spec files named, and none outside them', function () {
         $check = SuiteCheck::fromStream(($this->stream)(
             ['event' => 'example', 'state' => 'error', 'example' => 'LoyaltyDiscount > discounts', 'spec' => 'spec/App/Checkout/LoyaltyDiscount.spec.php:7', 'message' => 'Class "App\Checkout\LoyaltyDiscount" not found'],

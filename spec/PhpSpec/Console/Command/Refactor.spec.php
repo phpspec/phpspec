@@ -157,6 +157,38 @@ describe(Refactor::class, function () {
             expect(end($this->replay->requests[2]['messages'])->content)->toContain('Expected 90 to be 100');
         });
 
+        it('asks for one fix when a step leaves fewer examples than it found, and undoes it when the fix does too', function () {
+            $original = $this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'];
+            $examples = fn(int $count): SuiteCheck => SuiteCheck::fromStream(json_encode(['event' => 'summary', 'examples' => $count, 'actionable' => 0]));
+
+            $tester = ($this->run)([
+                ($this->plan)('Use a DiscountPolicy in CheckoutService'),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // one example fewer\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // still one fewer\n"]),
+            ], [$examples(4), $examples(3), $examples(3)], ['', '', '']);
+            $display = $tester->getDisplay();
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($display)->toContain('  Examples lost ✘, asking for a fix...');
+            expect($display)->toContain('The specs have 3 examples where they had 4: a refactoring moves or rewrites an example, never drops one.');
+            expect($display)->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect(end($this->replay->requests[2]['messages'])->content)->toContain('The specs have 3 examples where they had 4');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+        });
+
+        it('keeps a step that moves examples, the count holding', function () {
+            $examples = fn(int $count): SuiteCheck => SuiteCheck::fromStream(json_encode(['event' => 'summary', 'examples' => $count, 'actionable' => 0]));
+
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction', 'Move the loyalty examples to its spec'),
+                ($this->step)(['spec/App/Checkout/DiscountPolicy.spec.php' => "<?php // two more\n"]),
+                ($this->step)(['spec/App/Checkout/CheckoutService.spec.php' => "<?php // one moved out\n"]),
+            ], [$examples(4), $examples(6), $examples(6)], ['', '', '']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->not()->toContain('Examples lost');
+        });
+
         it('undoes the step and stops when its fix does not hold, keeping the steps before it', function () {
             $original = $this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'];
             $broken = ($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100');

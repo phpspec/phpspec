@@ -31,6 +31,7 @@ use PhpSpec\Console\Command\Refactor\RefactorTarget;
 use PhpSpec\Console\Command\Refactor\SpecSuite;
 use PhpSpec\Console\Command\Refactor\StepByStep;
 use PhpSpec\Console\Command\Refactor\SubprocessSuite;
+use PhpSpec\Console\Command\Refactor\SuiteCheck;
 use PhpSpec\Console\Command\Refactor\TargetResolver;
 use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Console\Command\Run\Generation;
@@ -125,7 +126,7 @@ final class Refactor extends Command
         try {
             return $forAgent
                 ? $this->planForAgent($output, $target, $model->plan($target, $journal->rendered()))
-                : $this->refactorWithTheDeveloper($input, $output, $target, $model, $suite, $journal);
+                : $this->refactorWithTheDeveloper($input, $output, $target, $model, $suite, $baseline, $journal);
         } catch (ModelFailedException $e) {
             return $this->refuse($output, $forAgent, $e->getMessage());
         }
@@ -135,7 +136,7 @@ final class Refactor extends Command
      * Shows the plan, asks to go ahead, and carries it out step by step,
      * keeping in the journal the steps that were kept.
      */
-    private function refactorWithTheDeveloper(Input $input, Output $output, RefactorTarget $target, RefactorModel $model, SpecSuite $suite, RefactorJournal $journal): int
+    private function refactorWithTheDeveloper(Input $input, Output $output, RefactorTarget $target, RefactorModel $model, SpecSuite $suite, SuiteCheck $baseline, RefactorJournal $journal): int
     {
         $progress = new Progress($output);
 
@@ -161,7 +162,7 @@ final class Refactor extends Command
         }
 
         $kept = [];
-        $exitCode = (new StepByStep($output, $model, $suite, $consent, $progress, new Writer($this->filesystem, getcwd() ?: '.')))->carryOut($plan, $kept);
+        $exitCode = (new StepByStep($output, $model, $suite, $consent, $progress, new Writer($this->filesystem, getcwd() ?: '.')))->carryOut($plan, $baseline, $kept);
 
         if ($kept !== []) {
             $journal->record($this->relativeClass($target), $plan->technique, implode('; ', $kept));

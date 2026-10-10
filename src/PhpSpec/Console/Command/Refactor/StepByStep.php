@@ -24,9 +24,10 @@ use Symfony\Component\Console\Output\OutputInterface as Output;
  * @internal
  * Carries out a refactoring plan with the developer, one step at a time: the
  * model writes the step, the developer sees it and says yes, it is written
- * and the whole suite checked. A step that breaks more than it meant to gets
- * one fix; still broken, or not fixed at all, it is undone and the run stops
- * there, the steps before it kept.
+ * and the whole suite checked. A step that breaks more than it meant to, or
+ * leaves fewer examples than it found, gets one fix; still wrong, or not
+ * fixed at all, it is undone and the run stops there, the steps before it
+ * kept.
  */
 final readonly class StepByStep
 {
@@ -40,10 +41,13 @@ final readonly class StepByStep
     ) {}
 
     /**
+     * @param SuiteCheck $baseline the suite before the first step
      * @param list<string> $kept the titles of the steps kept, filled in as they are
      */
-    public function carryOut(RefactorPlan $plan, array &$kept): int
+    public function carryOut(RefactorPlan $plan, SuiteCheck $baseline, array &$kept): int
     {
+        $examples = $baseline->examples();
+
         foreach ($plan->steps as $index => $planned) {
             $number = $index + 1;
             $this->output->writeln('');
@@ -66,12 +70,15 @@ final readonly class StepByStep
                 return 0;
             }
 
-            if (!$this->stands($step, $number === count($plan->steps))) {
+            $standing = $this->standing($step, $number === count($plan->steps), $examples);
+
+            if ($standing === null) {
                 $this->output->writeln(sprintf('  Stopped at step %d: the steps before it are kept, this one is undone.', $number));
 
                 return 1;
             }
 
+            $examples = $standing->examples();
             $kept[] = $planned->title;
         }
 
@@ -82,21 +89,24 @@ final readonly class StepByStep
     }
 
     /**
-     * Writes the step and checks the suite, fixing it once when it broke more
-     * than it meant to. Whether it stands; a step that does not is undone.
+     * Writes the step and checks the suite, fixing it once when it does not
+     * stand. The suite it stands on, or nothing when it was undone.
+     *
+     * @param int $examples how many examples there were before the step
      */
-    private function stands(RefactorStep $step, bool $last): bool
+    private function standing(RefactorStep $step, bool $last, int $examples): ?SuiteCheck
     {
         $applied = $this->apply($step);
         $check = $this->suite->check();
+        $wrong = $this->wrongWith($check, $step, $last, $examples);
 
-        if (!$this->holds($check, $step, $last)) {
-            $this->output->writeln('  <fg=red>Specs failed ✘</>, asking for a fix...');
-            $this->output->writeln($this->indented($check->report()));
+        if ($wrong !== '') {
+            $this->output->writeln($this->verdict($check, $step, $last) . ', asking for a fix...');
+            $this->output->writeln($this->indented($wrong));
             $this->output->writeln('');
 
             try {
-                $step = $this->progress->during('Fixing it', fn(): RefactorStep => $this->model->fix($step, $check->report()));
+                $step = $this->progress->during('Fixing it', fn(): RefactorStep => $this->model->fix($step, $wrong));
             } catch (RefusedStepException|ModelFailedException $e) {
                 return $this->undone($applied, '  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
             }
@@ -109,9 +119,10 @@ final readonly class StepByStep
 
             $applied = [...$this->apply($step), ...$applied];
             $check = $this->suite->check();
+            $wrong = $this->wrongWith($check, $step, $last, $examples);
 
-            if (!$this->holds($check, $step, $last)) {
-                return $this->undone($applied, "  <fg=red>Specs failed ✘</>\n" . $this->indented($check->report()));
+            if ($wrong !== '') {
+                return $this->undone($applied, $this->verdict($check, $step, $last) . "\n" . $this->indented($wrong));
             }
         }
 
@@ -119,7 +130,28 @@ final readonly class StepByStep
             ? '  <fg=green>Specs still pass ✓</>'
             : '  <fg=yellow>Red, as this step meant:</> ' . implode(', ', array_map(static fn(Proposal $file): string => $file->path, $step->files)));
 
-        return true;
+        return $check;
+    }
+
+    /**
+     * What keeps the step from standing, a line each, or nothing when it
+     * stands: where it meant to leave the suite, and with no fewer examples
+     * than it found.
+     */
+    private function wrongWith(SuiteCheck $check, RefactorStep $step, bool $last, int $examples): string
+    {
+        $wrong = $this->holds($check, $step, $last) ? [] : $check->failures();
+
+        if ($check->examples() < $examples) {
+            $wrong[] = sprintf('The specs have %d examples where they had %d: a refactoring moves or rewrites an example, never drops one.', $check->examples(), $examples);
+        }
+
+        return implode("\n", $wrong);
+    }
+
+    private function verdict(SuiteCheck $check, RefactorStep $step, bool $last): string
+    {
+        return sprintf('  <fg=red>%s ✘</>', $this->holds($check, $step, $last) ? 'Examples lost' : 'Specs failed');
     }
 
     /**
@@ -151,7 +183,7 @@ final readonly class StepByStep
     /**
      * @param list<Proposal> $applied
      */
-    private function undone(array $applied, string $said): bool
+    private function undone(array $applied, string $said): null
     {
         array_map($this->writer->revert(...), $applied);
 
@@ -159,7 +191,7 @@ final readonly class StepByStep
             $this->output->writeln($said);
         }
 
-        return false;
+        return null;
     }
 
     private function showFiles(RefactorStep $step): void

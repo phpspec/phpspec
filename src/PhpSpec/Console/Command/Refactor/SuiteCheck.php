@@ -28,7 +28,7 @@ final readonly class SuiteCheck
     /**
      * @param list<array{file: string|null, line: string}> $failures each failure, the spec file it sits in when known
      */
-    private function __construct(private bool $green, private array $failures) {}
+    private function __construct(private bool $green, private array $failures, private int $examples = 0) {}
 
     /**
      * @param string $stream the agent JSON Lines the run printed
@@ -38,6 +38,7 @@ final readonly class SuiteCheck
     {
         $failures = [];
         $actionable = null;
+        $examples = 0;
 
         foreach (explode("\n", $stream) as $line) {
             $event = json_decode($line, true);
@@ -54,6 +55,7 @@ final readonly class SuiteCheck
 
             if (($event['event'] ?? null) === 'summary') {
                 $actionable = (int) ($event['actionable'] ?? 1);
+                $examples = (int) ($event['examples'] ?? 0);
             }
         }
 
@@ -61,12 +63,17 @@ final readonly class SuiteCheck
             return new self(false, [['file' => null, 'line' => trim($errors) !== '' ? trim($errors) : 'The spec run printed no summary.']]);
         }
 
-        return new self($actionable === 0, $failures);
+        return new self($actionable === 0, $failures, $examples);
     }
 
     public function green(): bool
     {
         return $this->green;
+    }
+
+    public function examples(): int
+    {
+        return $this->examples;
     }
 
     /**
