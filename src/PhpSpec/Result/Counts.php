@@ -29,7 +29,6 @@ final class Counts
     private int $passes = 0;
     private int $failures = 0;
     private int $errors = 0;
-    private int $broken = 0;
     private int $pending = 0;
 
     private int $risky = 0;
@@ -43,6 +42,7 @@ final class Counts
     private int $stepPasses = 0;
     private int $stepFailures = 0;
     private int $stepErrors = 0;
+    private int $stepPending = 0;
     private int $undefined = 0;
     private int $skipped = 0;
 
@@ -67,7 +67,6 @@ final class Counts
             'passes' => $this->passes,
             'failures' => $this->failures,
             'errors' => $this->errors,
-            'broken' => $this->broken,
             'pending' => $this->pending,
             'risky' => $this->risky,
             'warnings' => $this->warnings,
@@ -80,6 +79,7 @@ final class Counts
             'stepPasses' => $this->stepPasses,
             'stepFailures' => $this->stepFailures,
             'stepErrors' => $this->stepErrors,
+            'stepPending' => $this->stepPending,
             'undefined' => $this->undefined,
             'skipped' => $this->skipped,
         ];
@@ -125,7 +125,7 @@ final class Counts
             } elseif ($result->isFailure()) {
                 $this->stepFailures++;
             } elseif ($result->isPending()) {
-                $this->pending++;
+                $this->stepPending++;
             } elseif ($result->isUndefined()) {
                 $this->undefined++;
             } elseif ($result->isSkipped()) {

@@ -261,8 +261,8 @@ final class PrettyViews
             if (!empty($counts['stepErrors'])) {
                 $parts[] = '<fg=red>' . $counts['stepErrors'] . ' errored</>';
             }
-            if ($counts['pending']) {
-                $parts[] = '<fg=yellow>' . $counts['pending'] . ' pending</>';
+            if (!empty($counts['stepPending'])) {
+                $parts[] = '<fg=yellow>' . $counts['stepPending'] . ' pending</>';
             }
             if ($counts['undefined']) {
                 $parts[] = '<fg=bright-blue>' . $counts['undefined'] . ' undefined</>';

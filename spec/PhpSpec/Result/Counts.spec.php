@@ -48,6 +48,24 @@ describe(Counts::class, function() {
         expect($c['stepErrors'])->toBe(1);
     });
 
+    it("counts a pending step apart from a pending example", function() {
+        $feature = new FeatureResult("Story", [new ScenarioResult("Half", [
+            new StepResult("Given a done step", "passed"),
+            new StepResult("When a waiting step", "pending"),
+        ])]);
+        $spec = new SpecificationResult("spec", [
+            new ExampleResult("works", [MatchResult::passed()]),
+            new ExampleResult("waits", [], isPending: true),
+            new ExampleResult("waits too", [], isPending: true),
+        ]);
+
+        $c = (new Counts(new SuiteResult([$feature, $spec])))->toArray();
+
+        expect($c['pending'])->toBe(2);
+        expect($c['stepPending'])->toBe(1);
+        expect($c)->not()->toHaveKey('broken');
+    });
+
     it("counts a risky example apart from the passes", function() {
         $risky = new ExampleResult("risky", []);
         $risky->markRisky();
@@ -186,7 +204,8 @@ describe(Counts::class, function() {
 
         $counts = new Counts($results);
         $c = $counts->toArray();
-        expect($c['pending'])->toBe(1);
+        expect($c['stepPending'])->toBe(1);
+        expect($c['pending'])->toBe(0);
         expect($c['undefined'])->toBe(1);
         expect($c['skipped'])->toBe(1);
         expect($c['steps'])->toBe(3);

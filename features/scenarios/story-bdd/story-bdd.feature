@@ -83,6 +83,32 @@ Feature: Story BDD with Gherkin
     And the output should contain "Needs the payment gateway"
     And the exit code should be 0
 
+  Scenario: Pending steps and pending examples are counted on their own lines
+    Given a spec file "spec/Waiting.spec.php":
+      """
+      <?php
+      describe('Waiting', function () {
+          it('works', fn () => expect(1)->toBe(1));
+          it('waits', fn () => pending('later'));
+      });
+      """
+    And a feature file "features/story.feature":
+      """
+      Feature: Story
+        Scenario: Half
+          Given a done step
+          When a waiting step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a done step", function () {});
+      when("a waiting step", fn () => pending());
+      """
+    When I run phpspec run with option "--all"
+    Then the output should contain "1 feature, 1 scenario, 2 steps (1 passed, 1 pending)"
+    And the output should contain "1 spec, 2 examples (1 passed, 1 pending)"
+
   Scenario: A skipped step is reported with the reason it gave
     Given a feature file "features/offline.feature":
       """
