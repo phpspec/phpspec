@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use Closure;
 use Exception;
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\Writer;
@@ -25,17 +26,20 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
+use PhpSpec\Console\Command\Refactor;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\Consent;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -58,6 +62,9 @@ final class CommandDispatcher
     private readonly SpecRunner $specRunner;
     private readonly RoleState $roleState;
     private readonly Agent $agent;
+
+    /** @var Closure(Consent): Refactor builds the refactor command, asking through the given consent */
+    private readonly Closure $refactor;
 
     /** Resolves prompt files, project overrides first. */
     private readonly PromptLibrary $prompts;
@@ -94,6 +101,7 @@ final class CommandDispatcher
      * @param Filesystem|null $filesystem filesystem abstraction for testability
      * @param Application|null $application the Symfony console application for command delegation
      * @param SpecRunner|null $specRunner runs specs for `run`; defaults to a fresh subprocess
+     * @param (Closure(Consent): Refactor)|null $refactor builds the refactor command asking through the given consent; defaults to the real one
      */
     public function __construct(
         private readonly SpecGenerator $specGenerator,
@@ -109,6 +117,7 @@ final class CommandDispatcher
         ?RoleState $roleState = null,
         ?Agent $agent = null,
         ?AiAssistant $ai = null,
+        ?Closure $refactor = null,
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
@@ -118,6 +127,7 @@ final class CommandDispatcher
         $this->specRunner = $specRunner ?? new SubprocessRunner();
         $this->roleState = $roleState ?? new RoleState();
         $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
+        $this->refactor = $refactor ?? fn(Consent $consent): Refactor => new Refactor($this->config, $this->filesystem, consent: $consent);
         $this->registerAutoloader();
 
         if ($ai !== null) {
@@ -322,6 +332,7 @@ final class CommandDispatcher
             '/run' => $this->handleRun($this->runArgument($parsed['tail'])),
             '/next' => $this->handleNext(),
             '/generate' => $this->handleGenerate($parsed['argument']),
+            '/refactor' => $this->handleRefactor($parsed['argument']),
             '/clear' => $this->handleClear(),
             '/swap' => $this->handleSwap(),
             '/help' => $this->handleHelp(),
@@ -594,6 +605,25 @@ final class CommandDispatcher
             new StepsHome($this->config, $this->filesystem),
         );
         $codeGenerator->apply($this->output->getOutput(), $candidates, false);
+    }
+
+    /**
+     * Refactors as `phpspec refactor` does, with the plan and each step asked
+     * through the pair chooser.
+     */
+    private function handleRefactor(string $argument): int
+    {
+        $consent = new Consent('Run phpspec refactor in a terminal to %s.', $this->interactive ? Generation::Asks : Generation::Declines, $this->chooser);
+        $input = new ArrayInput(trim($argument) === '' ? [] : ['target' => trim($argument)]);
+        $input->setInteractive($this->interactive);
+
+        try {
+            ($this->refactor)($consent)->run($input, $this->output->getOutput());
+        } catch (Exception $e) {
+            $this->output->error($e->getMessage());
+        }
+
+        return self::CONTINUE;
     }
 
     /**

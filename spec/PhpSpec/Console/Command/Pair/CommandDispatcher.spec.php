@@ -15,14 +15,19 @@ use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\RoleState;
 use PhpSpec\Console\Command\Pair\SpecRunner;
+use PhpSpec\Console\Command\Refactor;
+use PhpSpec\Console\Command\Refactor\SpecSuite;
+use PhpSpec\Console\Command\Refactor\SuiteCheck;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 require_once __DIR__ . '/../../../Ai/ReplayProvider.php';
+require_once __DIR__ . '/../Refactor/RefactorWorld.php';
 
 // A fake SpecRunner so the REPL can be tested without spawning a real run
 // subprocess; it records the arguments it was asked to run.
@@ -985,11 +990,64 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('shows error when a delegated command fails', function () {
-            // An option the command does not know fails while binding the input.
-            $result = $this->appDispatcher->dispatch('/refactor --nope');
+            $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new class extends \Symfony\Component\Console\Command\Command {
+                protected function configure(): void
+                {
+                    $this->setName('broken');
+                }
+
+                protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+                {
+                    throw new \RuntimeException('it broke');
+                }
+            });
+
+            $result = $this->appDispatcher->dispatch('/broken');
+
             expect($result)->toBe(CommandDispatcher::CONTINUE);
+            expect($this->buffer->fetch())->toContain('it broke');
+        });
+
+        it('refactors asking through the chooser, where always applies the remaining steps', function () {
+            $cwd = getcwd();
+            $project = new RefactorWorldFilesystem();
+            $project->write($cwd . '/src/App/Till.php', "<?php\nnamespace App;\n\nfinal class Till {}\n");
+            $project->write($cwd . '/spec/App/Till.spec.php', "<?php\n");
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('p', 'propose_plan', ['technique' => 'Extract Class', 'rationale' => 'Till prints.', 'steps' => [['title' => 'Introduce Printer', 'doing' => 'Introducing Printer'], ['title' => 'Use Printer', 'doing' => 'Using Printer']]])]),
+                new Response('', [new ToolCall('s', 'propose_step', ['files' => [['path' => 'src/App/Printer.php', 'content' => "<?php // printer\n"]], 'red' => false])]),
+                new Response('', [new ToolCall('s', 'propose_step', ['files' => [['path' => 'src/App/Till.php', 'content' => "<?php // uses printer\n"]], 'red' => false])]),
+            ]);
+            $suite = new class implements SpecSuite {
+                public function check(): SuiteCheck
+                {
+                    return SuiteCheck::fromStream('{"event":"summary","actionable":0}');
+                }
+            };
+            $answers = ['1', '2'];
+            $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]);
+            $dispatcher = new CommandDispatcher(
+                new SpecGenerator('spec', $project),
+                new ClassGenerator(SourceLayout::under('src'), $project),
+                $config,
+                $this->pairOutput,
+                true,
+                $project,
+                chooser: new Chooser($this->pairOutput, true, function () use (&$answers) {
+                    return array_shift($answers) ?? '3';
+                }),
+                specRunner: $this->specRunner,
+                refactor: fn(Consent $consent): Refactor => new Refactor($config, $project, $suite, $replay, $consent),
+            );
+
+            expect($dispatcher->dispatch('refactor Till'))->toBe(CommandDispatcher::CONTINUE);
+
             $output = $this->buffer->fetch();
-            expect($output)->toContain('The "--nope" option does not exist.');
+            expect($output)->toContain('Would you like to proceed?');
+            expect($output)->toContain('always apply the remaining refactoring steps');
+            expect(substr_count($output, 'Apply this step?'))->toBe(1);
+            expect($output)->toContain('Refactoring done: Extract Class');
+            expect($project->files[$cwd . '/src/App/Till.php'])->toBe("<?php // uses printer\n");
         });
     });
 });
