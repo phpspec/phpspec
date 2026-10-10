@@ -250,12 +250,16 @@ with `classname` naming the file, the describe and the contexts around it
 one title in two contexts reads apart. A feature is
 a `testsuite` of scenario suites, each step a `testcase` under its scenario. A
 pending or skipped case carries the reason as the `skipped` element's
-`message`. Every case and suite carries `time`, in seconds.
+`message`. Every case and suite carries `time`, in seconds. PHP warnings,
+deprecations and notices are left out, as PHPUnit's JUnit log leaves them out:
+the console, the HTML report and `--format=agent` carry them.
 
 #### HTML Formatter
 
 Outputs a self-contained HTML document with passed/failed examples and a
-summary, ready to open in a browser:
+summary counted in the console's words, ready to open in a browser. An example
+or step that raised a PHP warning, deprecation or notice unfolds to each one,
+with the line that raised it, and the header and its group's bar count them:
 
 ```bash
 bin/phpspec run --format=html > report.html

@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
  - The console counts each warning, deprecation and notice raised, not the examples that raised them, and counts a step's on the steps line; notices are listed in a `Notices:` section by pretty and dot alike
+ - The HTML report counts the run in the console's words, the stories on a line of their own and the specs named, and counts warnings, deprecations and notices in its header, footer and group bars; an example or step that raised one unfolds to each, with the line that raised it
  - A deprecation a library raises for another library's code calling it is no longer reported; one it raises because the project called something deprecated still is, through `trigger_error()` or `trigger_deprecation()`
 ### Fixed
  - A story hook that throws, or calls `skip()` or `pending()`, no longer ends the whole run with only its message: a before hook's signal leaves the feature, scenario or step it wraps skipped or pending with the reason, an after hook's signal is an error saying it came too late, and any other error errors the step it affects, naming the hook, while the rest of the run goes on

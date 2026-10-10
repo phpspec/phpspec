@@ -15,6 +15,7 @@
 namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Report\AbstractFormatter;
+use PhpSpec\Report\CountLines;
 use PhpSpec\Report\HtmlTheme;
 use PhpSpec\Report\ReportedObject;
 use PhpSpec\Result\Counts;
@@ -144,6 +145,11 @@ final class Html extends AbstractFormatter
                 $count .= ' · ' . $this->countFailures($group) . ' failed';
             }
 
+            $raised = (new Counts($group))->toArray();
+            foreach ($this->notesCounted($raised['warnings'] + $raised['stepWarnings'], $raised['deprecations'] + $raised['stepDeprecations'], $raised['notices'] + $raised['stepNotices']) as $notes) {
+                $count .= ' · ' . $notes;
+            }
+
             $html .= sprintf(
                 "<details class=\"group %s\"%s>\n<summary>%s <span class=\"count\">%s</span></summary>\n<ul>\n%s</ul>\n</details>\n",
                 $failed ? 'failed' : 'passed',
@@ -194,9 +200,9 @@ final class Html extends AbstractFormatter
     }
 
     /**
-     * Renders a single example: passing, pending and skipped examples are
-     * plain list items; failures and errors collapse their full detail
-     * (message, expected/got, code snippet, location) under the title.
+     * Renders a single example: a failure or an error collapses its full
+     * detail (message, expected/got, code snippet, location) under the title,
+     * as does any example that raised a PHP note; every other is a plain row.
      *
      * @param ExampleResult $example the example result to render
      * @return string the rendered HTML fragment
@@ -212,16 +218,14 @@ final class Html extends AbstractFormatter
             default => 'passed',
         };
 
-        if ($state === 'failed') {
-            $detail = '';
+        $detail = '';
 
+        if ($state === 'failed') {
             foreach ($example->getResults() as $match) {
                 if ($match->getResult() === Result::Failed) {
                     $detail .= $this->renderFailureDetail($match);
                 }
             }
-
-            return $this->collapsedLeaf($state, $example->getTitle(), $detail);
         }
 
         if ($state === 'error') {
@@ -229,65 +233,112 @@ final class Html extends AbstractFormatter
                 "<p class=\"message\">%s</p>\n",
                 $this->escape($example->getError()?->getMessage() ?? ''),
             );
-
-            return $this->collapsedLeaf($state, $example->getTitle(), $detail);
         }
 
         $reason = $state === 'risky' ? 'no expectation' : $example->getReason();
 
-        return sprintf(
-            "<li class=\"example %s\">%s%s</li>\n",
-            $state,
-            $this->escape($example->getTitle()),
-            $reason === null ? '' : ' <span class="reason">' . $this->escape($reason) . '</span>',
-        );
+        return $this->leaf($state, $example->getTitle(), $reason, $example, $detail);
     }
 
     /**
-     * Renders a single step: failed steps collapse their error message
-     * under the title; every other state is a plain list item.
+     * Renders a single step: a failed step collapses its error message under
+     * the title, as does any step that raised a PHP note; every other is a
+     * plain row.
      *
      * @param StepResult $step the step result to render
      * @return string the rendered HTML fragment
      */
     private function renderStep(StepResult $step): string
     {
+        $detail = '';
+
         if (($step->isFailure() || $step->isError()) && $step->getError() !== null) {
             $detail = sprintf(
                 "<p class=\"message\">%s</p>\n",
                 $this->escape($step->getError()->getMessage()),
             );
-
-            return $this->collapsedLeaf($step->getState(), $step->getTitle(), $detail);
         }
 
-        $reason = $step->getReason();
+        return $this->leaf($step->getState(), $step->getTitle(), $step->getReason(), $step, $detail);
+    }
+
+    /**
+     * One row: the title with the reason it gave and how many notes it
+     * raised, collapsing over the detail and the notes when there are any.
+     *
+     * @param string $state the outcome class, e.g. "passed" or "failed"
+     * @param string $detail the pre-rendered detail HTML, empty when there is none
+     * @return string the rendered HTML fragment
+     */
+    private function leaf(string $state, string $title, ?string $reason, ExampleResult|StepResult $result, string $detail): string
+    {
+        $label = $this->escape($title);
+        $counted = $this->notesCounted(count($result->getWarnings()), count($result->getDeprecations()), count($result->getNotices()));
+
+        foreach ([...($reason === null ? [] : [$reason]), ...$counted] as $aside) {
+            $label .= ' <span class="reason">' . $this->escape($aside) . '</span>';
+        }
+
+        $detail .= $this->renderNotes($result);
+
+        if ($detail === '') {
+            return sprintf("<li class=\"example %s\">%s</li>\n", $this->escape($state), $label);
+        }
 
         return sprintf(
-            "<li class=\"example %s\">%s%s</li>\n",
-            $this->escape($step->getState()),
-            $this->escape($step->getTitle()),
-            $reason === null ? '' : ' <span class="reason">' . $this->escape($reason) . '</span>',
+            "<li><details class=\"example %s\">\n<summary>%s</summary>\n<div class=\"detail\">\n%s</div>\n</details></li>\n",
+            $this->escape($state),
+            $label,
+            $detail,
         );
     }
 
     /**
-     * Wraps a failing leaf in a collapsed disclosure: the title stays a
-     * one-line row, the detail reveals on click.
-     *
-     * @param string $state the outcome class, e.g. "failed" or "error"
-     * @param string $title the example or step title
-     * @param string $detail the pre-rendered detail HTML
-     * @return string the rendered HTML fragment
+     * Each PHP note an example or a step raised: its kind, what PHP said and
+     * the line that raised it.
      */
-    private function collapsedLeaf(string $state, string $title, string $detail): string
+    private function renderNotes(ExampleResult|StepResult $result): string
     {
-        return sprintf(
-            "<li><details class=\"example %s\">\n<summary>%s</summary>\n<div class=\"detail\">\n%s</div>\n</details></li>\n",
-            $this->escape($state),
-            $this->escape($title),
-            $detail,
-        );
+        $items = '';
+        $kinds = [
+            ['warning', '⚠', $result->getWarnings()],
+            ['deprecation', '⛔', $result->getDeprecations()],
+            ['notice', 'ℹ', $result->getNotices()],
+        ];
+
+        foreach ($kinds as [$kind, $glyph, $notes]) {
+            foreach ($notes as $note) {
+                $items .= sprintf(
+                    "<li class=\"note %s\">%s %s <span class=\"where\">at %s:%d</span></li>\n",
+                    $kind,
+                    $glyph,
+                    $this->escape($note['message']),
+                    $this->escape($note['file']),
+                    $note['line'],
+                );
+            }
+        }
+
+        return $items === '' ? '' : "<ul class=\"notes\">\n" . $items . "</ul>\n";
+    }
+
+    /**
+     * Each kind of note raised, counted, as "2 warnings"; none for a kind
+     * never raised.
+     *
+     * @return list<string>
+     */
+    private function notesCounted(int $warnings, int $deprecations, int $notices): array
+    {
+        $counted = [];
+
+        foreach (['warning' => $warnings, 'deprecation' => $deprecations, 'notice' => $notices] as $noun => $count) {
+            if ($count > 0) {
+                $counted[] = $count . ' ' . $noun . ($count !== 1 ? 's' : '');
+            }
+        }
+
+        return $counted;
     }
 
     /**
@@ -382,11 +433,14 @@ final class Html extends AbstractFormatter
             $parts[] = $failed . ' failed';
         }
 
+        $parts = [...$parts, ...$this->notesCounted($counts['warnings'] + $counts['stepWarnings'], $counts['deprecations'] + $counts['stepDeprecations'], $counts['notices'] + $counts['stepNotices'])];
+
         return implode(' · ', $parts);
     }
 
     /**
-     * Renders the summary footer with example counts and duration.
+     * Renders the summary footer: the run counted in the console's words, and
+     * how long it took.
      *
      * @param array<string, int> $counts the tallied suite counts
      * @param float $duration the suite duration in seconds
@@ -394,29 +448,14 @@ final class Html extends AbstractFormatter
      */
     private function renderFooter(array $counts, float $duration): string
     {
-        $parts = [];
-        $labels = [
-            'passes' => 'passed',
-            'risky' => 'risky',
-            'failures' => 'failed',
-            'errors' => 'errored',
-            'pending' => 'pending',
-            'exampleSkipped' => 'skipped',
-        ];
+        $lines = '';
 
-        foreach ($labels as $key => $label) {
-            if ($counts[$key] > 0) {
-                $parts[] = $counts[$key] . ' ' . $label;
-            }
+        foreach ((new CountLines($counts))->lines() as $line) {
+            $parts = array_column($line['parts'], 'text');
+            $lines .= sprintf("<p>%s</p>\n", $this->escape($line['heading'] . ($parts === [] ? '' : ' (' . implode(', ', $parts) . ')')));
         }
 
-        return sprintf(
-            "<footer class=\"summary\">\n<p>%d example%s%s</p>\n<p>Finished in %.4f seconds</p>\n</footer>\n",
-            $counts['examples'],
-            $counts['examples'] !== 1 ? 's' : '',
-            $parts !== [] ? ' (' . implode(', ', $parts) . ')' : '',
-            $duration,
-        );
+        return sprintf("<footer class=\"summary\">\n%s<p>Finished in %.4f seconds</p>\n</footer>\n", $lines, $duration);
     }
 
     /**

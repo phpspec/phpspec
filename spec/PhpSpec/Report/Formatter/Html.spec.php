@@ -46,7 +46,7 @@ describe(Html::class, function() {
         $text = $output->fetch();
         expect($text)->toContain('class="example failed"');
         expect($text)->toContain('Expected a to be b');
-        expect($text)->toContain('<p>1 example (1 failed)</p>');
+        expect($text)->toContain('<p>1 spec, 1 example (1 failed)</p>');
     });
 
     it("words the footer as the console summary does, every outcome counted once", function() {
@@ -66,7 +66,62 @@ describe(Html::class, function() {
 
         (new Html($output))->format(new SuiteResult([$spec]));
 
-        expect($output->fetch())->toContain('<p>6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)</p>');
+        expect($output->fetch())->toContain('<p>1 spec, 6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)</p>');
+    });
+
+    it("counts the stories on a line of their own, notes included, as the console does", function () {
+        $output = new BufferedOutput();
+        $step = new StepResult("Given the old API", "passed");
+        $step->raised([['severity' => E_USER_WARNING, 'message' => 'the cache is cold', 'file' => '/proj/features/steps/steps.php', 'line' => 3]]);
+
+        (new Html($output))->format(new SuiteResult([new FeatureResult("Legacy", [new ScenarioResult("Old API", [$step])])]));
+
+        expect($output->fetch())->toContain('<p>1 feature, 1 scenario, 1 step (1 passed, 1 warning)</p>');
+    });
+
+    it("counts the notes in the header, and on the bar of the group that raised them", function () {
+        $output = new BufferedOutput();
+        $example = new ExampleResult("totals the entries", [MatchResult::passed()]);
+        $example->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'totals are rounded', 'file' => '/proj/src/App/Ledger.php', 'line' => 9],
+            ['severity' => E_USER_DEPRECATED, 'message' => 'sum() is deprecated', 'file' => '/proj/src/App/Ledger.php', 'line' => 10],
+        ]);
+
+        (new Html($output))->format(new SuiteResult([new SpecificationResult("Ledger", [$example])]));
+        $text = $output->fetch();
+
+        expect($text)->toContain('<p class="meta">1 example · 1 warning · 1 deprecation</p>');
+        expect($text)->toContain('<span class="count">1 example · 1 warning · 1 deprecation</span>');
+    });
+
+    it("unfolds a passing example that raised a note to each note, with its kind, its text and the line that raised it", function () {
+        $output = new BufferedOutput();
+        $example = new ExampleResult("totals the entries", [MatchResult::passed()]);
+        $example->raised([['severity' => E_USER_WARNING, 'message' => 'totals are <rounded>', 'file' => '/proj/src/App/Ledger.php', 'line' => 9]]);
+
+        (new Html($output))->format(new SuiteResult([new SpecificationResult("Ledger", [$example])]));
+        $text = $output->fetch();
+
+        expect($text)->toContain('<details class="example passed">');
+        expect($text)->toContain('<summary>totals the entries <span class="reason">1 warning</span></summary>');
+        expect($text)->toContain('<li class="note warning">⚠ totals are &lt;rounded&gt; <span class="where">at /proj/src/App/Ledger.php:9</span></li>');
+    });
+
+    it("unfolds a step that raised a note, passing or not, and keeps a failure's message beside it", function () {
+        $output = new BufferedOutput();
+        $noted = new StepResult("Given the old API", "passed");
+        $noted->raised([['severity' => E_USER_NOTICE, 'message' => 'the clock is local', 'file' => '/proj/features/steps/steps.php', 'line' => 5]]);
+        $broken = new StepResult("Then it fails", "failure");
+        $broken->setError(new StepError("Expected 1 to be 2", new \RuntimeException("Expected 1 to be 2")));
+        $broken->raised([['severity' => E_USER_DEPRECATED, 'message' => 'check() is deprecated', 'file' => '/proj/features/steps/steps.php', 'line' => 8]]);
+
+        (new Html($output))->format(new SuiteResult([new FeatureResult("Legacy", [new ScenarioResult("Old API", [$noted, $broken])])]));
+        $text = $output->fetch();
+
+        expect($text)->toContain('<summary>Given the old API <span class="reason">1 notice</span></summary>');
+        expect($text)->toContain('<li class="note notice">ℹ the clock is local <span class="where">at /proj/features/steps/steps.php:5</span></li>');
+        expect($text)->toContain('Expected 1 to be 2');
+        expect($text)->toContain('<li class="note deprecation">⛔ check() is deprecated <span class="where">at /proj/features/steps/steps.php:8</span></li>');
     });
 
     it("counts an errored step among the failed in the header", function() {

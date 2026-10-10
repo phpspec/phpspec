@@ -463,6 +463,25 @@ Feature: CLI options
     And a file "report.html" should be generated
     And the file "report.html" should contain "<!DOCTYPE html>"
 
+  Scenario: The HTML report counts the notes and unfolds the example that raised one
+    Given a spec file "spec/App/Noisy.spec.php":
+      """
+      <?php
+      describe('Noisy', function () {
+          it('warns', function () {
+              trigger_error('totals are rounded', E_USER_WARNING);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "-f html -o report.html"
+    Then the file "report.html" should contain "1 spec, 1 example (1 passed, 1 warning)"
+    And the file "report.html" should contain:
+      """
+      <summary>warns <span class="reason">1 warning</span></summary>
+      """
+    And the file "report.html" should contain "⚠ totals are rounded"
+
   Scenario: Unknown formats are rejected instead of silently falling back
     Given a spec file "spec/App/BadFormat.spec.php":
       """

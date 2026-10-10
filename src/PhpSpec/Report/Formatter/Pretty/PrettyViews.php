@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter\Pretty;
 
+use PhpSpec\Report\CountLines;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -35,6 +36,9 @@ final class PrettyViews
      * cut at the same place and a reader comparing them sees the same text.
      */
     private const PRINTED_MAX = 4000;
+
+    /** The colour each tone of a counted outcome is printed in. */
+    private const TONES = ['passed' => 'green', 'failed' => 'red', 'warned' => 'yellow', 'skipped' => 'cyan', 'undefined' => 'bright-blue'];
 
     public static function specification(OutputInterface $output, SpecificationResult $specification, bool $verbose = false): void
     {
@@ -254,77 +258,12 @@ final class PrettyViews
      */
     public static function counts(OutputInterface $output, array $counts, float $duration = 0): void
     {
-        if (!empty($counts['features'])) {
-            $output->write($counts['features'] . ' feature' . ($counts['features'] != 1 ? 's' : '') . ', ');
-            $output->write($counts['scenarios'] . ' scenario' . ($counts['scenarios'] != 1 ? 's' : '') . ', ');
-            $output->write($counts['steps'] . ' step' . ($counts['steps'] != 1 ? 's' : '') . ' (');
-            $parts = [];
-            if ($counts['stepPasses']) {
-                $parts[] = '<fg=green>' . $counts['stepPasses'] . ' passed</>';
-            }
-            if ($counts['stepFailures']) {
-                $parts[] = '<fg=red>' . $counts['stepFailures'] . ' failed</>';
-            }
-            if (!empty($counts['stepErrors'])) {
-                $parts[] = '<fg=red>' . $counts['stepErrors'] . ' errored</>';
-            }
-            if (!empty($counts['stepPending'])) {
-                $parts[] = '<fg=yellow>' . $counts['stepPending'] . ' pending</>';
-            }
-            if ($counts['undefined']) {
-                $parts[] = '<fg=bright-blue>' . $counts['undefined'] . ' undefined</>';
-            }
-            if ($counts['skipped']) {
-                $parts[] = '<fg=cyan>' . $counts['skipped'] . ' skipped</>';
-            }
-            $parts = [...$parts, ...self::notesCounted($counts['stepWarnings'] ?? 0, $counts['stepDeprecations'] ?? 0, $counts['stepNotices'] ?? 0)];
-            $output->write(implode(', ', $parts));
-            $output->write(')' . PHP_EOL);
-        }
-        $specs = empty($counts['specs']) ? '' : $counts['specs'] . ' spec' . ($counts['specs'] != 1 ? 's' : '');
-        if ($specs !== '' && empty($counts['examples'])) {
-            $output->write($specs . PHP_EOL);
-        }
-        if (isset($counts['examples']) && $counts['examples'] > 0) {
-            $exParts = [];
-            if ($counts['passes']) {
-                $exParts[] = '<fg=green>' . $counts['passes'] . ' passed</>';
-            }
-            if ($counts['risky']) {
-                $exParts[] = '<fg=yellow>' . $counts['risky'] . ' risky</>';
-            }
-            if ($counts['failures']) {
-                $exParts[] = '<fg=red>' . $counts['failures'] . ' failed</>';
-            }
-            if ($counts['errors']) {
-                $exParts[] = '<fg=red>' . $counts['errors'] . ' errored</>';
-            }
-            if ($counts['pending']) {
-                $exParts[] = '<fg=yellow>' . $counts['pending'] . ' pending</>';
-            }
-            if ($counts['exampleSkipped']) {
-                $exParts[] = '<fg=cyan>' . $counts['exampleSkipped'] . ' skipped</>';
-            }
-            $exParts = [...$exParts, ...self::notesCounted($counts['warnings'], $counts['deprecations'], $counts['notices'])];
-            $output->write(($specs === '' ? '' : $specs . ', ') . $counts['examples'] . ' example' . ($counts['examples'] != 1 ? 's' : '') . ' (' . implode(', ', $exParts) . ')' . PHP_EOL);
+        foreach ((new CountLines($counts))->lines() as $line) {
+            $parts = array_map(static fn(array $part): string => '<fg=' . self::TONES[$part['tone']] . '>' . $part['text'] . '</>', $line['parts']);
+            $output->write($line['heading'] . ($parts === [] ? '' : ' (' . implode(', ', $parts) . ')') . PHP_EOL);
         }
         if ($duration > 0) {
             $output->write(sprintf('Finished in %.4f seconds' . PHP_EOL, $duration));
         }
-    }
-
-    /**
-     * @return list<string> one part per kind of note raised, none for a kind never raised
-     */
-    private static function notesCounted(int $warnings, int $deprecations, int $notices): array
-    {
-        $parts = [];
-        foreach (['warning' => $warnings, 'deprecation' => $deprecations, 'notice' => $notices] as $kind => $count) {
-            if ($count > 0) {
-                $parts[] = '<fg=yellow>' . $count . ' ' . $kind . ($count !== 1 ? 's' : '') . '</>';
-            }
-        }
-
-        return $parts;
     }
 }
