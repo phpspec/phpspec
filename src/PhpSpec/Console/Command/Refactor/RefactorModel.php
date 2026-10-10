@@ -26,6 +26,7 @@ use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 use PhpSpec\Source\Imports;
+use Throwable;
 
 /**
  * @internal
@@ -71,6 +72,8 @@ final class RefactorModel
      * the classes it imports from the source path.
      *
      * @param string $journal the recent refactorings, one per line
+     *
+     * @throws ModelFailedException
      */
     public function plan(RefactorTarget $target, string $journal): RefactorPlan|Declined
     {
@@ -125,6 +128,7 @@ final class RefactorModel
      * touched as it now stands.
      *
      * @throws RefusedStepException
+     * @throws ModelFailedException
      */
     public function step(RefactorPlan $plan, int $index): RefactorStep
     {
@@ -138,6 +142,7 @@ final class RefactorModel
      * Asks for the step again, told what the specs said after it.
      *
      * @throws RefusedStepException
+     * @throws ModelFailedException
      */
     public function fix(RefactorStep $step, string $failures): RefactorStep
     {
@@ -153,7 +158,13 @@ final class RefactorModel
     private function ask(string $content, array $tools, string|array $choice): Response
     {
         $this->messages[] = Message::user($content);
-        $response = $this->provider->chat($this->messages, $this->options($tools, $choice));
+
+        try {
+            $response = $this->provider->chat($this->messages, $this->options($tools, $choice));
+        } catch (Throwable $e) {
+            throw new ModelFailedException(sprintf('The model did not answer: %s', $e->getMessage()), 0, $e);
+        }
+
         $this->messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
         $this->record($response);
 

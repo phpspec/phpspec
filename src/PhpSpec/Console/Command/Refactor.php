@@ -15,7 +15,6 @@
 namespace PhpSpec\Console\Command;
 
 use InvalidArgumentException;
-use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\PromptLibrary;
@@ -23,16 +22,15 @@ use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
-use PhpSpec\Console\Command\Refactor\Diff;
+use PhpSpec\Console\Command\Refactor\ModelFailedException;
+use PhpSpec\Console\Command\Refactor\PlannedStep;
 use PhpSpec\Console\Command\Refactor\Progress;
 use PhpSpec\Console\Command\Refactor\RefactorModel;
 use PhpSpec\Console\Command\Refactor\RefactorPlan;
-use PhpSpec\Console\Command\Refactor\RefactorStep;
 use PhpSpec\Console\Command\Refactor\RefactorTarget;
-use PhpSpec\Console\Command\Refactor\RefusedStepException;
 use PhpSpec\Console\Command\Refactor\SpecSuite;
+use PhpSpec\Console\Command\Refactor\StepByStep;
 use PhpSpec\Console\Command\Refactor\SubprocessSuite;
-use PhpSpec\Console\Command\Refactor\SuiteCheck;
 use PhpSpec\Console\Command\Refactor\TargetResolver;
 use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Console\Command\Run\Generation;
@@ -40,11 +38,13 @@ use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
 use PhpSpec\Guard\Inspection;
 use PhpSpec\RealFilesystem;
+use PhpSpec\Report\Formatter\Agent\Schema;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
+use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
@@ -80,20 +80,21 @@ final class Refactor extends Command
         $this
             ->setName('refactor')
             ->setDescription('AI-powered behaviour-preserving refactoring')
-            ->addArgument('target', Argument::OPTIONAL, 'Class FQCN, FQCN::method, or spec file path; the source modified last when left out');
+            ->addArgument('target', Argument::OPTIONAL, 'Class FQCN, FQCN::method, or spec file path; the source modified last when left out')
+            ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty');
     }
 
     protected function execute(Input $input, Output $output): int
     {
+        $forAgent = $input->getOption('format') === 'agent';
         $aiConfig = $this->config->getAiConfig();
+
         if ($aiConfig === null) {
-            $output->writeln('<fg=red>' . $this->config->aiConfigProblem() . '</>');
-            return 1;
+            return $this->refuse($output, $forAgent, (string) $this->config->aiConfigProblem());
         }
 
         if (!$this->loadBootstrap()) {
-            $output->writeln('<fg=red>Bootstrap file not found.</>');
-            return 1;
+            return $this->refuse($output, $forAgent, 'Bootstrap file not found.');
         }
 
         $root = getcwd() ?: '.';
@@ -102,25 +103,40 @@ final class Refactor extends Command
         try {
             $target = (new TargetResolver($this->config, $this->filesystem, $root))->resolve(is_string($argument) ? $argument : null);
             $provider = $this->provider ?? ProviderFactory::create($aiConfig);
-        } catch (UnresolvedTargetException|RuntimeException|InvalidArgumentException $e) {
-            $output->writeln('<fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
-            return 1;
+        } catch (UnresolvedTargetException $e) {
+            return $this->refuse($output, $forAgent, $e->problem(), $e->remedy());
+        } catch (RuntimeException|InvalidArgumentException $e) {
+            return $this->refuse($output, $forAgent, $e->getMessage());
         }
 
         $suite = $this->suite ?? new SubprocessSuite($root, Inspection::of($this->config, $this->filesystem, $root) !== null);
-        $output->writeln('  <fg=gray>Checking the specs...</>');
+        if (!$forAgent) {
+            $output->writeln('  <fg=gray>Checking the specs...</>');
+        }
         $baseline = $suite->check();
 
         if (!$baseline->green()) {
-            $output->writeln('');
-            $output->writeln('<fg=red>Specs must pass before refactoring.</> Fix failing specs first.');
-            $output->writeln('');
-            $output->writeln(OutputFormatter::escape($baseline->report()));
-            return 1;
+            return $this->refuse($output, $forAgent, 'Specs must pass before refactoring.', 'Fix failing specs first.', $baseline->failures());
         }
 
         $model = new RefactorModel($provider, $this->config, $this->filesystem, $root, new PromptLibrary($this->filesystem));
         $journal = new RefactorJournal($this->filesystem);
+
+        try {
+            return $forAgent
+                ? $this->planForAgent($output, $target, $model->plan($target, $journal->rendered()))
+                : $this->refactorWithTheDeveloper($input, $output, $target, $model, $suite, $journal);
+        } catch (ModelFailedException $e) {
+            return $this->refuse($output, $forAgent, $e->getMessage());
+        }
+    }
+
+    /**
+     * Shows the plan, asks to go ahead, and carries it out step by step,
+     * keeping in the journal the steps that were kept.
+     */
+    private function refactorWithTheDeveloper(Input $input, Output $output, RefactorTarget $target, RefactorModel $model, SpecSuite $suite, RefactorJournal $journal): int
+    {
         $progress = new Progress($output);
 
         $output->writeln('');
@@ -129,6 +145,7 @@ final class Refactor extends Command
         if ($plan instanceof Declined) {
             $output->writeln('');
             $output->writeln(sprintf('  <fg=yellow>Nothing to refactor in %s: %s</>', OutputFormatter::escape($target->fqcn), OutputFormatter::escape($plan->reason)));
+
             return 0;
         }
 
@@ -144,7 +161,7 @@ final class Refactor extends Command
         }
 
         $kept = [];
-        $exitCode = $this->carryOut($output, $plan, $model, $suite, $consent, $progress, new Writer($this->filesystem, $root), $kept);
+        $exitCode = (new StepByStep($output, $model, $suite, $consent, $progress, new Writer($this->filesystem, getcwd() ?: '.')))->carryOut($plan, $kept);
 
         if ($kept !== []) {
             $journal->record($this->relativeClass($target), $plan->technique, implode('; ', $kept));
@@ -154,96 +171,62 @@ final class Refactor extends Command
     }
 
     /**
-     * Takes the plan one step at a time: the model writes it, the developer
-     * sees it and says yes, it is written and the suite checked. A step that
-     * breaks more than it meant to gets one fix; still broken, it is undone
-     * and the run stops there, the steps before it kept.
-     *
-     * @param list<string> $kept the titles of the steps kept, filled in as they are
+     * The plan, or the model's reason to decline, as one receipt: a coding
+     * agent cannot answer the questions a plan is carried out by, so nothing
+     * is written.
      */
-    private function carryOut(Output $output, RefactorPlan $plan, RefactorModel $model, SpecSuite $suite, Consent $consent, Progress $progress, Writer $writer, array &$kept): int
+    private function planForAgent(Output $output, RefactorTarget $target, RefactorPlan|Declined $plan): int
     {
-        foreach ($plan->steps as $index => $planned) {
-            $number = $index + 1;
-            $last = $number === count($plan->steps);
+        $named = $target->fqcn . ($target->method === null ? '' : '::' . $target->method);
+        $about = ['class' => $target->fqcn]
+            + ($target->method === null ? [] : ['method' => $target->method])
+            + ['source' => $this->relative($target->sourceFile), 'spec' => $this->relative($target->specFile)];
 
-            try {
-                $output->writeln('');
-                $step = $progress->during($planned->doing, fn(): RefactorStep => $model->step($plan, $index));
-                $progress->checklist($plan, $index);
-                $this->showFiles($output, $step);
-
-                if (!$consent->confirm($output, '  Apply this step?', 'refactor-step', 'apply the remaining refactoring steps')) {
-                    $output->writeln(sprintf('  Stopped before step %d: the steps before it are kept.', $number));
-
-                    return 0;
-                }
-
-                $applied = $this->apply($writer, $step);
-                $check = $suite->check();
-
-                if (!$this->holds($check, $step, $last)) {
-                    $output->writeln('  <fg=red>Specs failed ✘</>, asking for a fix...');
-                    $output->writeln($this->indented($check->report()));
-                    $output->writeln('');
-                    $step = $progress->during('Fixing it', fn(): RefactorStep => $model->fix($step, $check->report()));
-                    $this->showFiles($output, $step);
-                    $fixed = $consent->confirm($output, '  Apply this fix?', 'refactor-fix', 'apply fixes');
-                    $applied = $fixed ? [...$this->apply($writer, $step), ...$applied] : $applied;
-                    $check = $fixed ? $suite->check() : $check;
-
-                    if (!$fixed || !$this->holds($check, $step, $last)) {
-                        array_map($writer->revert(...), $applied);
-                        $output->writeln($fixed ? '  <fg=red>Specs failed ✘</>' : '');
-                        $output->writeln($fixed ? $this->indented($check->report()) : '');
-                        $output->writeln(sprintf('  Stopped at step %d: the steps before it are kept, this one is undone.', $number));
-
-                        return 1;
-                    }
-                }
-            } catch (RefusedStepException $e) {
-                $output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
-                $output->writeln(sprintf('  Stopped at step %d: the steps before it are kept.', $number));
-
-                return 1;
-            }
-
-            $output->writeln($check->green()
-                ? '  <fg=green>Specs still pass ✓</>'
-                : '  <fg=yellow>Red, as this step meant:</> ' . implode(', ', array_map(static fn(Proposal $file): string => $file->path, $step->files)));
-            $kept[] = $planned->title;
-        }
-
-        $output->writeln('');
-        $output->writeln(sprintf('  <fg=green>Refactoring done: %s ✓</>', OutputFormatter::escape($plan->technique)));
+        $this->receipt($output, $about + ($plan instanceof Declined ? ['declined' => $plan->reason] : [
+            'technique' => $plan->technique,
+            'rationale' => $plan->rationale,
+            'steps' => array_map(static fn(PlannedStep $step): string => $step->title, $plan->steps),
+            'remedy' => sprintf('Run phpspec refactor %s in a terminal to carry out the plan.', str_replace('\\', '/', $named)),
+        ]));
 
         return 0;
     }
 
     /**
-     * Whether the suite stands where the step meant it to: green, or, for a
-     * step that writes a spec first, red only in the files that step wrote.
-     * The last step leaves it green.
+     * Says why there will be no refactoring and what to do about it, as a
+     * receipt for a coding agent, else in red.
+     *
+     * @param list<string> $failures the failing specs, one per line
      */
-    private function holds(SuiteCheck $check, RefactorStep $step, bool $last): bool
+    private function refuse(Output $output, bool $forAgent, string $problem, string $remedy = '', array $failures = []): int
     {
-        if ($check->green()) {
-            return true;
+        if ($forAgent) {
+            $this->receipt($output, ['error' => $problem] + ($remedy === '' ? [] : ['remedy' => $remedy]) + ($failures === [] ? [] : ['failures' => $failures]));
+
+            return 1;
         }
 
-        return !$last && $step->red && $check->confinedTo(array_map(static fn(Proposal $file): string => $file->path, $step->files));
+        if ($failures !== []) {
+            $output->writeln('');
+        }
+
+        $output->writeln(rtrim(sprintf('<fg=red>%s</> %s', OutputFormatter::escape($problem), OutputFormatter::escape($remedy))));
+
+        if ($failures !== []) {
+            $output->writeln('');
+            $output->writeln(OutputFormatter::escape(implode("\n", $failures)));
+        }
+
+        return 1;
     }
 
     /**
-     * @return list<Proposal> what was written, to undo in this order
+     * @param array<string, mixed> $fields
      */
-    private function apply(Writer $writer, RefactorStep $step): array
+    private function receipt(Output $output, array $fields): void
     {
-        foreach ($step->files as $file) {
-            $writer->apply($file);
-        }
-
-        return array_reverse($step->files);
+        $json = json_encode(['v' => Schema::V, 'action' => 'refactor'] + $fields, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+        $output->write($json . "\n", false, Output::OUTPUT_RAW);
     }
 
     private function showPlan(Output $output, RefactorPlan $plan, Progress $progress): void
@@ -258,15 +241,6 @@ final class Refactor extends Command
         $progress->checklist($plan);
         $output->writeln('');
         $output->writeln('PhpSpec has written a refactoring plan and is ready to start.');
-    }
-
-    private function showFiles(Output $output, RefactorStep $step): void
-    {
-        foreach ($step->files as $file) {
-            $output->writeln('');
-            $output->writeln(sprintf('  <fg=white>%s</>%s', $file->path, $file->isNew ? ' (new)' : ''));
-            $output->writeln(Diff::format(Diff::compute($file->isNew ? [] : explode("\n", $file->old), explode("\n", $file->new))));
-        }
     }
 
     /**
@@ -285,9 +259,9 @@ final class Refactor extends Command
         return implode("\n", $lines);
     }
 
-    private function indented(string $report): string
+    private function relative(string $file): string
     {
-        return '    ' . str_replace("\n", "\n    ", OutputFormatter::escape($report));
+        return ltrim(substr($file, strlen(getcwd() ?: '.')), '/\\');
     }
 
     /**
@@ -296,7 +270,7 @@ final class Refactor extends Command
      */
     private function relativeClass(RefactorTarget $target): string
     {
-        $relative = ltrim(substr($target->sourceFile, strlen(getcwd() ?: '.')), '/\\');
+        $relative = $this->relative($target->sourceFile);
         $srcDir = ltrim($this->config->getSrcPath(), './');
         if (str_starts_with($relative, $srcDir . '/')) {
             $relative = substr($relative, strlen($srcDir) + 1);

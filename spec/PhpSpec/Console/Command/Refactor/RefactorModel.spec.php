@@ -5,6 +5,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
+use PhpSpec\Console\Command\Refactor\ModelFailedException;
 use PhpSpec\Console\Command\Refactor\PlannedStep;
 use PhpSpec\Console\Command\Refactor\RefactorModel;
 use PhpSpec\Console\Command\Refactor\RefactorPlan;
@@ -41,7 +42,7 @@ describe(RefactorModel::class, function () {
         ],
     ])], 1200));
     let('replay', fn() => new ReplayProvider([]));
-    let('model', fn() => function (Response ...$responses): RefactorModel {
+    let('model', fn() => function (Response|Throwable ...$responses): RefactorModel {
         $this->replay = new ReplayProvider($responses);
 
         return new RefactorModel($this->replay, new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]), $this->filesystem, '/proj', new PromptLibrary($this->filesystem));
@@ -63,6 +64,12 @@ describe(RefactorModel::class, function () {
         expect($asked)->toContain("# src/App/Pricing/Rates.php\n");
         expect($request['options']['toolChoice'])->toBe('required');
         expect(array_map(fn($tool) => $tool->getName(), $request['options']['tools']))->toBe(['propose_plan', 'decline_refactoring']);
+    });
+
+    it('says the model did not answer, in the provider\'s words, when asking it fails', function () {
+        $model = ($this->model)(new RuntimeException('Google API error (400): API key not valid.'));
+
+        expect(fn() => $model->plan($this->target, ''))->toThrow(new ModelFailedException('The model did not answer: Google API error (400): API key not valid.'));
     });
 
     it('reads a decline, or an answer in prose, as nothing to refactor, in the model\'s words', function () {

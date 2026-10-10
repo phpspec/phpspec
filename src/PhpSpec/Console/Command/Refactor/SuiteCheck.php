@@ -87,12 +87,21 @@ final readonly class SuiteCheck
     }
 
     /**
-     * Each failure on a line of its own: where it is, which example, and what
-     * it said.
+     * Each failure as a line: where it is, which example, and what it said.
+     *
+     * @return list<string>
+     */
+    public function failures(): array
+    {
+        return array_column($this->failures, 'line');
+    }
+
+    /**
+     * Each failure on a line of its own.
      */
     public function report(): string
     {
-        return implode("\n", array_column($this->failures, 'line'));
+        return implode("\n", $this->failures());
     }
 
     /**

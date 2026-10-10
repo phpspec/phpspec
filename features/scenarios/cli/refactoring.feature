@@ -326,6 +326,60 @@ Feature: AI-powered refactoring
     Then the exit code should be 1
     And the output should contain "No class named Nope under src. Describe it first: phpspec describe Nope"
 
+  Scenario: For a coding agent, a refusal is one JSON receipt
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    When I run phpspec command "refactor Nope --format=agent"
+    Then the exit code should not be 0
+    And the output should be valid JSON
+    And the output should contain:
+      """
+      "error":"No class named Nope under src."
+      """
+    And the output should contain:
+      """
+      "remedy":"Describe it first: phpspec describe Nope"
+      """
+
+  Scenario: For a coding agent, failing specs are named in the refusal
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Broken.spec.php":
+      """
+      <?php
+      use App\Broken;
+
+      describe(Broken::class, function () {
+          it('fails', function () {
+              expect(true)->toBeFalse();
+          });
+      });
+      """
+    And a class "src/App/Broken.php":
+      """
+      <?php
+      namespace App;
+
+      class Broken {}
+      """
+    When I run phpspec command "refactor App/Broken --format=agent"
+    Then the exit code should not be 0
+    And the output should be valid JSON
+    And the output should contain:
+      """
+      "error":"Specs must pass before refactoring."
+      """
+    And the output should contain "spec/App/Broken.spec.php:6  Broken > fails: Expected true to be false"
+    And the output should not contain "Checking the specs"
+
   Scenario: A class named with slashes resolves as with backslashes
     Given a phpspec.yaml config:
       """

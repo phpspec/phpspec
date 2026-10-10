@@ -52,10 +52,11 @@ describe(SuiteCheck::class, function () {
         expect($check->green())->toBeFalse();
         expect($check->confinedTo(['spec/App/Checkout/LoyaltyDiscount.spec.php']))->toBeTrue();
         expect($check->confinedTo(['spec/App/Checkout/CheckoutService.spec.php']))->toBeFalse();
-        expect($check->report())->toBe(
-            "spec/App/Checkout/LoyaltyDiscount.spec.php:7  LoyaltyDiscount > discounts: Class \"App\\Checkout\\LoyaltyDiscount\" not found\n"
-            . "spec/App/Checkout/LoyaltyDiscount.spec.php:12  LoyaltyDiscount > caps: Expected 10 to be 5",
-        );
+        expect($check->failures())->toBe([
+            'spec/App/Checkout/LoyaltyDiscount.spec.php:7  LoyaltyDiscount > discounts: Class "App\\Checkout\\LoyaltyDiscount" not found',
+            'spec/App/Checkout/LoyaltyDiscount.spec.php:12  LoyaltyDiscount > caps: Expected 10 to be 5',
+        ]);
+        expect($check->report())->toBe(implode("\n", $check->failures()));
     });
 
     it('keeps no failure it cannot place, nor a run that died, inside any file', function () {

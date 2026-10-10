@@ -427,6 +427,35 @@ bin/phpspec exemplify App/Basket checkout --agent
 
 `added` is `false` when an example for that method is already present.
 
+## Refactoring
+
+`refactor --format=agent` asks the model for a refactoring plan and answers
+with one receipt. A plan is carried out one asked step at a time, and an
+agent cannot answer those questions, so nothing is written: the receipt is
+the plan, for you to carry out, or for a person to run `refactor` in a
+terminal.
+
+```bash
+bin/phpspec refactor App/Checkout/CheckoutService --format=agent
+```
+```json
+{"v":2,"action":"refactor","class":"App\\Checkout\\CheckoutService","source":"src/App/Checkout/CheckoutService.php","spec":"spec/App/Checkout/CheckoutService.spec.php","technique":"Replace Conditional with Polymorphism","rationale":"CheckoutService decides itself how a loyal customer's discount is worked out...","steps":["Introduce a DiscountPolicy abstraction","Describe LoyaltyDiscount","Move the loyalty rule into LoyaltyDiscount","Let CheckoutService ask its DiscountPolicy"],"remedy":"Run phpspec refactor App/Checkout/CheckoutService in a terminal to carry out the plan."}
+```
+
+`class`, `source` and `spec` say what was resolved, which matters when no
+target was given and the source modified last was taken; `method` is there
+when the target named one. When the model finds nothing worth changing, the
+receipt carries its reason as `declined` instead of a plan. Both exit `0`.
+
+A refusal carries `error` and, when the way past is known, `remedy`, and
+exits `1`: no spec for the class, no class by that name, no model to ask or
+one that did not answer, and specs that are not green, each failure listed
+in `failures`:
+
+```json
+{"v":2,"action":"refactor","error":"Specs must pass before refactoring.","remedy":"Fix failing specs first.","failures":["spec/App/Broken.spec.php:6  Broken > fails: Expected true to be false"]}
+```
+
 ## The loop
 
 Putting it together, an agent drives the full cycle through the CLI:

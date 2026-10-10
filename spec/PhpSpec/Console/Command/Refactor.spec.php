@@ -41,7 +41,8 @@ describe(Refactor::class, function () {
         'files' => array_map(fn(string $path, string $content): array => ['path' => $path, 'content' => $content], array_keys($files), $files),
         'red' => $red,
     ])], 900));
-    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService'): CommandTester {
+    let('outage', fn() => new RuntimeException('Google API error (400): API key not valid.'));
+    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = []): CommandTester {
         $this->replay = new ReplayProvider($responses);
         $suite = new class ($checks) implements SpecSuite {
             public function __construct(private array $checks) {}
@@ -66,10 +67,11 @@ describe(Refactor::class, function () {
         $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($command);
 
         $tester = new CommandTester($command);
-        $tester->execute($target === '' ? [] : ['target' => $target]);
+        $tester->execute(($target === '' ? [] : ['target' => $target]) + $options);
 
         return $tester;
     });
+    let('receipt', fn() => fn(CommandTester $tester): mixed => json_decode($tester->getDisplay(), true));
 
     context('a plan', function () {
 
@@ -173,6 +175,21 @@ describe(Refactor::class, function () {
             expect($this->project->files)->not()->toHaveKey($this->cwd . '/src/App/Checkout/LoyaltyDiscount.php');
         });
 
+        it('undoes the step when its fix cannot be written, keeping the steps before it', function () {
+            $original = $this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'];
+
+            $tester = ($this->run)([
+                ($this->plan)('Use a DiscountPolicy in CheckoutService'),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // broken\n"]),
+                ($this->step)(['vendor/acme/Policy.php' => "<?php\n"]),
+            ], [$this->green, ($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100')], ['', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+        });
+
         it('stops before a step the developer turns down, keeping the steps before it', function () {
             $tester = ($this->run)([
                 ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
@@ -197,6 +214,123 @@ describe(Refactor::class, function () {
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
             expect(($this->code)())->toBe($before);
+        });
+    });
+
+    context('a model that does not answer', function () {
+
+        it('says so and stops when it fails on the plan', function () {
+            $tester = ($this->run)([$this->outage], [$this->green]);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('The model did not answer: Google API error (400): API key not valid.');
+        });
+
+        it('stops at a step it fails to write, keeping the steps before it', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php // kept\n"]),
+                $this->outage,
+            ], [$this->green, $this->green], ['', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('The model did not answer: Google API error (400): API key not valid.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept.');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
+        });
+
+        it('undoes a step it fails to fix, keeping the steps before it', function () {
+            $original = $this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'];
+
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php // kept\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // broken\n"]),
+                $this->outage,
+            ], [$this->green, $this->green, ($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100')], ['', '', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('The model did not answer: Google API error (400): API key not valid.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept, this one is undone.');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
+        });
+    });
+
+    context('for a coding agent', function () {
+
+        it('answers with the plan as one JSON receipt, asking nothing and writing nothing', function () {
+            $before = ($this->code)();
+
+            $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService')], [$this->green], options: ['--format' => 'agent']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect(substr_count($tester->getDisplay(), "\n"))->toBe(1);
+            expect(($this->receipt)($tester))->toBe([
+                'v' => 2,
+                'action' => 'refactor',
+                'class' => 'App\\Checkout\\CheckoutService',
+                'source' => 'src/App/Checkout/CheckoutService.php',
+                'spec' => 'spec/App/Checkout/CheckoutService.spec.php',
+                'technique' => 'Replace Conditional with Polymorphism',
+                'rationale' => "CheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule:\n  - loyalty customers\n  - seasonal campaigns",
+                'steps' => ['Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'],
+                'remedy' => 'Run phpspec refactor App/Checkout/CheckoutService in a terminal to carry out the plan.',
+            ]);
+            expect(($this->code)())->toBe($before);
+            expect($this->replay->requests)->toHaveCount(1);
+        });
+
+        it('answers with the model\'s reason when it declines', function () {
+            $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => 'Clean.'])])], [$this->green], options: ['--format' => 'agent']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect(($this->receipt)($tester))->toBe([
+                'v' => 2,
+                'action' => 'refactor',
+                'class' => 'App\\Checkout\\CheckoutService',
+                'source' => 'src/App/Checkout/CheckoutService.php',
+                'spec' => 'spec/App/Checkout/CheckoutService.spec.php',
+                'declined' => 'Clean.',
+            ]);
+        });
+
+        it('refuses with the problem and what to do about it', function () {
+            $this->project->delete($this->cwd . '/spec/App/Checkout/CheckoutService.spec.php');
+
+            $tester = ($this->run)([], [], options: ['--format' => 'agent']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect(($this->receipt)($tester))->toBe([
+                'v' => 2,
+                'action' => 'refactor',
+                'error' => 'App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it.',
+                'remedy' => 'Describe it first: phpspec describe App\\Checkout\\CheckoutService',
+            ]);
+        });
+
+        it('refuses over failing specs, naming each failure', function () {
+            $tester = ($this->run)([], [($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100')], options: ['--format' => 'agent']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect(($this->receipt)($tester))->toBe([
+                'v' => 2,
+                'action' => 'refactor',
+                'error' => 'Specs must pass before refactoring.',
+                'remedy' => 'Fix failing specs first.',
+                'failures' => ['spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100'],
+            ]);
+        });
+
+        it('refuses when the model does not answer, and when there is no model to ask', function () {
+            $unanswered = ($this->run)([$this->outage], [$this->green], options: ['--format' => 'agent']);
+            $unconfigured = new CommandTester(new Refactor(new Configuration(), $this->project));
+            $unconfigured->execute(['target' => 'App\\Checkout\\CheckoutService', '--format' => 'agent']);
+
+            expect($unanswered->getStatusCode())->toBe(1);
+            expect(($this->receipt)($unanswered))->toBe(['v' => 2, 'action' => 'refactor', 'error' => 'The model did not answer: Google API error (400): API key not valid.']);
+            expect($unconfigured->getStatusCode())->toBe(1);
+            expect(($this->receipt)($unconfigured)['error'])->toContain('AI configuration required');
         });
     });
 

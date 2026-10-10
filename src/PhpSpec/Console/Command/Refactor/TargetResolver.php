@@ -53,11 +53,10 @@ final readonly class TargetResolver
         }
 
         if (!$this->filesystem->exists($resolved->specFile)) {
-            throw new UnresolvedTargetException(sprintf(
-                '%s has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe %s',
-                $resolved->fqcn,
-                $resolved->fqcn,
-            ));
+            throw new UnresolvedTargetException(
+                sprintf('%s has no spec, so nothing would catch a refactoring that broke it.', $resolved->fqcn),
+                sprintf('Describe it first: phpspec describe %s', $resolved->fqcn),
+            );
         }
 
         return $resolved;
@@ -122,7 +121,7 @@ final readonly class TargetResolver
             }
         }
 
-        throw new UnresolvedTargetException(sprintf('No class named %s under %s. Describe it first: phpspec describe %s', $shortName, $this->srcPath(), $shortName));
+        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->srcPath()), sprintf('Describe it first: phpspec describe %s', $shortName));
     }
 
     /**
