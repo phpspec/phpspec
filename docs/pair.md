@@ -245,7 +245,7 @@ news to it.
 On each request, the AI receives:
 
 - Your project's directory structure (src, spec, features)
-- All existing step definition signatures from `.steps.php` files
+- All existing step definition signatures from the steps files
 - The PhpSpec DSL reference (describe/it/let/context/expect syntax)
 - Available matchers and mocking syntax
 - Feature and step definition conventions

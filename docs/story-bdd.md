@@ -68,7 +68,7 @@ features/
   support/
     Server.php      # class Acme\Support\Server
   steps/
-    checkout.steps.php   # use Acme\Support\Server;
+    steps.php       # use Acme\Support\Server;
 ```
 
 ## Step Patterns
