@@ -116,8 +116,9 @@ final class Application extends BaseApplication
 
         $defaultCommands = array_values(array_filter(
             parent::getDefaultCommands(),
-            fn(Command $cmd) => !in_array($cmd->getName(), ['completion', '_complete'], true),
+            fn(Command $cmd) => !in_array($cmd->getName(), ['completion', '_complete', 'help'], true),
         ));
+        $defaultCommands[] = new Help();
         $specSuffix = $config->getSpecSuffix();
         $defaultCommands[] = new Run(
             new Loader(specSuffix: $specSuffix, featuresPath: $config->getFeaturesPath(), stepsPath: $config->getStepsPath()),

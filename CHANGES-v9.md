@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - A line target that reaches no example shows, under the pretty and dot formatters, the seven lines around it with the target number in bold, so an off-by-one line can be corrected by sight
  - A run focused with `fit()` or `fdescribe()` says how many examples it left out, each pending with "left out by focus" as the reason; without a terminal, as in CI, the run fails on a focus, except under `--format=agent`, where the summary carries `focused` instead
  - An example that runs to the end without making an expectation is reported as risky: `!` in pretty, `R` in dot, a `Risky:` section, a `risky` count and an agent entry with state `risky`; the exit code is unchanged, nothing is red
  - `--tags` runs the scenarios a Cucumber tag expression selects (`@smoke and not @wip`, `(@a or @b) and not @c`), a feature's tags counting for every scenario in it; tags used to be parsed and nothing could select by them. `--filter` and `--tags` reach every `--parallel` worker, which used to run every example of a file the filter had let through
@@ -30,6 +31,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - The file phpspec names, and writes, when a project has no configuration is `phpspec.yml`, the name the docs use; the lookup order of the four formats is unchanged
+ - `--filter` matches the path of titles an example or scenario sits under, joined by `>`: a context title selects everything in it, `when empty > starts` one example; a context the filter empties is no longer printed
+ - A class a spec needs but does not describe is offered spec first, then the class, the way a class missing from a step always was; the class question names its file relative to the project
+ - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec
  - Guard refuses to run when no coverage driver is available, with the remedy and exit code 1, instead of standing down and letting the run pass unjudged; the agent header's `guard` is `on` or `off`
  - `Configuration` is built from values and touches no disk; `Configuration::load()` reads what a project states, its config file and the PSR-4 mappings of composer.json, as the console does
  - A `let` value is built the first time an example reads it, once per example, instead of before the hooks: a `beforeEach` can arrange a double the let consumes, a let may read one declared after it, and a let nobody reads never runs; the doubles a let asks for are still on `$this` from the start
@@ -45,6 +50,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - The offer to create an interface names its file relative to the project, as the class offer does
+ - `run --help` no longer lists `--coverage-partial`, which only the parallel workers pass; the option still works
+ - Pair mode's `/help` lines its descriptions up in one column and lists `/generate` once; the application list below it used to repeat it
+ - `--profile` names each slow example by its path of titles, as the detail sections do, instead of the bare example title; the dot formatter fits its lines to the terminal while results stream in, where it used to size them only once the run was over
+ - Every generation receipt names its file relative to the project, unquoted: `Method add() generated in src/App/Calculator.php`, `Spec for App\Greeter created in spec/App/Greeter.spec.php`, the feature a pair tool wrote; the method receipt used to quote an absolute path and the spec made from a step named no file
+ - `describe --run` runs the spec it just wrote, where it used to run the whole suite
+ - A generated class whose name ends in `Exception` extends `Exception`, imported with a `use` line, where it used to extend nothing and could not be thrown
  - A call on a double that nothing declared names the file it came from relative to the project with forward slashes, as the other messages do, instead of the absolute path spelled the platform's way
  - A class, interface, spec or feature generated from a phpspec checked out with CRLF line endings, as git does on Windows, is written with line feeds alone, as PSR-12 asks and as generated methods and steps already were
  - A generated step definition takes the table or doc string its step carries, as `DataTable $table` or `string $docString` after its pattern's parameters, with the `DataTable` import added once; it used to take neither, and that a doc string arrives as a string is now documented

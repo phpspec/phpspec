@@ -43,6 +43,6 @@ describe(FormatterExtension::class, function () {
 
     it('has a default formatSummary', function () {
         $summary = $this->formatter->formatSummary(10, 8, 1, 1, 0);
-        expect($summary)->toBe('10 examples (8 passed, 1 failed, 1 pending, 0 errors)');
+        expect($summary)->toBe('10 examples (8 passed, 1 failed, 1 pending, 0 errored)');
     });
 });

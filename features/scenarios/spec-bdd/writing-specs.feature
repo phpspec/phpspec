@@ -184,5 +184,5 @@ Feature: Writing specs
     Then the output should contain "! calls the code and checks nothing (no expectation)"
     And the output should contain "Risky:"
     And the output should contain "1 risky"
-    And the output should contain "1 passes"
+    And the output should contain "1 passed"
     And the exit code should be 0

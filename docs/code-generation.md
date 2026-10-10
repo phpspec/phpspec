@@ -113,7 +113,7 @@ a class that doesn't exist yet.
 Would you like me to generate that class for you? [Y/n]
 ```
 
-A spec that needs some other class than the one it describes reads `Looks like App\Basket needs App\Coupon, a class that doesn't exist yet.` If confirmed, `ClassGenerator` creates the class and names the file, `src/App/Calculator.php`:
+A spec that needs some other class than the one it describes reads `Looks like App\Basket needs App\Coupon, a class that doesn't exist yet.` and offers a spec for it before the class, the way a class missing from a step is offered: outside-in says what a class is for before the class exists. If confirmed, `ClassGenerator` creates the class and names the file, `src/App/Calculator.php`:
 
 ```php
 <?php
@@ -122,17 +122,17 @@ namespace App;
 
 class Calculator
 {
-
 }
 ```
 
+A class whose name ends in `Exception` extends `Exception`, imported with a `use` line, so it can be thrown the moment it exists.
+
 ## Interface Generation
 
-When a mock references a class that doesn't exist, PhpSpec offers to generate it as an interface:
+When a mock references a type that doesn't exist, PhpSpec offers to generate it as an interface, naming the file it would write:
 
 ```
-Looks like you are trying to mock App\UserRepository, a class that doesn't exist yet.
-Would you like me to generate that interface for you? [y/n]
+Do you want me to create interface App\UserRepository in src/App/UserRepository.php? [Y/n]
 ```
 
 If confirmed, `InterfaceGenerator` creates an interface at `src/App/UserRepository.php`:

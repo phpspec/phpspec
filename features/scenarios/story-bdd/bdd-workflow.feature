@@ -57,6 +57,7 @@ Feature: BDD workflow
       """
     When I run phpspec run "features/" and answer "y" to generation prompts
     Then a spec and class for "App\Greeter" should be generated
+    And the output should contain "Spec for App\Greeter created in spec/App/Greeter.spec.php"
     When I implement the Greeter class
     And I run phpspec run "features/"
     Then all steps should pass

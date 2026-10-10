@@ -146,7 +146,7 @@ bin/phpspec describe <class> [options]
 
 **Options:**
 - `-e`, `--exemplify=METHOD` -- Include an example for the specified method.
-- `-r`, `--run` -- Run the specs after generating.
+- `-r`, `--run` -- Run the spec just generated, not the whole suite.
 - `--agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
 
 **Examples:**
@@ -191,7 +191,7 @@ See [Coding Agents](agent.md) for the `--agent` receipts and
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
 | `-v` | Verbose mode -- shows the duration of each example and step; `--format=agent` reports the passing entries too |
 | `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
-| `--profile[=N]` | Show the N slowest examples (default: 10) |
+| `--profile[=N]` | Show the N slowest examples, each by its path of titles (default: 10) |
 
 #### Pretty Formatter (default)
 
@@ -206,7 +206,7 @@ Spec: Calculator
     ✓ subtracts two numbers
 
 1 spec
-2 examples (2 passes)
+2 examples (2 passed)
 Finished in 0.0042 seconds
 ```
 
@@ -219,7 +219,7 @@ Compact one-character-per-example output:
 ```
 ..F.P..E.
 
-9 examples (6 passes, 1 failure, 1 pending, 1 error)
+9 examples (6 passed, 1 failed, 1 pending, 1 errored)
 ```
 
 - `.` pass, `F` failure, `P` pending, `E` error, `S` skipped, `U` undefined step
@@ -304,7 +304,7 @@ rejected with an error rather than silently falling back.
 
 | Option | Description |
 |---|---|
-| `--filter=PATTERN` | Only run specs/scenarios whose file path, example title, or scenario title contains PATTERN |
+| `--filter=PATTERN` | Only run specs/scenarios whose file path, or whose path of titles (`describe > context > example`, `Feature > Scenario`), contains PATTERN |
 | `--tags=EXPRESSION` | Only run the scenarios a Cucumber tag expression selects: `@smoke`, `@smoke and not @wip`, `(@a or @b) and not @c`. A feature's tags count for every scenario in it; a spec has no tags and does not run |
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--all` | Run all suites -- both specs and features |
@@ -332,6 +332,8 @@ the same way (useful for tight feedback loops and CI):
 bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
 bin/phpspec run --filter "should be good"        # Example/scenario titles matching a phrase
 bin/phpspec run --filter "it should be good"     # Leading "it" on the filter is ignored
+bin/phpspec run --filter "when empty"            # A context title selects everything in it
+bin/phpspec run --filter "when empty > starts"   # Titles joined by > narrow to one example
 bin/phpspec run --tags "@smoke and not @wip"      # Scenarios tagged @smoke, unless also @wip
 bin/phpspec run --paths-from specs.txt            # Run the specs listed in specs.txt
 bin/phpspec run --stop-on-failure                 # Stop on first failing spec
@@ -369,7 +371,8 @@ targeting a `Scenario Outline:` line runs every row of its examples table,
 while targeting a single examples row runs just that expansion. A line that
 reaches no example at all stops the run with `No example at <path:LINE>` and
 exit code 1: an explicit line is a precise ask, and running nothing is not an
-answer to it.
+answer to it. The pretty and dot formatters then show the seven lines around
+the target, its number in bold, since most misses are off by a line or two.
 
 Several selectors run each addressed block once, whether they name lines of
 one file or of many, so the `rerun` command an agent summary carries can be
@@ -540,7 +543,9 @@ change while the integration is being finalised.
 ## Dependencies
 
 PhpSpec depends on:
-- `php` ^8.2
-- `symfony/console` ^7.0
+- `php` ^8.2 with `ext-mbstring`, `ext-tokenizer` and `ext-sockets`
+- `symfony/console` and `symfony/yaml` ^7.0 || ^8.0
+- `cucumber/gherkin` ^39
 
-There are no other runtime dependencies. The mocking system is built-in.
+The mocking system is built in. The AI commands (`pair`, `next`, `generate`,
+`refactor`) need the `papi-ai` packages, installed separately; see `pair.md`.

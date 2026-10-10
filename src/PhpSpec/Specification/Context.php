@@ -134,7 +134,20 @@ class Context implements ExampleRegistry, Rebindable
      */
     public function run(): Results
     {
+        $filter = FilterRegistry::current();
+        $filter?->enterContext((string) $this->context);
+
+        try {
+            return $this->runBlocks();
+        } finally {
+            $filter?->leaveContext();
+        }
+    }
+
+    private function runBlocks(): Results
+    {
         $results = [];
+        $filter = FilterRegistry::current();
         CoverageRegistry::collector()?->pushContext($this->context);
 
         try {
@@ -166,6 +179,9 @@ class Context implements ExampleRegistry, Rebindable
                 $result = $block instanceof Example && !$block->isPending()
                     ? $this->runExampleWithHooks($block)
                     : $block->run();
+                if ($block instanceof Context && $result->getResults() === [] && $filter !== null) {
+                    continue;
+                }
                 $results[] = $result;
 
                 if (StopRegistry::reached($result)) {

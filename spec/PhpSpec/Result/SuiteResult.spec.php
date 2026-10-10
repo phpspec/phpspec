@@ -87,8 +87,9 @@ describe(SuiteResult::class, function() {
 
         $slowest = $result->getSlowestExamples(2);
         expect($slowest)->toHaveCount(2);
-        expect($slowest[0]->getTitle())->toBe("slow");
-        expect($slowest[1]->getTitle())->toBe("medium");
+        expect($slowest[0]->path)->toBe("spec > slow");
+        expect($slowest[0]->duration)->toBe(0.5);
+        expect($slowest[1]->path)->toBe("spec > medium");
     });
 
     it("collects slowest examples from nested contexts", function() {
@@ -103,7 +104,8 @@ describe(SuiteResult::class, function() {
 
         $slowest = $result->getSlowestExamples(10);
         expect($slowest)->toHaveCount(2);
-        expect($slowest[0]->getTitle())->toBe("nested");
+        expect($slowest[0]->path)->toBe("spec > ctx > nested");
+        expect($slowest[1]->path)->toBe("spec > top");
     });
 
     it("skips pending examples in slowest", function() {
@@ -117,7 +119,7 @@ describe(SuiteResult::class, function() {
 
         $slowest = $result->getSlowestExamples(10);
         expect($slowest)->toHaveCount(1);
-        expect($slowest[0]->getTitle())->toBe("passing");
+        expect($slowest[0]->path)->toBe("spec > passing");
     });
 
     it("getAllExamples collects from nested contexts", function() {

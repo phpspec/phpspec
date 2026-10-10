@@ -19,7 +19,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 0);
 
-        expect($result)->toContain("Method 'add()' generated");
+        expect($result)->toContain("Method add() generated");
     });
 
     it("generates a method stub with arguments", function (Filesystem $fs) {
@@ -29,7 +29,15 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 2);
 
-        expect($result)->toContain("Method 'add()' generated");
+        expect($result)->toContain("Method add() generated");
+    });
+
+    it("names the file relative to the project in its receipt, as the class receipt does", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\nclass Calculator\n{\n}\n");
+        allow($fs->write());
+
+        expect($this->generator->generate('Calculator', 'add', 0))->toBe('Method add() generated in src/Calculator.php');
     });
 
     it("throws when source file does not exist", function (Filesystem $fs) {
@@ -55,7 +63,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Acme\\Math\\Calculator', 'add', 3);
 
-        expect($result)->toContain("Method 'add()' generated");
+        expect($result)->toContain("Method add() generated");
     });
 
     it("writes into the file a loaded class came from when the layout says otherwise", function (Filesystem $fs) {
@@ -88,7 +96,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 2);
 
-        expect($result)->toContain("Method 'add()' generated");
+        expect($result)->toContain("Method add() generated");
     });
 
     it("generates a static method stub when the method was called statically", function (Filesystem $fs) {
@@ -114,7 +122,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 2, '42');
 
-        expect($result)->toContain("Method 'add()' generated");
+        expect($result)->toContain("Method add() generated");
     });
 
     it("fills empty method body with return value", function (Filesystem $fs) {

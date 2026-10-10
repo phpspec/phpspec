@@ -74,14 +74,18 @@ final class ClassGenerator
      */
     public function generateClass(string $className, string $filePath, string $namespace): void
     {
-        $classContent = implode("\n", [
-            '<?php' . $namespace,
-            '',
-            'class ' . $className,
-            '{',
-            '}',
-            '',
-        ]);
+        $throwable = str_ends_with($className, 'Exception');
+        $lines = ['<?php' . $namespace];
+        if ($throwable && $namespace !== '') {
+            $lines[] = '';
+            $lines[] = 'use Exception;';
+        }
+        $lines[] = '';
+        $lines[] = 'class ' . $className . ($throwable ? ' extends Exception' : '');
+        $lines[] = '{';
+        $lines[] = '}';
+        $lines[] = '';
+        $classContent = implode("\n", $lines);
 
         if ($this->filesystem->exists($filePath)) {
             throw new RuntimeException(sprintf('Class %s already exists in %s.', $className, ProjectRoot::here()->relative($filePath)));

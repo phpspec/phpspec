@@ -737,16 +737,18 @@ final class CommandDispatcher
         $out->writeln('');
         $out->writeln('  <fg=bright-blue;options=bold>Available commands:</>');
         $out->writeln('');
-        $out->writeln('  <fg=white>/describe</> <fg=gray>Acme\Greeter</>          Generate a spec file');
-        $out->writeln('  <fg=white>/exemplify</> <fg=gray>Acme\Greeter greet</> Add an example for a method');
-        $out->writeln('  <fg=white>/run</>                               Run all specs');
-        $out->writeln('  <fg=white>/run</> <fg=gray>spec/path</>                   Run specs at path');
-        $out->writeln('  <fg=white>/next</>                              Suggest the next step');
-        $out->writeln('  <fg=white>/generate</> <fg=gray>what to build</>        Generate a spec or code from words (AI)');
-        $out->writeln('  <fg=white>/clear</>                    Clear the screen');
-        $out->writeln("  <fg=white>/swap</>                     Swap who drives (you \u{21c4} AI)");
-        $out->writeln('  <fg=white>/help</>                     Show this help');
-        $out->writeln('  <fg=white>/quit</>                     Exit pair mode');
+        $this->writeCommandTable($out, [
+            ['/describe', 'Acme\Greeter', 'Generate a spec file'],
+            ['/exemplify', 'Acme\Greeter greet', 'Add an example for a method'],
+            ['/run', '', 'Run all specs'],
+            ['/run', 'spec/path', 'Run specs at path'],
+            ['/next', '', 'Suggest the next step'],
+            ['/generate', 'what to build', 'Generate a spec or code from words (AI)'],
+            ['/clear', '', 'Clear the screen'],
+            ['/swap', '', "Swap who drives (you \u{21c4} AI)"],
+            ['/help', '', 'Show this help'],
+            ['/quit', '', 'Exit pair mode'],
+        ]);
 
         $this->listApplicationCommands($out);
 
@@ -754,14 +756,14 @@ final class CommandDispatcher
 
         if ($this->ai !== null) {
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=green>(available)</>');
-            $out->writeln('  <fg=gray>Right now — ' . $this->roleState->current()->contractLine() . '</>');
+            $out->writeln('  <fg=gray>Right now: ' . $this->roleState->current()->contractLine() . '</>');
         } elseif ($this->config->get('ai') !== null) {
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=yellow>(configured, but unavailable)</>');
             if ($this->aiUnavailableReason !== null) {
                 $out->writeln('  <fg=gray>' . $this->aiUnavailableReason . '</>');
             }
         } else {
-            $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=gray>(not configured — add ai: section to phpspec.yml)</>');
+            $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=gray>(not configured: add an ai section to phpspec.yml)</>');
         }
         $out->writeln('');
         $out->writeln('  Commands also work as plain words: <fg=gray>run features</>, <fg=gray>run --all</>, <fg=gray>describe App\Basket</>.');
@@ -782,13 +784,30 @@ final class CommandDispatcher
     /**
      * Lists additional commands from the Application that aren't already handled by the REPL.
      */
+    /**
+     * Writes commands with their descriptions in one column, two past the
+     * longest usage, the markup kept out of the measure.
+     *
+     * @param non-empty-list<array{string, string, string}> $rows command, argument, description
+     */
+    private function writeCommandTable(\Symfony\Component\Console\Output\OutputInterface $out, array $rows): void
+    {
+        $column = max(array_map(static fn(array $row): int => strlen(trim($row[0] . ' ' . $row[1])), $rows)) + 2;
+
+        foreach ($rows as [$command, $argument, $description]) {
+            $usage = trim($command . ' ' . $argument);
+            $shown = '<fg=white>' . $command . '</>' . ($argument === '' ? '' : ' <fg=gray>' . $argument . '</>');
+            $out->writeln('  ' . $shown . str_repeat(' ', $column - strlen($usage)) . $description);
+        }
+    }
+
     private function listApplicationCommands(\Symfony\Component\Console\Output\OutputInterface $out): void
     {
         if ($this->application === null) {
             return;
         }
 
-        $skip = ['pair', 'describe', 'exemplify', 'run', 'next', 'list', 'help', 'completion', '_complete'];
+        $skip = ['pair', 'describe', 'exemplify', 'run', 'next', 'generate', 'list', 'help', 'completion', '_complete'];
         $extra = [];
 
         foreach ($this->application->all() as $name => $cmd) {

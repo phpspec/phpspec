@@ -62,5 +62,5 @@ Spec: Calculator
             ✓ adds two numbers
 
 1 spec
-2 examples (2 passes)
+2 examples (2 passed)
 ```

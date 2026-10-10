@@ -15,6 +15,7 @@
 namespace PhpSpec\CodeGeneration;
 
 use PhpSpec\Filesystem;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 
@@ -61,7 +62,7 @@ final class MethodStubGenerator
         $content = $this->filesystem->read($filePath);
 
         if (str_contains($content, "function $methodName(")) {
-            throw new RuntimeException("Method '$methodName' already exists in '$filePath'");
+            throw new RuntimeException(sprintf('Method %s() already exists in %s.', $methodName, ProjectRoot::here()->relative($filePath)));
         }
 
         $params = [];
@@ -98,7 +99,7 @@ final class MethodStubGenerator
         $newContent = substr($content, 0, $lastBrace) . $stub . substr($content, $lastBrace);
         $this->filesystem->write($filePath, $newContent);
 
-        return "Method '$methodName()' generated in '$filePath'";
+        return sprintf('Method %s() generated in %s', $methodName, ProjectRoot::here()->relative($filePath));
     }
 
     /**

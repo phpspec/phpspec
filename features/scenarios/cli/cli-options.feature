@@ -81,6 +81,29 @@ Feature: CLI options
     And the output should not contain "Beta"
     And the output should contain "1 example"
 
+  Scenario: Filter examples by a context title, or by a path of titles joined by >
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('Basket', function () {
+          context('when empty', function () {
+              it('starts out at zero', fn () => expect(0)->toBe(0));
+              it('refuses a coupon', fn () => expect(true)->toBeTrue());
+          });
+          context('with items', function () {
+              it('starts out at their total', fn () => expect(true)->toBeTrue());
+          });
+      });
+      """
+    When I run phpspec run with option "--filter='when empty'"
+    Then the output should contain "2 examples"
+    And the output should contain "refuses a coupon"
+    And the output should not contain "with items"
+    When I run phpspec run with option "--filter='when empty > starts'"
+    Then the output should contain "1 example"
+    And the output should contain "starts out at zero"
+    And the output should not contain "refuses a coupon"
+
   Scenario: Filter scenarios by title
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/paths.feature":
@@ -157,6 +180,21 @@ Feature: CLI options
       """
     When I run phpspec run with option "spec/App/Calc.spec.php:9999"
     Then the output should contain "No example at spec/App/Calc.spec.php:9999"
+    And the exit code should be 1
+
+  Scenario: A line that is no example shows the code around it, so the line can be corrected
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php:1"
+    Then the output should contain "No example at spec/App/Calc.spec.php:1"
+    And the output should contain " > 1  | <?php"
+    And the output should contain "   2  | describe("
+    And the output should contain "   3  |     it("
     And the exit code should be 1
 
   Scenario: Run several examples of one file by their line numbers
@@ -467,6 +505,12 @@ Feature: CLI options
     Then all examples should pass
     And the output should contain "seed 42"
 
+  Scenario: The help of run leaves out the option only its parallel workers use
+    When I run phpspec run with option "--help"
+    Then the output should contain "--coverage-min"
+    And the output should contain "--parallel"
+    And the output should not contain "coverage-partial"
+
   Scenario: Profile slowest examples
     Given a spec file "spec/App/Profile.spec.php":
       """
@@ -479,6 +523,7 @@ Feature: CLI options
       """
     When I run phpspec run with option "--profile"
     Then the output should contain "slowest examples"
+    And the output should contain "s Profile > Profile > runs quickly"
 
   Scenario: Bootstrap file
     Given a file "bootstrap.php":

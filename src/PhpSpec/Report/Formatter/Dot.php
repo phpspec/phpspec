@@ -16,6 +16,7 @@ namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Report\AbstractFormatter;
+use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\SpecificationResult;
@@ -39,27 +40,28 @@ final class Dot extends AbstractFormatter
     private bool $blocked = false;
 
     /**
-     * Calculates line widths and delegates to the parent format pipeline.
+     * Sizes the subtotal column to the whole suite before the pipeline starts;
+     * results streamed in one by one keep the default width.
      */
     public function format(SuiteResult $results): void
     {
-        $totalExamples = $this->countExamples($results);
-        $this->subtotalWidth = strlen((string) $totalExamples);
+        $this->subtotalWidth = strlen((string) $this->countExamples($results));
 
+        parent::format($results);
+    }
+
+    /**
+     * Fits the dots to the terminal before the first result arrives.
+     */
+    public function begin(): void
+    {
         $width = (new Terminal())->getWidth() ?: 80;
         $lineWidth = (int) floor($width * 0.9);
         // Suffix is " (NNN)" = 3 + subtotalWidth
         $this->dotsPerLine = max(1, $lineWidth - 3 - $this->subtotalWidth);
         $this->col = 0;
         $this->total = 0;
-
-        parent::format($results);
     }
-
-    /**
-     * Outputs an initial blank line before the progress dots.
-     */
-    public function begin(): void {}
 
     /**
      * Outputs progress characters for each example or step in the result tree.
@@ -107,88 +109,7 @@ final class Dot extends AbstractFormatter
         $this->formatNotices($results);
         $this->output->writeln('');
 
-        $counts = new Counts($results);
-        $c = $counts->toArray();
-
-        if (!empty($c['features'])) {
-            $this->output->writeln(
-                $c['features'] . ' feature' . ($c['features'] != 1 ? 's' : '') . ', '
-                . $c['scenarios'] . ' scenario' . ($c['scenarios'] != 1 ? 's' : '') . ', '
-                . $c['steps'] . ' step' . ($c['steps'] != 1 ? 's' : '') . ' ('
-                . $this->formatStepParts($c) . ')',
-            );
-        }
-
-        if (empty($c['features'])) {
-            $this->output->writeln($c['specs'] . ' spec' . ($c['specs'] != 1 ? 's' : ''));
-        }
-
-        if ($c['examples'] > 0) {
-            $parts = [];
-            if ($c['passes']) {
-                $parts[] = "<fg=green>{$c['passes']} passes</>";
-            }
-            if ($c['risky']) {
-                $parts[] = "<fg=yellow>{$c['risky']} risky</>";
-            }
-            if ($c['failures']) {
-                $parts[] = "<fg=red>{$c['failures']} failures</>";
-            }
-            if ($c['errors']) {
-                $parts[] = "<fg=red>{$c['errors']} errors</>";
-            }
-            if ($c['pending']) {
-                $parts[] = "<fg=yellow>{$c['pending']} pending</>";
-            }
-            if ($c['exampleSkipped']) {
-                $parts[] = "<fg=cyan>{$c['exampleSkipped']} skipped</>";
-            }
-            if ($c['warnings']) {
-                $parts[] = "<fg=yellow>{$c['warnings']} warning" . ($c['warnings'] != 1 ? 's' : '') . '</>';
-            }
-            if ($c['deprecations']) {
-                $parts[] = "<fg=yellow>{$c['deprecations']} deprecation" . ($c['deprecations'] != 1 ? 's' : '') . '</>';
-            }
-            if ($c['notices']) {
-                $parts[] = "<fg=yellow>{$c['notices']} notice" . ($c['notices'] != 1 ? 's' : '') . '</>';
-            }
-
-            $this->output->writeln($c['examples'] . ' example' . ($c['examples'] != 1 ? 's' : '') . ' (' . implode(', ', $parts) . ')');
-        }
-
-        $duration = $results->getDuration();
-        if ($duration > 0) {
-            $this->output->writeln(sprintf('Finished in %.4f seconds', $duration));
-        }
-    }
-
-    /**
-     * Formats the step outcome breakdown (passed, failed, pending, undefined, skipped).
-     *
-     * @param array<string, int> $c
-     */
-    private function formatStepParts(array $c): string
-    {
-        $parts = [];
-        if ($c['stepPasses']) {
-            $parts[] = "<fg=green>{$c['stepPasses']} passed</>";
-        }
-        if ($c['stepFailures']) {
-            $parts[] = "<fg=red>{$c['stepFailures']} failed</>";
-        }
-        if ($c['stepErrors']) {
-            $parts[] = "<fg=red>{$c['stepErrors']} errored</>";
-        }
-        if ($c['pending']) {
-            $parts[] = "<fg=yellow>{$c['pending']} pending</>";
-        }
-        if ($c['undefined']) {
-            $parts[] = "<fg=bright-blue>{$c['undefined']} undefined</>";
-        }
-        if ($c['skipped']) {
-            $parts[] = "<fg=cyan>{$c['skipped']} skipped</>";
-        }
-        return implode(', ', $parts);
+        PrettyViews::counts($this->output, (new Counts($results))->toArray(), $results->getDuration());
     }
 
     /**

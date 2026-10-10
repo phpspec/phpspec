@@ -12,6 +12,16 @@ use PhpSpec\Result\SuiteResult;
 
 describe(Counts::class, function() {
 
+    it("counts a feature among the features, never among the specs", function() {
+        $feature = new FeatureResult("Shop", [new ScenarioResult("Checkout", [new StepResult("Given a basket", "passed")])]);
+        $spec = new SpecificationResult("MySpec", [new ExampleResult("works", [MatchResult::passed()])]);
+
+        $counts = (new Counts(new SuiteResult([$feature, $spec])))->toArray();
+
+        expect($counts['specs'])->toBe(1);
+        expect($counts['features'])->toBe(1);
+    });
+
     it("counts passing examples", function() {
         $example1 = new ExampleResult("test1", [MatchResult::passed()]);
         $example2 = new ExampleResult("test2", [MatchResult::passed()]);

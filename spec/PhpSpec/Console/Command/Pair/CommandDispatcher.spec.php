@@ -831,10 +831,20 @@ describe(CommandDispatcher::class, function () {
     });
 
     context('help output', function () {
-        it('shows AI as not configured when no ai config', function () {
+        it('shows AI as not configured when no ai config, naming the file to add the ai section to', function () {
             $this->dispatcher->dispatch('/help');
             $output = $this->buffer->fetch();
-            expect($output)->toContain('not configured');
+            expect($output)->toContain('(not configured: add an ai section to phpspec.yml)');
+        });
+
+        it('starts every description in the same column, two past the longest usage', function () {
+            $this->dispatcher->dispatch('/help');
+            $output = $this->buffer->fetch();
+
+            $column = strlen('/exemplify Acme\\Greeter greet') + 2;
+            expect($output)->toContain('  ' . str_pad('/describe Acme\\Greeter', $column) . 'Generate a spec file');
+            expect($output)->toContain('  ' . str_pad('/run spec/path', $column) . 'Run specs at path');
+            expect($output)->toContain('  ' . str_pad('/quit', $column) . 'Exit pair mode');
         });
     });
 
@@ -862,6 +872,7 @@ describe(CommandDispatcher::class, function () {
             $app->setAutoExit(false);
             $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Next(new Configuration()));
             $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Refactor(new Configuration()));
+            $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Generate(new Configuration()));
             return $app;
         });
         let('appDispatcher', fn(Filesystem $fs) => new CommandDispatcher(
@@ -874,6 +885,14 @@ describe(CommandDispatcher::class, function () {
             $this->app,
             specRunner: $this->specRunner,
         ));
+
+        it('lists /generate once, among the pair commands, never again as an application command', function () {
+            $this->appDispatcher->dispatch('/help');
+            $output = $this->buffer->fetch();
+
+            expect(substr_count($output, '/generate'))->toBe(1);
+            expect($output)->toContain('/refactor');
+        });
 
         it('handles /next from suite state and returns CONTINUE', function () {
             $result = $this->appDispatcher->dispatch('/next');

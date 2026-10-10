@@ -525,7 +525,7 @@ describe(Configuration::class, function () {
     it('says which file to create when the project has no config file at all', function () {
         $problem = (new Configuration())->aiConfigProblem();
 
-        expect($problem)->toStartWith('AI configuration required. Create phpspec.yaml with an "ai" section, for example:');
+        expect($problem)->toStartWith('AI configuration required. Create phpspec.yml with an "ai" section, for example:');
         expect($problem)->toContain("\nai:\n  provider: ");
     });
 

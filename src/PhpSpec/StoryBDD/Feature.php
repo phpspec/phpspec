@@ -73,10 +73,16 @@ final readonly class Feature implements SpecBlock
      */
     public function withScenariosMatching(TitleFilter $filter): ?self
     {
-        $scenarios = array_values(array_filter(
-            $this->featureNode->scenarios,
-            fn(ScenarioNode $scenario) => $filter->matches($scenario->title),
-        ));
+        $filter->enterContext($this->featureNode->title);
+
+        try {
+            $scenarios = array_values(array_filter(
+                $this->featureNode->scenarios,
+                fn(ScenarioNode $scenario) => $filter->matches($scenario->title),
+            ));
+        } finally {
+            $filter->leaveContext();
+        }
 
         return $scenarios === [] ? null : $this->withScenarios($scenarios);
     }

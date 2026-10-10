@@ -14,6 +14,7 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "/help"
     Then the output should contain "AI assistant"
     And the output should contain "available"
+    And the output should contain "/generate" exactly 1 times
 
   Scenario: Help shows AI as unavailable when the configured provider cannot start
     Given a phpspec.yaml config:
@@ -153,7 +154,7 @@ Feature: AI-assisted pair programming
       });
       """
     When I run phpspec pair with input "/run; /run"
-    Then the output should contain "1 example (1 passes)" exactly 2 times
+    Then the output should contain "1 example (1 passed)" exactly 2 times
 
   Scenario: Running a spec that declares a top-level type twice does not crash
     Given a spec file "spec/App/Widget.spec.php":
@@ -171,7 +172,7 @@ Feature: AI-assisted pair programming
       });
       """
     When I run phpspec pair with input "/run; /run"
-    Then the output should contain "1 example (1 passes)" exactly 2 times
+    Then the output should contain "1 example (1 passed)" exactly 2 times
     And the output should not contain "Cannot declare interface"
 
   Scenario: A method generated mid-session is picked up by the next run
@@ -193,7 +194,7 @@ Feature: AI-assisted pair programming
       """
     When I run phpspec pair with input "/run; /run" answering "1"
     Then the file "src/App/Calculator.php" should contain "function add"
-    And the output should contain "1 example (1 passes)"
+    And the output should contain "1 example (1 passed)"
 
   Scenario: Exemplify shows a diff, marking only the added example as new
     Given a spec file "spec/App/Calculator.spec.php":

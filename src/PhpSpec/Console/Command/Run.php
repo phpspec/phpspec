@@ -16,6 +16,7 @@ namespace PhpSpec\Console\Command;
 
 use DOMException;
 use InvalidArgumentException;
+use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
@@ -24,6 +25,7 @@ use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\InternalOptions;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
@@ -49,6 +51,7 @@ use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Html;
 use PhpSpec\Report\Formatter\Junit;
 use PhpSpec\Report\Formatter\Pretty;
+use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Report\Formatter\Tap;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ScenarioResult;
@@ -73,7 +76,7 @@ use Symfony\Component\Console\Output\StreamOutput;
  * CLI command that runs specs and features, orchestrating the full lifecycle: bootstrap loading,
  * spec loading, execution, result formatting, coverage collection, and interactive code generation.
  */
-final class Run extends Command
+final class Run extends Command implements InternalOptions
 {
     /** @var array<int, string> partial coverage state files written by parallel workers */
     private array $coveragePartials = [];
@@ -322,12 +325,18 @@ final class Run extends Command
         }
 
         if ($this->selectedNothing($given, $results)) {
-            return $this->stopped(
+            $status = $this->stopped(
                 $prose,
                 $formatter,
                 'No example at ' . implode(', ', $given),
                 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.',
             );
+
+            if ($formatter instanceof Pretty || $formatter instanceof Dot) {
+                $this->showCodeAround($prose, $given);
+            }
+
+            return $status;
         }
 
         $this->writeReportFiles($input, $prose, $results);
@@ -449,6 +458,29 @@ final class Run extends Command
 
         foreach ($outputs['extraConsole'] as $format) {
             $this->createFormatter($format, $output)->format($results);
+        }
+    }
+
+    /**
+     * The lines around each targeted line, the target in bold, so the line
+     * can be corrected by sight: most misses are off by one or two.
+     *
+     * @param list<string> $given
+     */
+    private function showCodeAround(Output $prose, array $given): void
+    {
+        foreach ($given as $target) {
+            if (preg_match('/^(.*):(\d+)$/', $target, $at) !== 1) {
+                continue;
+            }
+
+            $lines = (new SurroundingCode($at[1], (int) $at[2]))->toArray();
+            if ($lines === []) {
+                continue;
+            }
+
+            $prose->writeln('');
+            PrettyViews::surroundingCode($prose, $lines, (int) $at[2], blamed: false);
         }
     }
 
@@ -999,6 +1031,11 @@ final class Run extends Command
         return 'No specs found.';
     }
 
+    public function internalOptions(): array
+    {
+        return ['coverage-partial'];
+    }
+
     private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
     {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
@@ -1040,12 +1077,8 @@ final class Run extends Command
         }
         $output->writeln('');
         $output->writeln("Top $count slowest examples:");
-        foreach ($slowest as $example) {
-            $output->writeln(sprintf(
-                '  <fg=yellow>%.4fs</> %s',
-                $example->getDuration(),
-                $example->getTitle(),
-            ));
+        foreach ($slowest as $timing) {
+            $output->writeln(sprintf('  <fg=yellow>%.4fs</> %s', $timing->duration, $timing->path));
         }
     }
 

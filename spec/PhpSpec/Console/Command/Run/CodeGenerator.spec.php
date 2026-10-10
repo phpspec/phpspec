@@ -259,7 +259,7 @@ describe(CodeGenerator::class, function () {
             expect($this->output->fetch())->toContain('  Looks like you are trying to spec App\Basket,' . PHP_EOL);
         });
 
-        it('names the class a spec needs when it is not the one it describes', function () {
+        it('names the class a spec needs when it is not the one it describes, and offers its spec before the class', function () {
             $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', Generation::Declines);
 
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Coupon" not found', new \Error('Class "App\Coupon" not found'));
@@ -272,6 +272,8 @@ describe(CodeGenerator::class, function () {
             expect($this->output->fetch())->toContain(implode(PHP_EOL, [
                 '  Looks like App\Basket needs App\Coupon,',
                 "  a class that doesn't exist yet.",
+                '',
+                '  Do you want me to create a spec for it?',
                 '',
             ]));
         });
@@ -294,15 +296,21 @@ describe(CodeGenerator::class, function () {
             try {
                 $applied = $generator->generate($this->output, $suite, false);
             } finally {
-                foreach ([$absDir . '/src/App/Coupon.php'] as $file) {
+                foreach ([$absDir . '/src/App/Coupon.php', $absDir . '/spec/App/Coupon.spec.php'] as $file) {
                     is_file($file) && unlink($file);
                 }
-                foreach ([$absDir . '/src/App', $absDir . '/src', $absDir . '/spec', $absDir] as $dir) {
+                foreach ([$absDir . '/src/App', $absDir . '/src', $absDir . '/spec/App', $absDir . '/spec', $absDir] as $dir) {
                     is_dir($dir) && rmdir($dir);
                 }
             }
 
             expect($applied)->toBe([[
+                'id' => Offer::generate('create_spec', 'App\Coupon', [])->id,
+                'action' => 'create_spec',
+                'target' => 'App\Coupon',
+                'file' => $relDir . '/spec/App/Coupon.spec.php',
+                'applied' => true,
+            ], [
                 'id' => Offer::generate('create_class', 'App\Coupon', [])->id,
                 'action' => 'create_class',
                 'target' => 'App\Coupon',

@@ -28,6 +28,7 @@ Feature: Code generation
       """
     When I run phpspec run and answer "y" to generation prompts
     Then the class "src/App/Calculator.php" should contain "function add"
+    And the output should contain "Method add() generated in src/App/Calculator.php"
 
   Scenario: A method called statically is generated static, with its arguments
     Given a class "src/App/TaskList.php":
@@ -109,7 +110,7 @@ Feature: Code generation
     When I run phpspec run with option "--accept-offers --fake"
     Then the class "src/App/Voucher.php" should contain "return 'B5';"
     When I run phpspec run in a fresh process
-    Then the output should contain "1 example (1 passes)"
+    Then the output should contain "1 example (1 passed)"
 
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
@@ -178,7 +179,8 @@ Feature: Code generation
       });
       """
     When I run phpspec run and answer "y" to generation prompts
-    Then a file "src/App/Logger.php" should be generated
+    Then the output should contain "Do you want me to create interface App\Logger in src/App/Logger.php?"
+    And a file "src/App/Logger.php" should be generated
     And it should contain "interface Logger"
 
   Scenario: A method generated on a mocked interface takes the arguments the spec called it with
@@ -211,6 +213,38 @@ Feature: Code generation
     Then a file "src/App/Notifier.php" should be generated
     And it should contain "interface Notifier"
 
+  Scenario: A class a spec needs is offered spec first, the way a class a step needs is
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the output should contain "Looks like App\Basket needs App\Coupon,"
+    And the output should contain "Spec for App\Coupon created in spec/App/Coupon.spec.php"
+    And a spec file "spec/App/Coupon.spec.php" should be generated
+    And a class file "src/App/Coupon.php" should be generated
+
+  Scenario: A generated class named like an exception extends Exception, so it can be thrown
+    Given a spec file "spec/App/PaymentFailedException.spec.php":
+      """
+      <?php
+      describe('App\PaymentFailedException', function () {
+          it('can be thrown', function () {
+              $declined = new App\PaymentFailedException('declined');
+              expect(fn () => throw $declined)->toThrow(App\PaymentFailedException::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the class "src/App/PaymentFailedException.php" should contain "use Exception;"
+    And the class "src/App/PaymentFailedException.php" should contain "class PaymentFailedException extends Exception"
+    When I run phpspec run in a fresh process
+    Then the output should contain "1 example (1 passed)"
   Scenario: A generated class lands where composer.json says its namespace lives
     Given no phpspec.json config
     And a file "composer.json":
@@ -268,7 +302,7 @@ Feature: Code generation
     Then a class file "src/Acme/Thing.php" should be generated
     And no file "src/Brew/Acme/Thing.php" should be generated
     When I run phpspec run
-    Then the output should contain "1 example (1 passes)"
+    Then the output should contain "1 example (1 passed)"
 
   Scenario: A method lands in the file its class was loaded from, wherever composer says the namespace lives
     Given no phpspec.json config
@@ -322,6 +356,19 @@ Feature: Code generation
     When I run phpspec describe "App\Formatter"
     Then a spec file "spec/App/Formatter.spec.php" should be generated
     And it should contain a describe block for "App\Formatter"
+
+  Scenario: Describe with run runs the spec it created, not the whole suite
+    Given a spec file "spec/App/Other.spec.php":
+      """
+      <?php
+      describe('App\Other', function () {
+          it('lives elsewhere', fn () => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec describe "App\Formatter" with option "-r -n"
+    Then the output should contain "1 spec"
+    And the output should not contain "2 specs"
+    And the output should not contain "lives elsewhere"
 
   Scenario: Describe with run under the agent format runs the new spec and reports it
     When I run phpspec describe "App\Formatter" with option "-r --format=agent -n"

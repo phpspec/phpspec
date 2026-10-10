@@ -17,16 +17,22 @@ namespace PhpSpec;
 /**
  * @internal
  * Matches example and scenario titles (and file paths) against the --filter
- * text using case-insensitive substring comparison. A leading "it" on the
- * filter is ignored, so --filter="it should be good" matches the example
- * title "should be good". While a spec whose path matches is running, every
- * title in it matches, preserving the file-path filtering behaviour.
+ * text using case-insensitive substring comparison against the title path,
+ * the titles of the contexts an example sits in and its own, joined by " > ":
+ * "when empty" selects a whole context, "when empty > starts" one example
+ * in it. A leading "it" on the filter is ignored, so --filter="it should be
+ * good" matches the example title "should be good". While a spec whose path
+ * matches is running, every title in it matches, preserving the file-path
+ * filtering behaviour.
  */
 final class TitleFilter
 {
     private readonly string $needle;
 
     private bool $currentSpecMatches = false;
+
+    /** @var list<string> the titles of the contexts being run, outermost first */
+    private array $contexts = [];
 
     /**
      * @param string $filter the raw --filter option value
@@ -54,8 +60,23 @@ final class TitleFilter
     }
 
     /**
-     * Checks whether an example or scenario title matches the filter,
-     * or whether the current spec file already matched by path.
+     * Records a context, or a feature, whose titles now form part of every
+     * title path matched inside it.
+     */
+    public function enterContext(string $title): void
+    {
+        $this->contexts[] = $title;
+    }
+
+    public function leaveContext(): void
+    {
+        array_pop($this->contexts);
+    }
+
+    /**
+     * Checks whether an example or scenario title, read at the end of the
+     * path of titles it sits under, matches the filter, or whether the
+     * current spec file already matched by path.
      *
      * @param string $title the example or scenario title
      * @return bool true when the title (or the current spec path) matches
@@ -66,7 +87,7 @@ final class TitleFilter
             return true;
         }
 
-        return stripos($title, $this->needle) !== false;
+        return stripos(implode(' > ', [...$this->contexts, $title]), $this->needle) !== false;
     }
 
     /**

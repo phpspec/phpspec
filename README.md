@@ -2,7 +2,7 @@
 
 Specification-oriented BDD framework for PHP 8.2+, inspired by RSpec and Jasmine.
 
-**License:** MIT | **PHP:** ^8.2 | **Dependencies:** symfony/console ^7.0
+**License:** MIT | **PHP:** ^8.2
 
 ## Installation
 
@@ -63,24 +63,24 @@ Finished in 0.0042 seconds
 
 ## Features
 
-- **Jasmine/RSpec-style DSL** — `describe`, `context`, `it`, `let`, `expect`
-- **30+ built-in matchers** — `toBe`, `toBeTrue`, `toContain`, `toThrow`, `toMatch`, `toHaveProperty`, and more
-- **Negation** — `expect($x)->not()->toBe($y)`
-- **Custom matchers** — `addMatcher('toBePrime', fn ($n) => isPrime($n), 'Expected %s to be prime')`
-- **Built-in mocking** — `mock()` with no external dependencies, automatic type-based double generation
-- **Mock verification** — `toBeCalled()`, `toBeCalledWith()`, `toBeCalledTimes()`
-- **Stubbing** — `allow($mock->method())->toReturn($value)`
-- **Argument matchers** — `any()`, `type('string')`, `callback(fn ($x) => $x > 0)`
-- **Type-hinted mock injection** — `it('test', function (Logger $logger) { ... })`
-- **Lifecycle hooks** — `beforeEach`, `afterEach`, `beforeAll`, `afterAll`
-- **Pending and focused** — `xit()`, `xdescribe()`, `pending()`, `fit()`, `fdescribe()`
-- **Story BDD** — Gherkin `.feature` files with `given()`/`when()`/`then()` step definitions
-- **Code generation** — specs, classes, interfaces, method stubs, step definitions
-- **`--fake` mode** — auto-generates method bodies with hardcoded return values from specs
-- **Multiple formatters** — pretty (default), dot, TAP, JUnit XML
-- **Code coverage** — text, Clover XML, and HTML reports via xdebug
-- **Configuration** — `phpspec.json` with spec paths, autoload, formatter, bootstrap
-- **CLI options** — `--stop-on-failure`, `--filter`, `--order=random`, `--seed`, `--profile`, `--bootstrap`, `-v`, `-q`
+- **Jasmine/RSpec-style DSL**: `describe`, `context`, `it`, `let`, `expect`
+- **30+ built-in matchers**: `toBe`, `toBeTrue`, `toContain`, `toThrow`, `toMatch`, `toHaveProperty`, and more
+- **Negation**: `expect($x)->not()->toBe($y)`
+- **Custom matchers**: `addMatcher('toBePrime', fn ($n) => isPrime($n), 'Expected %s to be prime')`
+- **Built-in mocking**: `mock()` with no external dependencies, automatic type-based double generation
+- **Mock verification**: `toBeCalled()`, `toBeCalledWith()`, `toBeCalledTimes()`
+- **Stubbing**: `allow($mock->method())->toReturn($value)`
+- **Argument matchers**: `any()`, `type('string')`, `callback(fn ($x) => $x > 0)`
+- **Type-hinted mock injection**: `it('test', function (Logger $logger) { ... })`
+- **Lifecycle hooks**: `beforeEach`, `afterEach`, `beforeAll`, `afterAll`
+- **Pending and focused**: `xit()`, `xdescribe()`, `pending()`, `fit()`, `fdescribe()`
+- **Story BDD**: Gherkin `.feature` files with `given()`/`when()`/`then()` step definitions
+- **Code generation**: specs, classes, interfaces, method stubs, step definitions
+- **`--fake` mode**: auto-generates method bodies with hardcoded return values from specs
+- **Multiple formatters**: pretty (default), dot, TAP, JUnit XML, HTML, agent JSON
+- **Code coverage**: text, Clover XML, and HTML reports via xdebug
+- **Configuration**: `phpspec.yml` or `phpspec.json` with spec paths, autoload, formatter, bootstrap
+- **CLI options**: `--stop-on-failure`, `--filter`, `--order=random`, `--seed`, `--profile`, `--bootstrap`, `-v`, `-q`
 
 ## CLI Usage
 

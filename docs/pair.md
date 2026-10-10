@@ -97,7 +97,7 @@ advice is Tab and Enter, never retyping it.
 
 ## AI Configuration
 
-Add an `ai` section to your config file (`phpspec.yaml`, `phpspec.yml`, or `phpspec.json`):
+Add an `ai` section to your config file (`phpspec.yml`, `phpspec.yaml`, or `phpspec.json`):
 
 ```yaml
 ai:
@@ -293,7 +293,7 @@ Example output:
   drive the step definitions and any missing specs.
 ```
 
-The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yaml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again — it points you at `bin/phpspec run` to drive out the missing class.
+The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again — it points you at `bin/phpspec run` to drive out the missing class.
 
 Inside pair mode, `/next` reads the real suite state rather than guessing, and follows the same outside-in, feature-first logic — a red scenario drops into the inner cycle, undefined steps get written, and green features prompt a baby step over the last-touched feature and source. **This works even without an AI provider**: the deterministic narrator gives the advice, and `next.txt` enriches it when a provider is configured (the navigator advises, the driver takes the step).
 

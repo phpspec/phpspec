@@ -79,7 +79,7 @@ describe(FormatterBridge::class, function () {
 
         $bridge->format($suite);
 
-        expect($output->fetch())->toContain('1 errors');
+        expect($output->fetch())->toContain('1 example (0 passed, 0 failed, 0 pending, 1 errored)');
     });
 
     it('walks nested context results', function () {
