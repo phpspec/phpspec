@@ -128,6 +128,30 @@ Feature: Story BDD with Gherkin
     And the output should contain "Skipped:"
     And the exit code should be 0
 
+  Scenario: A step's warning, deprecation and notice are each shown as what they are and counted on the steps line
+    Given a feature file "features/legacy.feature":
+      """
+      Feature: Legacy
+        Scenario: Old API
+          Given the old API
+      """
+    And a step file "features/steps/legacy.steps.php":
+      """
+      <?php
+      given("the old API", function () {
+          trigger_error('the cache is cold', E_USER_WARNING);
+          trigger_error('call() is deprecated', E_USER_DEPRECATED);
+          trigger_error('the clock is local', E_USER_NOTICE);
+      });
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "1 feature, 1 scenario, 1 step (1 passed, 1 warning, 1 deprecation, 1 notice)"
+    And the output should contain "⚠ the cache is cold (legacy.steps.php:3)"
+    And the output should contain "⛔ call() is deprecated (legacy.steps.php:4)"
+    And the output should contain "ℹ the clock is local (legacy.steps.php:5)"
+    And the output should contain "Notices:"
+    And the exit code should be 0
+
   Scenario: A generated step definition takes the table or doc string its step carries
     Given a feature file "features/menu.feature":
       """

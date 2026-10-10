@@ -676,6 +676,29 @@ Feature: CLI options
     When I run phpspec run with option "--stop-on-warning"
     Then the output should not contain "ZZAfterWarning"
 
+  Scenario: Stop on the first warning a step raised
+    Given a feature file "features/a_noisy.feature":
+      """
+      Feature: Noisy
+        Scenario: Warns
+          Given a noisy step
+      """
+    And a feature file "features/z_after.feature":
+      """
+      Feature: ZZAfterNoisy
+        Scenario: Never runs
+          Given a quiet step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a noisy step", fn () => trigger_error('something fishy', E_USER_WARNING));
+      given("a quiet step", function () {});
+      """
+    When I run phpspec run with option "features/ --stop-on-warning"
+    Then the output should contain "Feature: Noisy"
+    And the output should not contain "ZZAfterNoisy"
+
   Scenario: Stop on first deprecation
     Given a spec file "spec/App/AAStopDeprecation.spec.php":
       """

@@ -14,7 +14,6 @@
 
 namespace PhpSpec\Report\Formatter;
 
-use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\Counts;
@@ -106,7 +105,6 @@ final class Dot extends AbstractFormatter
         // The same sectioned detail as the pretty formatter: the dots are the
         // progress, the catch-up story at the bottom is identical.
         (new DetailSections())->render($this->output, $results);
-        $this->formatNotices($results);
         $this->output->writeln('');
 
         PrettyViews::counts($this->output, (new Counts($results))->toArray(), $results->getDuration());
@@ -208,65 +206,4 @@ final class Dot extends AbstractFormatter
         }
         return $count;
     }
-
-    /**
-     * Outputs notices with surrounding source code context.
-     */
-    private function formatNotices(Results $results): void
-    {
-        $notices = $this->collectNotices($results);
-        if (empty($notices)) {
-            return;
-        }
-
-        foreach ($notices as $notice) {
-            $this->output->writeln("  <fg=yellow>⚠ {$notice['title']}</>");
-            $this->output->writeln('');
-            $this->output->writeln("    Notice: {$notice['message']}");
-            $this->output->writeln('');
-            $surrounding = (new SurroundingCode($notice['file'], $notice['line']))->toArray();
-            $lastLine = array_key_last($surrounding);
-            $decimalPlace = strlen((string) $lastLine);
-            foreach ($surrounding as $lineNum => $code) {
-                $indent = strlen((string) $lineNum) < $decimalPlace ? ' ' : '';
-                if ($lineNum === $notice['line']) {
-                    $this->output->writeln("  <fg=red> ></> $indent<options=bold>$lineNum</>  <fg=gray>|</> <fg=red>$code</>");
-                } else {
-                    $this->output->writeln("     $indent<fg=gray>$lineNum  |</> $code");
-                }
-            }
-            $this->output->writeln('');
-            $this->output->writeln("    at {$notice['file']}:{$notice['line']}");
-            $this->output->writeln('');
-        }
-    }
-
-
-    /**
-     * Recursively collects notice details from all example results.
-     *
-     * @param array<int, array{title: string, message: string, file: string, line: int}> $notices
-     * @return array<int, array{title: string, message: string, file: string, line: int}>
-     */
-    private function collectNotices(Results $results, array &$notices = []): array
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                if ($result->hasNotices()) {
-                    foreach ($result->getNotices() as $notice) {
-                        $notices[] = [
-                            'title' => $result->getTitle(),
-                            'message' => $notice['message'],
-                            'file' => $notice['file'],
-                            'line' => $notice['line'],
-                        ];
-                    }
-                }
-            } elseif ($result instanceof Results) {
-                $this->collectNotices($result, $notices);
-            }
-        }
-        return $notices;
-    }
-
 }

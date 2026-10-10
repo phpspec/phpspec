@@ -314,12 +314,12 @@ final readonly class Feature implements SpecBlock
             return new StepResult($title, 'undefined');
         }
 
-        // PHP warnings and notices raised inside the step are collected onto
-        // its result (the same net examples run under), so they report in the
-        // Warnings section instead of leaking raw to the terminal.
-        $warnings = [];
-        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$warnings) {
-            $warnings[] = [
+        // PHP warnings, deprecations and notices raised inside the step are
+        // collected onto its result (the same net examples run under), so they
+        // report under their kinds instead of leaking raw to the terminal.
+        $notes = [];
+        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$notes) {
+            $notes[] = [
                 'severity' => $severity,
                 'message' => $message,
                 'file' => $file,
@@ -336,7 +336,7 @@ final readonly class Feature implements SpecBlock
         }
 
         $result->setDuration((hrtime(true) - $start) / 1e9);
-        $result->setWarnings($warnings);
+        $result->raised($notes);
 
         return $result;
     }

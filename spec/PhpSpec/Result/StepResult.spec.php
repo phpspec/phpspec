@@ -66,6 +66,23 @@ describe(StepResult::class, function () {
         expect($result->getError())->toBeNull();
     });
 
+    it("files the notes raised while it ran under their kinds, each once however often it was raised", function () {
+        $result = new StepResult("Given a step", "passed");
+        $deprecated = ['severity' => E_USER_DEPRECATED, 'message' => 'old', 'file' => 'a.php', 'line' => 3];
+
+        $result->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'oops', 'file' => 'a.php', 'line' => 1],
+            $deprecated,
+            $deprecated,
+            ['severity' => E_NOTICE, 'message' => 'info', 'file' => 'a.php', 'line' => 5],
+        ]);
+
+        expect(array_column($result->getWarnings(), 'message'))->toBe(['oops']);
+        expect($result->getDeprecations())->toBe([$deprecated]);
+        expect(array_column($result->getNotices(), 'message'))->toBe(['info']);
+        expect($result->hasNotices())->toBeTrue();
+    });
+
     it("records how long it ran", function () {
         $result = new StepResult("step", "passed");
         expect($result->getDuration())->toBe(0.0);

@@ -43,6 +43,9 @@ final class Counts
     private int $stepFailures = 0;
     private int $stepErrors = 0;
     private int $stepPending = 0;
+    private int $stepWarnings = 0;
+    private int $stepDeprecations = 0;
+    private int $stepNotices = 0;
     private int $undefined = 0;
     private int $skipped = 0;
 
@@ -80,6 +83,9 @@ final class Counts
             'stepFailures' => $this->stepFailures,
             'stepErrors' => $this->stepErrors,
             'stepPending' => $this->stepPending,
+            'stepWarnings' => $this->stepWarnings,
+            'stepDeprecations' => $this->stepDeprecations,
+            'stepNotices' => $this->stepNotices,
             'undefined' => $this->undefined,
             'skipped' => $this->skipped,
         ];
@@ -94,15 +100,9 @@ final class Counts
     {
         if ($result instanceof ExampleResult) {
             $this->examples++;
-            if ($result->hasWarnings()) {
-                $this->warnings++;
-            }
-            if ($result->hasDeprecations()) {
-                $this->deprecations++;
-            }
-            if ($result->hasNotices()) {
-                $this->notices++;
-            }
+            $this->warnings += count($result->getWarnings());
+            $this->deprecations += count($result->getDeprecations());
+            $this->notices += count($result->getNotices());
             if ($result->isPending()) {
                 $this->pending++;
             } elseif ($result->isSkipped()) {
@@ -118,6 +118,9 @@ final class Counts
             }
         } elseif ($result instanceof StepResult) {
             $this->steps++;
+            $this->stepWarnings += count($result->getWarnings());
+            $this->stepDeprecations += count($result->getDeprecations());
+            $this->stepNotices += count($result->getNotices());
             if ($result->isPassed()) {
                 $this->stepPasses++;
             } elseif ($result->isError()) {

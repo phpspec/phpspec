@@ -63,6 +63,20 @@ describe(StopConditions::class, function () {
         expect((new StopConditions(onSkipped: true))->metBy($threw))->toBeFalse();
     });
 
+    it("is met by a step that raised a note of the kind it stops on", function () {
+        $raising = function (int $severity): StepResult {
+            $step = new StepResult('Given the old API', 'passed');
+            $step->raised([['severity' => $severity, 'message' => 'noted', 'file' => 'a.php', 'line' => 1]]);
+
+            return $step;
+        };
+
+        expect((new StopConditions(onWarning: true))->metBy($raising(E_USER_WARNING)))->toBeTrue();
+        expect((new StopConditions(onDeprecation: true))->metBy($raising(E_USER_DEPRECATED)))->toBeTrue();
+        expect((new StopConditions(onNotice: true))->metBy($raising(E_USER_NOTICE)))->toBeTrue();
+        expect((new StopConditions(onWarning: true, onNotice: true))->metBy($raising(E_USER_DEPRECATED)))->toBeFalse();
+    });
+
     it("defaults to all false", function () {
         $stop = new StopConditions();
         expect($stop->onFailure)->toBeFalse();

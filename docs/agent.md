@@ -40,7 +40,7 @@ class — produces four lines:
 {"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}
 {"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
 {"v":2,"event":"example","id":"66b1647a77b6","example":"App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
-{"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
+{"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"risky":0,"warnings":0,"deprecations":0,"notices":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
 ```
 
 Every line carries `"v"` — the agent-protocol version (currently `2`; version
@@ -88,14 +88,14 @@ Scenario Outline is its own entry, named by its values
 |---|---|
 | `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
-| `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` only under `-v`. |
+| `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` when it raised a PHP warning, deprecation or notice, and otherwise only under `-v`. |
 | `message` | What went wrong, whatever the state; for `pending` and `skipped`, the reason the example gave, when it gave one. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
-| `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expectation?, at? }`, in the order they were declared. |
+| `steps` | Scenarios only: the steps that did not pass or that raised a PHP note, each `{ title, state, message?, expectation?, at?, warnings?, deprecations?, notices? }`, in the order they were declared. |
 
 **`failing`** entries also carry `expectation`, both sides in one block:
 
@@ -156,10 +156,20 @@ method — the entry also carries a per-example `offer` (see below). A failing
 expectation carries **no** offer: the code exists and its behaviour is simply
 wrong, so `state: failing` already says everything.
 
-**Warnings, deprecations and notices.** When an example emits PHP
-warnings/deprecations/notices, the entry gains `warnings`, `deprecations` and/or
-`notices` arrays of `{ "message", "at" }` — present only when non-empty.
-Sometimes the deprecation is the actual clue behind a failure.
+**Warnings, deprecations and notices.** A PHP warning, deprecation or notice
+raised while an example or a step ran is listed under `warnings`,
+`deprecations` or `notices`: an array of `{ "message", "at" }`, where `at` is
+the line that raised it, in the spec, the steps file or the code under test.
+An example carries its own on its entry; a scenario carries each on the step
+that raised it. An example or scenario that passed but raised one is reported
+all the same, `state: passing` with its `spec` and `rerun`, so a note never goes
+by unseen. The keys are present only when non-empty. Sometimes the deprecation
+is the actual clue behind a failure.
+
+```json
+{"v":2,"event":"example","id":"4c2e34fc4bc4","example":"App\\Ledger > totals the entries","state":"passing","spec":"spec/App/Ledger.spec.php:3","rerun":"run spec/App/Ledger.spec.php:3","warnings":[{"message":"totals are rounded","at":"src/App/Ledger.php:9"}]}
+{"v":2,"event":"example","id":"ffd3b79b2ddb","example":"Counting > Counting up","state":"passing","steps":[{"title":"Given I run the counter","state":"passing","deprecations":[{"message":"run() is deprecated, use count()","at":"features/steps/steps.php:4"}]}],"spec":"features/counting.feature:2","rerun":"run features/counting.feature:2"}
+```
 
 Large or object values in `expectation` are exported compactly (long
 strings and arrays are truncated with a `{ "truncated": true, "length": N }`
@@ -257,7 +267,11 @@ the server actually said.
 
 The counts (`passing`, `failing`, `errors`, `pending`, `skipped`, `risky`) are for the
 whole run, in the units the entries are reported in: one per example, one per
-scenario. `steps` is a size, not a verdict. The one number to branch on is
+scenario. `steps` is a size, not a verdict. `warnings`, `deprecations` and
+`notices` count every PHP note raised, by examples and steps alike, each one
+listed where it was raised. Like `risky`, they are never actionable: the run
+passed, and a deprecation raised in a vendor's code may be nothing the project
+can fix. The one number to branch on is
 **`actionable`** = failing + errors + pending, plus a coverage gate the run
 missed and anything that stopped it.
 **Zero means there is nothing to do**, and it never disagrees with the exit code.
@@ -265,7 +279,7 @@ missed and anything that stopped it.
 
 | Field | Present when | Meaning |
 |---|---|---|
-| `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
+| `rerun` | an entry needing attention has a location | One command that re-runs every failing example, and every one that raised a note, at once, so a fix is checked against all of what it was meant to fix. |
 | `rerun_argv` | with `rerun` | The same as an argument list ending in `--format=agent`. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
@@ -451,8 +465,8 @@ its `event`:
   weaken the code to get past it. If `judged` is `false`, guard reached no
   conclusion at all and `reason` says why: nothing was checked, so do not read
   the run as having been guarded.
-- `example` lines are what needs attention (passing examples are reported only
-  under `-v`). Each has a `state`:
+- `example` lines are what needs attention (a passing example is reported only
+  when it raised a PHP note, or under `-v`). Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at
     `expectation.expected` (what the spec wants), `expectation.actual` (what the
     code produced), and `message`.
@@ -464,6 +478,10 @@ its `event`:
   - `pending` — an unimplemented example; implement it.
   - `risky` — an example that made no expectation, so it checked nothing;
     give it one. Not actionable: nothing is red.
+- `warnings`, `deprecations` or `notices` on an entry, or on one of its
+  `steps`, are what PHP raised while it ran, at `at`. Fix the ones raised in
+  this project's code. They never count in `actionable`, so read the summary's
+  `warnings`, `deprecations` and `notices` before you stop.
 - `output` on an entry is what the code printed while it ran: read it, it is
   often the whole diagnosis for a scenario that drove a process of its own.
 - `attachments` on an entry is context the spec handed over about itself, by

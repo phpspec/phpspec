@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The agent header says which PHP ran, whether coverage is collected and whether guard is on, off or stood down, so a reader knows upfront which verdicts will follow
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
+ - `--format=agent` reports an example or scenario that passed but raised a PHP warning, deprecation or notice, each note on the entry or the step that raised it with the line that raised it, and the summary counts `warnings`, `deprecations` and `notices`; none counts in `actionable`
 ### Changed
  - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
  - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A class whose file exists but could not be autoloaded is said to be a PSR-4 problem, instead of being passed over in silence
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
+ - The console counts each warning, deprecation and notice raised, not the examples that raised them, and counts a step's on the steps line; notices are listed in a `Notices:` section by pretty and dot alike
 ### Fixed
  - A story hook that throws, or calls `skip()` or `pending()`, no longer ends the whole run with only its message: a before hook's signal leaves the feature, scenario or step it wraps skipped or pending with the reason, an after hook's signal is an error saying it came too late, and any other error errors the step it affects, naming the hook, while the rest of the run goes on
  - `skip()` or `pending()` in `beforeEach` or `beforeAll` leaves the examples it wraps skipped or pending with the reason, the matching after-hook still running, where it errored them and failed the run; in `afterEach` or `afterAll` it is an error that says it came after the example ran
@@ -117,6 +119,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A generated class, interface or spec ends with a newline
  - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree
  - The loader no longer plants a permanent subscriber per spec file; a specification resets itself when it runs
+ - A step's deprecations and notices were marked and listed as warnings; a note raised before `pending()` was filed as a warning whatever its kind, and one raised before `skip()` was lost
+ - `--stop-on-warning`, `--stop-on-deprecation` and `--stop-on-notice` stop at a note a step raised, as they did at an example's
 
 ## [9.0.0-beta.20](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.20)
 

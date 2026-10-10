@@ -86,15 +86,7 @@ final class PrettyViews
         if (!$example->isFailure() && !$example->isError()) {
             self::printedOutput($output, $example->getOutput(), $indentation + 2);
         }
-        foreach ($example->getWarnings() as $warning) {
-            self::diagnostic($output, $indentation, '⚠', $warning);
-        }
-        foreach ($example->getDeprecations() as $deprecation) {
-            self::diagnostic($output, $indentation, '⛔', $deprecation);
-        }
-        foreach ($example->getNotices() as $notice) {
-            self::diagnostic($output, $indentation, 'ℹ', $notice);
-        }
+        self::notes($output, $indentation, $example);
     }
 
 
@@ -141,8 +133,23 @@ final class PrettyViews
         if (!$step->isFailure() && !$step->isError()) {
             self::printedOutput($output, $step->getOutput(), 6);
         }
-        foreach ($step->getWarnings() as $warning) {
-            self::diagnostic($output, 4, '⚠', $warning);
+        self::notes($output, 4, $step);
+    }
+
+    /**
+     * Each PHP note raised while an example or a step ran, under it, marked
+     * with its kind.
+     */
+    private static function notes(OutputInterface $output, int $indentation, ExampleResult|StepResult $result): void
+    {
+        foreach ($result->getWarnings() as $warning) {
+            self::diagnostic($output, $indentation, '⚠', $warning);
+        }
+        foreach ($result->getDeprecations() as $deprecation) {
+            self::diagnostic($output, $indentation, '⛔', $deprecation);
+        }
+        foreach ($result->getNotices() as $notice) {
+            self::diagnostic($output, $indentation, 'ℹ', $notice);
         }
     }
 
@@ -270,6 +277,7 @@ final class PrettyViews
             if ($counts['skipped']) {
                 $parts[] = '<fg=cyan>' . $counts['skipped'] . ' skipped</>';
             }
+            $parts = [...$parts, ...self::notesCounted($counts['stepWarnings'] ?? 0, $counts['stepDeprecations'] ?? 0, $counts['stepNotices'] ?? 0)];
             $output->write(implode(', ', $parts));
             $output->write(')' . PHP_EOL);
         }
@@ -297,19 +305,26 @@ final class PrettyViews
             if ($counts['exampleSkipped']) {
                 $exParts[] = '<fg=cyan>' . $counts['exampleSkipped'] . ' skipped</>';
             }
-            if ($counts['warnings']) {
-                $exParts[] = '<fg=yellow>' . $counts['warnings'] . ' warning' . ($counts['warnings'] != 1 ? 's' : '') . '</>';
-            }
-            if ($counts['deprecations']) {
-                $exParts[] = '<fg=yellow>' . $counts['deprecations'] . ' deprecation' . ($counts['deprecations'] != 1 ? 's' : '') . '</>';
-            }
-            if ($counts['notices']) {
-                $exParts[] = '<fg=yellow>' . $counts['notices'] . ' notice' . ($counts['notices'] != 1 ? 's' : '') . '</>';
-            }
+            $exParts = [...$exParts, ...self::notesCounted($counts['warnings'], $counts['deprecations'], $counts['notices'])];
             $output->write(($specs === '' ? '' : $specs . ', ') . $counts['examples'] . ' example' . ($counts['examples'] != 1 ? 's' : '') . ' (' . implode(', ', $exParts) . ')' . PHP_EOL);
         }
         if ($duration > 0) {
             $output->write(sprintf('Finished in %.4f seconds' . PHP_EOL, $duration));
         }
+    }
+
+    /**
+     * @return list<string> one part per kind of note raised, none for a kind never raised
+     */
+    private static function notesCounted(int $warnings, int $deprecations, int $notices): array
+    {
+        $parts = [];
+        foreach (['warning' => $warnings, 'deprecation' => $deprecations, 'notice' => $notices] as $kind => $count) {
+            if ($count > 0) {
+                $parts[] = '<fg=yellow>' . $count . ' ' . $kind . ($count !== 1 ? 's' : '') . '</>';
+            }
+        }
+
+        return $parts;
     }
 }

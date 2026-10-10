@@ -89,13 +89,7 @@ final readonly class HookOutcome
             return $step;
         }
 
-        $broken = new StepResult($step->getTitle(), 'error');
-        $broken->setError($error);
-        $broken->setOutput($step->getOutput());
-        $broken->setDuration($step->getDuration());
-        $broken->setWarnings($step->getWarnings());
-
-        return $broken;
+        return $step->erroredBy($error);
     }
 
     private function error(): StepError

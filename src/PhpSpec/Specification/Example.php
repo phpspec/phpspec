@@ -262,9 +262,9 @@ class Example implements ExampleResultRegistry, Rebindable
             return $this->exampleResult;
         }
 
-        $warnings = [];
-        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$warnings) {
-            $warnings[] = [
+        $notes = [];
+        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$notes) {
+            $notes[] = [
                 'severity' => $severity,
                 'message' => $message,
                 'file' => $file,
@@ -284,7 +284,7 @@ class Example implements ExampleResultRegistry, Rebindable
             restore_error_handler();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $e->getMessage());
-            $this->exampleResult->setWarnings($warnings);
+            $this->exampleResult->raised($notes);
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
@@ -293,6 +293,7 @@ class Example implements ExampleResultRegistry, Rebindable
             restore_error_handler();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], isSkipped: true, reason: $e->getMessage());
+            $this->exampleResult->raised($notes);
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
@@ -314,15 +315,7 @@ class Example implements ExampleResultRegistry, Rebindable
         if (!$this->isError && $this->exampleResult->getResults() === []) {
             $this->exampleResult->markRisky();
         }
-        $unique = [];
-        foreach ($warnings as $w) {
-            $key = $w['message'] . ':' . $w['file'] . ':' . $w['line'];
-            $unique[$key] = $w;
-        }
-        $all = array_values($unique);
-        $this->exampleResult->setWarnings(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_WARNING, E_USER_WARNING]))));
-        $this->exampleResult->setDeprecations(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_DEPRECATED, E_USER_DEPRECATED]))));
-        $this->exampleResult->setNotices(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_NOTICE, E_USER_NOTICE]))));
+        $this->exampleResult->raised($notes);
         $this->keepAttachments($attachments);
         DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;

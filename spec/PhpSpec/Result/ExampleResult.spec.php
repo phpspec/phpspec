@@ -144,6 +144,22 @@ describe(ExampleResult::class, function() {
         expect($result->getNotices())->toHaveCount(1);
     });
 
+    it("files the notes raised while it ran under their kinds, each once however often it was raised", function() {
+        $result = new ExampleResult("test", []);
+        $deprecated = ['severity' => E_USER_DEPRECATED, 'message' => 'old', 'file' => 'a.php', 'line' => 3];
+
+        $result->raised([
+            ['severity' => E_WARNING, 'message' => 'oops', 'file' => 'a.php', 'line' => 1],
+            $deprecated,
+            $deprecated,
+            ['severity' => E_USER_NOTICE, 'message' => 'info', 'file' => 'a.php', 'line' => 5],
+        ]);
+
+        expect(array_column($result->getWarnings(), 'message'))->toBe(['oops']);
+        expect($result->getDeprecations())->toBe([$deprecated]);
+        expect(array_column($result->getNotices(), 'message'))->toBe(['info']);
+    });
+
     it("is not a context", function() {
         $result = new ExampleResult("test", []);
         expect($result->isContext())->toBe(false);

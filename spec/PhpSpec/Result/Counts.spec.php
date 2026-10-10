@@ -192,6 +192,35 @@ describe(Counts::class, function() {
         expect($c['notices'])->toBe(1);
     });
 
+    it("counts each note an example raised, not the examples that raised them", function () {
+        $warned = new ExampleResult("warn", [MatchResult::passed()]);
+        $warned->raised([
+            ['severity' => E_WARNING, 'message' => 'first', 'file' => 'a.php', 'line' => 1],
+            ['severity' => E_WARNING, 'message' => 'second', 'file' => 'a.php', 'line' => 2],
+        ]);
+
+        $c = (new Counts(new SuiteResult([new SpecificationResult("spec", [$warned])])))->toArray();
+
+        expect($c['warnings'])->toBe(2);
+    });
+
+    it("counts the notes steps raised apart from the examples'", function () {
+        $step = new StepResult("Given the old API", "passed");
+        $step->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'cold', 'file' => 'a.php', 'line' => 1],
+            ['severity' => E_USER_DEPRECATED, 'message' => 'old', 'file' => 'a.php', 'line' => 2],
+            ['severity' => E_USER_NOTICE, 'message' => 'local', 'file' => 'a.php', 'line' => 3],
+        ]);
+        $feature = new FeatureResult("Feature", [new ScenarioResult("Scenario", [$step])]);
+
+        $c = (new Counts(new SuiteResult([$feature])))->toArray();
+
+        expect($c['stepWarnings'])->toBe(1);
+        expect($c['stepDeprecations'])->toBe(1);
+        expect($c['stepNotices'])->toBe(1);
+        expect($c['warnings'])->toBe(0);
+    });
+
     it("counts pending, undefined, and skipped steps", function () {
         $steps = [
             new StepResult("Given pending", "pending"),

@@ -39,13 +39,17 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  * Speaks the run to a coding agent in JSON Lines: a run_started header, one
- * event per example or scenario that needs attention as it happens, and a
- * summary with the totals. No ANSI, no prose, and no waiting for the end of a
+ * event per example or scenario that needs attention as it happens (red,
+ * unfinished, or raising a PHP warning, deprecation or notice), and a summary
+ * with the totals. No ANSI, no prose, and no waiting for the end of a
  * long suite — the failure itself is the payload, delivered while the rest is
  * still running.
  */
 final class Agent extends AbstractFormatter
 {
+    /** The kinds of PHP note an entry or a step carries, each under its own key. */
+    private const NOTE_KINDS = ['warnings', 'deprecations', 'notices'];
+
     /** @var list<string> what each reported entry re-runs, for the summary's one command */
     private array $rerunTargets = [];
 
@@ -60,6 +64,9 @@ final class Agent extends AbstractFormatter
 
     /** How many story scenarios ran: the unit a story run is counted and reported in. */
     private int $scenarioCount = 0;
+
+    /** @var array{warnings: int, deprecations: int, notices: int} every PHP note raised, by kind */
+    private array $notesRaised = ['warnings' => 0, 'deprecations' => 0, 'notices' => 0];
 
     /** @var int how many examples a focus elsewhere left out of this run */
     private int $focusedOut = 0;
@@ -345,6 +352,12 @@ final class Agent extends AbstractFormatter
             'skipped' => $this->counts['skipped'] ?? 0,
             // Checked nothing, but nothing is red: counted, never actionable.
             'risky' => $this->counts['risky'] ?? 0,
+            // Each note is listed on the entry, or the step, that raised it.
+            // Never actionable: the run passed, and a deprecation raised in a
+            // vendor's code may be nothing this project can fix.
+            'warnings' => $this->notesRaised['warnings'],
+            'deprecations' => $this->notesRaised['deprecations'],
+            'notices' => $this->notesRaised['notices'],
             // The one number an agent checks: everything red or unfinished
             // (failures + errors + pending), plus a missed coverage gate and
             // anything that stopped the run. Zero means nothing to do.
@@ -452,9 +465,9 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Counts an example by state, and reports it unless it passed: a green
-     * suite of thousands need not spend tokens on entries an agent will never
-     * act on; the summary still counts them.
+     * Counts an example by state, and reports it when it needs attention: a
+     * green suite of thousands need not spend tokens on entries an agent will
+     * never act on; the summary still counts them.
      *
      * @param array<string, mixed> $entry
      */
@@ -463,34 +476,30 @@ final class Agent extends AbstractFormatter
         $state = is_string($entry['state'] ?? null) ? $entry['state'] : 'passing';
         $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
         $this->exampleCount++;
+        $this->tally($entry);
 
-        if ($this->reports($state)) {
-            $this->report($entry);
-        }
+        $this->report($entry, $state !== 'passing' || $this->carriesNotes($entry));
     }
 
     /**
-     * Whether an entry in this state goes out: everything that needs attention
-     * does, and a passing one only when the reader asked for the whole run.
-     */
-    private function reports(string $state): bool
-    {
-        return $state !== 'passing' || $this->output->isVerbose();
-    }
-
-    /**
-     * Sends an entry out the moment it is known, and remembers what it re-runs
-     * so the summary can still hand over one command for the lot. A passing
-     * entry is not part of that lot: it re-runs on its own, not with the fixes.
+     * Sends an entry out the moment it is known, when it needs attention or
+     * the reader asked for the whole run, and remembers what one needing
+     * attention re-runs so the summary can still hand over one command for the
+     * lot. A passing entry that raised nothing is not part of that lot: it
+     * re-runs on its own, not with the fixes.
      *
      * @param array<string, mixed> $entry
      */
-    private function report(array $entry): void
+    private function report(array $entry, bool $needsAttention): void
     {
+        if (!$needsAttention && !$this->output->isVerbose()) {
+            return;
+        }
+
         $this->start();
 
         $rerun = $entry['rerun'] ?? null;
-        if (is_string($rerun) && $entry['state'] !== 'passing') {
+        if ($needsAttention && is_string($rerun)) {
             $this->rerunTargets[] = substr($rerun, strlen('run '));
         }
 
@@ -596,27 +605,43 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Attaches any PHP warnings, deprecations or notices the example collected,
-     * as lean {message, at} lists and only when non-empty — a clean entry stays
-     * clean. A deprecation is sometimes the very clue that explains a failure.
+     * Attaches any PHP warnings, deprecations or notices an example or a step
+     * raised, as lean {message, at} lists and only when non-empty: a clean
+     * entry stays clean. A deprecation is sometimes the very clue that
+     * explains a failure.
      *
      * @param array<string, mixed> $entry
      */
-    private function attachNotes(array &$entry, ExampleResult $example): void
+    private function attachNotes(array &$entry, ExampleResult|StepResult $result): void
     {
-        $warnings = $this->notes($example->getWarnings());
-        if ($warnings !== []) {
-            $entry['warnings'] = $warnings;
-        }
+        $raised = ['warnings' => $result->getWarnings(), 'deprecations' => $result->getDeprecations(), 'notices' => $result->getNotices()];
 
-        $deprecations = $this->notes($example->getDeprecations());
-        if ($deprecations !== []) {
-            $entry['deprecations'] = $deprecations;
+        foreach ($raised as $kind => $notes) {
+            if ($notes !== []) {
+                $entry[$kind] = $this->notes($notes);
+            }
         }
+    }
 
-        $notices = $this->notes($example->getNotices());
-        if ($notices !== []) {
-            $entry['notices'] = $notices;
+    /**
+     * Whether an entry or a step carries a PHP note of any kind.
+     *
+     * @param array<string, mixed> $reported
+     */
+    private function carriesNotes(array $reported): bool
+    {
+        return array_intersect_key($reported, array_flip(self::NOTE_KINDS)) !== [];
+    }
+
+    /**
+     * Counts the notes an entry or a step carries, for the summary.
+     *
+     * @param array<string, mixed> $reported
+     */
+    private function tally(array $reported): void
+    {
+        foreach (self::NOTE_KINDS as $kind) {
+            $this->notesRaised[$kind] += is_array($reported[$kind] ?? null) ? count($reported[$kind]) : 0;
         }
     }
 
@@ -625,7 +650,7 @@ final class Agent extends AbstractFormatter
      * {message, at} shape — the severity flag is noise once the note's kind is
      * named by its key.
      *
-     * @param array<array{severity: int, message: string, file: string, line: int}> $items
+     * @param list<array{severity: int, message: string, file: string, line: int}> $items
      * @return list<array{message: string, at: string|null}>
      */
     private function notes(array $items): array
@@ -712,12 +737,10 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    /**
      * Records one scenario: counted whatever it did, and emitted when it needs
-     * attention, carrying the steps that were not passing so the reader sees
-     * which one broke (or which are still undefined) without a second lookup.
+     * attention, carrying the steps that were not passing, or that raised a
+     * PHP note, so the reader sees which one broke (or which are still
+     * undefined, or which warned) without a second lookup.
      */
     private function recordScenario(ScenarioResult $scenario, Origin $origin): void
     {
@@ -733,49 +756,31 @@ final class Agent extends AbstractFormatter
             }
 
             $this->stepCount++;
-            $stepState = $this->stepState($step);
             // Every step's, passing ones included: a scenario that shells out
             // usually does it in a step that worked, and reads the result in the
             // one that broke.
             $printed .= $step->getOutput();
+            $stepState = $this->stepState($step);
+            $reported = $this->fromStep($step, $stepState);
+            $this->tally($reported);
 
-            if ($stepState === 'passing') {
+            if ($stepState === 'passing' && !$this->carriesNotes($reported)) {
                 continue;
-            }
-
-            $reported = ['title' => $step->getTitle(), 'state' => $stepState];
-
-            if ($stepState === 'failing' && $step->getError() !== null) {
-                $reported['message'] = $step->getError()->getMessage();
-                $message ??= $step->getError()->getMessage();
-            } elseif ($step->getReason() !== null) {
-                $reported['message'] = $step->getReason();
-                $message ??= $step->getReason();
-            }
-
-            // An expectation that did not hold puts its two values on the step,
-            // and on the scenario alongside the message it already hoists, so a
-            // reader acting on the entry never has to go a level deeper.
-            $match = $step->getMatch();
-            if ($match !== null) {
-                $reported += $this->expectation($match);
-                $at = $this->location($match->getFile(), $match->getLine());
-                if ($at !== null) {
-                    $reported['at'] = $at;
-                }
-                $expectation = $expectation !== [] ? $expectation : $this->expectation($match);
             }
 
             $steps[] = $reported;
             $state = self::worst($state, $stepState);
+            // The message and the expectation of the first step that broke are
+            // hoisted onto the scenario, so a reader acting on the entry never
+            // has to go a level deeper.
+            $message ??= is_string($reported['message'] ?? null) ? $reported['message'] : null;
+            if ($expectation === [] && isset($reported['expectation'])) {
+                $expectation = ['expectation' => $reported['expectation']];
+            }
         }
 
         $this->scenarioCount++;
         $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
-
-        if (!$this->reports($state)) {
-            return;
-        }
 
         $entry = [
             'v' => Schema::V,
@@ -804,11 +809,43 @@ final class Agent extends AbstractFormatter
         // and a pass are addressed, as with examples: a scenario waiting on
         // undefined steps is work to write, not work to re-run.
         if ($state === 'failing' || $state === 'passing') {
-            $scenario = $this->location($origin->path, $origin->line);
-            $this->addLocation($entry, $scenario, $scenario);
+            $at = $this->location($origin->path, $origin->line);
+            $this->addLocation($entry, $at, $at);
         }
 
-        $this->report($entry);
+        // A passing scenario lists only the steps that raised a note.
+        $this->report($entry, $state !== 'passing' || $steps !== []);
+    }
+
+    /**
+     * A step as its scenario's entry carries it: its state, what went wrong
+     * when something did, with the values an expectation did not match and
+     * the line it lives on, and the notes it raised.
+     *
+     * @return array<string, mixed>
+     */
+    private function fromStep(StepResult $step, string $state): array
+    {
+        $reported = ['title' => $step->getTitle(), 'state' => $state];
+
+        if ($state === 'failing' && $step->getError() !== null) {
+            $reported['message'] = $step->getError()->getMessage();
+        } elseif ($step->getReason() !== null) {
+            $reported['message'] = $step->getReason();
+        }
+
+        $match = $step->getMatch();
+        if ($match !== null) {
+            $reported += $this->expectation($match);
+            $at = $this->location($match->getFile(), $match->getLine());
+            if ($at !== null) {
+                $reported['at'] = $at;
+            }
+        }
+
+        $this->attachNotes($reported, $step);
+
+        return $reported;
     }
 
     /**

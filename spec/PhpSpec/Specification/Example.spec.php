@@ -216,6 +216,21 @@ describe(Example::class, function() {
         expect($result->getNotices()[0]['message'])->toBe("test notice");
     });
 
+    it("keeps the notes raised before pending() or skip(), each under its kind", function() {
+        $pending = (new Example("waits", function() {
+            trigger_error("wait() is deprecated", E_USER_DEPRECATED);
+            pending("later");
+        }))->run();
+        $skipped = (new Example("skips", function() {
+            trigger_error("the printer is offline", E_USER_WARNING);
+            skip("no printer");
+        }))->run();
+
+        expect($pending->getWarnings())->toBe([]);
+        expect($pending->getDeprecations()[0]['message'])->toBe("wait() is deprecated");
+        expect($skipped->getWarnings()[0]['message'])->toBe("the printer is offline");
+    });
+
     it("measures execution duration", function() {
         $example = new Example("timed", function() {
             usleep(1000); // 1ms

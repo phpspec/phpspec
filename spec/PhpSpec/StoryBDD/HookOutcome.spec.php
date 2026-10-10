@@ -29,6 +29,7 @@ describe(HookOutcome::class, function () {
         $passed = new StepResult('Given a step', 'passed');
         $passed->setOutput('printed');
         $passed->setDuration(0.5);
+        $passed->raised([['severity' => E_USER_DEPRECATED, 'message' => 'old', 'file' => 'a.php', 'line' => 3]]);
 
         $step = (new HookOutcome(new RuntimeException('log full'), 'afterStep'))->after($passed);
 
@@ -36,6 +37,7 @@ describe(HookOutcome::class, function () {
         expect($step->getError()->getMessage())->toBe('log full (in afterStep)');
         expect($step->getOutput())->toBe('printed');
         expect($step->getDuration())->toBe(0.5);
+        expect($step->getDeprecations()[0]['message'])->toBe('old');
     });
 
     it('keeps the failure of a step that had already failed, warning with the hook error under it', function () {

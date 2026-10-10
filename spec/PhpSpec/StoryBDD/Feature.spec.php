@@ -193,10 +193,12 @@ describe(Feature::class, function () {
         expect($result->getResults()[0]->getResults()[0]->getMatch())->toBeNull();
     });
 
-    it("captures PHP warnings raised inside a step instead of leaking them", function () {
+    it("captures the PHP notes raised inside a step under their kinds, instead of leaking them", function () {
         $registry = new StepRegistry();
         $registry->addStep("a noisy step", function () {
             trigger_error("watch out", E_USER_WARNING);
+            trigger_error("going away", E_USER_DEPRECATED);
+            trigger_error("for the record", E_USER_NOTICE);
         });
 
         $feature = new Feature('test.feature', new FeatureNode(
@@ -213,6 +215,8 @@ describe(Feature::class, function () {
         expect($step->isPassed())->toBeTrue();
         expect($step->getWarnings())->toHaveLength(1);
         expect($step->getWarnings()[0]['message'])->toBe("watch out");
+        expect($step->getDeprecations()[0]['message'])->toBe("going away");
+        expect($step->getNotices()[0]['message'])->toBe("for the record");
     });
 
     it("skips remaining steps after a skipped step", function () {

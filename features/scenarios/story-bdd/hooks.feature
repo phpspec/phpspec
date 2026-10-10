@@ -236,7 +236,7 @@ Feature: Story BDD lifecycle hooks
     When I run phpspec run "features/"
     Then the output should contain "Expected 1 to be 2"
     And the output should contain "log full (in afterStep)"
-    And the output should contain "1 scenario, 1 step (1 failed)"
+    And the output should contain "1 scenario, 1 step (1 failed, 1 warning)"
     And the exit code should be 1
 
   Scenario: skip() in afterScenario comes too late, and says so

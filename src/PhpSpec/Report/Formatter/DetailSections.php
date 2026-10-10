@@ -33,7 +33,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  * The end-of-run detail, grouped by kind: Failures, Errors, Warnings,
- * Deprecations, Risky, Pending and Skipped, each section printed only when it has entries.
+ * Deprecations, Notices, Risky, Pending and Skipped, each section printed only when it has entries.
  * Shared by the pretty and dot formatters so both tell the same story. A
  * failure reads as its sentence, then the value wanted under "expected" and
  * the value produced under "got", whatever the matcher.
@@ -51,7 +51,7 @@ final class DetailSections
      */
     public function render(OutputInterface $output, SuiteResult $results): void
     {
-        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Risky' => [], 'Pending' => [], 'Skipped' => []];
+        $this->sections = ['Failures' => [], 'Errors' => [], 'Warnings' => [], 'Deprecations' => [], 'Notices' => [], 'Risky' => [], 'Pending' => [], 'Skipped' => []];
 
         foreach ($results->getResults() as $node) {
             if ($node instanceof FeatureResult) {
@@ -61,7 +61,7 @@ final class DetailSections
             }
         }
 
-        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Risky' => 'yellow', 'Pending' => 'yellow', 'Skipped' => 'cyan'];
+        $colours = ['Failures' => 'red', 'Errors' => 'red', 'Warnings' => 'yellow', 'Deprecations' => 'yellow', 'Notices' => 'yellow', 'Risky' => 'yellow', 'Pending' => 'yellow', 'Skipped' => 'cyan'];
         foreach ($this->sections as $name => $entries) {
             if ($entries === []) {
                 continue;
@@ -143,11 +143,23 @@ final class DetailSections
             $this->sections['Risky'][] = self::reasonEntry('yellow', $title, 'No expectation in this example.');
         }
 
-        foreach ($example->getWarnings() as $warning) {
+        $this->collectNotes($example, $title);
+    }
+
+    /**
+     * Lists each PHP note raised while an example or a step ran in the
+     * section of its kind.
+     */
+    private function collectNotes(ExampleResult|StepResult $result, string $title): void
+    {
+        foreach ($result->getWarnings() as $warning) {
             $this->sections['Warnings'][] = self::noteEntry($title, $warning);
         }
-        foreach ($example->getDeprecations() as $deprecation) {
+        foreach ($result->getDeprecations() as $deprecation) {
             $this->sections['Deprecations'][] = self::noteEntry($title, $deprecation);
+        }
+        foreach ($result->getNotices() as $notice) {
+            $this->sections['Notices'][] = self::noteEntry($title, $notice);
         }
     }
 
@@ -247,10 +259,7 @@ final class DetailSections
                     $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $step->getReason());
                 }
 
-                foreach ($step->getWarnings() as $warning) {
-                    $section = in_array($warning['severity'], [E_DEPRECATED, E_USER_DEPRECATED], true) ? 'Deprecations' : 'Warnings';
-                    $this->sections[$section][] = self::noteEntry($title, $warning);
-                }
+                $this->collectNotes($step, $title);
             }
 
             // Handed over by the scenario, not by any one of its steps: whichever
