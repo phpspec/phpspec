@@ -20,5 +20,11 @@ namespace PhpSpec\Console\Command\Refactor;
  */
 final readonly class Declined
 {
-    public function __construct(public string $reason) {}
+    /**
+     * @param int $tokens how many tokens the model wrote for it
+     */
+    public function __construct(
+        public string $reason,
+        public int $tokens = 0,
+    ) {}
 }

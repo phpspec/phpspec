@@ -16,19 +16,13 @@ namespace PhpSpec\Console\Command\Refactor;
 
 /**
  * @internal
- * A refactoring the model means to make: the technique, why, in its own
- * words, and the baby steps it takes, in order.
+ * A step of a plan, as the checklist names it and as the progress line says
+ * it is under way ("Introducing DiscountPolicy").
  */
-final readonly class RefactorPlan
+final readonly class PlannedStep
 {
-    /**
-     * @param list<PlannedStep> $steps
-     * @param int $tokens how many tokens the model wrote for it
-     */
     public function __construct(
-        public string $technique,
-        public string $rationale,
-        public array $steps,
-        public int $tokens = 0,
+        public string $title,
+        public string $doing,
     ) {}
 }

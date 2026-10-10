@@ -1,3 +1,3 @@
 Proposes the refactoring: its technique, the rationale in prose, and the baby
-steps in order, each a short imperative line such as "Describe LoyaltyDiscount"
-or "Move the loyalty rule behind DiscountPolicy".
+steps in order, each with a short imperative title ("Describe LoyaltyDiscount")
+and how it reads under way, in a few words ("Describing LoyaltyDiscount").

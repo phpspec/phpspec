@@ -26,10 +26,12 @@ final readonly class RefactorStep
 {
     /**
      * @param list<Proposal> $files
+     * @param int $tokens how many tokens the model wrote for it
      */
     public function __construct(
         public string $title,
         public array $files,
         public bool $red,
+        public int $tokens = 0,
     ) {}
 }

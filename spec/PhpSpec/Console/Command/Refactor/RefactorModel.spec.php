@@ -5,6 +5,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
+use PhpSpec\Console\Command\Refactor\PlannedStep;
 use PhpSpec\Console\Command\Refactor\RefactorModel;
 use PhpSpec\Console\Command\Refactor\RefactorPlan;
 use PhpSpec\Console\Command\Refactor\RefactorTarget;
@@ -30,8 +31,11 @@ describe(RefactorModel::class, function () {
     let('plan', fn() => new Response('', [new ToolCall('p1', 'propose_plan', [
         'technique' => 'Replace Conditional with Polymorphism',
         'rationale' => "CheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule.",
-        'steps' => ['Introduce a DiscountPolicy abstraction', 'Describe LoyaltyDiscount'],
-    ])]));
+        'steps' => [
+            ['title' => 'Introduce a DiscountPolicy abstraction', 'doing' => 'Introducing DiscountPolicy'],
+            'Describe LoyaltyDiscount',
+        ],
+    ])], 1200));
     let('replay', fn() => new ReplayProvider([]));
     let('model', fn() => function (Response ...$responses): RefactorModel {
         $this->replay = new ReplayProvider($responses);
@@ -45,7 +49,8 @@ describe(RefactorModel::class, function () {
         expect($plan)->toBeAnInstanceOf(RefactorPlan::class);
         expect($plan->technique)->toBe('Replace Conditional with Polymorphism');
         expect($plan->rationale)->toBe("CheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule.");
-        expect($plan->steps)->toBe(['Introduce a DiscountPolicy abstraction', 'Describe LoyaltyDiscount']);
+        expect($plan->steps)->toBeLike([new PlannedStep('Introduce a DiscountPolicy abstraction', 'Introducing DiscountPolicy'), new PlannedStep('Describe LoyaltyDiscount', 'Describe LoyaltyDiscount')]);
+        expect($plan->tokens)->toBe(1200);
 
         $request = $this->replay->requests[0];
         $asked = $request['messages'][1]->content;
@@ -71,13 +76,14 @@ describe(RefactorModel::class, function () {
                 ['path' => 'src/App/Checkout/CheckoutService.php', 'content' => "<?php // changed\n"],
             ],
             'red' => true,
-        ])]));
+        ])], 800));
         $plan = $model->plan($this->target, '');
 
         $step = $model->step($plan, 1);
 
         expect($step->title)->toBe('Describe LoyaltyDiscount');
         expect($step->red)->toBeTrue();
+        expect($step->tokens)->toBe(800);
         expect($step->files[0]->path)->toBe('spec/App/Checkout/LoyaltyDiscount.spec.php');
         expect($step->files[0]->isNew)->toBeTrue();
         expect($step->files[1]->old)->toBe($this->files['/proj/src/App/Checkout/CheckoutService.php']);

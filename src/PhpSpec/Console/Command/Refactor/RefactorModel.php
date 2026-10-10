@@ -82,7 +82,14 @@ final class RefactorModel
         $response = $this->ask($ask, [$this->tool('propose_plan', [
             'technique' => ['type' => 'string', 'description' => 'the named refactoring'],
             'rationale' => ['type' => 'string', 'description' => 'why it improves the design, in prose'],
-            'steps' => ['type' => 'array', 'description' => 'the baby steps, in order', 'items' => ['type' => 'string']],
+            'steps' => ['type' => 'array', 'description' => 'the baby steps, in order', 'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'title' => ['type' => 'string', 'description' => 'the step as an imperative line'],
+                    'doing' => ['type' => 'string', 'description' => 'the step under way, a few words: "Extracting DiscountPolicy"'],
+                ],
+                'required' => ['title', 'doing'],
+            ]],
         ]), $this->tool('decline_refactoring', [
             'reason' => ['type' => 'string', 'description' => 'why nothing is worth changing'],
         ])], 'required');
@@ -92,16 +99,17 @@ final class RefactorModel
                 return new RefactorPlan(
                     (string) ($call->arguments['technique'] ?? ''),
                     (string) ($call->arguments['rationale'] ?? ''),
-                    array_values(array_map(static fn(mixed $step): string => (string) $step, $call->arguments['steps'])),
+                    array_values(array_map($this->plannedStep(...), $call->arguments['steps'])),
+                    $response->outputTokens,
                 );
             }
 
             if ($call->name === 'decline_refactoring') {
-                return new Declined((string) ($call->arguments['reason'] ?? ''));
+                return new Declined((string) ($call->arguments['reason'] ?? ''), $response->outputTokens);
             }
         }
 
-        return new Declined(trim($response->text) !== '' ? (string) preg_replace('/\s+/', ' ', trim($response->text)) : 'The model proposed no plan.');
+        return new Declined(trim($response->text) !== '' ? (string) preg_replace('/\s+/', ' ', trim($response->text)) : 'The model proposed no plan.', $response->outputTokens);
     }
 
     /**
@@ -112,7 +120,7 @@ final class RefactorModel
      */
     public function step(RefactorPlan $plan, int $index): RefactorStep
     {
-        $title = $plan->steps[$index];
+        $title = $plan->steps[$index]->title;
         $ask = sprintf('Step %d of %d: %s', $index + 1, count($plan->steps), $title) . "\n\n" . $this->currentFiles();
 
         return $this->stepFrom($title, $this->ask($ask, [$this->stepTool()], ['name' => 'propose_step']));
@@ -163,11 +171,26 @@ final class RefactorModel
             }
 
             if ($files !== []) {
-                return new RefactorStep($title, $files, (bool) ($call->arguments['red'] ?? false));
+                return new RefactorStep($title, $files, (bool) ($call->arguments['red'] ?? false), $response->outputTokens);
             }
         }
 
         throw new RefusedStepException(sprintf('The model wrote nothing for "%s".', $title));
+    }
+
+    /**
+     * A step as the plan lists it: an object with its title and how it reads
+     * under way, or a bare title that reads the same both ways.
+     */
+    private function plannedStep(mixed $step): PlannedStep
+    {
+        if (!is_array($step)) {
+            return new PlannedStep((string) $step, (string) $step);
+        }
+
+        $title = (string) ($step['title'] ?? '');
+
+        return new PlannedStep($title, (string) ($step['doing'] ?? $title));
     }
 
     /**

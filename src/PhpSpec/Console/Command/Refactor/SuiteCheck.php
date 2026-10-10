@@ -81,7 +81,8 @@ final readonly class SuiteCheck
     }
 
     /**
-     * Each failure on a line of its own, where it is and what it said.
+     * Each failure on a line of its own: where it is, which example, and what
+     * it said.
      */
     public function report(): string
     {
@@ -95,12 +96,12 @@ final readonly class SuiteCheck
     private static function failure(array $entry): array
     {
         $spec = is_string($entry['spec'] ?? null) ? $entry['spec'] : null;
-        $where = $spec ?? (string) ($entry['example'] ?? '');
+        $example = (string) ($entry['example'] ?? '');
         $said = is_string($entry['message'] ?? null) ? $entry['message'] : (string) ($entry['state'] ?? '');
 
         return [
             'file' => $spec === null ? null : (string) preg_replace('/:\d+$/', '', $spec),
-            'line' => $where . '  ' . $said,
+            'line' => ($spec === null ? '' : $spec . '  ') . ($example === '' ? '' : $example . ': ') . $said,
         ];
     }
 }

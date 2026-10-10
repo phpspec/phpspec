@@ -5,501 +5,252 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor;
-use PhpSpec\Console\Command\Refactor\RefactorResult;
-use PhpSpec\Filesystem;
+use PhpSpec\Console\Command\Refactor\SpecSuite;
+use PhpSpec\Console\Command\Refactor\SuiteCheck;
+use PhpSpec\Console\Command\Run\Generation;
+use PhpSpec\Console\Consent;
+use PhpSpec\Console\Prompt;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
-// Builds a Refactor command wired to a scripted provider that proposes one
-// Extract Method refactoring, over a mocked project, capturing writes; the
-// consent examples drive the REAL agent flow, not the refactorFn shortcut.
-// A non-empty $journal seeds .phpspec/ai/journal.jsonl with prior entries.
-function refactorConsentWorld(Filesystem $fs, array &$written, string $journal = '', ?ProviderInterface $model = null): Refactor
-{
-    $cwd = getcwd();
-    $srcPath = $cwd . '/src/App/Good.php';
-    $specPath = $cwd . '/spec/App/Good.spec.php';
-
-    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$srcPath, $specPath, $cwd . '/src'], true)
-        || ($journal !== '' && str_contains($path, 'journal.jsonl')));
-    allow($fs->isDir())->toReturnUsing(fn(string $path): bool => in_array($path, [$cwd . '/src', $cwd . '/src/App'], true));
-    allow($fs->scandir())->toReturnUsing(fn(string $path): array => match ($path) {
-        $cwd . '/src' => ['App'],
-        $cwd . '/src/App' => ['Good.php'],
-        default => [],
-    });
-    allow($fs->mtime())->toReturn(1);
-    allow($fs->read())->toReturnUsing(function (string $path) use ($journal): string {
-        if (str_contains($path, 'journal.jsonl')) {
-            return $journal;
-        }
-
-        return "<?php\nnamespace App;\n\nclass Good {}\n";
-    });
-    allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
-        $written[$path] = $content;
-    });
-    allow($fs->mkdir())->toReturn(null);
-
-    $provider = new class implements ProviderInterface {
-        public int $turn = 0;
-
-        public function chat(array $messages, array $options = []): Response
-        {
-            if (++$this->turn === 1) {
-                $GLOBALS['refactor_seen_prompt'] = implode("\n", array_map(
-                    fn($message) => is_string($message->content ?? null) ? $message->content : '',
-                    $messages,
-                ));
-
-                return new Response('', [new ToolCall('t1', 'apply_refactoring', [
-                    'content' => "<?php\nclass Good { /* extracted */ }\n",
-                    'technique' => 'Extract Method',
-                    'description' => 'Pull the guard out',
-                ])]);
-            }
-
-            return new Response('done');
-        }
-    };
-
-    $specRunner = fn(string $path): array => [0, '1 pass'];
-
-    $cmd = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $fs, $specRunner, null, $model ?? $provider);
-
-    // Registered on an application so the command has a helper set: the
-    // consent question needs the question helper, exactly as in production.
-    $app = new Application('phpspec-test', '1.0');
-    $app->setAutoExit(false);
-    $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($cmd);
-
-    return $cmd;
-}
+require_once __DIR__ . '/../../Ai/ReplayProvider.php';
+require_once __DIR__ . '/Refactor/RefactorWorld.php';
 
 describe(Refactor::class, function () {
 
-    beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
+    let('cwd', fn() => getcwd());
+    let('project', function () {
+        $fs = new RefactorWorldFilesystem();
+        $fs->write($this->cwd . '/src/App/Checkout/CheckoutService.php', "<?php\nnamespace App\\Checkout;\n\nfinal class CheckoutService {}\n");
+        $fs->write($this->cwd . '/spec/App/Checkout/CheckoutService.spec.php', "<?php\ndescribe(App\\Checkout\\CheckoutService::class, function () {});\n");
+
+        return $fs;
+    });
+    let('green', fn() => SuiteCheck::fromStream('{"event":"summary","actionable":0}'));
+    let('redIn', fn() => fn(string $spec, string $said): SuiteCheck => SuiteCheck::fromStream(
+        json_encode(['event' => 'example', 'state' => 'failing', 'spec' => $spec, 'message' => $said]) . "\n" . '{"event":"summary","actionable":1}',
+    ));
+    let('plan', fn() => fn(string ...$titles): Response => new Response('', [new ToolCall('p', 'propose_plan', [
+        'technique' => 'Replace Conditional with Polymorphism',
+        'rationale' => "CheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule:\n  - loyalty customers\n  - seasonal campaigns",
+        'steps' => array_map(fn(string $title): array => ['title' => $title, 'doing' => 'Doing ' . $title], $titles),
+    ])], 1200));
+    let('step', fn() => fn(array $files, bool $red = false): Response => new Response('', [new ToolCall('s', 'propose_step', [
+        'files' => array_map(fn(string $path, string $content): array => ['path' => $path, 'content' => $content], array_keys($files), $files),
+        'red' => $red,
+    ])], 900));
+    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService'): CommandTester {
+        $this->replay = new ReplayProvider($responses);
+        $suite = new class ($checks) implements SpecSuite {
+            public function __construct(private array $checks) {}
+
+            public function check(): SuiteCheck
+            {
+                return array_shift($this->checks);
+            }
+        };
+        $prompt = new class ($answers) extends Prompt {
+            public function __construct(private array $answers) {}
+
+            public function ask(string $prompt): ?string
+            {
+                return array_shift($this->answers);
+            }
+        };
+        $consent = new Consent('Run phpspec refactor in a terminal to %s.', $interactive ? Generation::Asks : Generation::Declines, prompt: $prompt);
+        $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $this->project, $suite, $this->replay, $consent);
+        $app = new Application('phpspec-test', '1.0');
+        $app->setAutoExit(false);
+        $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($command);
+
+        $tester = new CommandTester($command);
+        $tester->execute($target === '' ? [] : ['target' => $target]);
+
+        return $tester;
     });
 
-    context('consent before applying', function () {
+    context('a plan', function () {
 
-        it('shows the proposal and asks before applying; declining leaves the file untouched', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written);
+        it('shows the technique, why, and the plan, and writes nothing when told no', function () {
+            $before = $this->project->files;
 
-            $tester = new CommandTester($cmd);
-            $tester->setInputs(['n']);
-            $exitCode = $tester->execute(['target' => 'App\\Good']);
-
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Extract Method');
-            expect($tester->getDisplay())->toContain('Apply? [Y/n]');
-            expect($tester->getDisplay())->toContain('Not applied');
-            expect(count($written))->toBe(0);
-        });
-
-        it('applies on yes and verifies', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written);
-
-            $tester = new CommandTester($cmd);
-            $tester->setInputs(['']);
-            $exitCode = $tester->execute(['target' => 'App\\Good']);
-
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Specs still pass');
-            expect(implode('', $written))->toContain('extracted');
-        });
-
-        it('shows the technique, its rationale and the diff after one progress line, asks once, and gives the verdict', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written);
-
-            $tester = new CommandTester($cmd);
-            $tester->setInputs(['']);
-            $tester->execute(['target' => 'App\\Good']);
+            $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction', 'Describe LoyaltyDiscount')], [$this->green], ['n']);
             $display = $tester->getDisplay();
 
-            expect(substr_count($display, '  Checking the specs...'))->toBe(1);
-            expect($display)->not()->toContain('Running baseline specs');
-            expect($display)->not()->toContain('Analysing code');
-            expect($display)->not()->toContain('Refactoring technique:');
-            expect($display)->toContain("  Extract Method\n  Pull the guard out\n\n  src/App/Good.php\n");
-            expect(substr_count($display, 'Apply? [Y/n]'))->toBe(1);
-            expect($display)->toContain('Specs still pass ✓');
+            expect($tester->getStatusCode())->toBe(0);
+            expect($display)->toContain('  Checking the specs...');
+            expect($display)->toMatch('/Planning the refactoring… \(\d+s · ↓ 1\.2k tokens\)/');
+            expect($display)->toContain("Replace Conditional with Polymorphism\n\nCheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule:\n  - loyalty customers\n  - seasonal campaigns\n\nPlan:\n\n  ◻ Introduce a DiscountPolicy abstraction\n  ◻ Describe LoyaltyDiscount\n\nPhpSpec has written a refactoring plan and is ready to start.\n");
+            expect($display)->toContain('Would you like to proceed? [Y/n]');
+            expect($display)->toContain('Left unchanged.');
+            expect($this->project->files)->toBe($before);
+            expect($this->replay->requests)->toHaveCount(1);
         });
 
-        it('takes the source modified last when given no target, and works on it without announcing it', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written);
+        it('prints the plan and writes nothing with nobody to answer', function () {
+            $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction')], [$this->green], interactive: false);
 
-            $tester = new CommandTester($cmd);
-            $tester->setInputs(['n']);
-            $exitCode = $tester->execute([]);
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('Nothing was written: there is nobody to answer. Run phpspec refactor in a terminal to carry out the plan.');
+            expect($this->replay->requests)->toHaveCount(1);
+        });
 
-            expect($exitCode)->toBe(0);
-            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('src/App/Good.php');
+        it('says there is nothing to refactor in the class, in the model\'s words, when it declines', function () {
+            $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => 'It does one thing.'])])], [$this->green]);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('  Nothing to refactor in App\\Checkout\\CheckoutService: It does one thing.');
+        });
+    });
+
+    context('the steps', function () {
+
+        it('carries out the plan one step at a time, asking at each and ticking each done', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\nnamespace App\\Checkout;\n\ninterface DiscountPolicy {}\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php\nnamespace App\\Checkout;\n\nfinal class CheckoutService { /* policy */ }\n"]),
+            ], [$this->green, $this->green, $this->green], ['', '', '']);
+            $display = $tester->getDisplay();
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($display)->toMatch('/Doing Introduce a DiscountPolicy abstraction… \(\d+s · ↓ 900 tokens\)\n  ◼ Introduce a DiscountPolicy abstraction\n  ◻ Use it in CheckoutService\n/');
+            expect($display)->toContain("  ✔ Introduce a DiscountPolicy abstraction\n  ◼ Use it in CheckoutService\n");
+            expect($display)->toContain('  src/App/Checkout/DiscountPolicy.php (new)');
+            expect(substr_count($display, 'Apply this step? [Y/n]'))->toBe(2);
+            expect(substr_count($display, '  Specs still pass ✓'))->toBe(2);
+            expect($display)->toContain('  Refactoring done: Replace Conditional with Polymorphism ✓');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toContain('interface DiscountPolicy');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toContain('/* policy */');
+            expect($this->project->files[$this->cwd . '/.phpspec/ai/journal.jsonl'] ?? '')->toContain('Replace Conditional with Polymorphism');
+        });
+
+        it('lets a step meant to be red stay red in the spec it writes, until a later step makes it green', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Describe LoyaltyDiscount', 'Write LoyaltyDiscount'),
+                ($this->step)(['spec/App/Checkout/LoyaltyDiscount.spec.php' => "<?php // red first\n"], red: true),
+                ($this->step)(['src/App/Checkout/LoyaltyDiscount.php' => "<?php // green\n"]),
+            ], [$this->green, ($this->redIn)('spec/App/Checkout/LoyaltyDiscount.spec.php:3', 'Class "App\\Checkout\\LoyaltyDiscount" not found'), $this->green], ['', '', '']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('  Red, as this step meant: spec/App/Checkout/LoyaltyDiscount.spec.php');
+            expect($tester->getDisplay())->toContain('Refactoring done');
+        });
+
+        it('asks for one fix when a step breaks a spec it did not mean to, and keeps the fix when it holds', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Use a DiscountPolicy in CheckoutService'),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // first try\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // fixed\n"]),
+            ], [$this->green, ($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100'), $this->green], ['', '', '']);
+            $display = $tester->getDisplay();
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($display)->toContain('  Specs failed ✘, asking for a fix...');
+            expect($display)->toContain('spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100');
+            expect($display)->toContain('Apply this fix? [Y/n]');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe("<?php // fixed\n");
+            expect(end($this->replay->requests[2]['messages'])->content)->toContain('Expected 90 to be 100');
+        });
+
+        it('undoes the step and stops when its fix does not hold, keeping the steps before it', function () {
+            $original = $this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'];
+            $broken = ($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100');
+
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php // kept\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // broken\n", 'src/App/Checkout/LoyaltyDiscount.php' => "<?php // new\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // still broken\n"]),
+            ], [$this->green, $this->green, $broken, $broken], ['', '', '', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept, this one is undone.');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+            expect($this->project->files)->not()->toHaveKey($this->cwd . '/src/App/Checkout/LoyaltyDiscount.php');
+        });
+
+        it('stops before a step the developer turns down, keeping the steps before it', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php // kept\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // not wanted\n"]),
+            ], [$this->green, $this->green], ['', '', 'n']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('Stopped before step 2: the steps before it are kept.');
+            expect($this->project->files)->toHaveKey($this->cwd . '/src/App/Checkout/DiscountPolicy.php');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->not()->toContain('not wanted');
+        });
+
+        it('stops on a step that writes outside the source and spec paths, writing nothing of it', function () {
+            $before = $this->project->files;
+
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['vendor/acme/Policy.php' => "<?php\n"]),
+            ], [$this->green], ['']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
+            expect($this->project->files)->toBe($before);
+        });
+    });
+
+    context('before a plan', function () {
+
+        it('refuses to start when the specs are not green, saying what failed', function () {
+            $tester = ($this->run)([], [($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100')]);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('Specs must pass before refactoring.');
+            expect($tester->getDisplay())->toContain('spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100');
+            expect($this->replay->requests)->toBe([]);
+        });
+
+        it('refuses a class with no spec, saying how to give it one', function () {
+            $this->project->delete($this->cwd . '/spec/App/Checkout/CheckoutService.spec.php');
+
+            $tester = ($this->run)([], []);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\\Checkout\\CheckoutService');
+        });
+
+        it('takes the source modified last when given no target, without announcing it', function () {
+            $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => 'Clean.'])])], [$this->green], target: '');
+
+            expect($tester->getDisplay())->toContain('Nothing to refactor in App\\Checkout\\CheckoutService: Clean.');
             expect($tester->getDisplay())->not()->toContain('Refactoring App');
-            expect($tester->getDisplay())->toContain('  src/App/Good.php');
         });
 
-        it("says there is nothing to refactor in the class, in the model's own words, when it proposes nothing", function (Filesystem $fs) {
-            $written = [];
-            $model = new class implements ProviderInterface {
-                public function chat(array $messages, array $options = []): Response
-                {
-                    return new Response('It does one thing and its names say so.');
-                }
-            };
-            $cmd = refactorConsentWorld($fs, $written, model: $model);
+        it('asks for AI configuration when there is none', function () {
+            $tester = new CommandTester(new Refactor(new Configuration(), $this->project));
+            $tester->execute(['target' => 'App\\Checkout\\CheckoutService']);
 
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Good']);
-
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('  Nothing to refactor in App\\Good: It does one thing and its names say so.');
-            expect($written)->toBe([]);
-        });
-
-        it('applies without asking when non-interactive', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Good'], ['interactive' => false]);
-
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->not()->toContain('Apply? [Y/n]');
-            expect(implode('', $written))->toContain('extracted');
-        });
-
-        it('records an applied refactoring in the journal, and a declined one not at all', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written);
-
-            $tester = new CommandTester($cmd);
-            $tester->setInputs(['']);
-            $tester->execute(['target' => 'App\\Good']);
-
-            $journal = implode('', array_filter($written, fn(string $p) => str_contains($p, 'journal.jsonl'), ARRAY_FILTER_USE_KEY));
-            expect($journal)->toContain('Extract Method');
-            expect($journal)->toContain('App\\\\Good');
-        });
-
-        it('does not record a declined refactoring', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written);
-
-            $tester = new CommandTester($cmd);
-            $tester->setInputs(['n']);
-            $tester->execute(['target' => 'App\\Good']);
-
-            expect(count($written))->toBe(0);
-        });
-
-        it('grounds the model with the recent refactorings, reversals demanding a rationale', function (Filesystem $fs) {
-            $written = [];
-            $cmd = refactorConsentWorld($fs, $written, '{"at":100,"command":"refactor","target":"App\\\\Good","technique":"Inline Method","description":"Inlined helper"}' . "\n");
-
-            $tester = new CommandTester($cmd);
-            $tester->setInputs(['n']);
-            $tester->execute(['target' => 'App\\Good']);
-
-            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('Inline Method');
-            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('clear rationale');
-        });
-
-    });
-
-    it('instantiates', function (Filesystem $fs) {
-        $config = Configuration::load('.', $fs);
-        $cmd = new Refactor($config, $fs);
-        expect($cmd)->toBeAnInstanceOf(Refactor::class);
-    });
-
-    context('command execution', function () {
-
-        it('returns error when AI config is missing', function (Filesystem $fs) {
-            $config = Configuration::load('.', $fs);
-            $cmd = new Refactor($config, $fs);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Calculator']);
-
-            expect($exitCode)->toBe(1);
+            expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('AI configuration required');
         });
 
-        it('returns error when source file does not exist', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {
-                return $path === $yamlPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
+        it('stops on a model it cannot reach, before checking the specs', function () {
+            $checked = false;
+            $suite = new class ($checked) implements SpecSuite {
+                public function __construct(private bool &$checked) {}
+
+                public function check(): SuiteCheck
+                {
+                    $this->checked = true;
+
+                    return SuiteCheck::fromStream('{"event":"summary","actionable":0}');
                 }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $cmd = new Refactor($configWithAi, $fs);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Missing']);
-
-            expect($exitCode)->toBe(1);
-            expect($tester->getDisplay())->toContain('Source file not found');
-        });
-
-        it('returns error when spec file does not exist', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $cwd = getcwd();
-            $srcPath = $cwd . '/src/App/Present.php';
-
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath, $srcPath): bool {
-                return $path === $yamlPath || $path === $srcPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
-                }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $cmd = new Refactor($configWithAi, $fs);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Present']);
-
-            expect($exitCode)->toBe(1);
-            expect($tester->getDisplay())->toContain('App\\Present has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\\Present');
-        });
-
-        it('returns error when baseline specs fail', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $cwd = getcwd();
-            $srcPath = $cwd . '/src/App/Broken.php';
-            $specPath = $cwd . '/spec/App/Broken.spec.php';
-
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath, $srcPath, $specPath): bool {
-                return $path === $yamlPath || $path === $srcPath || $path === $specPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
-                }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $specRunner = fn(string $path): array => [1, '1 example (1 failure)'];
-            $cmd = new Refactor($configWithAi, $fs, $specRunner);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Broken']);
-
-            expect($exitCode)->toBe(1);
-            expect($tester->getDisplay())->toContain('Specs must pass before refactoring');
-        });
-
-        it('displays successful refactoring result', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $cwd = getcwd();
-            $srcPath = $cwd . '/src/App/Good.php';
-            $specPath = $cwd . '/spec/App/Good.spec.php';
-
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath, $srcPath, $specPath): bool {
-                return $path === $yamlPath || $path === $srcPath || $path === $specPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
-                }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $specRunner = fn(string $path): array => [0, '1 pass'];
-            $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
-                success: true,
-                technique: 'Extract Method',
-                description: 'Extracted helper method',
-                diff: '+ private function helper()',
-                specOutput: '1 pass',
-            );
-            $cmd = new Refactor($configWithAi, $fs, $specRunner, $refactorFn);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Good']);
-
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Extract Method');
-            expect($tester->getDisplay())->toContain('Specs still pass');
-        });
-
-        it('displays failed refactoring result', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $cwd = getcwd();
-            $srcPath = $cwd . '/src/App/Risky.php';
-            $specPath = $cwd . '/spec/App/Risky.spec.php';
-
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath, $srcPath, $specPath): bool {
-                return $path === $yamlPath || $path === $srcPath || $path === $specPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
-                }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $specRunner = fn(string $path): array => [0, '1 pass'];
-            $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
-                success: false,
-                technique: 'Inline Variable',
-                description: 'Attempted inline but specs broke',
-                diff: '- $temp = $a;',
-                specOutput: '1 failure',
-            );
-            $cmd = new Refactor($configWithAi, $fs, $specRunner, $refactorFn);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Risky']);
-
-            expect($exitCode)->toBe(1);
-            expect($tester->getDisplay())->toContain('Inline Variable');
-            expect($tester->getDisplay())->toContain('Refactoring reverted');
-        });
-
-        it('displays successful result with empty diff', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $cwd = getcwd();
-            $srcPath = $cwd . '/src/App/NoDiff.php';
-            $specPath = $cwd . '/spec/App/NoDiff.spec.php';
-
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath, $srcPath, $specPath): bool {
-                return $path === $yamlPath || $path === $srcPath || $path === $specPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
-                }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $specRunner = fn(string $path): array => [0, '1 pass'];
-            $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
-                success: true,
-                technique: 'Rename Variable',
-                description: 'Renamed for clarity',
-                diff: '',
-                specOutput: '1 pass',
-            );
-            $cmd = new Refactor($configWithAi, $fs, $specRunner, $refactorFn);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\NoDiff']);
-
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Rename Variable');
-            expect($tester->getDisplay())->toContain('Specs still pass');
-        });
-
-        it('loads bootstrap when configured', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $cwd = getcwd();
-            $srcPath = $cwd . '/src/App/Booted.php';
-            $specPath = $cwd . '/spec/App/Booted.spec.php';
-
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath, $srcPath, $specPath): bool {
-                return $path === $yamlPath || $path === $srcPath || $path === $specPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\nbootstrap: vendor/autoload.php\n";
-                }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $specRunner = fn(string $path): array => [0, '1 pass'];
-            $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
-                success: true,
-                technique: 'Extract Method',
-                description: 'Extracted method',
-                diff: '+ new line',
-                specOutput: '1 pass',
-            );
-            $cmd = new Refactor($configWithAi, $fs, $specRunner, $refactorFn);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Booted']);
-
-            // vendor/autoload.php exists, so bootstrap loads fine
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Specs still pass');
-        });
-
-        it('displays no-refactoring-needed result', function (Filesystem $fs) {
-            $yamlPath = './phpspec.yaml';
-            $cwd = getcwd();
-            $srcPath = $cwd . '/src/App/Clean.php';
-            $specPath = $cwd . '/spec/App/Clean.spec.php';
-
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath, $srcPath, $specPath): bool {
-                return $path === $yamlPath || $path === $srcPath || $path === $specPath;
-            });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
-                }
-                return '';
-            });
-
-            $configWithAi = Configuration::load('.', $fs);
-            $specRunner = fn(string $path): array => [0, '1 pass'];
-            $refactorFn = fn(string $src, string $spec, ?string $method) => new RefactorResult(
-                success: false,
-                technique: 'None',
-                description: 'Code is already clean.',
-                diff: '',
-                specOutput: '',
-            );
-            $cmd = new Refactor($configWithAi, $fs, $specRunner, $refactorFn);
-
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Clean']);
-
-            expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Nothing to refactor in App\\Clean: Code is already clean.');
-        });
-
-        it('stops on a model it cannot reach, before checking the specs, rather than reporting nothing to refactor', function (Filesystem $fs) {
-            $cwd = getcwd();
-            $files = [$cwd . '/src/App/Good.php', $cwd . '/spec/App/Good.spec.php'];
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, $files, true));
-            $ranSpecs = false;
-            $specRunner = function (string $path) use (&$ranSpecs): array {
-                $ranSpecs = true;
-
-                return [0, '1 pass'];
             };
-            $cmd = new Refactor(new Configuration(['ai' => ['provider' => 'anthropic', 'api_key' => 'test-key']]), $fs, $specRunner);
+            $tester = new CommandTester(new Refactor(new Configuration(['ai' => ['provider' => 'anthropic', 'api_key' => 'k']]), $this->project, $suite));
+            $tester->execute(['target' => 'App\\Checkout\\CheckoutService']);
 
-            $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute(['target' => 'App\\Good']);
-
-            expect($exitCode)->toBe(1);
+            expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('composer require papi-ai/anthropic');
-            expect($tester->getDisplay())->not()->toContain('Nothing to refactor');
-            expect($ranSpecs)->toBeFalse();
+            expect($checked)->toBeFalse();
         });
     });
 });

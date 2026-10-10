@@ -155,7 +155,7 @@ Feature: AI-powered refactoring
     And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
     And the output should not contain "Basket"
 
-  Scenario: With no argument, refactor checks the spec of the source modified last
+  Scenario: Refactoring waits for the whole suite to be green, not only the class's spec
     Given a phpspec.yaml config:
       """
       ai:
@@ -198,13 +198,11 @@ Feature: AI-powered refactoring
 
       class Till {}
       """
-    And "src/App/Till.php" was modified last
-    When I run phpspec command "refactor"
+    When I run phpspec command "refactor Basket"
     Then the exit code should be 1
     And the output should contain "Checking the specs..."
     And the output should contain "Specs must pass before refactoring"
-    And the output should contain "rings up"
-    And the output should not contain "Refactoring App\Till"
+    And the output should contain "spec/App/Till.spec.php:6  Till > rings up: Expected true to be false"
 
   Scenario: With no argument and no source, refactor says there is none
     Given a phpspec.yaml config:

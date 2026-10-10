@@ -19,8 +19,8 @@ describe(SuiteCheck::class, function () {
 
     it('keeps every failure inside the spec files named, and none outside them', function () {
         $check = SuiteCheck::fromStream(($this->stream)(
-            ['event' => 'example', 'state' => 'error', 'spec' => 'spec/App/Checkout/LoyaltyDiscount.spec.php:7', 'message' => 'Class "App\Checkout\LoyaltyDiscount" not found'],
-            ['event' => 'example', 'state' => 'failing', 'spec' => 'spec/App/Checkout/LoyaltyDiscount.spec.php:12', 'message' => 'Expected 10 to be 5'],
+            ['event' => 'example', 'state' => 'error', 'example' => 'LoyaltyDiscount > discounts', 'spec' => 'spec/App/Checkout/LoyaltyDiscount.spec.php:7', 'message' => 'Class "App\Checkout\LoyaltyDiscount" not found'],
+            ['event' => 'example', 'state' => 'failing', 'example' => 'LoyaltyDiscount > caps', 'spec' => 'spec/App/Checkout/LoyaltyDiscount.spec.php:12', 'message' => 'Expected 10 to be 5'],
             ['event' => 'summary', 'examples' => 9, 'actionable' => 2],
         ));
 
@@ -28,8 +28,8 @@ describe(SuiteCheck::class, function () {
         expect($check->confinedTo(['spec/App/Checkout/LoyaltyDiscount.spec.php']))->toBeTrue();
         expect($check->confinedTo(['spec/App/Checkout/CheckoutService.spec.php']))->toBeFalse();
         expect($check->report())->toBe(
-            "spec/App/Checkout/LoyaltyDiscount.spec.php:7  Class \"App\\Checkout\\LoyaltyDiscount\" not found\n"
-            . "spec/App/Checkout/LoyaltyDiscount.spec.php:12  Expected 10 to be 5",
+            "spec/App/Checkout/LoyaltyDiscount.spec.php:7  LoyaltyDiscount > discounts: Class \"App\\Checkout\\LoyaltyDiscount\" not found\n"
+            . "spec/App/Checkout/LoyaltyDiscount.spec.php:12  LoyaltyDiscount > caps: Expected 10 to be 5",
         );
     });
 
@@ -44,7 +44,7 @@ describe(SuiteCheck::class, function () {
         ));
 
         expect($unplaced->confinedTo(['spec/App/Checkout.spec.php']))->toBeFalse();
-        expect($unplaced->report())->toBe('Checkout > later  pending');
+        expect($unplaced->report())->toBe('Checkout > later: pending');
         expect($died->confinedTo(['spec/App/Till.spec.php']))->toBeFalse();
         expect($died->report())->toBe('Cannot redeclare class App\Till');
     });
