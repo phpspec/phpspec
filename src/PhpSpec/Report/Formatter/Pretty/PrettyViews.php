@@ -273,8 +273,9 @@ final class PrettyViews
             $output->write(implode(', ', $parts));
             $output->write(')' . PHP_EOL);
         }
-        if (!empty($counts['specs'])) {
-            $output->write($counts['specs'] . ' spec' . ($counts['specs'] != 1 ? 's' : '') . PHP_EOL);
+        $specs = empty($counts['specs']) ? '' : $counts['specs'] . ' spec' . ($counts['specs'] != 1 ? 's' : '');
+        if ($specs !== '' && empty($counts['examples'])) {
+            $output->write($specs . PHP_EOL);
         }
         if (isset($counts['examples']) && $counts['examples'] > 0) {
             $exParts = [];
@@ -305,7 +306,7 @@ final class PrettyViews
             if ($counts['notices']) {
                 $exParts[] = '<fg=yellow>' . $counts['notices'] . ' notice' . ($counts['notices'] != 1 ? 's' : '') . '</>';
             }
-            $output->write($counts['examples'] . ' example' . ($counts['examples'] != 1 ? 's' : '') . ' (' . implode(', ', $exParts) . ')' . PHP_EOL);
+            $output->write(($specs === '' ? '' : $specs . ', ') . $counts['examples'] . ' example' . ($counts['examples'] != 1 ? 's' : '') . ' (' . implode(', ', $exParts) . ')' . PHP_EOL);
         }
         if ($duration > 0) {
             $output->write(sprintf('Finished in %.4f seconds' . PHP_EOL, $duration));

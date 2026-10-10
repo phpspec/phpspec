@@ -74,7 +74,7 @@ describe(Dot::class, function() {
         (new Dot($output))->format(new SuiteResult([$feature, $spec]));
 
         $text = str_replace("\r\n", "\n", $output->fetch());
-        expect($text)->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec\n2 examples (1 passed, 1 failed)\n");
+        expect($text)->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec, 2 examples (1 passed, 1 failed)\n");
     });
     it("wraps the dots at the terminal width while results stream in, not only once the run is over", function() {
         putenv('COLUMNS=40');

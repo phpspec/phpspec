@@ -258,7 +258,7 @@ describe(Pretty::class, function() {
         ]);
         (new Pretty($output))->format(new SuiteResult([$spec]));
 
-        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 spec\n3 examples (1 passed, 1 failed, 1 errored)\n");
+        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 spec, 3 examples (1 passed, 1 failed, 1 errored)\n");
     });
 
     it("keeps the spec count beside the feature count when both ran", function () {
@@ -267,7 +267,7 @@ describe(Pretty::class, function() {
         $spec = new SpecificationResult("MySpec", [new ExampleResult("works", [MatchResult::passed()])]);
         (new Pretty($output))->format(new SuiteResult([$feature, $spec]));
 
-        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec\n1 example (1 passed)\n");
+        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec, 1 example (1 passed)\n");
     });
     it("shows a code window with the line in bold and nothing painted red when no error is blamed on it", function () {
         $output = new BufferedOutput(OutputInterface::VERBOSITY_NORMAL, true);

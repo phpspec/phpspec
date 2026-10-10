@@ -205,8 +205,7 @@ Spec: Calculator
     ✓ adds two numbers
     ✓ subtracts two numbers
 
-1 spec
-2 examples (2 passed)
+1 spec, 2 examples (2 passed)
 Finished in 0.0042 seconds
 ```
 
