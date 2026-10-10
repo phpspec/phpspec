@@ -37,7 +37,7 @@ final readonly class StepsHome
         private Filesystem $filesystem = new RealFilesystem(),
         ?string $root = null,
     ) {
-        $this->root = rtrim(str_replace('\\', '/', $root ?? (getcwd() ?: '.')), '/');
+        $this->root = rtrim($root ?? (getcwd() ?: '.'), '/\\');
     }
 
     /**

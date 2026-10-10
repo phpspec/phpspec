@@ -39,6 +39,18 @@ describe(StepVocabulary::class, function () {
         expect($titles)->toBe(['I have a todo list' => '/project/features/steps/adding.steps.php']);
     });
 
+    it('reads a root as it is spelled, so a Windows root finds its steps files', function (Filesystem $fs) {
+        $root = 'C:\\project/features';
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$root, $root . '/steps'], true));
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            $root => ['steps'],
+            $root . '/steps' => ['steps.php'],
+            default => [],
+        });
+
+        expect((new StepVocabulary($fs))->stepsFiles($root . '\\'))->toBe(['C:\\project/features/steps/steps.php']);
+    });
+
     it('reads the titles a steps.php defines', function (Filesystem $fs) {
         $root = '/project/features';
         allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $root);

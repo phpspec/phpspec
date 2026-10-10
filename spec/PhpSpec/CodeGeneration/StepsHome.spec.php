@@ -69,6 +69,17 @@ describe(StepsHome::class, function () {
         expect((new StepsHome(new Configuration(), $this->filesystem, '/project'))->absolute('features/steps/steps.php'))->toBe('/project/features/steps/steps.php');
     });
 
+    it('builds its paths on the project root as it is spelled, so a Windows root finds the files it lists', function (Filesystem $fs) {
+        $tree = ['C:\\project/features' => ['steps'], 'C:\\project/features/steps' => ['web.steps.php', 'steps.php']];
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => isset($tree[$p]));
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => $tree[$p] ?? []);
+        $home = new StepsHome(new Configuration(), $fs, 'C:\\project\\');
+
+        expect($home->roots())->toBe(['C:\\project/features']);
+        expect($home->absolute('features/steps/steps.php'))->toBe('C:\\project/features/steps/steps.php');
+        expect($home->files())->toBe(['features/steps/steps.php', 'features/steps/web.steps.php']);
+    });
+
     it('labels a steps file by its name in the steps directory, and by its path elsewhere', function () {
         $home = new StepsHome(new Configuration(), $this->filesystem, '/project');
 

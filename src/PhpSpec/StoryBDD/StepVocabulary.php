@@ -128,7 +128,7 @@ final class StepVocabulary
     {
         $files = [];
         foreach ($roots as $root) {
-            foreach ($this->stepsFilesUnder(rtrim(str_replace('\\', '/', $root), '/')) as $file) {
+            foreach ($this->stepsFilesUnder(rtrim($root, '/\\')) as $file) {
                 $files[$file] = true;
             }
         }
