@@ -22,6 +22,7 @@ use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\Tool;
+use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 use PhpSpec\Source\Imports;
@@ -52,6 +53,11 @@ final class RefactorModel
 
     private ?CommandProfile $profile = null;
 
+    /** @var list<array{response: array{text: string, tool_calls: list<array{id: string, name: string, arguments: array<string, mixed>}>}}> every answer so far, as a recording replays them */
+    private array $rounds = [];
+
+    private string $subject = '';
+
     public function __construct(
         private readonly ProviderInterface $provider,
         private readonly Configuration $config,
@@ -70,6 +76,8 @@ final class RefactorModel
     {
         $this->messages = [Message::system($this->profile()->body)];
         $this->shown = [];
+        $this->rounds = [];
+        $this->subject = $target->fqcn;
 
         foreach ([$target->sourceFile, $target->specFile, ...$this->importedSources($target->sourceFile)] as $file) {
             $this->shown[$this->relative($file)] = true;
@@ -147,12 +155,34 @@ final class RefactorModel
         $this->messages[] = Message::user($content);
         $response = $this->provider->chat($this->messages, $this->options($tools, $choice));
         $this->messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
+        $this->record($response);
 
         foreach ($response->toolCalls as $call) {
             $this->messages[] = Message::toolResult($call->id, 'Shown to the developer.');
         }
 
         return $response;
+    }
+
+    /**
+     * Keeps every answer of the conversation in .phpspec/ai/last-refactor.json,
+     * in the shape an eval replays, so a real session can become one.
+     */
+    private function record(Response $response): void
+    {
+        $this->rounds[] = ['response' => [
+            'text' => $response->text,
+            'tool_calls' => array_values(array_map(static fn(ToolCall $call): array => ['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments], $response->toolCalls)),
+        ]];
+
+        $ai = $this->config->getAiConfig() ?? ['provider' => 'google'];
+        $this->filesystem->write($this->root . '/.phpspec/ai/last-refactor.json', (string) json_encode([
+            'command' => 'refactor',
+            'target' => $this->subject,
+            'provider' => $ai['provider'],
+            'model' => $ai['model'] ?? ProviderFactory::defaultModel($ai['provider']),
+            'turns' => [['rounds' => $this->rounds]],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 
     /**

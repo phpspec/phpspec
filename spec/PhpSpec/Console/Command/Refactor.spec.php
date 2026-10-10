@@ -27,6 +27,8 @@ describe(Refactor::class, function () {
         return $fs;
     });
     let('green', fn() => SuiteCheck::fromStream('{"event":"summary","actionable":0}'));
+    // The project's code, leaving out what phpspec keeps for itself under .phpspec.
+    let('code', fn() => fn(): array => array_filter($this->project->files, fn(string $path): bool => !str_contains($path, '/.phpspec/'), ARRAY_FILTER_USE_KEY));
     let('redIn', fn() => fn(string $spec, string $said): SuiteCheck => SuiteCheck::fromStream(
         json_encode(['event' => 'example', 'state' => 'failing', 'spec' => $spec, 'message' => $said]) . "\n" . '{"event":"summary","actionable":1}',
     ));
@@ -83,7 +85,7 @@ describe(Refactor::class, function () {
             expect($display)->toContain("Replace Conditional with Polymorphism\n\nCheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule:\n  - loyalty customers\n  - seasonal campaigns\n\nPlan:\n\n  ◻ Introduce a DiscountPolicy abstraction\n  ◻ Describe LoyaltyDiscount\n\nPhpSpec has written a refactoring plan and is ready to start.\n");
             expect($display)->toContain('Would you like to proceed? [Y/n]');
             expect($display)->toContain('Left unchanged.');
-            expect($this->project->files)->toBe($before);
+            expect(($this->code)())->toBe($before);
             expect($this->replay->requests)->toHaveCount(1);
         });
 
@@ -194,7 +196,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
-            expect($this->project->files)->toBe($before);
+            expect(($this->code)())->toBe($before);
         });
     });
 

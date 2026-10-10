@@ -24,6 +24,10 @@ describe(RefactorModel::class, function () {
     let('filesystem', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
         allow($fs->read())->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) {
+            $this->files[$path] = $content;
+        });
 
         return $fs;
     });
@@ -115,5 +119,19 @@ describe(RefactorModel::class, function () {
         expect($fixed->title)->toBe('Introduce a DiscountPolicy abstraction');
         expect($fixed->files[0]->new)->toBe("<?php // fixed\n");
         expect(end($this->replay->requests[2]['messages'])->content)->toContain('spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100');
+    });
+
+    it('keeps the conversation as a recording that replays it, answer by answer', function () {
+        $step = new Response('', [new ToolCall('s1', 'propose_step', ['files' => [['path' => 'src/App/Checkout/DiscountPolicy.php', 'content' => "<?php // policy\n"]], 'red' => false])]);
+        $model = ($this->model)($this->plan, $step);
+        $model->step($model->plan($this->target, ''), 0);
+
+        $recording = json_decode($this->files['/proj/.phpspec/ai/last-refactor.json'] ?? '', true);
+        $replayed = ReplayProvider::fromConversation($recording);
+
+        expect($recording['command'])->toBe('refactor');
+        expect($recording['target'])->toBe('App\\Checkout\\CheckoutService');
+        expect($replayed->chat([])->toolCalls[0]->name)->toBe('propose_plan');
+        expect($replayed->chat([])->toolCalls[0]->arguments['files'][0]['path'])->toBe('src/App/Checkout/DiscountPolicy.php');
     });
 });
