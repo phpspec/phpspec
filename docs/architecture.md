@@ -140,7 +140,7 @@ FeatureNode
 
 ### Step Registry
 
-Step definitions are registered via `given()`, `when()`, `then()` functions in `.steps.php` files. The `StepRegistry` maps step patterns to closures using placeholder-based matching (`{string}`, `{int}`, `{word}`, `{*}`).
+Step definitions are registered via `given()`, `when()`, `then()` functions in `steps.php` and `*.steps.php` files. The `StepRegistry` maps step patterns to closures using placeholder-based matching (`{string}`, `{int}`, `{float}`, `{word}`, `{*}`).
 
 ### Feature Execution
 
@@ -220,6 +220,6 @@ The autoloader (`CodeGeneration\Autoloader`) intercepts class-not-found errors a
 - `InterfaceGenerator` -- generates PHP interface files (from mock errors)
 - `SpecGenerator` -- generates `.spec.php` files
 - `MethodStubGenerator` -- adds method stubs to existing classes/interfaces
-- `StepGenerator` -- generates `.steps.php` files for undefined feature steps
+- `StepGenerator` -- appends pending definitions for undefined steps to one steps file, `steps.php` by default
 
 The `--fake` flag enhances `MethodStubGenerator` to fill in return values from spec expectations.

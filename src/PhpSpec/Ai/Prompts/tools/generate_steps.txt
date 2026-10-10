@@ -1,3 +1,5 @@
-Write a .steps.php file with step definitions for a feature. Uses bare given(),
-when(), then() global functions (NO use/import statements for them). Placeholders:
-{string}, {int}, {float}.
+Writes step definitions into a steps file grouped by what the steps do,
+never one file per feature: steps.php by default, or the file steps_file names (web
+for web.steps.php). content is the WHOLE file: keep every definition it already holds
+and append the new ones. Uses bare given(), when(), then() global functions (NO
+use/import statements for them). Placeholders: {string}, {int}, {float}.

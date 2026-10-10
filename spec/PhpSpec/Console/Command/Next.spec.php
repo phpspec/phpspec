@@ -699,13 +699,15 @@ describe(Next::class, function () {
             $featuresDir = $cwd . '/features';
             $known = [
                 $cwd . '/features/clearing.feature' => "Feature: Clearing\n  Scenario: Clears\n    When I clear completed tasks\n",
-                $cwd . '/features/steps/clearing.steps.php' => "<?php\nwhen('I clear completed tasks', fn() => \$this->todoList->getTasks());\n",
+                $cwd . '/features/steps/lists.steps.php' => "<?php\nwhen('I clear completed tasks', fn() => \$this->todoList->getTasks());\n",
                 $cwd . '/spec/App/TodoList.spec.php' => "<?php\ndescribe('TodoList', function () { it('clears completed tasks', fn() => null); });\n",
                 $cwd . '/src/App/TodoList.php' => "<?php\nclass TodoList { public function tasks(): array { return []; } }\n",
             ];
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir || isset($known[$p]) || in_array($p, [$cwd . '/spec', $cwd . '/src'], true));
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$featuresDir, $cwd . '/spec', $cwd . '/src'], true));
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$featuresDir, $featuresDir . '/steps', $cwd . '/spec', $cwd . '/src'], true));
             allow($fs->scandir())->toReturnUsing(fn(string $d): array => match ($d) {
+                $featuresDir => ['steps', 'clearing.feature'],
+                $featuresDir . '/steps' => ['lists.steps.php'],
                 $cwd . '/spec' => ['App/TodoList.spec.php'],
                 $cwd . '/src' => ['App/TodoList.php'],
                 default => [],
@@ -740,7 +742,8 @@ describe(Next::class, function () {
             $context = $replay->requests[0]['messages'][1]->content;
             expect($context)->toContain('features/clearing.feature');
             expect($context)->toContain('I clear completed tasks');
-            expect($context)->toContain('getTasks');                    // the steps file content
+            expect($context)->toContain('getTasks');                    // the steps that serve the feature, whatever their file is called
+            expect($context)->toContain('features/steps/lists.steps.php');
             expect($tester->getDisplay())->toContain('Implement');
         });
 

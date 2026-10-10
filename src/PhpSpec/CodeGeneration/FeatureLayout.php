@@ -18,30 +18,12 @@ use PhpSpec\Filesystem;
 
 /**
  * @internal
- * The one home of the steps-beside-feature layout convention
- * (`<feature dir>/steps/<name>.steps.php`): where a feature's step
- * definitions live, the way back, and where a project keeps its feature
- * and steps roots.
+ * Where a project keeps its features and its steps on disk. How steps are
+ * grouped into files is the project's choice, so no steps file belongs to a
+ * feature here.
  */
 final class FeatureLayout
 {
-    /**
-     * The steps file a feature's definitions live in, beside the feature
-     * under its own steps directory.
-     */
-    public function stepsPathFor(string $featurePath): string
-    {
-        return dirname($featurePath) . '/steps/' . basename($featurePath, '.feature') . '.steps.php';
-    }
-
-    /**
-     * The feature a steps file belongs to, inverting {@see stepsPathFor()}.
-     */
-    public function featurePathFor(string $stepsPath): string
-    {
-        return dirname($stepsPath, 2) . '/' . basename($stepsPath, '.steps.php') . '.feature';
-    }
-
     /**
      * The project's feature and steps roots, resolved from the layout on disk:
      * features live under `features/scenarios` when that subdirectory exists

@@ -1,6 +1,7 @@
 Write step definitions for the feature's undefined steps: bare given()/when()/then()
 global functions (no imports for them), {string}/{int}/{float} placeholders, one function per
-step. Let the steps drive out the domain code they need; never stub behaviour away.
-When every step is already defined and the human asks for the bodies, answer with
-propose_edit carrying the complete steps file with real implementations; never
-re-emit pending() stubs.
+step, appended to steps.php or the steps file they belong in by what they do,
+never one file per feature. Let the steps drive out the domain code they need; never stub
+behaviour away. When every step is already defined and the human asks for the bodies,
+answer with propose_edit carrying the complete steps file with real implementations;
+never re-emit pending() stubs.

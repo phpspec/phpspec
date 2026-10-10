@@ -23,6 +23,8 @@ use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\TreeScanner;
 use PhpSpec\CodeGeneration\FeatureLayout;
+use PhpSpec\CodeGeneration\StepGenerator;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
@@ -49,6 +51,8 @@ final class Agent
     private readonly PromptLibrary $prompts;
 
     private readonly FeatureLayout $layout;
+
+    private readonly StepsHome $steps;
 
     /** The conversation's standing project map, built once per session. */
     private ?string $projectMap = null;
@@ -79,6 +83,7 @@ final class Agent
         $this->registry = $registry ?? new ToolRegistry($config, $this->filesystem, $this->prompts);
         $this->recorder = $recorder ?? new Recorder($this->filesystem);
         $this->layout = new FeatureLayout();
+        $this->steps = new StepsHome($config, $this->filesystem);
     }
 
     /**
@@ -319,7 +324,7 @@ final class Agent
                 '%spec_suffix%' => $this->config->getSpecSuffix(),
                 '%src_path%' => ltrim($this->config->getSrcPath(), './'),
                 '%features_path%' => $roots['features'],
-                '%steps_path%' => $roots['steps'],
+                '%steps_path%' => $this->steps->directory(),
             ]);
         }
 
@@ -376,7 +381,7 @@ final class Agent
             }
         }
 
-        $titles = $this->stepTitlesByFile($featuresDir);
+        $titles = $this->stepTitlesByFile();
         if ($titles !== '') {
             $sections[] = "## Existing step definitions\nThese steps are already defined, reuse them in new scenarios:\n$titles";
         }
@@ -386,11 +391,11 @@ final class Agent
         return $this->projectMap;
     }
 
-    private function stepTitlesByFile(string $featuresRoot): string
+    private function stepTitlesByFile(): string
     {
         $byFile = [];
-        foreach ((new StepVocabulary($this->filesystem))->definedTitles($featuresRoot) as $title => $file) {
-            $byFile[basename($file)][] = $title;
+        foreach ((new StepVocabulary($this->filesystem))->definedTitles(...$this->steps->roots()) as $title => $file) {
+            $byFile[$this->steps->label(ProjectPath::relative($file))][] = $title;
         }
 
         $lines = [];
@@ -534,11 +539,25 @@ final class Agent
             $files[$rel] = $this->filesystem->read($cwd . '/' . $rel);
 
             if (str_ends_with($rel, '.feature')) {
-                $steps = $this->layout->stepsPathFor($rel);
-                if ($this->filesystem->exists($cwd . '/' . $steps)) {
-                    $files[$steps] = $this->filesystem->read($cwd . '/' . $steps);
-                }
+                $files += $this->stepsServing($files[$rel]);
             }
+        }
+
+        return $files;
+    }
+
+    /**
+     * The steps files whose definitions serve a feature's steps, whatever
+     * those files are called.
+     *
+     * @return array<string, string> relative path => contents
+     */
+    private function stepsServing(string $feature): array
+    {
+        $texts = array_column(StepGenerator::parseSteps($feature), 'text');
+        $files = [];
+        foreach ((new StepVocabulary($this->filesystem))->filesServing($texts, ...$this->steps->roots()) as $file) {
+            $files[ProjectPath::relative($file)] = $this->filesystem->read($file);
         }
 
         return $files;

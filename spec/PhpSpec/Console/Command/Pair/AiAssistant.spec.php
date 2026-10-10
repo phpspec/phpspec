@@ -649,7 +649,6 @@ describe(AiAssistant::class, function () {
         $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
             if (++$turn === 1) {
                 return new Response('', [new ToolCall('t1', 'generate_steps', [
-                    'feature_name' => 'clearing',
                     'content' => "<?php\ngiven(\"I have a todo list\", function () {\n    \$this->todoList = new App\\TodoList();\n});\n",
                 ])]);
             }
@@ -665,6 +664,68 @@ describe(AiAssistant::class, function () {
         expect(($this->artifactWrites)())->toBe([]);
         expect((string) json_encode($captured))->toContain('already defined in');
         expect((string) json_encode($captured))->toContain('reuse');
+    });
+
+    it('writes generated steps to steps.php, or to the steps file the assistant names', function (Filesystem $fs) {
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            return match (++$turn) {
+                1 => new Response('', [new ToolCall('t1', 'generate_steps', ['content' => "<?php\ngiven(\"a fresh step\", function () {});\n"])]),
+                default => new Response('done'),
+            };
+        };
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('write the steps');
+
+        expect(($this->artifactWrites)())->toBe([getcwd() . '/features/steps/steps.php']);
+
+        $turn = 0;
+        $this->writtenPaths = [];
+        $this->provider->responder = function () use (&$turn) {
+            return match (++$turn) {
+                1 => new Response('', [new ToolCall('t1', 'generate_steps', ['steps_file' => 'web', 'content' => "<?php\ngiven(\"I visit {string}\", function (string \$url) {});\n"])]),
+                default => new Response('done'),
+            };
+        };
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('write the web steps');
+
+        expect(($this->artifactWrites)())->toBe([getcwd() . '/features/steps/web.steps.php']);
+    });
+
+    it('rejects generated steps that drop a definition the steps file already holds', function (Filesystem $fs) {
+        $cwd = getcwd();
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps/steps.php'], true));
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            $cwd . '/features' => ['steps'],
+            $cwd . '/features/steps' => ['steps.php'],
+            default => [],
+        });
+        allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, '/features/steps/steps.php')
+            ? "<?php\ngiven('I have a todo list', function () {});\n"
+            : '');
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'generate_steps', ['content' => "<?php\nwhen('I clear the list', function () {});\n"])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('write the steps for clearing');
+
+        expect(($this->artifactWrites)())->toBe([]);
+        expect((string) json_encode($captured))->toContain('I have a todo list');
+        expect((string) json_encode($captured))->toContain('keep');
     });
 
     it('rejects shouldXxx spec content even without the ObjectBehavior literal', function (Filesystem $fs) {
@@ -705,7 +766,7 @@ describe(AiAssistant::class, function () {
             if (++$turn === 1) {
                 return new Response('', [
                     new ToolCall('t1', 'generate_feature', ['feature_name' => 'checkout', 'content' => 'Feature: Checkout']),
-                    new ToolCall('t2', 'generate_steps', ['feature_name' => 'checkout', 'content' => '<?php // steps']),
+                    new ToolCall('t2', 'generate_steps', ['content' => '<?php // steps']),
                     new ToolCall('t3', 'write_file', ['path' => 'src/App/Checkout.php', 'content' => '<?php // class']),
                 ]);
             }

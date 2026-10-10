@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
  - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
  - The file phpspec names, and writes, when a project has no configuration is `phpspec.yml`, the name the docs use; the lookup order of the four formats is unchanged
  - `--filter` matches the path of titles an example or scenario sits under, joined by `>`: a context title selects everything in it, `when empty > starts` one example; a context the filter empties is no longer printed

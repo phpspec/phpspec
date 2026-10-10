@@ -58,7 +58,7 @@ Feature: Agent scaffolding commands
     When I run phpspec command "generate the steps --format=agent"
     Then the output should be valid JSON
     And the output should contain "applied"
-    And the output should contain "features/steps/adding_a_task.steps.php"
-    And no file "features/steps/adding_a_task.steps.php" should be generated
+    And the output should contain "features/steps/steps.php"
+    And no file "features/steps/steps.php" should be generated
     When I accept the offers phpspec made
-    Then the file "features/steps/adding_a_task.steps.php" should contain "given("
+    Then the file "features/steps/steps.php" should contain "given("

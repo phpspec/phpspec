@@ -20,9 +20,9 @@ use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\FeatureGenerator;
-use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\StepGenerator;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 use PhpSpec\StoryBDD\StepsFile;
@@ -59,6 +59,7 @@ final class ToolRegistry
         ],
         'write_steps' => [
             'feature_path' => ['type' => 'string', 'description' => 'Project-relative path of the .feature to write steps for', 'default' => ''],
+            'steps_file' => ['type' => 'string', 'description' => 'Name of the steps file to append to (e.g. "web" for web.steps.php); empty for the default steps.php', 'default' => ''],
         ],
         'propose_edit' => [
             'path' => ['type' => 'string', 'description' => 'Project-relative path of the file'],
@@ -84,7 +85,7 @@ final class ToolRegistry
             'intent' => self::INTENT,
         ],
         'generate_steps' => [
-            'feature_name' => ['type' => 'string', 'description' => 'Step file name without extension (e.g. "user-registration")'],
+            'steps_file' => ['type' => 'string', 'description' => 'Name of the steps file the steps belong in, grouped by what they do (e.g. "web" for web.steps.php); empty for the default steps.php', 'default' => ''],
             'content' => ['type' => 'string', 'description' => 'The complete PHP step definitions file content'],
             'intent' => self::INTENT,
         ],
@@ -127,7 +128,7 @@ final class ToolRegistry
 
     private readonly StepGenerator $stepGenerator;
 
-    private readonly FeatureLayout $layout;
+    private readonly StepsHome $steps;
 
     private readonly StepVocabulary $vocabulary;
 
@@ -144,7 +145,7 @@ final class ToolRegistry
         $this->prompts = $prompts ?? new PromptLibrary($filesystem);
         $this->featureGenerator = new FeatureGenerator();
         $this->stepGenerator = new StepGenerator($filesystem);
-        $this->layout = new FeatureLayout();
+        $this->steps = new StepsHome($config, $filesystem);
         $this->vocabulary = new StepVocabulary($filesystem);
     }
 
@@ -194,12 +195,13 @@ final class ToolRegistry
         }
 
         if ($step->phase === Phase::WriteSteps && in_array('write_steps', $profile->tools, true)) {
-            $feature = $step->subject ?? $this->featureBesideSteps($step->path);
+            $named = $this->namedStepsFile($step->path);
+            $feature = $step->subject ?? ($named !== null ? $grounding->recentFeature : null);
             if ($feature === null) {
                 return null;
             }
 
-            $proposal = $this->stepsProposal($feature);
+            $proposal = $this->stepsProposal($feature, $named);
             if ($this->scaffoldsNothing($proposal)) {
                 // Every step is already defined: nothing is determined here.
                 // The human wants content (the bodies), which is the model's job.
@@ -324,7 +326,8 @@ final class ToolRegistry
             return null;
         }
 
-        $proposal = $this->stepsProposal($feature);
+        $named = $this->namedStepsFile($step?->path) ?? $this->steps->file((string) ($arguments['steps_file'] ?? ''));
+        $proposal = $this->stepsProposal($feature, $named);
 
         // A scaffold that adds nothing is not an answer; filling in existing
         // step bodies is propose_edit's job.
@@ -332,13 +335,12 @@ final class ToolRegistry
     }
 
     /**
-     * Whether a scaffold proposal adds nothing meaningful: the generator may
-     * normalise the trailing newline, so a whitespace-only difference still
-     * counts as nothing to add.
+     * Whether a scaffold proposal defines no step the file did not already
+     * define: a steps file not written yet comes back as a bare opening tag.
      */
     private function scaffoldsNothing(Proposal $proposal): bool
     {
-        return rtrim($proposal->new) === rtrim($proposal->old);
+        return $this->vocabulary->titlesIn($proposal->new) === $this->vocabulary->titlesIn($proposal->old);
     }
 
     /**
@@ -349,7 +351,8 @@ final class ToolRegistry
      */
     private function editCall(?Step $step, array $arguments): ?Proposal
     {
-        $path = $this->derivedPath($step) ?? $this->relative((string) ($arguments['path'] ?? ''));
+        $modelPath = $this->relative((string) ($arguments['path'] ?? ''));
+        $path = $this->derivedPath($step) ?? $this->namedStepsFile($modelPath) ?? $modelPath;
         $content = (string) ($arguments['content'] ?? '');
         if ($path === '' || $content === '') {
             return null;
@@ -360,7 +363,7 @@ final class ToolRegistry
         }
 
         if ((new StepsFile($path))->isStepDefinitions()) {
-            $rejection = $this->vocabulary->rejectionFor($content, $path, $this->featuresRoot());
+            $rejection = $this->vocabulary->rejectionFor($content, $path, ...$this->steps->roots());
             if ($rejection !== null) {
                 throw new RuntimeException($rejection);
             }
@@ -432,8 +435,12 @@ final class ToolRegistry
             $path = substr($path, 2);
         }
 
-        if (str_contains($path, '/') || (new StepsFile($path))->isStepDefinitions()) {
+        if (str_contains($path, '/')) {
             return $path;
+        }
+
+        if ((new StepsFile($path))->isStepDefinitions()) {
+            return $this->steps->file($path) ?? $path;
         }
 
         $dir = match (true) {
@@ -472,11 +479,11 @@ final class ToolRegistry
     }
 
     /**
-     * The steps-file proposal for a feature: the feature is parsed and the
-     * missing step definitions drafted beside it, in the same layout the
-     * runner's own generator uses (`<feature dir>/steps/<name>.steps.php`).
+     * The steps-file proposal for a feature: the feature is parsed and its
+     * missing step definitions appended to the steps file named, steps.php by
+     * default, skipping every title a steps file already defines.
      */
-    private function stepsProposal(string $featurePath): Proposal
+    private function stepsProposal(string $featurePath, ?string $stepsFile = null): Proposal
     {
         $relFeature = $this->relative($featurePath);
         $absFeature = $this->absolute($relFeature);
@@ -489,42 +496,21 @@ final class ToolRegistry
             throw new RuntimeException(sprintf('No Given/When/Then steps found in "%s".', $relFeature));
         }
 
-        $relSteps = $this->layout->stepsPathFor($relFeature);
+        $relSteps = $stepsFile ?? $this->steps->defaultFile();
         $absSteps = $this->absolute($relSteps);
         $existing = $this->filesystem->exists($absSteps) ? $this->filesystem->read($absSteps) : '';
+        $defined = array_keys($this->vocabulary->definedTitles(...$this->steps->roots()));
 
-        // A title another steps file owns is already defined for the whole
-        // suite, so the scaffold skips it instead of planting a duplicate
-        // that would error at the next load.
-        $foreign = [];
-        foreach ($this->vocabulary->definedTitles($this->featuresRoot()) as $title => $file) {
-            if (basename($file) !== basename($relSteps)) {
-                $foreign[] = $title;
-            }
-        }
-
-        return new Proposal($relSteps, $existing, $this->stepGenerator->skeleton($steps, $existing, $foreign), $existing === '', 'write_steps');
+        return new Proposal($relSteps, $existing, $this->stepGenerator->skeleton($steps, $existing, $defined), $existing === '', 'write_steps');
     }
 
     /**
-     * The absolute features root the vocabulary scans.
+     * The steps file a step or call names, placed in the steps directory when
+     * only its name is given, or null when it names none.
      */
-    private function featuresRoot(): string
+    private function namedStepsFile(?string $path): ?string
     {
-        return $this->absolute(trim($this->config->getFeaturesPath(), './'));
-    }
-
-    /**
-     * The feature that a named `.steps.php` path belongs to, in the standard
-     * layout (`features/steps/x.steps.php` steps `features/x.feature`).
-     */
-    private function featureBesideSteps(?string $stepsPath): ?string
-    {
-        if ($stepsPath === null || !str_ends_with($stepsPath, '.steps.php')) {
-            return null;
-        }
-
-        return $this->layout->featurePathFor($stepsPath);
+        return $path !== null && (new StepsFile($path))->isStepDefinitions() ? $this->locatedPath($path) : null;
     }
 
     /**

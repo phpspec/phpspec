@@ -113,6 +113,29 @@ describe(Agent::class, function () {
         expect($outcome->proposals[0]->new)->toContain('When I add "milk"');
     });
 
+    it('shows the model the steps that serve a named feature, whatever their file is called', function (Filesystem $fs) {
+        $cwd = getcwd();
+        $files = [
+            "$cwd/features/clearing.feature" => "Feature: Clearing\n  Scenario: Clears\n    When I clear completed tasks\n",
+            "$cwd/features/steps/lists.steps.php" => "<?php\nwhen('I clear completed tasks', fn() => \$this->todoList->getTasks());\n",
+        ];
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => isset($files[$p]) || in_array($p, ["$cwd/features", "$cwd/features/steps"], true));
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, ["$cwd/features", "$cwd/features/steps"], true));
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            "$cwd/features" => ['clearing.feature', 'steps'],
+            "$cwd/features/steps" => ['lists.steps.php'],
+            default => [],
+        });
+        allow($fs->read())->toReturnUsing(fn(string $p): string => $files[$p] ?? '');
+        $replay = new ReplayProvider([new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'features/steps/lists.steps.php', 'content' => "<?php\nwhen('I clear completed tasks', function () {});\n"])])]);
+
+        (new Agent($this->config, $fs, $replay))->chat('generate', 'the body of the steps for features/clearing.feature');
+
+        $context = $replay->requests[0]['messages'][1]->content;
+        expect($context)->toContain('features/steps/lists.steps.php');
+        expect($context)->toContain('getTasks');
+    });
+
     it('asks the model on the tool channel and lands its call as a proposal', function (Filesystem $fs) {
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/App/Whatever.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),

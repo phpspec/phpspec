@@ -177,7 +177,7 @@ The AI assistant has access to these tools during a pair session:
 | `describe` | Start a spec: writes an empty `describe()` skeleton for a class (idempotent) |
 | `add_example` | Add one `it()` example to a spec, one at a time (idempotent; never overwrites existing examples) |
 | `generate_feature` | Write a Gherkin `.feature` file |
-| `generate_steps` | Write a `.steps.php` step definitions file |
+| `generate_steps` | Add step definitions to `steps.php`, or to the steps file named for what the steps do |
 | `write_file` | Create a new file (class, interface, etc.) |
 | `update_file` | Modify an existing file (shows a diff) |
 | `inspect_symbol` | Inspect a class or method's signature for context |

@@ -65,8 +65,9 @@ of the config (see [Configuration](configuration.md#ai-assistant)); without it,
 it refuses, naming the file to add the section to. The current TDD step is
 resolved deterministically from your words (an explicit path, or
 feature/steps/spec/code wording). A feature request becomes a Gherkin skeleton
-and `generate the steps` writes the step definitions for the last-touched
-feature by parsing it, so those two make no model call; everything else is
+and `generate the steps` appends the step definitions for the last-touched
+feature to `features/steps/steps.php` (or the steps file you name) by parsing it,
+so those two make no model call; everything else is
 authored by the AI. Each proposal is shown as a diff and written after a `[Y/n]`
 confirmation. With no terminal to ask, nothing is written: the change is offered
 under an id for [`accept`](#accept) to apply.

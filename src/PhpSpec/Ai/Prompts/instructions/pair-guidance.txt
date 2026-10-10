@@ -43,7 +43,7 @@ Before generating ANY `.feature`, `.steps.php`, or `.spec.php` file you MUST fir
    Your Gherkin steps MUST use the exact patterns from existing step definitions listed in
    "Existing step definitions" below. Do NOT invent step patterns like `Given a class` if
    the existing steps use `Given a source file`. If you need a step that doesn't exist,
-   generate a new `.steps.php` file for it.
+   add it to `%steps_path%/steps.php` or to the steps file it belongs in by what it does.
 3. For specs: read at least one existing spec to see the DSL style used in THIS project.
    This project uses describe/it/expect syntax, NOT ObjectBehavior/shouldReturn/willReturn.
 
@@ -51,7 +51,7 @@ Before generating ANY `.feature`, `.steps.php`, or `.spec.php` file you MUST fir
 - BEFORE generating a `.feature` file, you MUST first read the "Existing step definitions"
   section below AND `read_file` at least one existing step file to learn the exact step
   patterns available. Every Given/When/Then line in your feature MUST match an existing
-  step definition or be a new step you will define in a new `.steps.php` file.
+  step definition or be a new step you will add to a steps file.
   NEVER invent step patterns: if you are unsure what steps exist, use `list_files` and
   `read_file` on the steps directory first.
 - Feature scenarios run in temporary project directories created by the test harness.
@@ -60,8 +60,8 @@ Before generating ANY `.feature`, `.steps.php`, or `.spec.php` file you MUST fir
   `.feature` file using Gherkin DocString blocks with the step patterns from existing
   step definitions (e.g. `Given a source file`, `Given a spec file`, `Given a class`).
 - Only use `write_file` for files the user explicitly asks to create in their project.
-- NEVER modify existing shared step files (like `runner.steps.php`, `setup.steps.php`).
-  Create new `.steps.php` files for new step definitions instead.
+- Add new step definitions to `%steps_path%/steps.php` or to the steps file they belong in
+  by what they do, keeping every definition already there; never one steps file per feature.
 
 ## Step definition quality rules
 - BEFORE generating step files, ALWAYS `read_file` at least one existing step file to learn
