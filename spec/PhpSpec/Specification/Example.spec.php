@@ -1,6 +1,9 @@
 <?php
 
 use PhpSpec\Specification\Example;
+use PhpSpec\Specification\ExampleError;
+use PhpSpec\Specification\PendingException;
+use PhpSpec\Specification\SkippedException;
 
 describe(Example::class, function() {
 
@@ -257,11 +260,26 @@ describe(Example::class, function() {
         expect($example->containsLine($end + 1))->toBeFalse();
     });
 
+    it("is skipped or pending, with the reason, when a hook signals so before it runs", function() {
+        $line = __LINE__ + 1;
+        $skipped = new Example("answers", function() {});
+        $pending = new Example("pays", function() {});
+
+        $skip = $skipped->leftOutBy(new SkippedException('no service'));
+        $wait = $pending->leftOutBy(new PendingException('needs the gateway'));
+
+        expect($skip->isSkipped())->toBeTrue();
+        expect($skip->getReason())->toBe('no service');
+        expect($skip->getLine())->toBe($line);
+        expect($wait->isPending())->toBeTrue();
+        expect($wait->getReason())->toBe('needs the gateway');
+    });
+
     it("reports a hook that threw as its own error, declared where it is", function() {
         $line = __LINE__ + 1;
         $example = new Example("never started", function() {});
 
-        $result = $example->failedInHook(new \RuntimeException('no setup'));
+        $result = $example->failedInHook(new ExampleError('no setup', new \RuntimeException('no setup')));
 
         expect($result->isError())->toBeTrue();
         expect($result->getMessage())->toBe('no setup');

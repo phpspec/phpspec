@@ -208,13 +208,31 @@ class Example implements ExampleResultRegistry, Rebindable
      * afterEach) threw: an error of its own, declared where it is, so the
      * examples beside it still run and the count holds.
      */
-    public function failedInHook(\Throwable $e): ExampleResult
+    public function failedInHook(ExampleError $error): ExampleResult
     {
         DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
 
         $this->isError = true;
         $this->exampleResult = new ExampleResult($this->title, [], true);
-        $this->exampleResult->setError(new ExampleError($e->getMessage(), $e));
+        $this->exampleResult->setError($error);
+
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+
+        return $this->declared($this->exampleResult);
+    }
+
+    /**
+     * The result of an example a hook left out before it ran, with skip() or
+     * pending(): skipped or pending with the hook's reason, declared where it
+     * is, the body never run.
+     */
+    public function leftOutBy(PendingException|SkippedException $signal): ExampleResult
+    {
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+
+        $this->exampleResult = $signal instanceof PendingException
+            ? new ExampleResult($this->title, [], isPending: true, reason: $signal->getMessage())
+            : new ExampleResult($this->title, [], isSkipped: true, reason: $signal->getMessage());
 
         DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
 
