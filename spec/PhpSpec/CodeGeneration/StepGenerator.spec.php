@@ -163,7 +163,7 @@ describe(StepGenerator::class, function () {
 
     it('appends to the steps file it is given, skipping a title another steps file defines', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n\ngiven(\"I visit {string}\", function (string $arg1) {\n    pending();\n});\n");
+        allow($fs->read())->toReturn("<?php\n\ngiven(\"I visit {string}\", function (string \$arg1) {\n    pending();\n});\n");
         $content = '';
         allow($fs->write())->toReturnUsing(function (string $path, string $written) use (&$content) {
             $content = $written;
