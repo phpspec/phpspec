@@ -48,7 +48,8 @@ See [Pair Programming & AI](pair.md#the-next-command) for full documentation.
 
 ### `refactor`
 
-AI-powered, behaviour-preserving refactoring.
+AI-powered, behaviour-preserving refactoring: a plan, then baby steps you
+approve one at a time, the whole spec suite checked after each.
 
 ```bash
 bin/phpspec refactor                       # the source file modified last under src_path
