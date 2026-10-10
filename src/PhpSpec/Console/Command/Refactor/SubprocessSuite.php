@@ -24,14 +24,18 @@ use PhpSpec\Parallel\ParallelRunner;
  */
 final readonly class SubprocessSuite implements SpecSuite
 {
+    /**
+     * @param bool $guarded whether the project has guard on, which judges a run by its coverage
+     */
     public function __construct(
         private string $directory,
+        private bool $guarded = false,
         private int $timeoutSeconds = 300,
     ) {}
 
     public function check(): SuiteCheck
     {
-        $command = [PHP_BINARY, '-d', 'xdebug.mode=off', ParallelRunner::findPhpspecBin(), 'run', '--format=agent', '--no-interaction', '--no-ansi'];
+        $command = [PHP_BINARY, '-d', 'xdebug.mode=' . ($this->guarded ? 'coverage' : 'off'), ParallelRunner::findPhpspecBin(), 'run', '--format=agent', '--no-interaction', '--no-ansi'];
         $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $this->directory);
 
         if (!is_resource($process)) {

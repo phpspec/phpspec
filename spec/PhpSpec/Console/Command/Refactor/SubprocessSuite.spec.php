@@ -31,4 +31,14 @@ describe(SubprocessSuite::class, function () {
         expect($check->confinedTo(['spec/Red.spec.php']))->toBeTrue();
         expect($check->report())->toContain('spec/Red.spec.php:3');
     });
+
+    it('collects coverage in a project that has guard on, so guard can judge the run', function () {
+        if (!extension_loaded('xdebug')) {
+            skip('Xdebug is not loaded.');
+        }
+        file_put_contents($this->project . '/spec/Green.spec.php', "<?php\ndescribe('Green', function () {\n    it('runs under coverage', fn() => expect(ini_get('xdebug.mode'))->toBe('coverage'));\n});\n");
+
+        expect((new SubprocessSuite($this->project, guarded: true))->check()->report())->toBe('');
+        expect((new SubprocessSuite($this->project))->check()->report())->toContain('Green > runs under coverage');
+    });
 });

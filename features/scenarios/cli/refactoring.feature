@@ -93,6 +93,37 @@ Feature: AI-powered refactoring
     When I run phpspec refactor "App\Solid"
     Then the output should not contain "Specs must pass"
 
+  Scenario: With guard on, the specs are checked under coverage so guard can judge them
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Solid.spec.php":
+      """
+      <?php
+      use App\Solid;
+
+      describe(Solid::class, function () {
+          it('works', function () {
+              expect(new Solid())->toBeAnInstanceOf(Solid::class);
+          });
+      });
+      """
+    And a class "src/App/Solid.php":
+      """
+      <?php
+      namespace App;
+
+      class Solid {}
+      """
+    And Xdebug is available
+    And I run phpspec guard
+    When I run phpspec refactor "App\Solid"
+    Then the output should not contain "Specs must pass"
+    And the output should not contain "no coverage driver"
+
   Scenario: Require AI configuration
     Given no phpspec.json config
     And a phpspec.yaml config:

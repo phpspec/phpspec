@@ -38,6 +38,7 @@ use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
+use PhpSpec\Guard\Inspection;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
@@ -106,7 +107,7 @@ final class Refactor extends Command
             return 1;
         }
 
-        $suite = $this->suite ?? new SubprocessSuite($root);
+        $suite = $this->suite ?? new SubprocessSuite($root, Inspection::of($this->config, $this->filesystem, $root) !== null);
         $output->writeln('  <fg=gray>Checking the specs...</>');
         $baseline = $suite->check();
 
