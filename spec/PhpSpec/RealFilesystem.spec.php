@@ -53,6 +53,17 @@ describe(RealFilesystem::class, function() {
         rmdir($dir);
     });
 
+    it("deletes a file, and leaves a path with nothing there alone", function() {
+        $file = sys_get_temp_dir() . '/phpspec_delete_' . getmypid() . '.php';
+        file_put_contents($file, '<?php');
+        $fs = new RealFilesystem();
+
+        $fs->delete($file);
+        $fs->delete($file);
+
+        expect(file_exists($file))->toBeFalse();
+    });
+
     it("scans a directory", function() {
         $fs = new RealFilesystem();
         $entries = $fs->scandir(__DIR__);

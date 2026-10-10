@@ -69,6 +69,14 @@ final class RealFilesystem implements Filesystem
     }
 
     /** {@inheritdoc} */
+    public function delete(string $path): void
+    {
+        if (is_file($path)) {
+            unlink($path);
+        }
+    }
+
+    /** {@inheritdoc} */
     public function scandir(string $path): array
     {
         return scandir($path);
