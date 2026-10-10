@@ -1,0 +1,26 @@
+{
+    "command": "refactor",
+    "target": "Brew\\Till",
+    "provider": "google",
+    "model": "gemini-3.1-pro-preview",
+    "turns": [
+        {
+            "rounds": [
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "decline_refactoring",
+                                "name": "decline_refactoring",
+                                "arguments": {
+                                    "reason": "The Till class is already small, cohesive, and delegates appropriately to its collaborators and value objects, leaving no obvious design flaws to fix."
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

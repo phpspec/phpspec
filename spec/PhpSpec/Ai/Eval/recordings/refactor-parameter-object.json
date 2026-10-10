@@ -1,0 +1,165 @@
+{
+    "command": "refactor",
+    "target": "Brew\\DrinkPricer",
+    "provider": "google",
+    "model": "gemini-3.1-pro-preview",
+    "turns": [
+        {
+            "rounds": [
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_plan",
+                                "name": "propose_plan",
+                                "arguments": {
+                                    "rationale": "The `priceOf` method takes three primitive parameters that represent a single concept: a Drink. Grouping them into a `Drink` object reduces primitive obsession and makes the signature clearer. \n\nFurthermore, it provides a natural home for the pricing logic. By moving the calculation into the `Drink` itself, we follow the \"Tell, don't ask\" principle, telling the drink to price itself rather than asking for its parts to calculate the price externally.",
+                                    "steps": [
+                                        {
+                                            "doing": "Describing Drink",
+                                            "title": "Describe Drink"
+                                        },
+                                        {
+                                            "doing": "Adding price(Drink)",
+                                            "title": "Add price(Drink) to DrinkPricer"
+                                        },
+                                        {
+                                            "doing": "Updating DrinkPricer specs",
+                                            "title": "Update DrinkPricer specs to use price(Drink)"
+                                        },
+                                        {
+                                            "doing": "Moving pricing logic",
+                                            "title": "Move pricing logic to Drink"
+                                        },
+                                        {
+                                            "doing": "Removing priceOf",
+                                            "title": "Remove priceOf from DrinkPricer"
+                                        }
+                                    ],
+                                    "technique": "Introduce Parameter Object"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "content": "<?php\n\nuse Brew\\Drink;\n\ndescribe(Drink::class, function () {\n    it('exposes its properties', function () {\n        $drink = new Drink('small', 'oat', 2);\n        \n        expect($drink->size)->toBe('small');\n        expect($drink->milk)->toBe('oat');\n        expect($drink->shots)->toBe(2);\n    });\n});\n",
+                                            "path": "spec/Brew/Drink.spec.php"
+                                        }
+                                    ],
+                                    "red": true
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "content": "<?php\n\nnamespace Brew;\n\nfinal class Drink\n{\n    public function __construct(\n        public readonly string $size,\n        public readonly string $milk,\n        public readonly int $shots,\n    ) {\n    }\n}\n",
+                                            "path": "src/Brew/Drink.php"
+                                        },
+                                        {
+                                            "path": "src/Brew/DrinkPricer.php",
+                                            "content": "<?php\n\nnamespace Brew;\n\nuse InvalidArgumentException;\n\nfinal class DrinkPricer\n{\n    public function price(Drink $drink): Money\n    {\n        return $this->priceOf($drink->size, $drink->milk, $drink->shots);\n    }\n\n    public function priceOf(string $size, string $milk, int $shots): Money\n    {\n        $pence = match ($size) {\n            'small' => 250,\n            'medium' => 300,\n            'large' => 350,\n            default => throw new InvalidArgumentException(sprintf('Unknown size \"%s\".', $size)),\n        };\n\n        if ($milk === 'oat') {\n            $pence += 40;\n        } elseif ($milk === 'almond') {\n            $pence += 50;\n        } elseif ($milk === 'soy') {\n            $pence += 30;\n        }\n\n        if ($shots > 1) {\n            $pence += ($shots - 1) * 60;\n        }\n\n        return new Money($pence);\n    }\n}\n"
+                                        }
+                                    ],
+                                    "red": false
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "path": "spec/Brew/DrinkPricer.spec.php",
+                                            "content": "<?php\n\nuse Brew\\Drink;\nuse Brew\\DrinkPricer;\nuse Brew\\Money;\n\ndescribe(DrinkPricer::class, function () {\n    let('pricer', fn () => new DrinkPricer());\n\n    it('prices a drink by its size', function () {\n        expect($this->pricer->price(new Drink('small', 'dairy', 1)))->toBeLike(new Money(250));\n        expect($this->pricer->price(new Drink('large', 'dairy', 1)))->toBeLike(new Money(350));\n    });\n\n    it('charges for plant milk', function () {\n        expect($this->pricer->price(new Drink('medium', 'oat', 1)))->toBeLike(new Money(340));\n        expect($this->pricer->price(new Drink('medium', 'almond', 1)))->toBeLike(new Money(350));\n        expect($this->pricer->price(new Drink('medium', 'soy', 1)))->toBeLike(new Money(330));\n    });\n\n    it('charges for every shot after the first', function () {\n        expect($this->pricer->price(new Drink('small', 'dairy', 3)))->toBeLike(new Money(370));\n    });\n\n    it('refuses a size it does not sell', function () {\n        expect(fn () => $this->pricer->price(new Drink('huge', 'dairy', 1)))->toThrow(new InvalidArgumentException('Unknown size \"huge\".'));\n    });\n});\n"
+                                        }
+                                    ],
+                                    "red": false
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "path": "src/Brew/Drink.php",
+                                            "content": "<?php\n\nnamespace Brew;\n\nuse InvalidArgumentException;\n\nfinal class Drink\n{\n    public function __construct(\n        public readonly string $size,\n        public readonly string $milk,\n        public readonly int $shots,\n    ) {\n    }\n\n    public function price(): Money\n    {\n        $pence = match ($this->size) {\n            'small' => 250,\n            'medium' => 300,\n            'large' => 350,\n            default => throw new InvalidArgumentException(sprintf('Unknown size \"%s\".', $this->size)),\n        };\n\n        if ($this->milk === 'oat') {\n            $pence += 40;\n        } elseif ($this->milk === 'almond') {\n            $pence += 50;\n        } elseif ($this->milk === 'soy') {\n            $pence += 30;\n        }\n\n        if ($this->shots > 1) {\n            $pence += ($this->shots - 1) * 60;\n        }\n\n        return new Money($pence);\n    }\n}\n"
+                                        },
+                                        {
+                                            "content": "<?php\n\nnamespace Brew;\n\nuse InvalidArgumentException;\n\nfinal class DrinkPricer\n{\n    public function price(Drink $drink): Money\n    {\n        return $drink->price();\n    }\n\n    public function priceOf(string $size, string $milk, int $shots): Money\n    {\n        $pence = match ($size) {\n            'small' => 250,\n            'medium' => 300,\n            'large' => 350,\n            default => throw new InvalidArgumentException(sprintf('Unknown size \"%s\".', $size)),\n        };\n\n        if ($milk === 'oat') {\n            $pence += 40;\n        } elseif ($milk === 'almond') {\n            $pence += 50;\n        } elseif ($milk === 'soy') {\n            $pence += 30;\n        }\n\n        if ($shots > 1) {\n            $pence += ($shots - 1) * 60;\n        }\n\n        return new Money($pence);\n    }\n}\n",
+                                            "path": "src/Brew/DrinkPricer.php"
+                                        },
+                                        {
+                                            "content": "<?php\n\nuse Brew\\Drink;\nuse Brew\\Money;\n\ndescribe(Drink::class, function () {\n    it('exposes its properties', function () {\n        $drink = new Drink('small', 'oat', 2);\n        \n        expect($drink->size)->toBe('small');\n        expect($drink->milk)->toBe('oat');\n        expect($drink->shots)->toBe(2);\n    });\n\n    it('prices itself by its size', function () {\n        expect((new Drink('small', 'dairy', 1))->price())->toBeLike(new Money(250));\n        expect((new Drink('large', 'dairy', 1))->price())->toBeLike(new Money(350));\n    });\n\n    it('charges for plant milk', function () {\n        expect((new Drink('medium', 'oat', 1))->price())->toBeLike(new Money(340));\n        expect((new Drink('medium', 'almond', 1))->price())->toBeLike(new Money(350));\n        expect((new Drink('medium', 'soy', 1))->price())->toBeLike(new Money(330));\n    });\n\n    it('charges for every shot after the first', function () {\n        expect((new Drink('small', 'dairy', 3))->price())->toBeLike(new Money(370));\n    });\n\n    it('refuses a size it does not sell', function () {\n        expect(fn () => (new Drink('huge', 'dairy', 1))->price())->toThrow(new InvalidArgumentException('Unknown size \"huge\".'));\n    });\n});\n",
+                                            "path": "spec/Brew/Drink.spec.php"
+                                        },
+                                        {
+                                            "content": "<?php\n\nuse Brew\\Drink;\nuse Brew\\DrinkPricer;\nuse Brew\\Money;\n\ndescribe(DrinkPricer::class, function () {\n    let('pricer', fn () => new DrinkPricer());\n\n    it('prices a drink', function () {\n        expect($this->pricer->price(new Drink('small', 'dairy', 1)))->toBeLike(new Money(250));\n    });\n});\n",
+                                            "path": "spec/Brew/DrinkPricer.spec.php"
+                                        }
+                                    ],
+                                    "red": false
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "red": false,
+                                    "files": [
+                                        {
+                                            "path": "src/Brew/DrinkPricer.php",
+                                            "content": "<?php\n\nnamespace Brew;\n\nfinal class DrinkPricer\n{\n    public function price(Drink $drink): Money\n    {\n        return $drink->price();\n    }\n}\n"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
