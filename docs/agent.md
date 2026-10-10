@@ -309,7 +309,7 @@ turned into flat data:
 | `create_class` | `App\Coupon` | A referenced class doesn't exist yet. |
 | `create_interface` | `App\Repository` | A mocked type doesn't exist yet. |
 | `create_method` | `App\Basket::checkout` | A called method doesn't exist on its class/interface. |
-| `create_steps` | `features/checkout.feature` | A feature has undefined steps. |
+| `create_steps` | `features/steps/steps.php` | The run has undefined steps; accepting appends them all to that file. |
 | `fake_method` | `App\Basket::total` | An existing **empty** method that a spec pins to a value; `value` is the return expression `--fake` would insert (e.g. `"4000"`, `"'hello'"`, `"true"`). |
 
 Offers appear in two places: run-wide on the summary's `offers`, and per-example

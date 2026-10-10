@@ -275,11 +275,13 @@ captured to `.phpspec/ai/last-request.json` for debugging. In pair mode the same
 
 ## Step Definition Generation
 
-When running feature files with undefined steps, PhpSpec generates step definition stubs:
+When a run finds undefined steps, PhpSpec offers them all at once, for one steps
+file: `features/steps/steps.php` when there is none yet, or the steps file you
+pick (or a new one you name) when there are:
 
 ```
-Undefined step: "a calculator"
-Generated step stub in features/steps/calculator.steps.php
+You have undefined steps. Would you like me to generate the steps for you? [Y/n]
+  Step definitions generated at features/steps/steps.php
 ```
 
 The generated file contains:

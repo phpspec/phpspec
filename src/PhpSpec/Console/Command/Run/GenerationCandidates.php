@@ -27,13 +27,14 @@ namespace PhpSpec\Console\Command\Run;
 final readonly class GenerationCandidates
 {
     /**
-     * @param array<string, array<array{keyword: string, text: string}>> $undefinedSteps undefined Gherkin steps grouped by feature file path
+     * @param list<array{keyword: string, text: string, table?: bool, docString?: bool}> $undefinedSteps every undefined Gherkin step of the run, its And/But already resolved to the keyword it continues
      * @param array<string, string> $missingSpecClasses FQCNs referenced in specs that do not exist, each keyed to the class its spec describes
      * @param array<string> $missingStepClasses FQCNs referenced in steps that do not exist
      * @param array<string> $missingMockTypes FQCNs that could not be mocked because they do not exist
      * @param array<array{className: string, methodName: string, file: string, line: int}> $undefinedMockInterfaceMethods methods called on interface mocks that do not exist
      * @param array<array{className: string, methodName: string, file: string, line: int}> $undefinedClassMethods methods called on real classes that do not exist
      * @param array<array{className: string, methodName: string, fakeExpression: string, file: string, line: int}> $fakeableMethods empty methods that --fake could fill
+     * @param string $stepsFile the project-relative steps file the undefined steps go to when nobody picks another
      */
     public function __construct(
         public array $undefinedSteps = [],
@@ -43,6 +44,7 @@ final readonly class GenerationCandidates
         public array $undefinedMockInterfaceMethods = [],
         public array $undefinedClassMethods = [],
         public array $fakeableMethods = [],
+        public string $stepsFile = 'features/steps/steps.php',
     ) {}
 
     /**
@@ -73,7 +75,7 @@ final readonly class GenerationCandidates
                 undefinedClassMethods: $matching($this->undefinedClassMethods),
             ),
             'fake_method' => new self(fakeableMethods: $matching($this->fakeableMethods)),
-            'create_steps' => new self(undefinedSteps: array_intersect_key($this->undefinedSteps, [$target => true])),
+            'create_steps' => $target === $this->stepsFile ? new self(undefinedSteps: $this->undefinedSteps, stepsFile: $this->stepsFile) : new self(),
             default => new self(),
         };
     }
@@ -109,12 +111,14 @@ final readonly class GenerationCandidates
             'undefinedMockInterfaceMethods' => $this->undefinedMockInterfaceMethods,
             'undefinedClassMethods' => $this->undefinedClassMethods,
             'fakeableMethods' => $this->fakeableMethods,
+            'stepsFile' => $this->stepsFile,
         ];
     }
 
     /**
-     * Reconstructs from a json_decode'd array, tolerating missing keys and a
-     * missing-class list recorded before the describing class was kept.
+     * Reconstructs from a json_decode'd array, tolerating missing keys, a
+     * missing-class list recorded before the describing class was kept, and
+     * undefined steps recorded per feature.
      *
      * @param array<string, mixed> $data the decoded candidate data
      * @return self
@@ -126,14 +130,20 @@ final readonly class GenerationCandidates
             $missingSpecClasses = array_combine($missingSpecClasses, $missingSpecClasses);
         }
 
+        $undefinedSteps = $data['undefinedSteps'] ?? [];
+        if (is_array($undefinedSteps) && !array_is_list($undefinedSteps)) {
+            $undefinedSteps = array_merge(...array_values($undefinedSteps));
+        }
+
         return new self(
-            $data['undefinedSteps'] ?? [],
+            $undefinedSteps,
             $missingSpecClasses,
             $data['missingStepClasses'] ?? [],
             $data['missingMockTypes'] ?? [],
             $data['undefinedMockInterfaceMethods'] ?? [],
             $data['undefinedClassMethods'] ?? [],
             $data['fakeableMethods'] ?? [],
+            is_string($data['stepsFile'] ?? null) ? $data['stepsFile'] : 'features/steps/steps.php',
         );
     }
 }

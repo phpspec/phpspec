@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter\Agent;
 
+use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Offers\Offer;
 
 /**
@@ -76,8 +77,9 @@ final class Offers
             $add('fake_method', $target, $value);
         }
 
-        foreach (self::featurePaths($candidates) as $path) {
-            $add('create_steps', $path);
+        $steps = GenerationCandidates::fromArray($candidates);
+        if ($steps->undefinedSteps !== []) {
+            $add('create_steps', $steps->stepsFile);
         }
 
         return $offers;
@@ -182,14 +184,4 @@ final class Offers
         return $targets;
     }
 
-    /**
-     * @param array<string, mixed> $candidates
-     * @return list<string>
-     */
-    private static function featurePaths(array $candidates): array
-    {
-        $values = $candidates['undefinedSteps'] ?? [];
-
-        return is_array($values) ? array_values(array_filter(array_keys($values), 'is_string')) : [];
-    }
 }

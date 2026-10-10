@@ -57,6 +57,14 @@ then('the output should contain {string}', function (string $text) {
     }
 });
 
+then('the output should contain:', function (string $text) {
+    if (!str_contains(str_replace("\r\n", "\n", $this->output), $text)) {
+        throw new \RuntimeException(
+            "Expected output to contain:\n{$text}\nOutput:\n{$this->output}",
+        );
+    }
+});
+
 then('the output should not contain {string}', function (string $text) {
     if (str_contains($this->output, $text)) {
         throw new \RuntimeException(

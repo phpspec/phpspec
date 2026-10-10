@@ -118,6 +118,14 @@ final readonly class StepsHome
     }
 
     /**
+     * A project-relative steps file under the project root.
+     */
+    public function absolute(string $file): string
+    {
+        return $this->root . '/' . ltrim(str_replace('\\', '/', $file), '/');
+    }
+
+    /**
      * How a steps file is named to a person choosing one: by its name in the
      * steps directory, by its project path anywhere else.
      */

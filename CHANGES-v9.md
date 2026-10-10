@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
  - The file phpspec names, and writes, when a project has no configuration is `phpspec.yml`, the name the docs use; the lookup order of the four formats is unchanged
  - `--filter` matches the path of titles an example or scenario sits under, joined by `>`: a context title selects everything in it, `when empty > starts` one example; a context the filter empties is no longer printed
  - A class a spec needs but does not describe is offered spec first, then the class, the way a class missing from a step always was; the class question names its file relative to the project
@@ -52,6 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A step two features share is generated once; it used to land in a steps file per feature, and the second definition failed the next run at load
  - A checkout resolves its dependencies for PHP 8.2, the floor, whatever PHP runs composer (`config.platform.php`), so a `vendor/` built under a newer PHP no longer carries Symfony 8 into a run on 8.2; `bin/phpspec` refuses PHP older than 8.2 with a sentence instead of a parse error
  - The offer to create an interface names its file relative to the project, as the class offer does
  - `run --help` no longer lists `--coverage-partial`, which only the parallel workers pass; the option still works

@@ -65,6 +65,10 @@ describe(StepsHome::class, function () {
         expect((new StepsHome(new Configuration(), $this->filesystem, '/project'))->files())->toBe([]);
     });
 
+    it('places a project-relative steps file under the project root', function () {
+        expect((new StepsHome(new Configuration(), $this->filesystem, '/project'))->absolute('features/steps/steps.php'))->toBe('/project/features/steps/steps.php');
+    });
+
     it('labels a steps file by its name in the steps directory, and by its path elsewhere', function () {
         $home = new StepsHome(new Configuration(), $this->filesystem, '/project');
 

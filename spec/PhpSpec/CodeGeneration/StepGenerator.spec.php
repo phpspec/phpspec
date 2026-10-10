@@ -17,7 +17,7 @@ describe(StepGenerator::class, function () {
     });
 
     it('generates given/when/then from the primary keywords', function () {
-        (new StepGenerator($this->filesystem))->generate('/proj/features/x.feature', [
+        (new StepGenerator($this->filesystem))->generate('/proj/features/steps/steps.php', [
             ['keyword' => 'Given', 'text' => 'a precondition'],
             ['keyword' => 'When', 'text' => 'an action'],
             ['keyword' => 'Then', 'text' => 'an outcome'],
@@ -29,7 +29,7 @@ describe(StepGenerator::class, function () {
     });
 
     it('generates And and But as the keyword of the step they follow', function () {
-        (new StepGenerator($this->filesystem))->generate('/proj/features/x.feature', [
+        (new StepGenerator($this->filesystem))->generate('/proj/features/steps/steps.php', [
             ['keyword' => 'Given', 'text' => 'a precondition'],
             ['keyword' => 'And', 'text' => 'another precondition'],
             ['keyword' => 'When', 'text' => 'an action'],
@@ -47,7 +47,7 @@ describe(StepGenerator::class, function () {
     });
 
     it('defaults a leading And with no preceding primary to given', function () {
-        (new StepGenerator($this->filesystem))->generate('/proj/features/x.feature', [
+        (new StepGenerator($this->filesystem))->generate('/proj/features/steps/steps.php', [
             ['keyword' => 'And', 'text' => 'a stray step'],
         ]);
 
@@ -149,6 +149,34 @@ describe(StepGenerator::class, function () {
         ]);
 
         expect(substr_count($content, 'I add a {string} task {string}'))->toBe(1);
+    });
+
+    it('writes the steps file it is given, making its directory first', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+        expect($fs->mkdir('/proj/acceptance'))->toBeCalled();
+        expect($fs->write('/proj/acceptance/steps.php', any()))->toBeCalled();
+
+        $written = (new StepGenerator($fs))->generate('/proj/acceptance/steps.php', [['keyword' => 'Given', 'text' => 'a precondition']]);
+
+        expect($written)->toBe('/proj/acceptance/steps.php');
+    });
+
+    it('appends to the steps file it is given, skipping a title another steps file defines', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\ngiven(\"I visit {string}\", function (string $arg1) {\n    pending();\n});\n");
+        $content = '';
+        allow($fs->write())->toReturnUsing(function (string $path, string $written) use (&$content) {
+            $content = $written;
+        });
+
+        (new StepGenerator($fs))->generate('/proj/features/steps/web.steps.php', [
+            ['keyword' => 'Given', 'text' => 'a precondition'],
+            ['keyword' => 'When', 'text' => 'the user plays'],
+        ], ['the user plays']);
+
+        expect($content)->toStartWith("<?php\n\ngiven(\"I visit {string}\"");
+        expect($content)->toContain('given("a precondition"');
+        expect($content)->not()->toContain('the user plays');
     });
 
     it('turns a decimal into a {float}, taken as a float, and a whole number into an {int}', function () {

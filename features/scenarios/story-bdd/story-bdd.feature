@@ -117,10 +117,10 @@ Feature: Story BDD with Gherkin
           When I read the menu
       """
     When I run phpspec run with option "features/ --accept-offers"
-    Then the file "features/steps/menu.steps.php" should contain "use PhpSpec\StoryBDD\DataTable;"
-    And the file "features/steps/menu.steps.php" should contain "function (DataTable $table)"
-    And the file "features/steps/menu.steps.php" should contain "function (string $docString)"
-    And the file "features/steps/menu.steps.php" should contain "function ()" exactly 1 times
+    Then the file "features/steps/steps.php" should contain "use PhpSpec\StoryBDD\DataTable;"
+    And the file "features/steps/steps.php" should contain "function (DataTable $table)"
+    And the file "features/steps/steps.php" should contain "function (string $docString)"
+    And the file "features/steps/steps.php" should contain "function ()" exactly 1 times
 
   Scenario: A Background step that fails is reported once, naming the scenarios it took down
     Given a feature file "features/background.feature":
@@ -354,6 +354,7 @@ Feature: Story BDD with Gherkin
       """
     When I run phpspec run "features/" and answer "y" to generation prompts
     Then a step file should be generated with step definitions
+    And the file "features/steps/steps.php" should contain "I have a new thing"
 
   Scenario: And and But steps generate the keyword of the step they follow
     Given a feature file "features/keywords.feature":
@@ -368,27 +369,27 @@ Feature: Story BDD with Gherkin
           And another outcome
       """
     When I run phpspec run "features/" and answer "y" to generation prompts
-    Then the file "features/steps/keywords.steps.php" should contain:
+    Then the file "features/steps/steps.php" should contain:
       """
       given("a precondition"
       """
-    And the file "features/steps/keywords.steps.php" should contain:
+    And the file "features/steps/steps.php" should contain:
       """
       given("another precondition"
       """
-    And the file "features/steps/keywords.steps.php" should contain:
+    And the file "features/steps/steps.php" should contain:
       """
       when("an action"
       """
-    And the file "features/steps/keywords.steps.php" should contain:
+    And the file "features/steps/steps.php" should contain:
       """
       when("not another action"
       """
-    And the file "features/steps/keywords.steps.php" should contain:
+    And the file "features/steps/steps.php" should contain:
       """
       then("an outcome"
       """
-    And the file "features/steps/keywords.steps.php" should contain:
+    And the file "features/steps/steps.php" should contain:
       """
       then("another outcome"
       """
@@ -428,7 +429,7 @@ Feature: Story BDD with Gherkin
           Then I see 2 tasks
       """
     When I run phpspec run "features/" and answer "y" to generation prompts
-    Then the file "features/steps/repeats.steps.php" should contain "I add a {string} task {string}" exactly 1 times
+    Then the file "features/steps/steps.php" should contain "I add a {string} task {string}" exactly 1 times
 
   Scenario: Helper classes under features/support load before the steps that use them
     Given a feature file "features/greeting.feature":

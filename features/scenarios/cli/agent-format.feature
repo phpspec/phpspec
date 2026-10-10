@@ -823,6 +823,30 @@ Feature: Agent output format
     And the output should contain "src/App/Coupon.php"
     And a class file "src/App/Coupon.php" should be generated
 
+  Scenario: The undefined steps of every feature are one offer, for steps.php
+    Given a feature file "features/playing.feature":
+      """
+      Feature: Playing
+        Scenario: A game
+          Given a user named "Chuck Norris"
+          When the user plays
+      """
+    And a feature file "features/paying.feature":
+      """
+      Feature: Paying
+        Scenario: A tea
+          When the user plays
+          Then the tea is paid
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "create_steps" exactly 1 times
+    And the output should contain "features/steps/steps.php"
+    And no file "features/steps/steps.php" should be generated
+    When I accept the offers phpspec made
+    Then the file "features/steps/steps.php" should contain "a user named {string}"
+    And the file "features/steps/steps.php" should contain "the user plays" exactly 1 times
+
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":
       """

@@ -16,6 +16,7 @@ namespace PhpSpec\Console\Command;
 
 use DOMException;
 use InvalidArgumentException;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
@@ -1171,6 +1172,7 @@ final class Run extends Command implements InternalOptions
             ltrim($this->config->getSpecPath(), './'),
             $generation,
             $this->config->getSpecSuffix(),
+            steps: new StepsHome($this->config),
         );
     }
 }

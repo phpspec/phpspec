@@ -21,6 +21,8 @@ use PhpSpec\CodeGeneration\MethodStubGenerator;
 use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\CodeGeneration\StepGenerator;
+use PhpSpec\CodeGeneration\StepsHome;
+use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Console\Command\Refactor\Diff;
@@ -30,6 +32,7 @@ use PhpSpec\Offers\Offer;
 use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Results;
+use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
@@ -46,7 +49,6 @@ final readonly class CodeGenerator
     private ResultScanner $scanner;
     private SourceAnalyser $analyser;
     private Filesystem $filesystem;
-    private Prompt $prompt;
 
     /**
      * @param SourceLayout $layout where a class's file lives
@@ -55,6 +57,8 @@ final readonly class CodeGenerator
      * @param string $specSuffix file suffix for spec files
      * @param Chooser|null $chooser when given, questions are presented through this
      *                              numbered chooser (pair mode) instead of a plain [Y/n] prompt
+     * @param StepsHome $steps where the project keeps its step definitions
+     * @param Prompt $prompt reads the person's answers
      */
     public function __construct(
         private SourceLayout $layout,
@@ -62,11 +66,12 @@ final readonly class CodeGenerator
         private Generation $generation = Generation::Asks,
         private string $specSuffix = '.spec.php',
         private ?Chooser $chooser = null,
+        private StepsHome $steps = new StepsHome(new Configuration()),
+        private Prompt $prompt = new Prompt(),
     ) {
         $this->analyser = new SourceAnalyser();
         $this->scanner = new ResultScanner($this->analyser);
         $this->filesystem = new RealFilesystem();
-        $this->prompt = new Prompt();
     }
 
     /**
@@ -93,13 +98,14 @@ final readonly class CodeGenerator
     public function scan(Results $results): GenerationCandidates
     {
         return new GenerationCandidates(
-            $this->scanner->collectUndefinedSteps($results),
+            array_values(array_merge(...array_values($this->scanner->collectUndefinedSteps($results)))),
             $this->scanner->collectMissingSpecClasses($results),
             $this->scanner->collectMissingStepClasses($results),
             $this->scanner->collectMissingMockTypes($results),
             $this->scanner->collectUndefinedMockInterfaceMethods($results),
             $this->scanner->collectUndefinedClassMethods($results),
             $this->scanner->collectFakeableMethods($results),
+            $this->steps->defaultFile(),
         );
     }
 
@@ -115,7 +121,7 @@ final readonly class CodeGenerator
     public function apply(Output $output, GenerationCandidates $candidates, bool $fake): array
     {
         return [
-            ...$this->generateStepDefinitions($output, $candidates->undefinedSteps),
+            ...$this->generateStepDefinitions($output, $candidates),
             ...$this->generateMissingSpecClasses($output, $candidates->missingSpecClasses),
             ...$this->generateMissingStepClasses($output, $candidates->missingStepClasses),
             ...$this->generateMissingInterfaces($output, $candidates->missingMockTypes),
@@ -126,34 +132,103 @@ final readonly class CodeGenerator
     }
 
     /**
-     * Offers to generate step definition stubs for undefined Gherkin steps.
+     * Offers the undefined steps of the run, all of them, to one steps file:
+     * steps.php when there is none yet, or the one the person picks.
      *
-     * @param Output $output the console output for prompts and confirmation messages
-     * @param array<string, array<array{keyword: string, text: string}>> $undefinedSteps undefined steps grouped by feature file path
      * @return list<Applied>
      */
-    private function generateStepDefinitions(Output $output, array $undefinedSteps): array
+    private function generateStepDefinitions(Output $output, GenerationCandidates $candidates): array
     {
-        $applied = [];
-
-        foreach ($undefinedSteps as $featurePath => $steps) {
-            $count = count($steps);
-            $question = sprintf(
-                '  <fg=bright-blue>%d undefined step%s in %s. Generate step definitions?</>',
-                $count,
-                $count !== 1 ? 's' : '',
-                basename($featurePath),
-            );
-
-            if ($this->confirm($output, $question, 'generate-steps', 'generate step definitions')) {
-                $generator = new StepGenerator();
-                $stepsFile = $generator->generate($featurePath, $steps);
-                $output->writeln("  <fg=green>Step definitions generated at $stepsFile</>");
-                $applied[] = self::applied('create_steps', $featurePath, $stepsFile);
-            }
+        if ($candidates->undefinedSteps === []) {
+            return [];
         }
 
-        return $applied;
+        $file = $this->stepsDestination($output, $candidates->stepsFile);
+        if ($file === null) {
+            return [];
+        }
+
+        (new StepGenerator($this->filesystem))->generate(
+            $this->steps->absolute($file),
+            $candidates->undefinedSteps,
+            array_keys((new StepVocabulary($this->filesystem))->definedTitles(...$this->steps->roots())),
+        );
+        $output->writeln(sprintf('  <fg=green>Step definitions generated at %s</>', $file));
+
+        return [self::applied('create_steps', $file, $file)];
+    }
+
+    /**
+     * The steps file the undefined steps go to, or null when they go nowhere.
+     * A yes or no for the default file when there is no steps file to choose
+     * from, or nobody to choose (accepted offers, the pair chooser, no one
+     * there); otherwise a pick among the steps files there are.
+     */
+    private function stepsDestination(Output $output, string $default): ?string
+    {
+        $question = '  <fg=bright-blue>You have undefined steps. Would you like me to generate the steps for you?</>';
+        $action = sprintf('append them to %s', $default);
+        $files = $this->steps->files();
+
+        if ($files === [] || $this->chooser !== null || $this->generation !== Generation::Asks) {
+            return $this->confirm($output, $question, 'generate-steps', $action) ? $default : null;
+        }
+
+        return $this->picked($output, $question, $files, $action);
+    }
+
+    /**
+     * @param list<string> $files the steps files to choose from
+     */
+    private function picked(Output $output, string $question, array $files, string $action): ?string
+    {
+        $newFile = count($files) + 1;
+
+        $output->writeln('');
+        $output->writeln($question);
+        $output->writeln('');
+        $output->writeln('  [0] No, skip');
+        foreach ($files as $index => $file) {
+            $output->writeln(sprintf('  [%d] %s', $index + 1, $this->steps->label($file)));
+        }
+        $output->writeln(sprintf('  [%d] New file...', $newFile));
+
+        while (($answer = $this->answer($output)) !== null) {
+            $choice = trim($answer) === '' ? '1' : trim($answer);
+            $index = ctype_digit($choice) ? (int) $choice : -1;
+
+            if ($index === 0) {
+                return null;
+            }
+
+            if ($index === $newFile) {
+                return $this->newStepsFile($output, $action);
+            }
+
+            if (isset($files[$index - 1])) {
+                return $files[$index - 1];
+            }
+
+            $output->writeln(sprintf('  <fg=yellow>Answer with a number from 0 to %d.</>', $newFile));
+        }
+
+        return $this->nobody($output, $action);
+    }
+
+    private function newStepsFile(Output $output, string $action): ?string
+    {
+        $output->writeln('  Name the new steps file (for example web):');
+
+        while (($answer = $this->answer($output)) !== null) {
+            $file = $this->steps->file($answer);
+            if ($file !== null) {
+                return $file;
+            }
+
+            $output->writeln('  <fg=yellow>A steps file is named, not placed: for example web.</>');
+        }
+
+        return $this->nobody($output, $action);
     }
 
     /**
@@ -546,15 +621,26 @@ final readonly class CodeGenerator
         // it, because a person reading a log still wants to know what was
         // offered.
         if ($answer === null) {
-            $output->writeln(sprintf(
-                '  <fg=yellow>Nothing was written: there is nobody to answer. Run with --accept-offers to %s.</>',
-                $action,
-            ));
+            $this->nobody($output, $action);
 
             return false;
         }
 
         return $answer === '' || strtolower($answer) === 'y';
+    }
+
+    /**
+     * Says that nothing was written because nobody was there to answer, and
+     * how to take the offer anyway.
+     */
+    private function nobody(Output $output, string $action): null
+    {
+        $output->writeln(sprintf(
+            '  <fg=yellow>Nothing was written: there is nobody to answer. Run with --accept-offers to %s.</>',
+            $action,
+        ));
+
+        return null;
     }
 
     /**

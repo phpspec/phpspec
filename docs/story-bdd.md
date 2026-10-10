@@ -294,15 +294,43 @@ bin/phpspec run features/greeting.feature  # Run a specific feature
 
 A scenario with an undefined step was never checked, so the run fails with exit
 code 1 until the step is defined; a `pending()` step is work deferred on
-purpose and leaves the exit code at 0. When running features with undefined
-steps, PhpSpec offers to generate step definition stubs:
+purpose and leaves the exit code at 0. When a run finds undefined steps, in any
+number of features, PhpSpec offers them once, all together, for one steps file.
+With no steps file yet, the answer is a yes or a no for `features/steps/steps.php`:
 
 ```
-3 undefined steps in features/greeting.feature.
-Generate step definitions? [Y/n]
+You have undefined steps. Would you like me to generate the steps for you? [Y/n]
 ```
 
-Generated steps include `pending()` calls so they show as pending until implemented.
+Once steps files exist, you pick the one the steps go to, or name a new one:
+
+```
+You have undefined steps. Would you like me to generate the steps for you?
+
+  [0] No, skip
+  [1] assertions.steps.php
+  [2] web.steps.php
+  [3] New file...
+```
+
+How steps are grouped is yours to decide; grouping them by what they do keeps
+them reusable across features, where a steps file per feature would not. A step
+already defined in any steps file is never generated again. With nobody to
+answer (`--no-interaction`) nothing is written; `--accept-offers` and
+`phpspec accept` append to `steps.php`. The steps go to `steps_path` when it is
+configured.
+
+Generated steps include `pending()` calls so they show as pending until implemented:
+
+```php
+given("some {int} stuff", function (int $arg1) {
+    pending();
+});
+
+given("a user named {string}", function (string $arg1) {
+    pending();
+});
+```
 
 ## The BDD Cycle
 
@@ -324,5 +352,6 @@ Feature (acceptance) -> Steps -> Specs (unit) -> Classes -> Green
 | Path | Purpose |
 |---|---|
 | `features/*.feature` | Gherkin feature files |
-| `features/steps/*.steps.php` | Step definition files |
+| `features/steps/steps.php` | The default step definitions file |
+| `features/steps/*.steps.php` | Step definition files grouped as you choose |
 | `features/**/*.steps.php` | Step files in subdirectories (also scanned) |

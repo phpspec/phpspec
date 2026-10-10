@@ -41,15 +41,30 @@ describe(Offers::class, function () {
         expect($offers[0]['value'])->toBe('return 3');
     });
 
-    it('maps undefined steps to create_steps keyed by feature path', function () {
-        $candidates = ['undefinedSteps' => [
-            'features/checkout.feature' => [['keyword' => 'Given', 'text' => 'a basket']],
-        ]];
+    it('maps every undefined step of the run to one create_steps offer, targeting the steps file', function () {
+        $candidates = [
+            'undefinedSteps' => [
+                ['keyword' => 'Given', 'text' => 'a basket'],
+                ['keyword' => 'When', 'text' => 'the user plays'],
+            ],
+            'stepsFile' => 'acceptance_steps/steps.php',
+        ];
 
         $offers = Offers::fromCandidates($candidates);
 
+        expect($offers)->toHaveLength(1);
         expect($offers[0]['action'])->toBe('create_steps');
-        expect($offers[0]['target'])->toBe('features/checkout.feature');
+        expect($offers[0]['target'])->toBe('acceptance_steps/steps.php');
+    });
+
+    it('targets steps.php with steps recorded per feature and no steps file', function () {
+        $offers = Offers::fromCandidates(['undefinedSteps' => [
+            'features/checkout.feature' => [['keyword' => 'Given', 'text' => 'a basket']],
+            'features/paying.feature' => [['keyword' => 'Given', 'text' => 'a tea']],
+        ]]);
+
+        expect($offers)->toHaveLength(1);
+        expect($offers[0]['target'])->toBe('features/steps/steps.php');
     });
 
     it('deduplicates the same action and target', function () {

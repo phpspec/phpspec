@@ -22,6 +22,7 @@ use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\ClassLocation;
 use PhpSpec\CodeGeneration\SpecGenerator;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
@@ -590,6 +591,7 @@ final class CommandDispatcher
             $this->interactive ? Generation::Asks : Generation::Accepts,
             $this->config->getSpecSuffix(),
             $this->chooser,
+            new StepsHome($this->config, $this->filesystem),
         );
         $codeGenerator->apply($this->output->getOutput(), $candidates, false);
     }
