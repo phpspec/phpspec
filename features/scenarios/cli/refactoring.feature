@@ -61,6 +61,38 @@ Feature: AI-powered refactoring
     Then the output should not contain "Could not open input file"
     And the output should not contain "Specs must pass"
 
+  Scenario: An example the run skips does not stop a refactoring
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Solid.spec.php":
+      """
+      <?php
+      use App\Solid;
+
+      describe(Solid::class, function () {
+          it('works', function () {
+              expect(new Solid())->toBeAnInstanceOf(Solid::class);
+          });
+
+          it('works on PHP 9 too', function () {
+              skip('PHP 9 is not out yet');
+          });
+      });
+      """
+    And a class "src/App/Solid.php":
+      """
+      <?php
+      namespace App;
+
+      class Solid {}
+      """
+    When I run phpspec refactor "App\Solid"
+    Then the output should not contain "Specs must pass"
+
   Scenario: Require AI configuration
     Given no phpspec.json config
     And a phpspec.yaml config:

@@ -17,12 +17,14 @@ namespace PhpSpec\Console\Command\Refactor;
 /**
  * @internal
  * What a run of the whole spec suite said, read from its agent stream: green
- * or not, and every failure with the spec file it sits in, when that is
- * known. A run that died, or answered with no stream at all, is red and
- * places nothing.
+ * when it left nothing to act on, and otherwise everything it left, each with
+ * the spec file it sits in when there is one. A run that died, or answered
+ * with no stream at all, is red and places nothing.
  */
 final readonly class SuiteCheck
 {
+    private const ACTIONABLE = ['failing', 'error', 'pending'];
+
     /**
      * @param list<array{file: string|null, line: string}> $failures each failure, the spec file it sits in when known
      */
@@ -43,19 +45,23 @@ final readonly class SuiteCheck
                 continue;
             }
 
-            match ($event['event'] ?? null) {
-                'example' => $failures[] = self::failure($event),
-                'fatal' => $failures[] = ['file' => null, 'line' => (string) ($event['message'] ?? 'The run stopped.')],
-                'summary' => $actionable = (int) ($event['actionable'] ?? 1),
-                default => null,
-            };
+            $failures = [...$failures, ...match ($event['event'] ?? null) {
+                'example' => in_array($event['state'] ?? null, self::ACTIONABLE, true) ? [self::failure($event)] : [],
+                'fatal' => [['file' => null, 'line' => (string) ($event['message'] ?? 'The run stopped.')]],
+                'summary' => self::leftOver($event),
+                default => [],
+            }];
+
+            if (($event['event'] ?? null) === 'summary') {
+                $actionable = (int) ($event['actionable'] ?? 1);
+            }
         }
 
         if ($actionable === null) {
             return new self(false, [['file' => null, 'line' => trim($errors) !== '' ? trim($errors) : 'The spec run printed no summary.']]);
         }
 
-        return new self($actionable === 0 && $failures === [], $failures);
+        return new self($actionable === 0, $failures);
     }
 
     public function green(): bool
@@ -87,6 +93,28 @@ final readonly class SuiteCheck
     public function report(): string
     {
         return implode("\n", array_column($this->failures, 'line'));
+    }
+
+    /**
+     * What the summary still asks for beyond its entries: logic guard found
+     * no example reaching, and a coverage gate missed.
+     *
+     * @param array<string, mixed> $summary
+     * @return list<array{file: null, line: string}>
+     */
+    private static function leftOver(array $summary): array
+    {
+        $left = [];
+
+        foreach ($summary['guard']['violations'] ?? [] as $violation) {
+            $left[] = ['file' => null, 'line' => sprintf('%s:%d  %s', $violation['file'] ?? '', $violation['lines'][0] ?? 0, $violation['remedy'] ?? '')];
+        }
+
+        if (($summary['coverage']['met'] ?? true) === false) {
+            $left[] = ['file' => null, 'line' => sprintf('Coverage is %s%%, under the %s%% required.', $summary['coverage']['percent'] ?? 0, $summary['coverage']['required'] ?? 0)];
+        }
+
+        return $left;
     }
 
     /**
