@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A story hook that throws, or calls `skip()` or `pending()`, no longer ends the whole run with only its message: a before hook's signal leaves the feature, scenario or step it wraps skipped or pending with the reason, an after hook's signal is an error saying it came too late, and any other error errors the step it affects, naming the hook, while the rest of the run goes on
  - `skip()` or `pending()` in `beforeEach` or `beforeAll` leaves the examples it wraps skipped or pending with the reason, the matching after-hook still running, where it errored them and failed the run; in `afterEach` or `afterAll` it is an error that says it came after the example ran
  - The HTML report words its counts as the console does, `1 example (1 failed)`, `6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)`, where it said `1 pass` and `2 failures` and left risky examples out; its header counts an errored step among the failed, where it counted none
  - A run of specs and features counts pending steps and pending examples apart: a pending example no longer shows in the steps line, nor a pending step in the examples line, the HTML footer or the suite state the AI commands read

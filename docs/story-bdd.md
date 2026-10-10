@@ -269,6 +269,17 @@ the scenario failed, so resources are always cleaned up. `afterStep` runs after
 every step that executed, but not for steps skipped because an earlier step
 failed.
 
+A before hook can decide for what it wraps: `skip()` or `pending()` in
+`beforeFeature`, `beforeScenario` or `beforeStep` leaves every scenario of the
+feature, that scenario, or that step skipped or pending with the reason; the
+matching after hook still runs. In an after hook the step or scenario already
+ran, so `skip()` or `pending()` there is an error that says so.
+
+A hook that throws errors what it wraps, naming the hook (`database down (in
+beforeScenario)`), and the run goes on: a before hook errors the first step it
+kept from running, an after hook the step that just ran. A step that had
+already failed keeps its failure, with the hook's error as a warning under it.
+
 ## Step States
 
 | State | Color | Meaning |

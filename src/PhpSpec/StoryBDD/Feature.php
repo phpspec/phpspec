@@ -113,23 +113,38 @@ final readonly class Feature implements SpecBlock
      */
     public function stream(): \Generator
     {
-        $this->hooks->runBeforeFeature();
+        $held = $this->attempt(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature');
+
+        // The last scenario waits for afterFeature, which may break its last step.
+        $last = null;
+        $closed = false;
 
         try {
             foreach ($this->featureNode->scenarios as $scenario) {
                 $expansions = $scenario instanceof ScenarioOutlineNode ? $scenario->expand() : [$scenario];
 
                 foreach ($expansions as $expanded) {
-                    $result = $this->runScenario($expanded);
-                    yield $result;
+                    $result = $this->runScenario($expanded, $held);
+                    if ($last !== null) {
+                        yield $last;
+                    }
+                    $last = $result;
 
                     if (StopRegistry::reached($result)) {
-                        return;
+                        break 2;
                     }
                 }
             }
+
+            $closed = true;
+            $after = $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature');
+            if ($last !== null) {
+                yield $after === null ? $last : new ScenarioResult($last->getTitle(), self::brokenAtTheEnd($last->getResults(), $after), $last->getLine(), $last->getAttachments());
+            }
         } finally {
-            $this->hooks->runAfterFeature();
+            if (!$closed) {
+                $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature');
+            }
         }
     }
 
@@ -162,11 +177,12 @@ final readonly class Feature implements SpecBlock
      * Skips remaining steps after the first failure.
      *
      * @param ScenarioNode $scenario the scenario to execute
+     * @param HookOutcome|null $featureHeld what a beforeFeature raised, deciding every scenario without running its hooks or steps
      */
-    private function runScenario(ScenarioNode $scenario): ScenarioResult
+    private function runScenario(ScenarioNode $scenario, ?HookOutcome $featureHeld = null): ScenarioResult
     {
         $world = new StepWorld();
-        $this->hooks->runBeforeScenario($world);
+        $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');
 
         $collector = new StepMatchCollector();
         DispatcherRegistry::dispatcher()->addSubscriber($collector);
@@ -180,32 +196,30 @@ final readonly class Feature implements SpecBlock
         $stepResults = [];
         $failed = false;
 
-        if ($this->featureNode->background !== null) {
-            foreach ($this->featureNode->background->steps as $step) {
-                if ($failed) {
-                    $stepResults[] = new StepResult($step->keyword . ' ' . $step->text, 'skipped');
-                    continue;
-                }
-                $result = $this->runStep($step, $world, $collector);
-                $this->hooks->runAfterStep($world);
-                $stepResults[] = $result;
-                if ($result->isFailure() || $result->isError() || $result->isSkipped()) {
-                    $failed = true;
-                }
-            }
-        }
+        foreach ([...($this->featureNode->background->steps ?? []), ...$scenario->steps] as $step) {
+            $title = $step->keyword . ' ' . $step->text;
 
-        foreach ($scenario->steps as $step) {
-            if ($failed) {
-                $stepResults[] = new StepResult($step->keyword . ' ' . $step->text, 'skipped');
+            if ($held !== null) {
+                $stepResults[] = $stepResults === [] ? $held->instead($title) : new StepResult($title, 'skipped');
                 continue;
             }
+
+            if ($failed) {
+                $stepResults[] = new StepResult($title, 'skipped');
+                continue;
+            }
+
             $result = $this->runStep($step, $world, $collector);
-            $this->hooks->runAfterStep($world);
+            $after = $this->attempt(fn() => $this->hooks->runAfterStep($world), 'afterStep');
+            $result = $after?->after($result) ?? $result;
             $stepResults[] = $result;
             if ($result->isFailure() || $result->isError() || $result->isSkipped()) {
                 $failed = true;
             }
+        }
+
+        if ($held !== null && $stepResults === []) {
+            $stepResults[] = $held->alone();
         }
 
         // Read before the teardown, and only for a scenario that needs
@@ -217,7 +231,12 @@ final readonly class Feature implements SpecBlock
             $attached = $attachments->read();
         }
 
-        $this->hooks->runAfterScenario($world);
+        if ($featureHeld === null) {
+            $after = $this->attempt(fn() => $this->hooks->runAfterScenario($world), 'afterScenario');
+            if ($after !== null) {
+                $stepResults = self::brokenAtTheEnd($stepResults, $after);
+            }
+        }
 
         DispatcherRegistry::dispatcher()->removeSubscriber($collector);
         DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
@@ -225,6 +244,35 @@ final readonly class Feature implements SpecBlock
         // An outline expansion is addressed by its own examples-table row; every
         // other scenario by its keyword line.
         return new ScenarioResult($scenario->title, $stepResults, $scenario->exampleLine ?? $scenario->line, $attached);
+    }
+
+    /**
+     * Runs hooks, keeping what they raise instead of letting it end the run.
+     */
+    private function attempt(\Closure $hooks, string $name): ?HookOutcome
+    {
+        try {
+            $hooks();
+
+            return null;
+        } catch (\Throwable $raised) {
+            return new HookOutcome($raised, $name);
+        }
+    }
+
+    /**
+     * The steps with an after-hook's outcome on the last of them, or alone
+     * when there is no step to carry it.
+     *
+     * @param array<Results> $steps
+     * @return list<StepResult>
+     */
+    private static function brokenAtTheEnd(array $steps, HookOutcome $after): array
+    {
+        $steps = array_values(array_filter($steps, static fn(Results $step): bool => $step instanceof StepResult));
+        $last = array_pop($steps);
+
+        return $last === null ? [$after->alone()] : [...$steps, $after->after($last)];
     }
 
     /**
@@ -254,9 +302,12 @@ final readonly class Feature implements SpecBlock
      */
     private function runStep(StepNode $step, object $world, StepMatchCollector $collector): StepResult
     {
-        $this->hooks->runBeforeStep($world);
-
         $title = $step->keyword . ' ' . $step->text;
+
+        $before = $this->attempt(fn() => $this->hooks->runBeforeStep($world), 'beforeStep');
+        if ($before !== null) {
+            return $before->instead($title);
+        }
         $match = $this->registry->match($step->text);
 
         if ($match === null) {
