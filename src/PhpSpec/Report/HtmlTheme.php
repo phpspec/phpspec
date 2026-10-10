@@ -182,6 +182,8 @@ final class HtmlTheme
         table.snippet tr.mark td.ln{color:var(--code-red);font-weight:700}
         table.snippet pre{margin:0}
         .where{margin:.2rem 0 0;font-family:var(--mono);font-size:.75rem;color:var(--ps-slate)}
+        details.group ul.notes{margin:.35rem 0 .1rem;padding:0;font-family:var(--mono);font-size:.8rem}
+        .note{color:var(--ps-amber)}
         section.subgroup{padding:.2rem .6rem .4rem}
         section.subgroup h3,section.subgroup h4,section.subgroup h5,section.subgroup h6{
         margin:.5rem 0 .25rem;font-size:.9rem;color:var(--ps-ink)}

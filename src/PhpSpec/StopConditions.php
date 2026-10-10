@@ -64,16 +64,17 @@ final readonly class StopConditions
         if ($result instanceof ExampleResult) {
             return ($this->onFailure && ($result->isFailure() || $result->isError()))
                 || ($this->onError && $result->isError())
-                || ($this->onWarning && $result->hasWarnings())
-                || ($this->onDeprecation && $result->hasDeprecations())
-                || ($this->onNotice && $result->hasNotices())
+                || $this->metByNotesOf($result)
                 || ($this->onPending && $result->isPending())
                 || ($this->onSkipped && $result->isSkipped());
         }
 
         if ($result instanceof StepResult) {
             return ($this->onFailure && ($result->isFailure() || $result->isError()))
-                || ($this->onError && $result->isError());
+                || ($this->onError && $result->isError())
+                || $this->metByNotesOf($result)
+                || ($this->onPending && ($result->isPending() || $result->isUndefined()))
+                || ($this->onSkipped && $result->isSkippedForAReason());
         }
 
         foreach ($result->getResults() as $child) {
@@ -118,5 +119,12 @@ final readonly class StopConditions
             onPending: true,
             onSkipped: true,
         );
+    }
+
+    private function metByNotesOf(ExampleResult|StepResult $result): bool
+    {
+        return ($this->onWarning && $result->hasWarnings())
+            || ($this->onDeprecation && $result->hasDeprecations())
+            || ($this->onNotice && $result->hasNotices());
     }
 }

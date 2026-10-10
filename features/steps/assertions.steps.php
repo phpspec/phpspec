@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\StoryBDD\StepsFile;
+
 /**
  * Assertion steps — all Then steps that verify command output,
  * exit codes, and generated files.
@@ -51,6 +53,14 @@ then('the output should contain {string}', function (string $text) {
     if (!str_contains($this->output, $text)) {
         throw new \RuntimeException(
             "Expected output to contain \"{$text}\".\nOutput:\n{$this->output}",
+        );
+    }
+});
+
+then('the output should contain:', function (string $text) {
+    if (!str_contains(str_replace("\r\n", "\n", $this->output), $text)) {
+        throw new \RuntimeException(
+            "Expected output to contain:\n{$text}\nOutput:\n{$this->output}",
         );
     }
 });
@@ -230,6 +240,39 @@ then('the reported entry should have printed {string}', function (string $text) 
     expect(is_array($printed) ? ($printed['value'] ?? '') : (string) $printed)->toContain($text);
 });
 
+// The closing totals, compared as the JSON a reader decodes.
+then('the summary should state {string} as {string}', function (string $key, string $value) use ($events) {
+    $stream = $events($this->stdout ?? $this->output);
+    $summary = end($stream) ?: [];
+
+    expect($summary['event'] ?? null)->toBe('summary');
+    expect(array_key_exists($key, $summary))->toBeTrue();
+    expect(json_encode($summary[$key]))->toBe($value);
+});
+
+then('the reported entry should be {string} at {string}', function (string $state, string $spec) use ($events, $entries) {
+    $entry = $entries($events($this->stdout ?? $this->output))[0] ?? [];
+
+    expect($entry['state'] ?? null)->toBe($state);
+    expect($entry['spec'] ?? null)->toBe($spec);
+});
+
+// A PHP note rides in the list named after its kind, saying what PHP said and
+// where it was raised.
+then('the reported entry should carry the {word} {string} raised at {string}', function (string $kind, string $message, string $at) use ($events, $entries) {
+    $entry = $entries($events($this->stdout ?? $this->output))[0] ?? [];
+
+    expect($entry[$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
+});
+
+then('the step {string} should carry the {word} {string} raised at {string}', function (string $title, string $kind, string $message, string $at) use ($events, $entries) {
+    $entry = $entries($events($this->stdout ?? $this->output))[0] ?? [];
+    $steps = array_values(array_filter($entry['steps'] ?? [], fn(array $step) => $step['title'] === $title));
+
+    expect($steps)->toHaveLength(1);
+    expect($steps[0][$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
+});
+
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
 then('the failing entries should have distinct ids', function () use ($events, $entries) {
@@ -356,7 +399,7 @@ then('a step file should be generated with step definitions', function () {
     $found = false;
     if (is_dir($stepsDir)) {
         foreach (scandir($stepsDir) as $file) {
-            if (str_ends_with($file, '.steps.php')) {
+            if ((new StepsFile($file))->isStepDefinitions()) {
                 $content = file_get_contents($stepsDir . '/' . $file);
                 if (str_contains($content, 'given(') || str_contains($content, 'when(') || str_contains($content, 'then(')) {
                     $found = true;

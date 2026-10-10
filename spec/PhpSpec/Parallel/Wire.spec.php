@@ -194,7 +194,11 @@ describe(Wire::class, function () {
         $failed->setMatch(MatchResult::failed(9, 10, 'Expected 9 to be 10', __FILE__, __LINE__, null, 'toBe'));
         $errored = new StepResult('When I add a ghost', 'error');
         $errored->setError($stepError);
-        $errored->setWarnings([['severity' => E_WARNING, 'message' => 'w', 'file' => __FILE__, 'line' => 1]]);
+        $errored->raised([
+            ['severity' => E_WARNING, 'message' => 'w', 'file' => __FILE__, 'line' => 1],
+            ['severity' => E_DEPRECATED, 'message' => 'd', 'file' => __FILE__, 'line' => 2],
+            ['severity' => E_NOTICE, 'message' => 'n', 'file' => __FILE__, 'line' => 3],
+        ]);
         $scenario = new ScenarioResult('Paying', [$passed, $failed, $errored, new StepResult('And later', 'skipped', 'No printer here'), new StepResult('And unknown', 'undefined'), new StepResult('And pending', 'pending', 'Needs the gateway')], 7, ['log' => 'x']);
 
         $back = $roundTrip(new FeatureResult('Checkout', [$scenario], 'features/checkout.feature'));
@@ -216,6 +220,8 @@ describe(Wire::class, function () {
         expect($steps[2]->getError()->getLine())->toBe($line);
         expect($steps[2]->getError()->lineIn(__FILE__))->toBe($line);
         expect($steps[2]->getWarnings())->toBe($errored->getWarnings());
+        expect($steps[2]->getDeprecations())->toBe($errored->getDeprecations());
+        expect($steps[2]->getNotices())->toBe($errored->getNotices());
         expect($steps[3]->getReason())->toBe('No printer here');
         expect($steps[4]->getReason())->toBeNull();
         expect($steps[5]->getReason())->toBe('Needs the gateway');

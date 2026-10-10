@@ -20,9 +20,9 @@ Feature: Greeting
 
 ## Step Definitions
 
-Define steps in `*.steps.php` files. They are discoverable anywhere inside
-the features folder (conventionally `features/steps/`, but a file beside its
-feature works too), regardless of which feature path you run. An additional
+Define steps in `steps.php` or in `*.steps.php` files. They are discoverable
+anywhere inside the features folder (conventionally `features/steps/`),
+regardless of which feature path you run. An additional
 directory can be searched by setting `steps_path` in the
 [configuration](configuration.md#steps_path).
 
@@ -68,7 +68,7 @@ features/
   support/
     Server.php      # class Acme\Support\Server
   steps/
-    checkout.steps.php   # use Acme\Support\Server;
+    steps.php       # use Acme\Support\Server;
 ```
 
 ## Step Patterns
@@ -79,8 +79,13 @@ Patterns use placeholders that capture values from the step text:
 |---|---|---|
 | `{string}` | Quoted text `"..."` | `string` |
 | `{int}` | Integer `\d+` | `int` |
+| `{float}` | Decimal `\d+.\d+` | `float` |
 | `{word}` | Single word `\w+` | `string` |
 | `{*}` | Anything `.+` | `string` |
+
+A capture reaches the definition as text and takes the type its parameter
+declares: `function (int $count)` receives `5`, `function (float $price)` receives
+`4.5`. Generated definitions declare those types.
 
 ```php
 given('there are {int} cucumbers', function (int $count) {
@@ -264,6 +269,17 @@ the scenario failed, so resources are always cleaned up. `afterStep` runs after
 every step that executed, but not for steps skipped because an earlier step
 failed.
 
+A before hook can decide for what it wraps: `skip()` or `pending()` in
+`beforeFeature`, `beforeScenario` or `beforeStep` leaves every scenario of the
+feature, that scenario, or that step skipped or pending with the reason; the
+matching after hook still runs. In an after hook the step or scenario already
+ran, so `skip()` or `pending()` there is an error that says so.
+
+A hook that throws errors what it wraps, naming the hook (`database down (in
+beforeScenario)`), and the run goes on: a before hook errors the first step it
+kept from running, an after hook the step that just ran. A step that had
+already failed keeps its failure, with the hook's error as a warning under it.
+
 ## Step States
 
 | State | Color | Meaning |
@@ -289,15 +305,43 @@ bin/phpspec run features/greeting.feature  # Run a specific feature
 
 A scenario with an undefined step was never checked, so the run fails with exit
 code 1 until the step is defined; a `pending()` step is work deferred on
-purpose and leaves the exit code at 0. When running features with undefined
-steps, PhpSpec offers to generate step definition stubs:
+purpose and leaves the exit code at 0. When a run finds undefined steps, in any
+number of features, PhpSpec offers them once, all together, for one steps file.
+With no steps file yet, the answer is a yes or a no for `features/steps/steps.php`:
 
 ```
-3 undefined steps in features/greeting.feature.
-Generate step definitions? [Y/n]
+You have undefined steps. Would you like me to generate the steps for you? [Y/n]
 ```
 
-Generated steps include `pending()` calls so they show as pending until implemented.
+Once steps files exist, you pick the one the steps go to, or name a new one:
+
+```
+You have undefined steps. Would you like me to generate the steps for you?
+
+  [0] No, skip
+  [1] assertions.steps.php
+  [2] web.steps.php
+  [3] New file...
+```
+
+How steps are grouped is yours to decide; grouping them by what they do keeps
+them reusable across features, where a steps file per feature would not. A step
+already defined in any steps file is never generated again. With nobody to
+answer (`--no-interaction`) nothing is written; `--accept-offers` and
+`phpspec accept` append to `steps.php`. The steps go to `steps_path` when it is
+configured.
+
+Generated steps include `pending()` calls so they show as pending until implemented:
+
+```php
+given("some {int} stuff", function (int $arg1) {
+    pending();
+});
+
+given("a user named {string}", function (string $arg1) {
+    pending();
+});
+```
 
 ## The BDD Cycle
 
@@ -319,5 +363,6 @@ Feature (acceptance) -> Steps -> Specs (unit) -> Classes -> Green
 | Path | Purpose |
 |---|---|
 | `features/*.feature` | Gherkin feature files |
-| `features/steps/*.steps.php` | Step definition files |
+| `features/steps/steps.php` | The default step definitions file |
+| `features/steps/*.steps.php` | Step definition files grouped as you choose |
 | `features/**/*.steps.php` | Step files in subdirectories (also scanned) |

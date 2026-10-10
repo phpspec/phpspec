@@ -463,6 +463,25 @@ Feature: CLI options
     And a file "report.html" should be generated
     And the file "report.html" should contain "<!DOCTYPE html>"
 
+  Scenario: The HTML report counts the notes and unfolds the example that raised one
+    Given a spec file "spec/App/Noisy.spec.php":
+      """
+      <?php
+      describe('Noisy', function () {
+          it('warns', function () {
+              trigger_error('totals are rounded', E_USER_WARNING);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "-f html -o report.html"
+    Then the file "report.html" should contain "1 spec, 1 example (1 passed, 1 warning)"
+    And the file "report.html" should contain:
+      """
+      <summary>warns <span class="reason">1 warning</span></summary>
+      """
+    And the file "report.html" should contain "⚠ totals are rounded"
+
   Scenario: Unknown formats are rejected instead of silently falling back
     Given a spec file "spec/App/BadFormat.spec.php":
       """
@@ -675,6 +694,29 @@ Feature: CLI options
       """
     When I run phpspec run with option "--stop-on-warning"
     Then the output should not contain "ZZAfterWarning"
+
+  Scenario: Stop on the first warning a step raised
+    Given a feature file "features/a_noisy.feature":
+      """
+      Feature: Noisy
+        Scenario: Warns
+          Given a noisy step
+      """
+    And a feature file "features/z_after.feature":
+      """
+      Feature: ZZAfterNoisy
+        Scenario: Never runs
+          Given a quiet step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a noisy step", fn () => trigger_error('something fishy', E_USER_WARNING));
+      given("a quiet step", function () {});
+      """
+    When I run phpspec run with option "features/ --stop-on-warning"
+    Then the output should contain "Feature: Noisy"
+    And the output should not contain "ZZAfterNoisy"
 
   Scenario: Stop on first deprecation
     Given a spec file "spec/App/AAStopDeprecation.spec.php":
@@ -969,6 +1011,59 @@ Feature: CLI options
     Then the output should contain "1 pending"
     And the output should not contain "ZZAfterPending"
     And the exit code should be 0
+
+  Scenario: Stop on the first pending or undefined step
+    Given a feature file "features/a_waiting.feature":
+      """
+      Feature: Waiting
+        Scenario: Waits
+          Given a step written later
+      """
+    And a feature file "features/z_after.feature":
+      """
+      Feature: ZZAfterWaiting
+        Scenario: Never runs
+          Given a done step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a done step", function () {});
+      """
+    When I run phpspec run with option "features/ --stop-on-pending"
+    Then the output should contain "Feature: Waiting"
+    And the output should not contain "ZZAfterWaiting"
+
+  Scenario: Stop on the first step that skipped itself, not on one skipped behind a failure
+    Given a feature file "features/a_broken.feature":
+      """
+      Feature: Broken
+        Scenario: Fails first
+          Given a failing step
+          Then a step behind it
+      """
+    And a feature file "features/b_offline.feature":
+      """
+      Feature: Offline
+        Scenario: Printing
+          Given a printer
+      """
+    And a feature file "features/z_after.feature":
+      """
+      Feature: ZZAfterOffline
+        Scenario: Never runs
+          Given a step behind it
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a failing step", fn () => expect(1)->toBe(2));
+      given("a step behind it", function () {});
+      given("a printer", fn () => skip('No printer here'));
+      """
+    When I run phpspec run with option "features/ --stop-on-skipped"
+    Then the output should contain "Feature: Offline"
+    And the output should not contain "ZZAfterOffline"
 
   Scenario: TAP carries the reason an example was left pending or skipped
     Given a spec file "spec/App/TapReasons.spec.php":

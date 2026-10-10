@@ -65,8 +65,9 @@ of the config (see [Configuration](configuration.md#ai-assistant)); without it,
 it refuses, naming the file to add the section to. The current TDD step is
 resolved deterministically from your words (an explicit path, or
 feature/steps/spec/code wording). A feature request becomes a Gherkin skeleton
-and `generate the steps` writes the step definitions for the last-touched
-feature by parsing it, so those two make no model call; everything else is
+and `generate the steps` appends the step definitions for the last-touched
+feature to `features/steps/steps.php` (or the steps file you name) by parsing it,
+so those two make no model call; everything else is
 authored by the AI. Each proposal is shown as a diff and written after a `[Y/n]`
 confirmation. With no terminal to ask, nothing is written: the change is offered
 under an id for [`accept`](#accept) to apply.
@@ -205,8 +206,7 @@ Spec: Calculator
     ✓ adds two numbers
     ✓ subtracts two numbers
 
-1 spec
-2 examples (2 passed)
+1 spec, 2 examples (2 passed)
 Finished in 0.0042 seconds
 ```
 
@@ -250,12 +250,16 @@ with `classname` naming the file, the describe and the contexts around it
 one title in two contexts reads apart. A feature is
 a `testsuite` of scenario suites, each step a `testcase` under its scenario. A
 pending or skipped case carries the reason as the `skipped` element's
-`message`. Every case and suite carries `time`, in seconds.
+`message`. Every case and suite carries `time`, in seconds. PHP warnings,
+deprecations and notices are left out, as PHPUnit's JUnit log leaves them out:
+the console, the HTML report and `--format=agent` carry them.
 
 #### HTML Formatter
 
 Outputs a self-contained HTML document with passed/failed examples and a
-summary, ready to open in a browser:
+summary counted in the console's words, ready to open in a browser. An example
+or step that raised a PHP warning, deprecation or notice unfolds to each one,
+with the line that raised it, and the header and its group's bar count them:
 
 ```bash
 bin/phpspec run --format=html > report.html
@@ -321,11 +325,11 @@ the same way (useful for tight feedback loops and CI):
 |---|---|
 | `--stop-on-failure` | failure or error |
 | `--stop-on-error` | error |
-| `--stop-on-warning` | warning |
-| `--stop-on-deprecation` | deprecation |
-| `--stop-on-notice` | notice |
-| `--stop-on-pending` | pending example |
-| `--stop-on-skipped` | skipped example |
+| `--stop-on-warning` | warning, from an example or a step |
+| `--stop-on-deprecation` | deprecation, from an example or a step |
+| `--stop-on-notice` | notice, from an example or a step |
+| `--stop-on-pending` | pending example, or pending or undefined step |
+| `--stop-on-skipped` | skipped example, or step that skipped itself (not one skipped behind a step that failed or was pending) |
 | `--stop-on-problems` | any non-passing result |
 
 ```bash

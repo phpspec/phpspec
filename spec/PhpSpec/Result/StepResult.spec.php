@@ -48,6 +48,12 @@ describe(StepResult::class, function () {
         expect((new StepResult("When I pay", "skipped"))->getReason())->toBeNull();
     });
 
+    it("tells a step that skipped itself from one skipped behind another", function () {
+        expect((new StepResult("Given a printer", "skipped", "No printer here"))->isSkippedForAReason())->toBeTrue();
+        expect((new StepResult("Then it prints", "skipped"))->isSkippedForAReason())->toBeFalse();
+        expect((new StepResult("Given a printer", "pending", "later"))->isSkippedForAReason())->toBeFalse();
+    });
+
     it("returns the state string", function () {
         $result = new StepResult("step", "pending");
         expect($result->getState())->toBe("pending");
@@ -64,6 +70,23 @@ describe(StepResult::class, function () {
     it("returns null error by default", function () {
         $result = new StepResult("step", "passed");
         expect($result->getError())->toBeNull();
+    });
+
+    it("files the notes raised while it ran under their kinds, each once however often it was raised", function () {
+        $result = new StepResult("Given a step", "passed");
+        $deprecated = ['severity' => E_USER_DEPRECATED, 'message' => 'old', 'file' => 'a.php', 'line' => 3];
+
+        $result->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'oops', 'file' => 'a.php', 'line' => 1],
+            $deprecated,
+            $deprecated,
+            ['severity' => E_NOTICE, 'message' => 'info', 'file' => 'a.php', 'line' => 5],
+        ]);
+
+        expect(array_column($result->getWarnings(), 'message'))->toBe(['oops']);
+        expect($result->getDeprecations())->toBe([$deprecated]);
+        expect(array_column($result->getNotices(), 'message'))->toBe(['info']);
+        expect($result->hasNotices())->toBeTrue();
     });
 
     it("records how long it ran", function () {

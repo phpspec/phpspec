@@ -39,6 +39,91 @@ describe(StepVocabulary::class, function () {
         expect($titles)->toBe(['I have a todo list' => '/project/features/steps/adding.steps.php']);
     });
 
+    it('reads a root as it is spelled, so a Windows root finds its steps files', function (Filesystem $fs) {
+        $root = 'C:\\project/features';
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$root, $root . '/steps'], true));
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            $root => ['steps'],
+            $root . '/steps' => ['steps.php'],
+            default => [],
+        });
+
+        expect((new StepVocabulary($fs))->stepsFiles($root . '\\'))->toBe(['C:\\project/features/steps/steps.php']);
+    });
+
+    it('reads the titles a steps.php defines', function (Filesystem $fs) {
+        $root = '/project/features';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $root);
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$root, $root . '/steps'], true));
+        allow($fs->isFile())->toReturn(true);
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            $root => ['steps', 'adding.feature'],
+            $root . '/steps' => ['steps.php', 'helpers.php'],
+            default => [],
+        });
+        allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, '/steps.php')
+            ? "<?php\ngiven('I have a todo list', function () {});\n"
+            : "<?php\ngiven('a helper that is no step file', function () {});\n");
+
+        $titles = (new StepVocabulary($fs))->definedTitles($root);
+
+        expect($titles)->toBe(['I have a todo list' => '/project/features/steps/steps.php']);
+    });
+
+    context('across several steps roots', function () {
+        let('vocabulary', function (Filesystem $fs) {
+            $files = [
+                '/project/features/steps/steps.php' => "<?php\ngiven('a user named {string}', function (string \$name) {});\nwhen('the user plays', function () {});\n",
+                '/project/features/steps/web.steps.php' => "<?php\ngiven('I visit {string}', function (string \$url) {});\n",
+                '/project/acceptance_steps/steps.php' => "<?php\nthen('the player wins', function () {});\n",
+            ];
+            $dirs = [
+                '/project/features' => ['steps', 'game.feature'],
+                '/project/features/steps' => ['steps.php', 'web.steps.php'],
+                '/project/acceptance_steps' => ['steps.php'],
+            ];
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => isset($dirs[$p]));
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => isset($dirs[$p]) || isset($files[$p]));
+            allow($fs->scandir())->toReturnUsing(fn(string $p): array => $dirs[$p] ?? []);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $files[$p] ?? '');
+
+            return new StepVocabulary($fs);
+        });
+
+        it('maps the titles of every root', function () {
+            expect(array_keys($this->vocabulary->definedTitles('/project/features', '/project/acceptance_steps')))
+                ->toBe(['a user named {string}', 'the user plays', 'I visit {string}', 'the player wins']);
+        });
+
+        it('tells two steps.php apart by path, rejecting a title the other one owns', function () {
+            $message = $this->vocabulary->rejectionFor(
+                "<?php\ngiven('the user plays', function () {});\n",
+                'acceptance_steps/steps.php',
+                '/project/features',
+                '/project/acceptance_steps',
+            );
+
+            expect($message)->toContain('/project/features/steps/steps.php');
+        });
+
+        it('lets the target file redefine its own titles, named by path', function () {
+            expect($this->vocabulary->rejectionFor(
+                "<?php\ngiven('a user named {string}', function (string \$name) {});\n",
+                'features/steps/steps.php',
+                '/project/features',
+                '/project/acceptance_steps',
+            ))->toBeNull();
+        });
+
+        it('names the files whose definitions serve the given steps, each once', function () {
+            expect($this->vocabulary->filesServing(
+                ['a user named "Chuck Norris"', 'the user plays', 'the player wins', 'something nobody defines'],
+                '/project/features',
+                '/project/acceptance_steps',
+            ))->toBe(['/project/features/steps/steps.php', '/project/acceptance_steps/steps.php']);
+        });
+    });
+
     it('rejects content defining the same title twice', function (Filesystem $fs) {
         $message = (new StepVocabulary($fs))->rejectionFor(
             "<?php\ngiven('I filter the list', function () {});\nwhen('I filter the list', function () {});\n",

@@ -117,3 +117,161 @@ Feature: Story BDD lifecycle hooks
     When I run phpspec run "features/"
     Then the exit code should not be 0
     And the file "cleanup.log" should contain "cleaned up"
+
+  Scenario: skip() in beforeScenario skips the scenario with its reason, and afterScenario still runs
+    Given a feature file "features/remote.feature":
+      """
+      Feature: Remote
+        Scenario: Fetching
+          Given a step
+          When another step
+      """
+    And a step file "features/steps/remote.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      when("another step", function () {});
+      beforeScenario(fn () => skip('no service'));
+      afterScenario(fn () => file_put_contents('closed.txt', 'yes'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "- Given a step (no service)"
+    And the output should contain "1 scenario, 2 steps (2 skipped)"
+    And a file "closed.txt" should be generated
+    And the exit code should be 0
+
+  Scenario: pending() in beforeFeature leaves every scenario of the feature pending with its reason
+    Given a feature file "features/gateway.feature":
+      """
+      Feature: Gateway
+        Scenario: Paying
+          Given a step
+        Scenario: Refunding
+          Given a step
+      """
+    And a step file "features/steps/gateway.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      beforeFeature(fn () => pending('needs the gateway'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "○ Given a step (needs the gateway)" exactly 2 times
+    And the output should contain "2 scenarios, 2 steps (2 pending)"
+    And the exit code should be 0
+
+  Scenario: skip() in beforeStep skips that step with its reason
+    Given a feature file "features/flaky.feature":
+      """
+      Feature: Flaky
+        Scenario: Probing
+          Given a step
+      """
+    And a step file "features/steps/flaky.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      beforeStep(fn () => skip('probe offline'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "- Given a step (probe offline)"
+    And the exit code should be 0
+
+  Scenario: An error in beforeScenario errors that scenario, naming the hook, and the next scenario still runs
+    Given a feature file "features/storage.feature":
+      """
+      Feature: Storage
+        Scenario: Saving
+          Given a step
+        Scenario: Loading
+          Given a step
+      """
+    And a step file "features/steps/storage.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      beforeScenario(function () {
+          if (!file_exists('first.done')) {
+              touch('first.done');
+              throw new RuntimeException('database down');
+          }
+      });
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "database down (in beforeScenario)"
+    And the output should contain "2 scenarios, 2 steps (1 passed, 1 errored)"
+    And the exit code should be 1
+
+  Scenario: An error in afterStep errors the step it followed, naming the hook
+    Given a feature file "features/audit.feature":
+      """
+      Feature: Audit
+        Scenario: Logging
+          Given a step
+      """
+    And a step file "features/steps/audit.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      afterStep(fn () => throw new RuntimeException('log full'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "log full (in afterStep)"
+    And the output should contain "1 scenario, 1 step (1 errored)"
+    And the exit code should be 1
+
+  Scenario: An error in afterStep after a failing step keeps the failure and shows the hook's error as a warning
+    Given a feature file "features/audit.feature":
+      """
+      Feature: Audit
+        Scenario: Logging
+          Given a failing step
+      """
+    And a step file "features/steps/audit.steps.php":
+      """
+      <?php
+      given("a failing step", fn () => expect(1)->toBe(2));
+      afterStep(fn () => throw new RuntimeException('log full'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "Expected 1 to be 2"
+    And the output should contain "log full (in afterStep)"
+    And the output should contain "1 scenario, 1 step (1 failed, 1 warning)"
+    And the exit code should be 1
+
+  Scenario: skip() in afterScenario comes too late, and says so
+    Given a feature file "features/late.feature":
+      """
+      Feature: Late
+        Scenario: Ran already
+          Given a step
+      """
+    And a step file "features/steps/late.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      afterScenario(fn () => skip('no service'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "skip() in afterScenario comes after the scenario ran; call it in beforeScenario or in a step."
+    And the exit code should be 1
+
+  Scenario: An error in afterFeature errors the feature's last step, and the results still print
+    Given a feature file "features/shutdown.feature":
+      """
+      Feature: Shutdown
+        Scenario: First
+          Given a step
+        Scenario: Last
+          Given a step
+      """
+    And a step file "features/steps/shutdown.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      afterFeature(fn () => throw new RuntimeException('server would not stop'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "server would not stop (in afterFeature)"
+    And the output should contain "2 scenarios, 2 steps (1 passed, 1 errored)"
+    And the exit code should be 1

@@ -250,6 +250,8 @@ final class Wire
             'state' => $step->getState(),
             'reason' => $step->getReason(),
             'warnings' => $step->getWarnings(),
+            'deprecations' => $step->getDeprecations(),
+            'notices' => $step->getNotices(),
             'output' => $step->getOutput(),
             'duration' => $step->getDuration(),
         ];
@@ -485,6 +487,8 @@ final class Wire
             isset($node['reason']) ? (string) $node['reason'] : null,
         );
         $step->setWarnings($this->notesFrom($node['warnings'] ?? null));
+        $step->setDeprecations($this->notesFrom($node['deprecations'] ?? null));
+        $step->setNotices($this->notesFrom($node['notices'] ?? null));
         $step->setOutput((string) ($node['output'] ?? ''));
         $step->setDuration((float) ($node['duration'] ?? 0.0));
 

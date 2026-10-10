@@ -27,14 +27,13 @@ use PhpSpec\StoryBDD\StepError;
  */
 final class StepResult implements Results
 {
+    use RaisedNotesTrait;
+
     /** @var StepError|null Error that occurred during step execution */
     private ?StepError $error = null;
 
     /** @var MatchResult|null The expectation that did not hold, when one failed */
     private ?MatchResult $match = null;
-
-    /** @var list<array{severity: int, message: string, file: string, line: int}> */
-    private array $warnings = [];
 
     /** @var string What the step printed while it ran */
     private string $output = '';
@@ -127,6 +126,15 @@ final class StepResult implements Results
     }
 
     /**
+     * Whether the step skipped itself, with skip() or by a hook's, rather than
+     * being skipped behind a step that failed or was pending before it.
+     */
+    public function isSkippedForAReason(): bool
+    {
+        return $this->isSkipped() && $this->reason !== null;
+    }
+
+    /**
      * Stores an error that occurred during step execution.
      *
      * @param StepError $error the step error details
@@ -174,26 +182,6 @@ final class StepResult implements Results
     }
 
     /**
-     * Stores the PHP warnings raised while the step ran.
-     *
-     * @param list<array{severity: int, message: string, file: string, line: int}> $warnings
-     */
-    public function setWarnings(array $warnings): void
-    {
-        $this->warnings = $warnings;
-    }
-
-    /**
-     * Returns the PHP warnings raised while the step ran.
-     *
-     * @return list<array{severity: int, message: string, file: string, line: int}>
-     */
-    public function getWarnings(): array
-    {
-        return $this->warnings;
-    }
-
-    /**
      * Stores what the step printed while it ran: when a step drives a process
      * of its own, what that process said is the whole of the diagnosis.
      *
@@ -210,6 +198,23 @@ final class StepResult implements Results
     public function getOutput(): string
     {
         return $this->output;
+    }
+
+    /**
+     * This step errored by something that ran after it, keeping what it
+     * printed, how long it took and the notes it raised.
+     */
+    public function erroredBy(StepError $error): self
+    {
+        $errored = new self($this->title, 'error');
+        $errored->error = $error;
+        $errored->output = $this->output;
+        $errored->duration = $this->duration;
+        $errored->warnings = $this->warnings;
+        $errored->deprecations = $this->deprecations;
+        $errored->notices = $this->notices;
+
+        return $errored;
     }
 
     /**

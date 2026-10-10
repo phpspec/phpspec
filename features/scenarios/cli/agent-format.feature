@@ -130,6 +130,71 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should have printed "the counter said 2"
 
+  Scenario: A passing example that raised a warning is reported with it, and the summary counts it
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Ledger.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Ledger
+      {
+          public function total(array $entries): int
+          {
+              trigger_error('totals are rounded', E_USER_WARNING);
+
+              return array_sum($entries);
+          }
+      }
+      """
+    And a spec file "spec/App/Ledger.spec.php":
+      """
+      <?php
+      describe('App\Ledger', function () {
+          it('totals the entries', function () {
+              expect((new App\Ledger())->total([1, 2]))->toBe(3);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the summary should state "warnings" as "1"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "actionable" as "0"
+    And the reported entry should be "passing" at "spec/App/Ledger.spec.php:3"
+    And the reported entry should carry the warning "totals are rounded" raised at "src/App/Ledger.php:9"
+
+  Scenario: A step that raised a deprecation and a notice carries them in its scenario's entry
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given I run the counter
+          Then it should have counted 2
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('I run the counter', function () {
+          trigger_error('run() is deprecated, use count()', E_USER_DEPRECATED);
+          trigger_error('the counter starts at 2', E_USER_NOTICE);
+          $this->count = 2;
+      });
+
+      then('it should have counted {int}', function (int $expected) {
+          expect($this->count)->toBe($expected);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the summary should state "deprecations" as "1"
+    And the summary should state "notices" as "1"
+    And the summary should state "actionable" as "0"
+    And the reported entry should be "passing" at "features/counting.feature:2"
+    And the step "Given I run the counter" should carry the deprecation "run() is deprecated, use count()" raised at "features/steps/counting.steps.php:4"
+    And the step "Given I run the counter" should carry the notice "the counter starts at 2" raised at "features/steps/counting.steps.php:5"
+
   Scenario: A boolean failure says what the matcher wanted, not only what it got
     Given a spec file "spec/App/Watch.spec.php":
       """
@@ -822,6 +887,30 @@ Feature: Agent output format
     And the output should contain "files"
     And the output should contain "src/App/Coupon.php"
     And a class file "src/App/Coupon.php" should be generated
+
+  Scenario: The undefined steps of every feature are one offer, for steps.php
+    Given a feature file "features/playing.feature":
+      """
+      Feature: Playing
+        Scenario: A game
+          Given a user named "Chuck Norris"
+          When the user plays
+      """
+    And a feature file "features/paying.feature":
+      """
+      Feature: Paying
+        Scenario: A tea
+          When the user plays
+          Then the tea is paid
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "create_steps" exactly 1 times
+    And the output should contain "features/steps/steps.php"
+    And no file "features/steps/steps.php" should be generated
+    When I accept the offers phpspec made
+    Then the file "features/steps/steps.php" should contain "a user named {string}"
+    And the file "features/steps/steps.php" should contain "the user plays" exactly 1 times
 
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":

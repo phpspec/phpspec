@@ -31,13 +31,8 @@ class AgentSpecProcessEnd implements ProcessEnd
     }
 }
 
-// Code under spec that reaches into PhpSpec: the error is raised beyond the spec.
-define('BLAME_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_blame_outsider_' . getmypid() . '.php');
-if (!function_exists('blame_spec_outsider_reaches_in')) {
-    register_shutdown_function(static fn() => @unlink(BLAME_SPEC_OUTSIDER));
-    file_put_contents(BLAME_SPEC_OUTSIDER, "<?php\nfunction blame_spec_outsider_reaches_in(): void { \\PhpSpec\\Mock\\Double::getInstance('Nope\\Missing'); }\n");
-    require BLAME_SPEC_OUTSIDER;
-}
+require_once __DIR__ . '/../../BlameOutsider.php';
+
 describe(Agent::class, function () {
 
     it("addresses an error raised beyond the spec at the spec line it came through, the rerun at the declaring line", function () {
@@ -654,6 +649,75 @@ describe(Agent::class, function () {
         expect($entry['warnings'])->toBe([['message' => 'array offset on null', 'at' => 'src/App/X.php:2']]);
         expect($entry)->not()->toHaveKey('deprecations');
         expect($entry)->not()->toHaveKey('notices');
+    });
+
+    it('reports a passing example that raised a note, addressed for a rerun, and counts each kind in the summary, never as actionable', function () use ($render) {
+        $noted = new ExampleResult('totals', [MatchResult::passed()]);
+        $noted->declaredAt(getcwd() . '/spec/App/Ledger.spec.php', 3);
+        $noted->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'totals are rounded', 'file' => getcwd() . '/src/App/Ledger.php', 'line' => 9],
+            ['severity' => E_USER_NOTICE, 'message' => 'the clock is local', 'file' => getcwd() . '/src/App/Ledger.php', 'line' => 10],
+        ]);
+        $quiet = new ExampleResult('subtracts', [MatchResult::passed()]);
+        $quiet->declaredAt(getcwd() . '/spec/App/Ledger.spec.php', 7);
+
+        $doc = $render(new SuiteResult([new SpecificationResult('App\\Ledger', [$noted, $quiet])]));
+
+        expect($doc['examples'])->toHaveLength(1);
+        expect($doc['examples'][0]['state'])->toBe('passing');
+        expect($doc['examples'][0]['spec'])->toBe('spec/App/Ledger.spec.php:3');
+        expect($doc['examples'][0]['warnings'])->toBe([['message' => 'totals are rounded', 'at' => 'src/App/Ledger.php:9']]);
+        expect($doc['examples'][0]['notices'])->toBe([['message' => 'the clock is local', 'at' => 'src/App/Ledger.php:10']]);
+        expect($doc['result']['warnings'])->toBe(1);
+        expect($doc['result']['deprecations'])->toBe(0);
+        expect($doc['result']['notices'])->toBe(1);
+        expect($doc['result']['actionable'])->toBe(0);
+        expect($doc['result']['rerun'])->toBe('run spec/App/Ledger.spec.php:3');
+    });
+
+    it('lists a step that raised a note in its scenario, passing or not, and counts the note in the summary', function () use ($render) {
+        $noted = new StepResult('Given I run the counter', 'passed');
+        $noted->raised([
+            ['severity' => E_USER_DEPRECATED, 'message' => 'run() is deprecated', 'file' => getcwd() . '/features/steps/counting.steps.php', 'line' => 4],
+        ]);
+
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [new ScenarioResult('Counting up', [$noted, new StepResult('Then it counts', 'passed')], 2)], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'])->toHaveLength(1);
+        expect($doc['examples'][0]['state'])->toBe('passing');
+        expect($doc['examples'][0]['spec'])->toBe('features/counting.feature:2');
+        expect($doc['examples'][0]['steps'])->toBe([[
+            'title' => 'Given I run the counter',
+            'state' => 'passing',
+            'deprecations' => [['message' => 'run() is deprecated', 'at' => 'features/steps/counting.steps.php:4']],
+        ]]);
+        expect($doc['result']['deprecations'])->toBe(1);
+        expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    it('keeps a note on the failing step that raised it', function () use ($render) {
+        $broken = new StepResult('Given a broken step', 'error');
+        $broken->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+        $broken->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'log full (in afterStep)', 'file' => getcwd() . '/features/steps/counting.steps.php', 'line' => 9],
+        ]);
+
+        $entry = $render(new SuiteResult([
+            new FeatureResult('Counting', [new ScenarioResult('Counting up', [$broken], 2)], 'features/counting.feature'),
+        ]))['examples'][0];
+
+        expect($entry['steps'][0]['warnings'])->toBe([['message' => 'log full (in afterStep)', 'at' => 'features/steps/counting.steps.php:9']]);
+    });
+
+    it('counts no notes in the summary of a run that raised none', function () use ($render) {
+        $summary = $render(new SuiteResult([new SpecificationResult('App\\X', [new ExampleResult('works', [MatchResult::passed()])])]))['result'];
+
+        expect($summary['warnings'])->toBe(0);
+        expect($summary['deprecations'])->toBe(0);
+        expect($summary['notices'])->toBe(0);
+        expect($summary)->not()->toHaveKey('rerun');
     });
 
     it('carries what an example printed, so the dump explaining it is not lost', function () use ($render) {

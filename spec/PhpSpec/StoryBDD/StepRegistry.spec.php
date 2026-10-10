@@ -74,6 +74,18 @@ describe(StepRegistry::class, function () {
         expect($match->args[0])->toBe("5");
     });
 
+    it("matches {float} placeholder and captures the decimal", function () {
+        $this->registry->addStep("the price is {float}", function ($price) {});
+        $match = $this->registry->match("the price is 4.5");
+        expect($match)->toBeAnInstanceOf(StepMatch::class);
+        expect($match->args[0])->toBe("4.5");
+    });
+
+    it("does not take a decimal for an {int}", function () {
+        $this->registry->addStep("the price is {int}", function ($price) {});
+        expect($this->registry->match("the price is 4.5"))->toBeNull();
+    });
+
     it("matches {string} placeholder and captures quoted text", function () {
         $this->registry->addStep("I greet {string}", function ($name) {});
         $match = $this->registry->match('I greet "World"');

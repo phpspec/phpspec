@@ -19,8 +19,8 @@ use PhpSpec\RealFilesystem;
 
 /**
  * @internal
- * Generates step definition files for undefined Story BDD steps.
- * Creates a steps PHP file alongside the feature file with placeholder step implementations.
+ * Generates step definitions for undefined Story BDD steps: a pending
+ * definition per step, appended to the steps file it is given.
  */
 class StepGenerator
 {
@@ -35,27 +35,24 @@ class StepGenerator
     }
 
     /**
-     * Generates step definition functions for the given undefined steps and writes them to a steps file.
-     * Appends to an existing steps file if one already exists.
+     * Appends a pending definition for each undefined step to a steps file,
+     * creating the file and its directory when they do not exist.
      *
-     * @param string $featurePath absolute path to the .feature file
+     * @param string $stepsFile absolute path of the steps file to write
      * @param array<int, array{keyword: string, text: string, table?: bool, docString?: bool}> $undefinedSteps list of undefined steps, each with 'keyword' and 'text' keys, and whether a table or a doc string follows it
-     * @return string the path to the generated/updated steps file
+     * @param list<string> $definedElsewhere titles other steps files already define, never written again
+     * @return string the path of the steps file written
      */
-    public function generate(string $featurePath, array $undefinedSteps): string
+    public function generate(string $stepsFile, array $undefinedSteps, array $definedElsewhere = []): string
     {
-        $featureDir = dirname($featurePath);
-        $stepsDir = $featureDir . '/steps';
-        $featureName = pathinfo($featurePath, PATHINFO_FILENAME);
-        $stepsFile = $stepsDir . '/' . $featureName . '.steps.php';
-
+        $stepsDir = dirname($stepsFile);
         if (!$this->filesystem->exists($stepsDir)) {
             $this->filesystem->mkdir($stepsDir);
         }
 
         $existing = $this->filesystem->exists($stepsFile) ? $this->filesystem->read($stepsFile) : '';
 
-        $this->filesystem->write($stepsFile, $this->skeleton($undefinedSteps, $existing));
+        $this->filesystem->write($stepsFile, $this->skeleton($undefinedSteps, $existing, $definedElsewhere));
 
         return $stepsFile;
     }
@@ -193,13 +190,13 @@ class StepGenerator
      * Converts step text into a pattern with typed placeholders for quoted strings and numbers.
      *
      * @param string $text the raw step text
-     * @return string the pattern with {string} and {int} placeholders
+     * @return string the pattern with {string}, {float} and {int} placeholders
      */
     private function extractPattern(string $text): string
     {
-        // Convert quoted strings to {string} placeholders
         $pattern = preg_replace('/"[^"]*"/', '{string}', $text) ?? $text;
-        // Convert standalone numbers to {int} placeholders
+        $pattern = preg_replace('/\b\d+\.\d+\b/', '{float}', $pattern) ?? $pattern;
+
         return preg_replace('/\b(\d+)\b/', '{int}', $pattern) ?? $pattern;
     }
 
@@ -214,12 +211,13 @@ class StepGenerator
         $params = [];
         $index = 0;
 
-        preg_match_all('/{(string|int|word|\*)}/', $pattern, $matches);
+        preg_match_all('/{(string|int|float|word|\*)}/', $pattern, $matches);
 
         foreach ($matches[1] as $type) {
             $index++;
             $paramType = match ($type) {
                 'int' => 'int',
+                'float' => 'float',
                 default => 'string',
             };
             $params[] = "$paramType \$arg$index";

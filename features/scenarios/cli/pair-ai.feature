@@ -127,6 +127,25 @@ Feature: AI-assisted pair programming
     And the output should contain "3. No"
     And the class "src/App/Calculator.php" should contain "function add"
 
+  Scenario: Running features in pair mode offers the undefined steps for steps.php, with no picker
+    Given a feature file "features/playing.feature":
+      """
+      Feature: Playing
+        Scenario: A game
+          Given a user named "Chuck Norris"
+          When the user plays
+      """
+    And a step file "features/steps/web.steps.php":
+      """
+      <?php
+      given("I visit {string}", function (string $url) {});
+      """
+    When I run phpspec pair with input "/run features/" answering "1"
+    Then the output should contain "always append them to features/steps/steps.php"
+    And the output should not contain "[0] No, skip"
+    And the file "features/steps/steps.php" should contain "a user named {string}"
+    And the file "features/steps/web.steps.php" should not contain "a user named"
+
   Scenario: Running specs twice in the same pair session shows results both times
     Given a class "src/App/Calculator.php":
       """

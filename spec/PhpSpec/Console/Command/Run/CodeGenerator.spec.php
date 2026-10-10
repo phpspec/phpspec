@@ -1,6 +1,11 @@
 <?php
 
 use PhpSpec\CodeGeneration\SourceLayout;
+use PhpSpec\RealFilesystem;
+use PhpSpec\Console\Prompt;
+use PhpSpec\Console\Command\Run\GenerationCandidates;
+use PhpSpec\Configuration;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Run\CodeGenerator;
@@ -508,4 +513,161 @@ describe(CodeGenerator::class, function () {
             @rmdir($absDir);
         });
     });
+    context('undefined steps', function () {
+        let('root', function () {
+            $root = sys_get_temp_dir() . '/phpspec_codegen_steps_' . uniqid();
+            mkdir($root . '/features', 0777, true);
+
+            return $root;
+        });
+        afterEach(function () {
+            $remove = function (string $dir) use (&$remove): void {
+                foreach (array_diff(scandir($dir) ?: [], ['.', '..']) as $entry) {
+                    is_dir("$dir/$entry") ? $remove("$dir/$entry") : unlink("$dir/$entry");
+                }
+                rmdir($dir);
+            };
+            $remove($this->root);
+        });
+        let('candidates', fn() => new GenerationCandidates(
+            undefinedSteps: [
+                ['keyword' => 'Given', 'text' => 'a user named "Chuck Norris"'],
+                ['keyword' => 'When', 'text' => 'the user plays'],
+                ['keyword' => 'When', 'text' => 'the user plays'],
+            ],
+            stepsFile: 'features/steps/steps.php',
+        ));
+        let('stepsFiles', function () {
+            mkdir($this->root . '/features/steps');
+            file_put_contents($this->root . '/features/steps/web.steps.php', "<?php\n\ngiven(\"I visit {string}\", function (string \$arg1) {\n    pending();\n});\n");
+            file_put_contents($this->root . '/features/steps/assertions.steps.php', "<?php\n\nthen(\"nothing else happens\", function () {\n    pending();\n});\n");
+
+            return ['web' => $this->root . '/features/steps/web.steps.php', 'assertions' => $this->root . '/features/steps/assertions.steps.php'];
+        });
+        let('answering', fn() => function (Prompt $prompt, string ...$answers): Prompt {
+            allow($prompt->ask())->toReturnUsing(function () use (&$answers): ?string {
+                return array_shift($answers);
+            });
+
+            return $prompt;
+        });
+        let('steps', fn() => new StepsHome(new Configuration(), new RealFilesystem(), $this->root));
+
+        it('asks once, Y/n, when there is no steps file, and writes every step to steps.php once', function (Prompt $prompt) {
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', steps: $this->steps, prompt: ($this->answering)($prompt, ''));
+
+            $applied = $generator->apply($this->output, $this->candidates, false);
+
+            $out = $this->output->fetch();
+            expect(substr_count($out, 'You have undefined steps. Would you like me to generate the steps for you? [Y/n]'))->toBe(1);
+            $written = (string) file_get_contents($this->root . '/features/steps/steps.php');
+            expect($written)->toContain('given("a user named {string}", function (string $arg1) {');
+            expect(substr_count($written, 'the user plays'))->toBe(1);
+            expect($applied)->toBe([[
+                'id' => Offer::generate('create_steps', 'features/steps/steps.php', [])->id,
+                'action' => 'create_steps',
+                'target' => 'features/steps/steps.php',
+                'file' => 'features/steps/steps.php',
+                'applied' => true,
+            ]]);
+        });
+
+        it('offers the steps files there are and writes to the one picked', function (Prompt $prompt) {
+            $files = $this->stepsFiles;
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', steps: $this->steps, prompt: ($this->answering)($prompt, '2'));
+
+            $generator->apply($this->output, $this->candidates, false);
+
+            expect(str_replace("\r\n", "\n", $this->output->fetch()))->toContain(implode("\n", [
+                'You have undefined steps. Would you like me to generate the steps for you?',
+                '',
+                '  [0] No, skip',
+                '  [1] assertions.steps.php',
+                '  [2] web.steps.php',
+                '  [3] New file...',
+            ]));
+            expect((string) file_get_contents($files['web']))->toContain('a user named {string}');
+            expect((string) file_get_contents($files['assertions']))->not()->toContain('a user named');
+            expect(file_exists($this->root . '/features/steps/steps.php'))->toBeFalse();
+        });
+
+        it('asks again on an answer that is no option, and takes the first file on Enter', function (Prompt $prompt) {
+            $files = $this->stepsFiles;
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', steps: $this->steps, prompt: ($this->answering)($prompt, '9', 'y', ''));
+
+            $generator->apply($this->output, $this->candidates, false);
+
+            expect(substr_count($this->output->fetch(), 'Answer with a number from 0 to 3.'))->toBe(2);
+            expect((string) file_get_contents($files['assertions']))->toContain('a user named {string}');
+        });
+
+        it('writes to a new steps file the person names, refusing a path for a name', function (Prompt $prompt) {
+            $this->stepsFiles;
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', steps: $this->steps, prompt: ($this->answering)($prompt, '3', 'a/b', 'players'));
+
+            $applied = $generator->apply($this->output, $this->candidates, false);
+
+            $out = $this->output->fetch();
+            expect($out)->toContain('Name the new steps file');
+            expect($out)->toContain('A steps file is named, not placed: for example web.');
+            expect((string) file_get_contents($this->root . '/features/steps/players.steps.php'))->toContain('a user named {string}');
+            expect($applied[0]['file'])->toBe('features/steps/players.steps.php');
+        });
+
+        it('writes nothing when the person skips', function (Prompt $prompt) {
+            $files = $this->stepsFiles;
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', steps: $this->steps, prompt: ($this->answering)($prompt, '0'));
+
+            expect($generator->apply($this->output, $this->candidates, false))->toBe([]);
+            expect((string) file_get_contents($files['web']))->not()->toContain('a user named');
+        });
+
+        it('never writes a step another steps file already defines', function (Prompt $prompt) {
+            $files = $this->stepsFiles;
+            file_put_contents($files['assertions'], "<?php\n\nwhen(\"the user plays\", function () {\n    pending();\n});\n");
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', steps: $this->steps, prompt: ($this->answering)($prompt, '2'));
+
+            $generator->apply($this->output, $this->candidates, false);
+
+            expect((string) file_get_contents($files['web']))->toContain('a user named {string}');
+            expect((string) file_get_contents($files['web']))->not()->toContain('the user plays');
+        });
+
+        it('with nobody to answer, shows no options, writes nothing and names where the steps would go', function () {
+            $this->stepsFiles;
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', Generation::Declines, steps: $this->steps);
+
+            expect($generator->apply($this->output, $this->candidates, false))->toBe([]);
+
+            $out = $this->output->fetch();
+            expect($out)->toContain('You have undefined steps. Would you like me to generate the steps for you?');
+            expect($out)->toContain('Nothing was written: there is nobody to answer. Run with --accept-offers to append them to features/steps/steps.php.');
+            expect($out)->not()->toContain('[0] No, skip');
+            expect(file_exists($this->root . '/features/steps/steps.php'))->toBeFalse();
+        });
+
+        it('appends to steps.php when the offers are accepted, whatever other steps files there are', function () {
+            $files = $this->stepsFiles;
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', Generation::Accepts, steps: $this->steps);
+
+            $generator->apply($this->output, $this->candidates, false);
+
+            expect((string) file_get_contents($this->root . '/features/steps/steps.php'))->toContain('a user named {string}');
+            expect((string) file_get_contents($files['web']))->not()->toContain('a user named');
+        });
+
+        it('puts the steps to the pair chooser as yes or no for steps.php, with no picker', function () {
+            $this->stepsFiles;
+            $chooser = new Chooser(new PairOutput($this->output), true, fn() => '1');
+            $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', chooser: $chooser, steps: $this->steps);
+
+            $generator->apply($this->output, $this->candidates, false);
+
+            $out = $this->output->fetch();
+            expect($out)->toContain("2. Yes, and don't ask again — always append them to features/steps/steps.php");
+            expect($out)->not()->toContain('[0] No, skip');
+            expect((string) file_get_contents($this->root . '/features/steps/steps.php'))->toContain('a user named {string}');
+        });
+    });
 });
+

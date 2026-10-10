@@ -24,20 +24,13 @@ use PhpSpec\Specification\ExampleError;
  */
 final class ExampleResult implements Results
 {
+    use RaisedNotesTrait;
+
     /** @var ExampleError|null Error that occurred during execution */
     private ?ExampleError $error = null;
 
     /** @var float Execution duration in seconds */
     private float $duration = 0.0;
-
-    /** @var array<array{severity: int, message: string, file: string, line: int}> Warning items (E_WARNING, E_USER_WARNING) collected during execution */
-    private array $warnings = [];
-
-    /** @var array<array{severity: int, message: string, file: string, line: int}> Deprecation items (E_DEPRECATED, E_USER_DEPRECATED) collected during execution */
-    private array $deprecations = [];
-
-    /** @var array<array{severity: int, message: string, file: string, line: int}> Notice items (E_NOTICE, E_USER_NOTICE) collected during execution */
-    private array $notices = [];
 
     /** @var string What the subject printed while this example ran */
     private string $output = '';
@@ -247,90 +240,6 @@ final class ExampleResult implements Results
     public function isLeftOutByFocus(): bool
     {
         return $this->leftOutByFocus;
-    }
-
-    /**
-     * Stores warning items collected during example execution.
-     *
-     * @param array<array{severity: int, message: string, file: string, line: int}> $warnings array of warning items
-     */
-    public function setWarnings(array $warnings): void
-    {
-        $this->warnings = $warnings;
-    }
-
-    /**
-     * Returns the warning items from this example.
-     *
-     * @return array<array{severity: int, message: string, file: string, line: int}>
-     */
-    public function getWarnings(): array
-    {
-        return $this->warnings;
-    }
-
-    /**
-     * Checks whether this example produced any warnings.
-     */
-    public function hasWarnings(): bool
-    {
-        return !empty($this->warnings);
-    }
-
-    /**
-     * Stores deprecation items collected during example execution.
-     *
-     * @param array<array{severity: int, message: string, file: string, line: int}> $deprecations array of deprecation items
-     */
-    public function setDeprecations(array $deprecations): void
-    {
-        $this->deprecations = $deprecations;
-    }
-
-    /**
-     * Returns the deprecation items from this example.
-     *
-     * @return array<array{severity: int, message: string, file: string, line: int}>
-     */
-    public function getDeprecations(): array
-    {
-        return $this->deprecations;
-    }
-
-    /**
-     * Checks whether this example produced any deprecations.
-     */
-    public function hasDeprecations(): bool
-    {
-        return !empty($this->deprecations);
-    }
-
-    /**
-     * Stores notice items collected during example execution.
-     *
-     * @param array<array{severity: int, message: string, file: string, line: int}> $notices array of notice items
-     */
-    public function setNotices(array $notices): void
-    {
-        $this->notices = $notices;
-    }
-
-    /**
-     * Returns the notice items from this example.
-     *
-     * @return array<array{severity: int, message: string, file: string, line: int}>
-     */
-    public function getNotices(): array
-    {
-        return $this->notices;
-    }
-
-    /**
-     * Checks whether this example produced any notices.
-     */
-    public function hasNotices(): bool
-    {
-        return !empty($this->notices);
     }
 
     /**

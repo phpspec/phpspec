@@ -16,6 +16,7 @@ namespace PhpSpec\Specification;
 
 use Closure;
 use PhpSpec\Attachments;
+use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ExampleCompleted;
@@ -24,6 +25,7 @@ use PhpSpec\EventDispatcher\Event\ExampleRunned;
 use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber;
 use PhpSpec\Mock\Double;
+use PhpSpec\OwnCode;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ExampleResultRegistry;
 use PhpSpec\Results;
@@ -208,13 +210,31 @@ class Example implements ExampleResultRegistry, Rebindable
      * afterEach) threw: an error of its own, declared where it is, so the
      * examples beside it still run and the count holds.
      */
-    public function failedInHook(\Throwable $e): ExampleResult
+    public function failedInHook(ExampleError $error): ExampleResult
     {
         DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
 
         $this->isError = true;
         $this->exampleResult = new ExampleResult($this->title, [], true);
-        $this->exampleResult->setError(new ExampleError($e->getMessage(), $e));
+        $this->exampleResult->setError($error);
+
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+
+        return $this->declared($this->exampleResult);
+    }
+
+    /**
+     * The result of an example a hook left out before it ran, with skip() or
+     * pending(): skipped or pending with the hook's reason, declared where it
+     * is, the body never run.
+     */
+    public function leftOutBy(PendingException|SkippedException $signal): ExampleResult
+    {
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+
+        $this->exampleResult = $signal instanceof PendingException
+            ? new ExampleResult($this->title, [], isPending: true, reason: $signal->getMessage())
+            : new ExampleResult($this->title, [], isSkipped: true, reason: $signal->getMessage());
 
         DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
 
@@ -244,16 +264,8 @@ class Example implements ExampleResultRegistry, Rebindable
             return $this->exampleResult;
         }
 
-        $warnings = [];
-        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$warnings) {
-            $warnings[] = [
-                'severity' => $severity,
-                'message' => $message,
-                'file' => $file,
-                'line' => $line,
-            ];
-            return true;
-        }, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
+        $caught = new CapturedNotes(OwnCode::here());
+        $caught->listen();
 
         // What the subject prints belongs to the example that provoked it, not
         // to whatever the terminal happened to be showing at the time.
@@ -263,18 +275,19 @@ class Example implements ExampleResultRegistry, Rebindable
         try {
             $printed->around(fn() => ($this->example)(...$this->resolveClosureArgs($this->example)));
         } catch (PendingException $e) {
-            restore_error_handler();
+            $caught->stop();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $e->getMessage());
-            $this->exampleResult->setWarnings($warnings);
+            $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
-            restore_error_handler();
+            $caught->stop();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], isSkipped: true, reason: $e->getMessage());
+            $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
@@ -288,7 +301,7 @@ class Example implements ExampleResultRegistry, Rebindable
 
         $elapsed = (hrtime(true) - $start) / 1e9;
         DispatcherRegistry::dispatcher()->dispatch(new ExampleRunned($this->title), ExampleRunned::NAME);
-        restore_error_handler();
+        $caught->stop();
         DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
         $this->exampleResult->setOutput($printed->text());
@@ -296,15 +309,7 @@ class Example implements ExampleResultRegistry, Rebindable
         if (!$this->isError && $this->exampleResult->getResults() === []) {
             $this->exampleResult->markRisky();
         }
-        $unique = [];
-        foreach ($warnings as $w) {
-            $key = $w['message'] . ':' . $w['file'] . ':' . $w['line'];
-            $unique[$key] = $w;
-        }
-        $all = array_values($unique);
-        $this->exampleResult->setWarnings(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_WARNING, E_USER_WARNING]))));
-        $this->exampleResult->setDeprecations(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_DEPRECATED, E_USER_DEPRECATED]))));
-        $this->exampleResult->setNotices(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_NOTICE, E_USER_NOTICE]))));
+        $this->exampleResult->raised($caught->notes());
         $this->keepAttachments($attachments);
         DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - A file named `steps.php` holds step definitions as any `*.steps.php` does, wherever step files are looked for
+ - A `{float}` step placeholder captures a decimal such as `4.5`, and a generated step definition takes a decimal in its text as `{float}` with a `float` parameter, where it used to read `{int}.{int}`
  - A line target that reaches no example shows, under the pretty and dot formatters, the seven lines around it with the target number in bold, so an off-by-one line can be corrected by sight
  - A run focused with `fit()` or `fdescribe()` says how many examples it left out, each pending with "left out by focus" as the reason; without a terminal, as in CI, the run fails on a focus, except under `--format=agent`, where the summary carries `focused` instead
  - An example that runs to the end without making an expectation is reported as risky: `!` in pretty, `R` in dot, a `Risky:` section, a `risky` count and an agent entry with state `risky`; the exit code is unchanged, nothing is red
@@ -30,11 +32,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The agent header says which PHP ran, whether coverage is collected and whether guard is on, off or stood down, so a reader knows upfront which verdicts will follow
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
+ - `--format=agent` reports an example or scenario that passed but raised a PHP warning, deprecation or notice, each note on the entry or the step that raised it with the line that raised it, and the summary counts `warnings`, `deprecations` and `notices`; none counts in `actionable`
 ### Changed
+ - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
+ - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
  - The file phpspec names, and writes, when a project has no configuration is `phpspec.yml`, the name the docs use; the lookup order of the four formats is unchanged
  - `--filter` matches the path of titles an example or scenario sits under, joined by `>`: a context title selects everything in it, `when empty > starts` one example; a context the filter empties is no longer printed
  - A class a spec needs but does not describe is offered spec first, then the class, the way a class missing from a step always was; the class question names its file relative to the project
- - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec
+ - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; specs and examples share one line, `193 specs, 2300 examples (2300 passed)`, as features, scenarios and steps do; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec
  - Guard refuses to run when no coverage driver is available, with the remedy and exit code 1, instead of standing down and letting the run pass unjudged; the agent header's `guard` is `on` or `off`
  - `Configuration` is built from values and touches no disk; `Configuration::load()` reads what a project states, its config file and the PSR-4 mappings of composer.json, as the console does
  - A `let` value is built the first time an example reads it, once per example, instead of before the hooks: a `beforeEach` can arrange a double the let consumes, a let may read one declared after it, and a let nobody reads never runs; the doubles a let asks for are still on `$this` from the start
@@ -49,7 +54,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A class whose file exists but could not be autoloaded is said to be a PSR-4 problem, instead of being passed over in silence
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
+ - The console counts each warning, deprecation and notice raised, not the examples that raised them, and counts a step's on the steps line; notices are listed in a `Notices:` section by pretty and dot alike
+ - The HTML report counts the run in the console's words, the stories on a line of their own and the specs named, and counts warnings, deprecations and notices in its header, footer and group bars; an example or step that raised one unfolds to each, with the line that raised it
+ - A deprecation a library raises for another library's code calling it is no longer reported; one it raises because the project called something deprecated still is, through `trigger_error()` or `trigger_deprecation()`
 ### Fixed
+ - A story hook that throws, or calls `skip()` or `pending()`, no longer ends the whole run with only its message: a before hook's signal leaves the feature, scenario or step it wraps skipped or pending with the reason, an after hook's signal is an error saying it came too late, and any other error errors the step it affects, naming the hook, while the rest of the run goes on
+ - `skip()` or `pending()` in `beforeEach` or `beforeAll` leaves the examples it wraps skipped or pending with the reason, the matching after-hook still running, where it errored them and failed the run; in `afterEach` or `afterAll` it is an error that says it came after the example ran
+ - The HTML report words its counts as the console does, `1 example (1 failed)`, `6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)`, where it said `1 pass` and `2 failures` and left risky examples out; its header counts an errored step among the failed, where it counted none
+ - A run of specs and features counts pending steps and pending examples apart: a pending example no longer shows in the steps line, nor a pending step in the examples line, the HTML footer or the suite state the AI commands read
+ - A step two features share is generated once; it used to land in a steps file per feature, and the second definition failed the next run at load
+ - A checkout resolves its dependencies for PHP 8.2, the floor, whatever PHP runs composer (`config.platform.php`), so a `vendor/` built under a newer PHP no longer carries Symfony 8 into a run on 8.2; `bin/phpspec` refuses PHP older than 8.2 with a sentence instead of a parse error
  - The offer to create an interface names its file relative to the project, as the class offer does
  - `run --help` no longer lists `--coverage-partial`, which only the parallel workers pass; the option still works
  - Pair mode's `/help` lines its descriptions up in one column and lists `/generate` once; the application list below it used to repeat it
@@ -107,6 +121,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A generated class, interface or spec ends with a newline
  - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree
  - The loader no longer plants a permanent subscriber per spec file; a specification resets itself when it runs
+ - A step's deprecations and notices were marked and listed as warnings; a note raised before `pending()` was filed as a warning whatever its kind, and one raised before `skip()` was lost
+ - `--stop-on-warning`, `--stop-on-deprecation` and `--stop-on-notice` stop at a note a step raised, as they did at an example's
+ - `--stop-on-pending` stops at a pending or undefined step and `--stop-on-skipped` at a step that skipped itself, as they did at an example; `--stop-on-problems` stops at them too
 
 ## [9.0.0-beta.20](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.20)
 

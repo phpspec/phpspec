@@ -19,7 +19,7 @@ use RuntimeException;
 /**
  * @internal
  * Maps step patterns to closures for matching against Gherkin step text.
- * Patterns use {string}, {int}, {word}, and {*} placeholders that are converted to regex capture groups.
+ * Patterns use {string}, {int}, {float}, {word}, and {*} placeholders that are converted to regex capture groups.
  * A title registers once: matching is global and keyword-blind, so a second
  * definition of the same title (even under another keyword) could only shadow
  * or be shadowed silently, and is rejected instead.
@@ -35,7 +35,7 @@ final class StepRegistry
     /**
      * Registers a step definition with a pattern and its implementing closure.
      *
-     * @param string $pattern step pattern with optional {string}/{int}/{word}/{*} placeholders
+     * @param string $pattern step pattern with optional {string}/{int}/{float}/{word}/{*} placeholders
      * @param \Closure $callback the closure to execute when the pattern matches
      * @return void
      *
@@ -118,7 +118,8 @@ final class StepRegistry
     /**
      * Converts a step pattern with placeholders into a full-match regex.
      * Replaces {string} with quoted capture, {int} with digit capture,
-     * {word} with word capture, and {*} with greedy capture.
+     * {float} with decimal capture, {word} with word capture, and {*} with
+     * greedy capture.
      *
      * @param string $pattern the step pattern with placeholders
      * @return string the compiled regex with anchors
@@ -131,6 +132,8 @@ final class StepRegistry
         $regex = str_replace('\\{string\\}', '"([^"]*)"', $regex);
         // {int} → (\d+)
         $regex = str_replace('\\{int\\}', '(\d+)', $regex);
+        // {float} → (\d+\.\d+)
+        $regex = str_replace('\\{float\\}', '(\d+\.\d+)', $regex);
         // {word} → (\w+)
         $regex = str_replace('\\{word\\}', '(\w+)', $regex);
         // {*} → (.+)

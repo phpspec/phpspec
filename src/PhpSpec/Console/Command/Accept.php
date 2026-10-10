@@ -16,6 +16,7 @@ namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\Generation;
@@ -194,6 +195,7 @@ final class Accept extends Command
             // said yes, and there is nothing left to put to them.
             Generation::Accepts,
             $this->config->getSpecSuffix(),
+            steps: new StepsHome($this->config, $this->filesystem),
         );
 
         return $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');

@@ -99,7 +99,35 @@ Feature: Generate code from a natural-language instruction
           Then I should have 1 task on my list
       """
     When I run phpspec command "generate the steps"
-    Then the output should contain "features/steps/adding_a_task.steps.php"
+    Then the output should contain "features/steps/steps.php"
     And the output should contain "phpspec accept o_"
     When I accept the offers phpspec made
-    Then the file "features/steps/adding_a_task.steps.php" should contain "given("
+    Then the file "features/steps/steps.php" should contain "given("
+
+  Scenario: generate appends the steps of another feature to steps.php, skipping a step already defined
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("I have a todo list", function () {
+          pending();
+      });
+      """
+    And a feature file "features/clearing_tasks.feature":
+      """
+      Feature: Clearing tasks
+        Scenario: Clearing
+          Given I have a todo list
+          When I clear the list
+      """
+    When I run phpspec command "generate the steps"
+    Then the output should contain "features/steps/steps.php"
+    When I accept the offers phpspec made
+    Then the file "features/steps/steps.php" should contain "I have a todo list" exactly 1 times
+    And the file "features/steps/steps.php" should contain "I clear the list"
+    And no file "features/steps/clearing_tasks.steps.php" should be generated

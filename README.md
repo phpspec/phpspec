@@ -143,7 +143,7 @@ Feature: Greeting
     Then I should see "Hello, World!"
 ```
 
-Define steps in `features/steps/greeting.steps.php`:
+Define steps in `features/steps/steps.php`:
 
 ```php
 <?php

@@ -276,6 +276,27 @@ describe(Loader::class, function () {
         }
     });
 
+    it("loads features/steps/steps.php as step definitions", function () {
+        $root = sys_get_temp_dir() . '/phpspec_loader_plain_steps_' . uniqid();
+        mkdir($root . '/features/steps', 0777, true);
+        file_put_contents($root . '/features/checkout.feature', "Feature: Checkout\n  Scenario: Buys\n    Given a plain step\n");
+        file_put_contents($root . '/features/steps/steps.php', '<?php given("a plain step", function () { expect(true)->toBeTrue(); });');
+
+        try {
+            $suite = (new Loader(featuresPath: $root . '/features'))->load($root . '/features');
+
+            $steps = $suite->getSpecifications()[0]->run()->getResults()[0]->getResults();
+            expect($steps[0]->isUndefined())->toBeFalse();
+            expect($steps[0]->isPassed())->toBeTrue();
+        } finally {
+            unlink($root . '/features/checkout.feature');
+            unlink($root . '/features/steps/steps.php');
+            rmdir($root . '/features/steps');
+            rmdir($root . '/features');
+            rmdir($root);
+        }
+    });
+
     it("finds step definitions anywhere under the features root", function () {
         $root = sys_get_temp_dir() . '/phpspec_loader_root_' . uniqid();
         mkdir($root . '/features/checkout', 0777, true);

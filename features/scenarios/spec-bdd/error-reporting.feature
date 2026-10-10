@@ -200,3 +200,86 @@ Feature: Error reporting
       """
     When I run phpspec run
     Then the output should contain "warning"
+
+  Scenario: Every note an example raised is counted, and its notices are listed with the rest
+    Given a spec file "spec/App/Notes.spec.php":
+      """
+      <?php
+      describe('Notes', function () {
+          it('raises some', function () {
+              trigger_error('first warning', E_USER_WARNING);
+              trigger_error('second warning', E_USER_WARNING);
+              trigger_error('the clock is local', E_USER_NOTICE);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "1 spec, 1 example (1 passed, 2 warnings, 1 notice)"
+    And the output should contain "Notices:"
+
+  Scenario: A deprecation a library raises for its own code is left out, one the project's call raises is kept
+    Given a library file "acme/Old.php" outside the project, loaded by "bootstrap.php":
+      """
+      <?php
+      namespace Acme;
+
+      function deprecated(): void
+      {
+          trigger_error('deprecated() is deprecated.', E_USER_DEPRECATED);
+      }
+
+      function internally(): void
+      {
+          deprecated();
+      }
+      """
+    And a spec file "spec/App/Old.spec.php":
+      """
+      <?php
+      describe('Old', function () {
+          it('calls the deprecated function', function () {
+              Acme\deprecated();
+              expect(true)->toBeTrue();
+          });
+          it('calls what calls it', function () {
+              Acme\internally();
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a feature file "features/old.feature":
+      """
+      Feature: Old
+        Scenario: Calling it
+          Given the deprecated function is called
+          And what calls it is called
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("the deprecated function is called", fn () => Acme\deprecated());
+      given("what calls it is called", fn () => Acme\internally());
+      """
+    When I run phpspec run with option "--all --bootstrap=bootstrap.php"
+    Then the output should contain "1 spec, 2 examples (2 passed, 1 deprecation)"
+    And the output should contain "2 steps (2 passed, 1 deprecation)"
+    And the exit code should be 0
+
+  Scenario: A note raised before pending() or skip() is kept, under its kind
+    Given a spec file "spec/App/Later.spec.php":
+      """
+      <?php
+      describe('Later', function () {
+          it('waits', function () {
+              trigger_error('wait() is deprecated', E_USER_DEPRECATED);
+              pending('later');
+          });
+          it('skips', function () {
+              trigger_error('the printer is offline', E_USER_WARNING);
+              skip('no printer');
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "1 spec, 2 examples (1 pending, 1 skipped, 1 warning, 1 deprecation)"

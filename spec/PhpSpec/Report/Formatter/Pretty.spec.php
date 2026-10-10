@@ -20,13 +20,7 @@ final class PrettySpecPoint
     public function __construct(public int $x, public int $y) {}
 }
 
-// Code under spec that reaches into PhpSpec: the error is raised beyond the spec.
-define('BLAME_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_blame_outsider_' . getmypid() . '.php');
-if (!function_exists('blame_spec_outsider_reaches_in')) {
-    register_shutdown_function(static fn() => @unlink(BLAME_SPEC_OUTSIDER));
-    file_put_contents(BLAME_SPEC_OUTSIDER, "<?php\nfunction blame_spec_outsider_reaches_in(): void { \\PhpSpec\\Mock\\Double::getInstance('Nope\\Missing'); }\n");
-    require BLAME_SPEC_OUTSIDER;
-}
+require_once __DIR__ . '/../../BlameOutsider.php';
 describe(Pretty::class, function() {
 
     // A response body or a watched log can run to megabytes, and a terminal
@@ -223,7 +217,7 @@ describe(Pretty::class, function() {
         expect($text)->toContain('Y');
     });
 
-    it("groups the detail into Failures, Errors, Warnings, Deprecations, Pending and Skipped sections, in that order", function() {
+    it("groups the detail into Failures, Errors, Warnings, Deprecations, Notices, Pending and Skipped sections, in that order", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
 
@@ -236,15 +230,17 @@ describe(Pretty::class, function() {
         $warning->setWarnings([['severity' => E_WARNING, 'message' => 'a warning', 'file' => __FILE__, 'line' => __LINE__]]);
         $deprecated = new ExampleResult("deprecates", [MatchResult::passed()]);
         $deprecated->setDeprecations([['severity' => E_USER_DEPRECATED, 'message' => 'a deprecation', 'file' => __FILE__, 'line' => __LINE__]]);
+        $noticed = new ExampleResult("notes", [MatchResult::passed()]);
+        $noticed->setNotices([['severity' => E_USER_NOTICE, 'message' => 'a notice', 'file' => __FILE__, 'line' => __LINE__]]);
         $pending = new ExampleResult("waits", [], isPending: true);
         $skipped = new ExampleResult("skips", [], false, false, true);
-        $spec = new SpecificationResult("MySpec", [$failing, $erroring, $warning, $deprecated, $skipped, $pending]);
+        $spec = new SpecificationResult("MySpec", [$failing, $erroring, $warning, $deprecated, $noticed, $skipped, $pending]);
         $suite = new SuiteResult([$spec]);
 
         $formatter->format($suite);
         $text = $output->fetch();
         $positions = [];
-        foreach (["Failures:", "Errors:", "Warnings:", "Deprecations:", "Pending:", "Skipped:"] as $header) {
+        foreach (["Failures:", "Errors:", "Warnings:", "Deprecations:", "Notices:", "Pending:", "Skipped:"] as $header) {
             expect($text)->toContain($header);
             $positions[] = strpos($text, $header);
         }
@@ -264,7 +260,7 @@ describe(Pretty::class, function() {
         ]);
         (new Pretty($output))->format(new SuiteResult([$spec]));
 
-        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 spec\n3 examples (1 passed, 1 failed, 1 errored)\n");
+        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 spec, 3 examples (1 passed, 1 failed, 1 errored)\n");
     });
 
     it("keeps the spec count beside the feature count when both ran", function () {
@@ -273,7 +269,7 @@ describe(Pretty::class, function() {
         $spec = new SpecificationResult("MySpec", [new ExampleResult("works", [MatchResult::passed()])]);
         (new Pretty($output))->format(new SuiteResult([$feature, $spec]));
 
-        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec\n1 example (1 passed)\n");
+        expect(str_replace("\r\n", "\n", $output->fetch()))->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec, 1 example (1 passed)\n");
     });
     it("shows a code window with the line in bold and nothing painted red when no error is blamed on it", function () {
         $output = new BufferedOutput(OutputInterface::VERBOSITY_NORMAL, true);
@@ -717,6 +713,25 @@ describe(Pretty::class, function() {
         $text = $output->fetch();
         expect($text)->toContain("Warnings:");
         expect($text)->toContain('Undefined property: StepWorld::$list');
+    });
+
+    it("shows each note a step raised as what it is, lists it under its kind and counts it on the steps line", function () {
+        $output = new BufferedOutput();
+        $step = new StepResult("Given the old API", "passed");
+        $step->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'the cache is cold', 'file' => 'features/steps/legacy.steps.php', 'line' => 3],
+            ['severity' => E_USER_DEPRECATED, 'message' => 'call() is deprecated', 'file' => 'features/steps/legacy.steps.php', 'line' => 4],
+            ['severity' => E_USER_NOTICE, 'message' => 'the clock is local', 'file' => 'features/steps/legacy.steps.php', 'line' => 5],
+        ]);
+
+        (new Pretty($output))->format(new SuiteResult([new FeatureResult("Legacy", [new ScenarioResult("Old API", [$step])])]));
+        $text = $output->fetch();
+
+        expect($text)->toContain("⚠ the cache is cold (legacy.steps.php:3)");
+        expect($text)->toContain("⛔ call() is deprecated (legacy.steps.php:4)");
+        expect($text)->toContain("ℹ the clock is local (legacy.steps.php:5)");
+        expect($text)->toContain("Notices:");
+        expect($text)->toContain("1 step (1 passed, 1 warning, 1 deprecation, 1 notice)");
     });
 
     it("formats a feature with undefined and pending steps", function () {

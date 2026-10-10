@@ -103,14 +103,14 @@ describe(ToolRegistry::class, function () {
 
             $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
 
-            expect($proposals[0]->path)->toBe('features/steps/adding_a_task.steps.php');
+            expect($proposals[0]->path)->toBe('features/steps/steps.php');
             expect($proposals[0]->new)->toContain('given("I have a todo list"');
             expect($proposals[0]->new)->toContain('when("I add the task {string}"');
             expect($proposals[0]->isNew)->toBe(true);
         });
 
         it('appends only the missing steps when the steps file already exists', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, '.steps.php'));
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
             allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
                 ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n    Then I should have 1 task on my list\n"
                 : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
@@ -124,7 +124,7 @@ describe(ToolRegistry::class, function () {
         });
 
         it('declines the steps short-circuit when every step is already defined', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, '.steps.php'));
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
             allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
                 ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n"
                 : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
@@ -230,7 +230,7 @@ describe(ToolRegistry::class, function () {
         });
 
         it('skips a write_steps call when every step is already defined', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, '.steps.php'));
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
             allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
                 ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n"
                 : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
@@ -355,13 +355,57 @@ describe(ToolRegistry::class, function () {
             expect($proposals[0]->new)->toContain('I clear the list');
         });
 
+        it('drafts the steps into the steps file the step names, for the last-touched feature', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
+            $step = new Step(Phase::WriteSteps, 'features/steps/web.steps.php', null, 'you named it');
+
+            $proposals = $this->registry->deterministic($step, new Grounding(recentFeature: 'features/adding.feature'), $this->genProfile);
+
+            expect($proposals[0]->path)->toBe('features/steps/web.steps.php');
+            expect($proposals[0]->new)->toContain('given("a list"');
+        });
+
+        it('writes a write_steps call into the steps file it names', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
+
+            $proposals = $this->registry->fromCalls([new ToolCall('1', 'write_steps', ['feature_path' => 'features/adding.feature', 'steps_file' => 'web'])], null);
+
+            expect($proposals[0]->path)->toBe('features/steps/web.steps.php');
+        });
+
+        it('declines a scaffold that adds no step, even for a steps file not written yet', function (Filesystem $fs) {
+            $cwd = getcwd();
+            $feature = $cwd . '/features/clearing.feature';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $feature || $p === $cwd . '/features');
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+            allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+                $cwd . '/features' => ['steps'],
+                $cwd . '/features/steps' => ['lists.steps.php'],
+                default => [],
+            });
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $feature
+                ? "Feature: Clearing\n  Scenario: Clears\n    Given I have a todo list\n"
+                : "<?php\ngiven('I have a todo list', function () {});\n");
+            $step = new Step(Phase::WriteSteps, null, 'features/clearing.feature', 'steps asked for');
+
+            expect($this->registry->deterministic($step, Grounding::empty(), $this->genProfile))->toBeNull();
+        });
+
+        it('places a bare steps.php from the model in the steps directory', function () {
+            $proposals = $this->registry->fromCalls([new ToolCall('1', 'propose_edit', ['path' => 'steps.php', 'content' => "<?php\ngiven('a list', function () {});\n"])], null);
+
+            expect($proposals[0]->path)->toBe('features/steps/steps.php');
+        });
+
         it('serves a write_steps call from the argument feature path when the step has none', function (Filesystem $fs) {
             allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
             allow($fs->read())->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
 
             $proposals = $this->registry->fromCalls([new ToolCall('1', 'write_steps', ['feature_path' => 'features/adding.feature'])], null);
 
-            expect($proposals[0]->path)->toBe('features/steps/adding.steps.php');
+            expect($proposals[0]->path)->toBe('features/steps/steps.php');
             expect($proposals[0]->new)->toContain('given("a list"');
         });
 

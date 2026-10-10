@@ -15,6 +15,7 @@
 namespace PhpSpec\Ai\Agent;
 
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\StoryBDD\StepsFile;
 
 /**
  * @internal
@@ -68,7 +69,7 @@ final readonly class Step
                 return new self(Phase::WriteSteps, null, $path, sprintf('you asked for steps for "%s"', $path));
             }
 
-            if ($path !== null && str_ends_with($path, '.steps.php')) {
+            if ($path !== null && (new StepsFile($path))->isStepDefinitions()) {
                 return new self(Phase::WriteSteps, $path, null, sprintf('you named "%s"', $path));
             }
 

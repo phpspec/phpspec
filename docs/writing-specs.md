@@ -166,6 +166,20 @@ it("fetches the rates", function () {
 
 A skipped example is reported with a `-` (an `S` under `--format dot`) and its reason, listed under `Skipped:`, and leaves the run green; `--stop-on-skipped` halts the run at the first one.
 
+A hook can decide for the examples it wraps. `skip()` or `pending()` in `beforeEach` leaves each example skipped or pending with that reason, and in `beforeAll` every example of the context, nested ones included; the matching `afterEach` or `afterAll` still runs, so what the hook set up is cleaned up:
+
+```php
+describe("RatesClient", function () {
+    beforeAll(function () {
+        if (getenv("RATES_API_URL") === false) {
+            skip("No rates API configured");
+        }
+    });
+});
+```
+
+In `afterEach` or `afterAll` the example has already run, so `skip()` or `pending()` there is an error that says so.
+
 ## Risky Examples
 
 An example that runs to the end without making a single expectation checked nothing, whatever the code did. It is reported as risky, with a `!` (an `R` under `--format dot`), counted apart from the passes and listed under `Risky:` at the end. It leaves the run green: nothing is red, there is only nothing checked.
@@ -175,6 +189,12 @@ it("converts the total", function () {
     $this->converter->convert(100);   // risky: no expect()
 });
 ```
+
+## Warnings, Deprecations and Notices
+
+A PHP warning, deprecation or notice raised while an example or a step runs is kept on it rather than printed wherever it fell: shown under it as `⚠`, `⛔` or `ℹ` with the line that raised it, listed under `Warnings:`, `Deprecations:` or `Notices:` at the end, and counted on the summary line. It leaves the run green, and `--stop-on-warning`, `--stop-on-deprecation` and `--stop-on-notice` halt the run at the first one.
+
+A deprecation a library raises because your code called something deprecated is reported, whether the library raised it with `trigger_error()` or `trigger_deprecation()`. One a library raises for another library's code calling it is left out: nothing you change in your own code makes it go away. A library is anything in a Composer vendor directory or outside the project.
 
 ## Focused Examples
 

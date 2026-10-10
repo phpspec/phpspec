@@ -88,6 +88,16 @@ describe('prompt artifacts', function () {
         expect($text)->not()->toContain('given(');
     });
 
+    it('steers every steps writer to steps.php or a file grouped by what the steps do, never a file per feature', function () use ($read) {
+        foreach (['tools/write_steps', 'tools/generate_steps', 'instructions/write-steps'] as $prompt) {
+            expect($read($prompt))->toContain('steps.php');
+            expect($read($prompt))->toContain('never one file per feature');
+        }
+        expect($read('tools/generate_steps'))->toContain('keep every definition');
+        expect($read('instructions/pair-guidance'))->not()->toContain('Create new `.steps.php` files');
+        expect($read('instructions/pair-guidance'))->not()->toContain('generate a new `.steps.php` file');
+    });
+
     it('ships every pair write tool description as an editable file', function () use ($read) {
         expect($read('tools/describe'))->toContain('describe() skeleton');
         expect($read('tools/add_example'))->toContain('ONE it() example');

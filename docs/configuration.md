@@ -109,9 +109,11 @@ features_path: acceptance
 
 ### `steps_path`
 
-An additional directory to search for `*.steps.php` step definitions. Step
-definitions are always discoverable anywhere inside the features folder;
-when `steps_path` is set, that directory is searched as well. Default: unset.
+An additional directory to search for step definitions (`steps.php` and
+`*.steps.php`), and the one generated steps go to. Step definitions are always
+discoverable anywhere inside the features folder; when `steps_path` is set,
+that directory is searched as well, and `steps.php` there becomes the default
+steps file. Default: unset, so generated steps go to `features/steps/steps.php`.
 
 ```yaml
 steps_path: acceptance_steps

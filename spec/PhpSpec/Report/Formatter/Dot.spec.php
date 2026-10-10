@@ -74,7 +74,7 @@ describe(Dot::class, function() {
         (new Dot($output))->format(new SuiteResult([$feature, $spec]));
 
         $text = str_replace("\r\n", "\n", $output->fetch());
-        expect($text)->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec\n2 examples (1 passed, 1 failed)\n");
+        expect($text)->toContain("1 feature, 1 scenario, 1 step (1 passed)\n1 spec, 2 examples (1 passed, 1 failed)\n");
     });
     it("wraps the dots at the terminal width while results stream in, not only once the run is over", function() {
         putenv('COLUMNS=40');
@@ -239,7 +239,7 @@ describe(Dot::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("Notice:");
+        expect($text)->toContain("Notices:");
         expect($text)->toContain('Undefined variable $x');
         expect($text)->toContain("1 notice");
     });
@@ -432,7 +432,7 @@ describe(Dot::class, function() {
         expect($text)->not()->toContain("not found");
     });
 
-    it("marks a notice with a bare warning sign", function() {
+    it("lists a notice once, under Notices, as it lists the other notes", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);
 
@@ -444,8 +444,8 @@ describe(Dot::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("⚠ notice fired");
-        expect($text)->not()->toContain("⚠\u{FE0F}");
+        expect($text)->toContain("Notices:");
+        expect(substr_count($text, 'undefined var'))->toBe(1);
     });
 
     it("formats an undefined step with U, apart from a pending one", function() {
@@ -644,7 +644,7 @@ describe(Dot::class, function() {
         expect($text)->toContain("200 steps");
     });
 
-    it("formats multiple deprecations", function() {
+    it("counts each deprecation it lists, not the examples that raised them", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);
 
@@ -658,7 +658,7 @@ describe(Dot::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("1 deprecation");
+        expect($text)->toContain("2 deprecations");
     });
 
 });

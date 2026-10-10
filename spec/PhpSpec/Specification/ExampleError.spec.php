@@ -2,13 +2,7 @@
 
 use PhpSpec\Specification\ExampleError;
 
-// Code under spec that reaches into PhpSpec: the error is raised beyond the spec.
-define('BLAME_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_blame_outsider_' . getmypid() . '.php');
-if (!function_exists('blame_spec_outsider_reaches_in')) {
-    register_shutdown_function(static fn() => @unlink(BLAME_SPEC_OUTSIDER));
-    file_put_contents(BLAME_SPEC_OUTSIDER, "<?php\nfunction blame_spec_outsider_reaches_in(): void { \\PhpSpec\\Mock\\Double::getInstance('Nope\\Missing'); }\n");
-    require BLAME_SPEC_OUTSIDER;
-}
+require_once __DIR__ . '/../BlameOutsider.php';
 describe(ExampleError::class, function() {
 
     it("wraps an exception", function() {

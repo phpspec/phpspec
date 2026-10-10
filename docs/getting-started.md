@@ -81,7 +81,7 @@ Feature: Calculator
     Then the result should be 5
 ```
 
-Define steps in `features/steps/*.steps.php` and run with:
+Define steps in `features/steps/steps.php` (or any `*.steps.php` there) and run with:
 
 ```bash
 bin/phpspec run features/

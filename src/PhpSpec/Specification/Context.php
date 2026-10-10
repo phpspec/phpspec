@@ -64,6 +64,9 @@ class Context implements ExampleRegistry, Rebindable
     /** @var bool whether all examples in this context are skipped */
     private bool $pending = false;
 
+    /** The skip() or pending() a beforeAll above this context raised, leaving all of it out. */
+    private PendingException|SkippedException|null $leftOutBy = null;
+
     /** @var bool whether this context is focused (exclusive execution) */
     private bool $focused = false;
 
@@ -103,6 +106,15 @@ class Context implements ExampleRegistry, Rebindable
     public function setPending(bool $pending): void
     {
         $this->pending = $pending;
+    }
+
+    /**
+     * Leaves every example of this context, nested ones too, out with the
+     * signal a beforeAll above it raised; none of its own hooks run.
+     */
+    public function leaveOutBy(PendingException|SkippedException $signal): void
+    {
+        $this->leftOutBy = $signal;
     }
 
     /**
@@ -160,9 +172,15 @@ class Context implements ExampleRegistry, Rebindable
             $this->applyTitleFilter();
             $this->applyLineFilter();
 
-            if (!$this->pending) {
-                foreach ($this->beforeAllHooks as $hook) {
-                    $hook();
+            $signal = $this->leftOutBy;
+            $ownHooksRan = !$this->pending && $signal === null;
+            if ($ownHooksRan) {
+                try {
+                    foreach ($this->beforeAllHooks as $hook) {
+                        $hook();
+                    }
+                } catch (PendingException|SkippedException $raised) {
+                    $signal = $raised;
                 }
             }
 
@@ -174,11 +192,16 @@ class Context implements ExampleRegistry, Rebindable
                 if ($block instanceof Context) {
                     $block->setWorld($this->world);
                     $block->inheritHooks($this->beforeEachHooks, $this->afterEachHooks, $this->letBindings);
+                    if ($signal !== null) {
+                        $block->leaveOutBy($signal);
+                    }
                 }
 
-                $result = $block instanceof Example && !$block->isPending()
-                    ? $this->runExampleWithHooks($block)
-                    : $block->run();
+                $result = match (true) {
+                    $signal !== null && $block instanceof Example => $block->leftOutBy($signal),
+                    $block instanceof Example && !$block->isPending() => $this->runExampleWithHooks($block),
+                    default => $block->run(),
+                };
                 if ($block instanceof Context && $result->getResults() === [] && $filter !== null) {
                     continue;
                 }
@@ -189,15 +212,19 @@ class Context implements ExampleRegistry, Rebindable
                 }
             }
 
-            if (!$this->pending) {
+            if ($ownHooksRan) {
                 foreach ($this->afterAllHooks as $hook) {
-                    $hook();
+                    try {
+                        $hook();
+                    } catch (PendingException|SkippedException $late) {
+                        throw new ExampleError((new LateSignal($late, 'afterAll', 'the examples', 'beforeAll or in an example'))->sentence(), $late);
+                    }
                 }
             }
         } catch (Throwable $e) {
             DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
             $result = new ExampleResult($this->context, [], true);
-            $error = new ExampleError($e->getMessage(), $e);
+            $error = $e instanceof ExampleError ? $e : new ExampleError($e->getMessage(), $e);
             $result->setError($error);
             $contextResult = new ContextResult($this->context, [$result]);
             $contextResult->setError($error);
@@ -233,15 +260,19 @@ class Context implements ExampleRegistry, Rebindable
         $teardown = new CapturedOutput();
 
         try {
-            $setup->around(function (): void {
-                $this->reapplyLets();
-                foreach ($this->beforeEachHooks as $hook) {
-                    $hook(...$this->resolveClosureArgs($hook));
-                }
-                $this->world->__phpspec_let_mocks = $this->letMocks;
-            });
+            try {
+                $setup->around(function (): void {
+                    $this->reapplyLets();
+                    foreach ($this->beforeEachHooks as $hook) {
+                        $hook(...$this->resolveClosureArgs($hook));
+                    }
+                    $this->world->__phpspec_let_mocks = $this->letMocks;
+                });
 
-            $result = $example->run();
+                $result = $example->run();
+            } catch (PendingException|SkippedException $signal) {
+                $result = $example->leftOutBy($signal);
+            }
             $body = $result->getOutput();
 
             try {
@@ -250,13 +281,15 @@ class Context implements ExampleRegistry, Rebindable
                         $hook(...$this->resolveClosureArgs($hook));
                     }
                 });
+            } catch (PendingException|SkippedException $late) {
+                $result = $example->failedInHook(new ExampleError((new LateSignal($late, 'afterEach', 'the example', 'beforeEach or in the example'))->sentence(), $late));
             } catch (Throwable $e) {
-                $result = $example->failedInHook($e);
+                $result = $example->failedInHook(new ExampleError($e->getMessage(), $e));
             }
         } catch (Throwable $e) {
             $coverage?->endExample($example->getTitle());
 
-            return $this->printed($example->failedInHook($e), $setup->text(), '');
+            return $this->printed($example->failedInHook(new ExampleError($e->getMessage(), $e)), $setup->text(), '');
         } finally {
             $this->forgetInjectedMocks();
         }

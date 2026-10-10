@@ -203,6 +203,10 @@ when('I run phpspec run {string} and answer {string} to generation prompts', fun
     _phpspec_exec($this, 'run ' . $path, interactive: true);
 });
 
+when('I run phpspec run {string} answering {string}', function (string $path, string $answers) {
+    _phpspec_exec_subprocess($this, 'run ' . $path, answers: $answers);
+});
+
 // -- Implementation steps (bdd-workflow) --------------------------------
 
 when('I implement the greet method to return {string}', function (string $_value) {

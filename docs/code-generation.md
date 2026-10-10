@@ -265,8 +265,8 @@ honoured over anything the model picks, and its extension decides the artifact: 
 spec), a `.spec.php` path stays a spec, and a `src/…php` path stays implementation code.
 
 With no path, the **wording routes the request**: feature/scenario/story wording becomes a
-Gherkin skeleton under your configured `features_path` (no model call), `the steps` writes
-step definitions for the last-touched feature by parsing it (no model call), spec wording
+Gherkin skeleton under your configured `features_path` (no model call), `the steps` appends
+step definitions for the last-touched feature to `steps.php` by parsing it (no model call), spec wording
 derives the spec path from the class you named, and implement/method wording derives the
 source path through your configured layout (PSR-4 prefix included). Every exchange is
 captured to `.phpspec/ai/last-request.json` for debugging. In pair mode the same thing is
@@ -275,11 +275,13 @@ captured to `.phpspec/ai/last-request.json` for debugging. In pair mode the same
 
 ## Step Definition Generation
 
-When running feature files with undefined steps, PhpSpec generates step definition stubs:
+When a run finds undefined steps, PhpSpec offers them all at once, for one steps
+file: `features/steps/steps.php` when there is none yet, or the steps file you
+pick (or a new one you name) when there are:
 
 ```
-Undefined step: "a calculator"
-Generated step stub in features/steps/calculator.steps.php
+You have undefined steps. Would you like me to generate the steps for you? [Y/n]
+  Step definitions generated at features/steps/steps.php
 ```
 
 The generated file contains:

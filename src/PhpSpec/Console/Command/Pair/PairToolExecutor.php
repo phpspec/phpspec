@@ -30,10 +30,12 @@ use PhpSpec\Ai\SymbolInspector;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\SpecGenerator;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
 use PhpSpec\ProjectRoot;
+use PhpSpec\StoryBDD\StepsFile;
 use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 use Throwable;
@@ -431,7 +433,7 @@ final class PairToolExecutor implements ToolExecutor
      */
     private static function specsCanVerify(string $path): bool
     {
-        if (str_ends_with($path, '.steps.php') || str_ends_with($path, '.feature')) {
+        if ((new StepsFile($path))->isStepDefinitions() || str_ends_with($path, '.feature')) {
             return false;
         }
 
@@ -620,17 +622,22 @@ final class PairToolExecutor implements ToolExecutor
      */
     private function proposalFor(string $absPath, string $content, string $origin): Proposal
     {
-        if (str_ends_with($absPath, '.steps.php')) {
-            $root = getcwd() . '/' . trim($this->config->getFeaturesPath(), './');
-            $rejection = (new StepVocabulary($this->filesystem))->rejectionFor($content, $absPath, $root);
+        $exists = $this->filesystem->exists($absPath);
+        $old = $exists ? $this->filesystem->read($absPath) : '';
+
+        if ((new StepsFile($absPath))->isStepDefinitions()) {
+            $vocabulary = new StepVocabulary($this->filesystem);
+            $rejection = $vocabulary->rejectionFor($content, $absPath, ...(new StepsHome($this->config, $this->filesystem))->roots());
+            $dropped = array_values(array_diff($vocabulary->titlesIn($old), $vocabulary->titlesIn($content)));
+            if ($rejection === null && $origin === 'generate_steps' && $dropped !== []) {
+                $rejection = sprintf('The steps for %s drop "%s", which it already defines; keep every existing definition and append the new ones.', ProjectPath::relative($absPath), $dropped[0]);
+            }
             if ($rejection !== null) {
                 throw new RuntimeException($rejection);
             }
         }
 
-        $exists = $this->filesystem->exists($absPath);
-
-        return new Proposal(ProjectPath::relative($absPath), $exists ? $this->filesystem->read($absPath) : '', $content, !$exists, $origin);
+        return new Proposal(ProjectPath::relative($absPath), $old, $content, !$exists, $origin);
     }
 
     /**
@@ -738,14 +745,18 @@ final class PairToolExecutor implements ToolExecutor
 
     private function generateStepsHandler(): Closure
     {
-        $stepsPath = $this->resolveFeaturePaths()['steps'];
+        $home = new StepsHome($this->config, $this->filesystem);
 
-        return function (array $args) use ($stepsPath) {
-            $filePath = getcwd() . '/' . $stepsPath . '/' . $args['feature_name'] . '.steps.php';
+        return function (array $args) use ($home) {
+            $name = trim((string) ($args['steps_file'] ?? ''));
+            $file = $name === '' ? $home->defaultFile() : $home->file($name);
+            if ($file === null) {
+                throw new RuntimeException(sprintf('"%s" is not a steps file name; name one such as web, or leave it empty for %s.', $name, $home->defaultFile()));
+            }
 
-            $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_steps'));
+            $this->applyProposal($this->proposalFor($home->absolute($file), $args['content'], 'generate_steps'));
 
-            return "Steps file written to $filePath";
+            return 'Steps file written to ' . $file;
         };
     }
 

@@ -18,7 +18,8 @@ describe(GenerationCandidates::class, function () {
 
     it('round-trips through toArray and fromArray', function () {
         $candidates = new GenerationCandidates(
-            undefinedSteps: ['features/x.feature' => [['keyword' => 'Given', 'text' => 'a step']]],
+            undefinedSteps: [['keyword' => 'Given', 'text' => 'a step']],
+            stepsFile: 'acceptance_steps/steps.php',
             missingSpecClasses: ['App\\Foo' => 'App\\Basket'],
             missingStepClasses: ['App\\Bar'],
             missingMockTypes: ['App\\Repo'],
@@ -50,6 +51,30 @@ describe(GenerationCandidates::class, function () {
         $candidates = new GenerationCandidates(missingSpecClasses: ['App\\Foo' => 'App\\Basket', 'App\\Bar' => 'App\\Basket']);
 
         expect($candidates->only('create_class', 'App\\Bar')->missingSpecClasses)->toBe(['App\\Bar' => 'App\\Basket']);
+    });
+
+    it('narrows the steps offer to the steps file it names', function () {
+        $candidates = new GenerationCandidates(
+            undefinedSteps: [['keyword' => 'Given', 'text' => 'a step']],
+            missingStepClasses: ['App\\Till'],
+            stepsFile: 'features/steps/steps.php',
+        );
+
+        $only = $candidates->only('create_steps', 'features/steps/steps.php');
+        expect($only->undefinedSteps)->toBe([['keyword' => 'Given', 'text' => 'a step']]);
+        expect($only->stepsFile)->toBe('features/steps/steps.php');
+        expect($only->missingStepClasses)->toBe([]);
+        expect($candidates->only('create_steps', 'features/steps/web.steps.php')->isEmpty())->toBeTrue();
+    });
+
+    it('reads undefined steps recorded per feature as one list', function () {
+        $candidates = GenerationCandidates::fromArray(['undefinedSteps' => [
+            'features/x.feature' => [['keyword' => 'Given', 'text' => 'one']],
+            'features/y.feature' => [['keyword' => 'When', 'text' => 'two']],
+        ]]);
+
+        expect($candidates->undefinedSteps)->toBe([['keyword' => 'Given', 'text' => 'one'], ['keyword' => 'When', 'text' => 'two']]);
+        expect($candidates->stepsFile)->toBe('features/steps/steps.php');
     });
 
     it('tolerates missing keys in fromArray', function () {

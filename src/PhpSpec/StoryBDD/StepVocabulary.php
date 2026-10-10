@@ -42,16 +42,16 @@ final class StepVocabulary
     }
 
     /**
-     * Every title defined under a features root, mapped to the file defining
+     * Every title defined under the steps roots, mapped to the file defining
      * it (the first, when a legacy tree still holds duplicates).
      *
-     * @param string $featuresRoot absolute path of the features directory
+     * @param string ...$roots absolute paths of the directories holding steps files
      * @return array<string, string> title => absolute steps-file path
      */
-    public function definedTitles(string $featuresRoot): array
+    public function definedTitles(string ...$roots): array
     {
         $titles = [];
-        foreach ($this->stepsFilesUnder($featuresRoot) as $file) {
+        foreach ($this->stepsFiles(...$roots) as $file) {
             foreach ($this->titlesIn($this->filesystem->read($file)) as $title) {
                 $titles[$title] ??= $file;
             }
@@ -67,10 +67,10 @@ final class StepVocabulary
      * replaces them.
      *
      * @param string $content the proposed steps-file content
-     * @param string $targetPath the file the content is destined for (any base)
-     * @param string $featuresRoot absolute path of the features directory
+     * @param string $targetPath the file the content is destined for, absolute or project-relative
+     * @param string ...$roots absolute paths of the directories holding steps files
      */
-    public function rejectionFor(string $content, string $targetPath, string $featuresRoot): ?string
+    public function rejectionFor(string $content, string $targetPath, string ...$roots): ?string
     {
         $titles = $this->titlesIn($content);
         $duplicate = $this->firstDuplicate($titles);
@@ -78,9 +78,8 @@ final class StepVocabulary
             return sprintf('The proposed steps define "%s" twice; a step title registers once, so define it once and reuse it.', $duplicate);
         }
 
-        $target = basename($targetPath);
-        foreach ($this->definedTitles($featuresRoot) as $title => $file) {
-            if (basename($file) === $target) {
+        foreach ($this->definedTitles(...$roots) as $title => $file) {
+            if (self::isTarget($file, $targetPath)) {
                 continue;
             }
 
@@ -90,6 +89,59 @@ final class StepVocabulary
         }
 
         return null;
+    }
+
+    /**
+     * The steps files whose definitions serve the given step texts, in the
+     * order their titles are defined, each once: the files a story's steps
+     * live in, whatever the files are called.
+     *
+     * @param list<string> $stepTexts step texts as a feature writes them
+     * @param string ...$roots absolute paths of the directories holding steps files
+     * @return list<string> absolute steps-file paths
+     */
+    public function filesServing(array $stepTexts, string ...$roots): array
+    {
+        $titles = $this->definedTitles(...$roots);
+        $registry = new StepRegistry();
+        foreach (array_keys($titles) as $title) {
+            $registry->addStep($title, static function (): void {});
+        }
+
+        $files = [];
+        foreach ($stepTexts as $text) {
+            $match = $registry->match($text);
+            if ($match !== null) {
+                $files[$titles[$match->pattern]] = true;
+            }
+        }
+
+        return array_values(array_intersect(array_unique(array_values($titles)), array_keys($files)));
+    }
+
+    /**
+     * Every steps file (steps.php or *.steps.php) under the roots, each once.
+     *
+     * @return list<string> absolute paths
+     */
+    public function stepsFiles(string ...$roots): array
+    {
+        $files = [];
+        foreach ($roots as $root) {
+            foreach ($this->stepsFilesUnder(rtrim($root, '/\\')) as $file) {
+                $files[$file] = true;
+            }
+        }
+
+        return array_keys($files);
+    }
+
+    private static function isTarget(string $file, string $targetPath): bool
+    {
+        $file = str_replace('\\', '/', $file);
+        $target = str_replace('\\', '/', $targetPath);
+
+        return $file === $target || str_ends_with($file, '/' . preg_replace('~^\./~', '', $target));
     }
 
     /**
@@ -112,7 +164,7 @@ final class StepVocabulary
     }
 
     /**
-     * Every *.steps.php file under a directory, recursively.
+     * Every steps file (steps.php or *.steps.php) under a directory, recursively.
      *
      * @return list<string> absolute paths
      */
@@ -135,7 +187,7 @@ final class StepVocabulary
                 continue;
             }
 
-            if (str_ends_with($entry, '.steps.php')) {
+            if ((new StepsFile($entry))->isStepDefinitions()) {
                 $files[] = $path;
             }
         }

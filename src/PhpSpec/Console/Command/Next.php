@@ -24,7 +24,8 @@ use PhpSpec\Ai\Agent\Request;
 use PhpSpec\Ai\Agent\Step;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\RefactorJournal;
-use PhpSpec\CodeGeneration\FeatureLayout;
+use PhpSpec\CodeGeneration\StepGenerator;
+use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
@@ -33,6 +34,7 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
+use PhpSpec\StoryBDD\StepVocabulary;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -458,9 +460,8 @@ final class Next extends Command
         }
 
         $cwd = getcwd() ?: '.';
-        $layout = new FeatureLayout();
         $feature = ProjectPath::normalize($red['path']);
-        $candidates = [$feature, $layout->stepsPathFor($feature)];
+        $candidates = [$feature, ...$this->stepsServing($cwd . '/' . $feature)];
 
         $spec = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSpecPath(), './'));
         $source = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
@@ -478,6 +479,26 @@ final class Next extends Command
         }
 
         return $files;
+    }
+
+    /**
+     * The steps files, project-relative, whose definitions serve a feature's
+     * steps, whatever those files are called.
+     *
+     * @return list<string>
+     */
+    private function stepsServing(string $featureFile): array
+    {
+        if (!$this->filesystem->exists($featureFile)) {
+            return [];
+        }
+
+        $texts = array_column(StepGenerator::parseSteps($this->filesystem->read($featureFile)), 'text');
+
+        return array_map(
+            static fn(string $file): string => ProjectPath::relative($file),
+            (new StepVocabulary($this->filesystem))->filesServing($texts, ...(new StepsHome($this->config, $this->filesystem))->roots()),
+        );
     }
 
     private function loadBootstrap(): bool

@@ -29,7 +29,6 @@ final class Counts
     private int $passes = 0;
     private int $failures = 0;
     private int $errors = 0;
-    private int $broken = 0;
     private int $pending = 0;
 
     private int $risky = 0;
@@ -43,6 +42,10 @@ final class Counts
     private int $stepPasses = 0;
     private int $stepFailures = 0;
     private int $stepErrors = 0;
+    private int $stepPending = 0;
+    private int $stepWarnings = 0;
+    private int $stepDeprecations = 0;
+    private int $stepNotices = 0;
     private int $undefined = 0;
     private int $skipped = 0;
 
@@ -67,7 +70,6 @@ final class Counts
             'passes' => $this->passes,
             'failures' => $this->failures,
             'errors' => $this->errors,
-            'broken' => $this->broken,
             'pending' => $this->pending,
             'risky' => $this->risky,
             'warnings' => $this->warnings,
@@ -80,6 +82,10 @@ final class Counts
             'stepPasses' => $this->stepPasses,
             'stepFailures' => $this->stepFailures,
             'stepErrors' => $this->stepErrors,
+            'stepPending' => $this->stepPending,
+            'stepWarnings' => $this->stepWarnings,
+            'stepDeprecations' => $this->stepDeprecations,
+            'stepNotices' => $this->stepNotices,
             'undefined' => $this->undefined,
             'skipped' => $this->skipped,
         ];
@@ -94,15 +100,9 @@ final class Counts
     {
         if ($result instanceof ExampleResult) {
             $this->examples++;
-            if ($result->hasWarnings()) {
-                $this->warnings++;
-            }
-            if ($result->hasDeprecations()) {
-                $this->deprecations++;
-            }
-            if ($result->hasNotices()) {
-                $this->notices++;
-            }
+            $this->warnings += count($result->getWarnings());
+            $this->deprecations += count($result->getDeprecations());
+            $this->notices += count($result->getNotices());
             if ($result->isPending()) {
                 $this->pending++;
             } elseif ($result->isSkipped()) {
@@ -118,6 +118,9 @@ final class Counts
             }
         } elseif ($result instanceof StepResult) {
             $this->steps++;
+            $this->stepWarnings += count($result->getWarnings());
+            $this->stepDeprecations += count($result->getDeprecations());
+            $this->stepNotices += count($result->getNotices());
             if ($result->isPassed()) {
                 $this->stepPasses++;
             } elseif ($result->isError()) {
@@ -125,7 +128,7 @@ final class Counts
             } elseif ($result->isFailure()) {
                 $this->stepFailures++;
             } elseif ($result->isPending()) {
-                $this->pending++;
+                $this->stepPending++;
             } elseif ($result->isUndefined()) {
                 $this->undefined++;
             } elseif ($result->isSkipped()) {
