@@ -16,7 +16,8 @@ namespace PhpSpec\Source;
 
 /**
  * @internal
- * The methods a source file declares, and the lines each of them occupies.
+ * The classes a source file declares, their methods, and the lines each
+ * method occupies.
  *
  * Two questions are asked of this. Guard asks which member a line sits in, so
  * a violation can be named ("App\Basket::applyCoupon") instead of pointed at
@@ -31,14 +32,16 @@ final readonly class Members
 {
     /**
      * @param list<array{class: string, method: string, start: int, end: int}> $declared
+     * @param list<string> $classes
      */
-    private function __construct(private array $declared) {}
+    private function __construct(private array $declared, private array $classes) {}
 
     public static function in(string $source): self
     {
         $tokens = @token_get_all($source);
         $namespace = '';
         $class = null;
+        $classes = [];
         $declared = [];
 
         for ($i = 0; $i < count($tokens); $i++) {
@@ -58,6 +61,7 @@ final readonly class Members
                 $name = self::nameAfter($tokens, $i);
                 if ($name !== '') {
                     $class = $namespace . $name;
+                    $classes[] = $class;
                 }
 
                 continue;
@@ -73,7 +77,17 @@ final readonly class Members
             }
         }
 
-        return new self($declared);
+        return new self($declared, $classes);
+    }
+
+    /**
+     * The classes, interfaces, traits and enums the file declares, in order.
+     *
+     * @return list<string>
+     */
+    public function classes(): array
+    {
+        return $this->classes;
     }
 
     /**

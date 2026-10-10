@@ -302,6 +302,7 @@ Inside pair mode, `/next` reads the real suite state rather than guessing, and f
 AI-powered, behaviour-preserving refactoring. The AI analyses your source code, applies a single baby-step refactoring, and verifies that specs still pass.
 
 ```bash
+bin/phpspec refactor
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
 bin/phpspec refactor "spec/App/Calculator.spec.php"
@@ -311,6 +312,7 @@ bin/phpspec refactor "spec/App/Calculator.spec.php"
 
 | Input | Source File | Spec File |
 |---|---|---|
+| none | the source file modified last under `src_path` | the spec of the class it declares |
 | `App\Calculator` | `src/App/Calculator.php` | `spec/App/Calculator.spec.php` |
 | `App\Calculator::sum` | `src/App/Calculator.php` (focused on `sum`) | `spec/App/Calculator.spec.php` |
 | `spec/App/Calculator.spec.php` | `src/App/Calculator.php` (inferred) | `spec/App/Calculator.spec.php` |
@@ -319,9 +321,8 @@ bin/phpspec refactor "spec/App/Calculator.spec.php"
 
 1. **Baseline check** -- Runs your specs first. If they fail, refactoring is refused (you can't preserve behaviour that's already broken).
 2. **AI analysis** -- The LLM reads your source and spec files, identifies a single refactoring opportunity.
-3. **Apply** -- Writes the refactored code.
-4. **Verify** -- Runs specs again. If they pass, the refactoring is kept. If they fail, the original file is restored.
-5. **Report** -- Shows the technique name, a description of the change, and a unified diff.
+3. **Proposal** -- Shows the technique, why it improves the code, and the diff, then asks `Apply? [Y/n]`.
+4. **Apply and verify** -- Writes the refactored code and runs the specs again. If they pass, the refactoring is kept. If they fail, the original file is restored.
 
 ### Refactoring Techniques
 
@@ -338,38 +339,42 @@ The AI chooses from standard refactoring techniques:
 - Remove Dead Code
 - And others as appropriate
 
-If the code is already clean, the AI reports that no refactoring is needed.
+When nothing is worth changing, it says so in its own words: `Nothing to refactor in App\Till: Till does one thing, and its names say what.`
 
 ### Example Output
 
 ```
-Technique: Extract Method
-Description: Extracted validation logic into a validateInput() method
+$ bin/phpspec refactor
+  Checking the specs...
 
-   1   <?php
-   2   namespace App;
-   3 - class Calculator {
-   3 + class Calculator {
-   4       public function add(int $a, int $b): int {
-   5 -         if ($a < 0 || $b < 0) {
-   6 -             throw new \InvalidArgumentException('Negative');
-   7 -         }
-   5 +         $this->validateInput($a, $b);
-              return $a + $b;
-          }
-  10 +
-  11 +     private function validateInput(int $a, int $b): void {
-  12 +         if ($a < 0 || $b < 0) {
-  13 +             throw new \InvalidArgumentException('Negative');
-  14 +         }
-  15 +     }
-      }
+  Extract Method
+  receipt() both walks the items and formats each one; line() takes the
+  formatting, so receipt() reads as what it does.
 
-Specs still pass.
+  src/App/Till.php
+    10       public function receipt(): string
+    11       {
+    12 -         $lines = [];
+    13 -         foreach ($this->items as $item) {
+    14 -             $lines[] = sprintf('%-20s %6.2f', $item['name'], $item['price']);
+    15 -         }
+    12 +         return implode("\n", array_map($this->line(...), $this->items));
+    13 +     }
+    14
+    17 -         return implode("\n", $lines);
+    15 +     /** @param array{name: string, price: float} $item */
+    16 +     private function line(array $item): string
+    17 +     {
+    18 +         return sprintf('%-20s %6.2f', $item['name'], $item['price']);
+    19       }
+    20   }
+
+  Apply? [Y/n]
+  Specs still pass ✓
 ```
 
 ### Requirements
 
 - AI must be configured in `phpspec.yaml` (same `ai:` section as pair mode)
-- Both the source file and spec file must exist
+- The class must have a spec: one without is refused, with the `describe` command that gives it one
 - Baseline specs must pass before refactoring begins

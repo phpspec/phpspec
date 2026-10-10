@@ -116,3 +116,103 @@ Feature: AI-powered refactoring
     When I run phpspec refactor "spec/App/Calc.spec.php"
     Then the exit code should not be 0
     And the output should contain "AI configuration required"
+
+  Scenario: With no argument, refactor takes the source modified last, and refuses one with no spec
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      use App\Basket;
+
+      describe(Basket::class, function () {
+          it('works', function () {
+              expect(new Basket())->toBeAnInstanceOf(Basket::class);
+          });
+      });
+      """
+    And a class "src/App/Basket.php":
+      """
+      <?php
+      namespace App;
+
+      class Basket {}
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    And "src/App/Till.php" was modified last
+    When I run phpspec command "refactor"
+    Then the exit code should be 1
+    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
+    And the output should not contain "Basket"
+
+  Scenario: With no argument, refactor checks the spec of the source modified last
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      use App\Basket;
+
+      describe(Basket::class, function () {
+          it('works', function () {
+              expect(new Basket())->toBeAnInstanceOf(Basket::class);
+          });
+      });
+      """
+    And a class "src/App/Basket.php":
+      """
+      <?php
+      namespace App;
+
+      class Basket {}
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      use App\Till;
+
+      describe(Till::class, function () {
+          it('rings up', function () {
+              expect(true)->toBeFalse();
+          });
+      });
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    And "src/App/Till.php" was modified last
+    When I run phpspec command "refactor"
+    Then the exit code should be 1
+    And the output should contain "Checking the specs..."
+    And the output should contain "Specs must pass before refactoring"
+    And the output should contain "rings up"
+    And the output should not contain "Refactoring App\Till"
+
+  Scenario: With no argument and no source, refactor says there is none
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    When I run phpspec command "refactor"
+    Then the exit code should be 1
+    And the output should contain "No source to refactor under src."

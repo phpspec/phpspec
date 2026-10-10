@@ -51,6 +51,7 @@ See [Pair Programming & AI](pair.md#the-next-command) for full documentation.
 AI-powered, behaviour-preserving refactoring.
 
 ```bash
+bin/phpspec refactor                       # the source file modified last under src_path
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
 ```

@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use InvalidArgumentException;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
@@ -21,9 +22,14 @@ use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\RefactorAgent;
 use PhpSpec\Console\Command\Refactor\RefactorResult;
+use PhpSpec\Console\Command\Refactor\RefactorTarget;
+use PhpSpec\Console\Command\Refactor\TargetResolver;
+use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
@@ -34,9 +40,9 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  * @internal
  * CLI command that performs AI-powered, behaviour-preserving refactorings.
  *
- * Resolves a target (class FQCN, FQCN::method, or spec file path), verifies
- * that specs pass, then delegates to the RefactorAgent for a single baby-step
- * refactoring.
+ * Resolves a target (class FQCN, FQCN::method, a spec file path, or with no
+ * target the source modified last), verifies that its specs pass, then
+ * delegates to the RefactorAgent for a single baby-step refactoring.
  */
 final class Refactor extends Command
 {
@@ -73,47 +79,62 @@ final class Refactor extends Command
         $this
             ->setName('refactor')
             ->setDescription('AI-powered behaviour-preserving refactoring')
-            ->addArgument('target', Argument::REQUIRED, 'Class FQCN, FQCN::method, or spec file path');
+            ->addArgument('target', Argument::OPTIONAL, 'Class FQCN, FQCN::method, or spec file path; the source modified last when left out');
     }
 
     protected function execute(Input $input, Output $output): int
     {
-        // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
             $output->writeln('<fg=red>' . $this->config->aiConfigProblem() . '</>');
             return 1;
         }
 
-        // 2. Load bootstrap
         if (!$this->loadBootstrap()) {
             $output->writeln('<fg=red>Bootstrap file not found.</>');
             return 1;
         }
 
-        // 3. Resolve target
-        $targetArg = $input->getArgument('target');
-        if (!is_string($targetArg) || $targetArg === '') {
-            $output->writeln('<fg=red>Could not resolve target. Provide a class FQCN, FQCN::method, or spec file path.</>');
+        $argument = $input->getArgument('target');
+
+        try {
+            $target = (new TargetResolver($this->config, $this->filesystem, getcwd() ?: '.'))->resolve(is_string($argument) ? $argument : null);
+        } catch (UnresolvedTargetException $e) {
+            $output->writeln('<fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
             return 1;
         }
 
-        [$srcPath, $specPath, $method] = $this->resolveTarget($targetArg);
+        // The proposal is shown and confirmed BEFORE the write, so nothing
+        // reaches disk unbidden.
+        $displayed = false;
+        $confirm = function (string $technique, string $description, string $diff) use ($input, $output, $target, &$displayed): bool {
+            $displayed = true;
+            $this->displayProposal($output, $technique, $description, $diff, $target->sourceFile);
 
-        // 4. Verify files exist
-        if (!$this->filesystem->exists($srcPath)) {
-            $output->writeln("<fg=red>Source file not found: $srcPath</>");
-            return 1;
+            if (!$input->isInteractive()) {
+                return true;
+            }
+
+            /** @var QuestionHelper $helper */
+            $helper = $this->getHelper('question');
+
+            return (bool) $helper->ask($input, $output, new ConfirmationQuestion('  <fg=yellow>Apply?</> [Y/n] ', true));
+        };
+
+        $refactor = $this->refactorFn;
+        if ($refactor === null) {
+            try {
+                $provider = $this->provider ?? ProviderFactory::create($aiConfig);
+            } catch (RuntimeException|InvalidArgumentException $e) {
+                $output->writeln('<fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
+                return 1;
+            }
+
+            $refactor = fn(string $source, string $spec, ?string $method): RefactorResult => $this->refactorWith($provider, $aiConfig, $source, $spec, $method, $confirm);
         }
 
-        if (!$this->filesystem->exists($specPath)) {
-            $output->writeln("<fg=red>Spec file not found: $specPath</>");
-            return 1;
-        }
-
-        // 5. Baseline spec run
-        $output->writeln('  <fg=gray>Running baseline specs...</>');
-        [$exitCode, $specOutput] = $this->runSpecs($specPath);
+        $output->writeln('  <fg=gray>Checking the specs...</>');
+        [$exitCode, $specOutput] = $this->runSpecs($target->specFile);
 
         if ($exitCode !== 0) {
             $output->writeln('');
@@ -123,40 +144,19 @@ final class Refactor extends Command
             return 1;
         }
 
-        // 6. Run refactoring; the proposal is shown and confirmed BEFORE the
-        // write, so nothing reaches disk unbidden.
-        $output->writeln('  <fg=gray>Analysing code for refactoring opportunities...</>');
         $output->writeln('');
+        $result = $refactor($target->sourceFile, $target->specFile, $target->method);
 
-        $displayed = false;
-        $confirm = function (string $technique, string $description, string $diff) use ($input, $output, $srcPath, &$displayed): bool {
-            $displayed = true;
-            $this->displayProposal($output, $technique, $description, $diff, $srcPath);
-
-            if (!$input->isInteractive()) {
-                return true;
-            }
-
-            /** @var QuestionHelper $helper */
-            $helper = $this->getHelper('question');
-
-            return (bool) $helper->ask($input, $output, new ConfirmationQuestion('  <fg=yellow>Apply this refactoring?</> [Y/n] ', true));
-        };
-
-        $result = $this->performRefactoring($aiConfig, $srcPath, $specPath, $method, $confirm);
-
-        // 7. Display result
-        return $this->displayResult($output, $result, $srcPath, $displayed);
+        return $this->displayResult($output, $result, $target, $displayed);
     }
 
     /**
-     * Displays the proposed refactoring: technique, description, and the diff.
+     * Displays the proposed refactoring: the technique, why, and the diff.
      */
     private function displayProposal(Output $output, string $technique, string $description, string $diff, string $srcPath): void
     {
-        $output->writeln("  <fg=white;options=bold>Refactoring technique:</> $technique");
-        $output->writeln('');
-        $output->writeln("  $description");
+        $output->writeln('  <options=bold>' . OutputFormatter::escape($technique) . '</>');
+        $output->writeln('  ' . OutputFormatter::escape(wordwrap($description, 76, "\n  ")));
         $output->writeln('');
 
         if ($diff !== '') {
@@ -172,15 +172,15 @@ final class Refactor extends Command
      * Displays the refactoring result and returns the exit code. When the
      * confirm hook already showed the proposal, it is not repeated.
      */
-    private function displayResult(Output $output, RefactorResult $result, string $srcPath, bool $alreadyDisplayed = false): int
+    private function displayResult(Output $output, RefactorResult $result, RefactorTarget $target, bool $alreadyDisplayed = false): int
     {
         if (!$result->success && $result->technique === 'None') {
-            $output->writeln("  <fg=yellow>$result->description</>");
+            $output->writeln(sprintf('  <fg=yellow>Nothing to refactor in %s: %s</>', OutputFormatter::escape($target->fqcn), OutputFormatter::escape($result->description)));
             return 0;
         }
 
         if (!$alreadyDisplayed) {
-            $this->displayProposal($output, $result->technique, $result->description, $result->diff, $srcPath);
+            $this->displayProposal($output, $result->technique, $result->description, $result->diff, $target->sourceFile);
         }
 
         if (!$result->applied) {
@@ -199,86 +199,22 @@ final class Refactor extends Command
     }
 
     /**
-     * Resolves a target string into [srcPath, specPath, method].
-     *
-     * Supports:
-     * - `App\Calculator` → src/App/Calculator.php + spec/App/Calculator.spec.php
-     * - `App\Calculator::sum` → same + method focus
-     * - `spec/App/Calculator.spec.php` → infer src from spec
-     *
-     * @return array{0: string, 1: string, 2: string|null}
-     */
-    public function resolveTarget(string $target): array
-    {
-        $specSuffix = $this->config->getSpecSuffix();
-        $specPath = ltrim($this->config->getSpecPath(), './');
-        $srcPath = ltrim($this->config->getSrcPath(), './');
-        $cwd = getcwd();
-
-        // Spec file path given
-        if (str_ends_with($target, $specSuffix) || str_contains($target, '.spec.php')) {
-            $specFile = str_starts_with($target, '/') ? $target : $cwd . '/' . $target;
-
-            // Infer src from spec: spec/App/Foo.spec.php → src/App/Foo.php
-            $relative = $target;
-            if (str_starts_with($relative, $specPath . '/')) {
-                $relative = substr($relative, strlen($specPath . '/'));
-            }
-            $relative = str_replace($specSuffix, '.php', $relative);
-            $srcFile = $cwd . '/' . $srcPath . '/' . $relative;
-
-            return [$srcFile, $specFile, null];
-        }
-
-        // FQCN::method
-        $method = null;
-        $fqcn = $target;
-        if (str_contains($target, '::')) {
-            [$fqcn, $method] = explode('::', $target, 2);
-        }
-
-        // FQCN → file paths
-        $classPath = str_replace('\\', '/', $fqcn);
-        $srcFile = $cwd . '/' . $srcPath . '/' . $classPath . '.php';
-        $specFile = $cwd . '/' . $specPath . '/' . $classPath . $specSuffix;
-
-        return [$srcFile, $specFile, $method];
-    }
-
-    /**
-     * Performs the refactoring via injected callable or RefactorAgent.
+     * Asks the model for one refactoring of the target, remembering a kept
+     * one so a later run neither undoes nor repeats it.
      *
      * @param array{provider: string, model?: string, api_key?: string, effort?: string} $aiConfig
      * @param callable(string, string, string): bool $confirm asked with (technique, description, diff) before the write
      */
-    private function performRefactoring(array $aiConfig, string $srcPath, string $specPath, ?string $method, callable $confirm): RefactorResult
+    private function refactorWith(ProviderInterface $provider, array $aiConfig, string $source, string $spec, ?string $method, callable $confirm): RefactorResult
     {
-        if ($this->refactorFn !== null) {
-            return ($this->refactorFn)($srcPath, $specPath, $method);
-        }
-
-        try {
-            $provider = $this->provider ?? ProviderFactory::create($aiConfig);
-        } catch (\RuntimeException $e) {
-            return new RefactorResult(
-                success: false,
-                technique: 'None',
-                description: $e->getMessage(),
-                diff: '',
-                specOutput: '',
-            );
-        }
-
         $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
         $journal = new RefactorJournal($this->filesystem);
 
         $agent = new RefactorAgent($provider, $model, $this->filesystem, $aiConfig['effort'] ?? null, $this->specRunner, $confirm);
-        $result = $agent->refactor($srcPath, $specPath, $method, $journal->rendered());
+        $result = $agent->refactor($source, $spec, $method, $journal->rendered());
 
-        // Only a kept change becomes memory: the journal is what stops a later
-        // run from undoing this refactoring or redoing it forever.
         if ($result->success && $result->applied && $result->technique !== 'None') {
-            $journal->record($this->relativeClass($srcPath), $result->technique, $result->description);
+            $journal->record($this->relativeClass($source), $result->technique, $result->description);
         }
 
         return $result;

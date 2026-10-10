@@ -21,6 +21,7 @@ use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\Ai\Role;
 use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
@@ -114,10 +115,25 @@ final class RefactorAgent
         return $this->result ?? new RefactorResult(
             success: false,
             technique: 'None',
-            description: 'The AI did not apply any refactoring.',
+            description: $this->lastWords() ?? 'The model proposed no change.',
             diff: '',
             specOutput: '',
         );
+    }
+
+    /**
+     * What the model last said in prose, on one line: when it proposes no
+     * refactoring, that is its reason.
+     */
+    private function lastWords(): ?string
+    {
+        foreach (array_reverse($this->messages) as $message) {
+            if ($message->role === Role::Assistant && is_string($message->content) && trim($message->content) !== '') {
+                return (string) preg_replace('/\s+/', ' ', trim($message->content));
+            }
+        }
+
+        return null;
     }
 
     /**

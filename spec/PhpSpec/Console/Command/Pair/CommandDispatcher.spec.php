@@ -909,6 +909,14 @@ describe(CommandDispatcher::class, function () {
             expect($output)->toContain('AI configuration required');
         });
 
+        it('delegates /refactor with no target, which takes the source modified last', function () {
+            $result = $this->appDispatcher->dispatch('/refactor');
+            $output = $this->buffer->fetch();
+            expect($result)->toBe(CommandDispatcher::CONTINUE);
+            expect($output)->not()->toContain('Not enough arguments');
+            expect($output)->toContain('AI configuration required');
+        });
+
         it('delegates a bare "refactor Class" to the refactor command', function () {
             $result = $this->appDispatcher->dispatch('refactor App\\Calculator');
             $output = $this->buffer->fetch();
@@ -957,11 +965,11 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('shows error when a delegated command fails', function () {
-            // /refactor without its required arg triggers an exception in bind
-            $result = $this->appDispatcher->dispatch('/refactor');
+            // An option the command does not know fails while binding the input.
+            $result = $this->appDispatcher->dispatch('/refactor --nope');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
             $output = $this->buffer->fetch();
-            expect($output)->toContain('Not enough arguments');
+            expect($output)->toContain('The "--nope" option does not exist.');
         });
     });
 });

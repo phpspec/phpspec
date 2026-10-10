@@ -14,20 +14,27 @@ use Symfony\Component\Console\Tester\CommandTester;
 // Extract Method refactoring, over a mocked project, capturing writes; the
 // consent examples drive the REAL agent flow, not the refactorFn shortcut.
 // A non-empty $journal seeds .phpspec/ai/journal.jsonl with prior entries.
-function refactorConsentWorld(Filesystem $fs, array &$written, string $journal = ''): Refactor
+function refactorConsentWorld(Filesystem $fs, array &$written, string $journal = '', ?ProviderInterface $model = null): Refactor
 {
     $cwd = getcwd();
     $srcPath = $cwd . '/src/App/Good.php';
     $specPath = $cwd . '/spec/App/Good.spec.php';
 
-    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$srcPath, $specPath], true)
+    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$srcPath, $specPath, $cwd . '/src'], true)
         || ($journal !== '' && str_contains($path, 'journal.jsonl')));
+    allow($fs->isDir())->toReturnUsing(fn(string $path): bool => in_array($path, [$cwd . '/src', $cwd . '/src/App'], true));
+    allow($fs->scandir())->toReturnUsing(fn(string $path): array => match ($path) {
+        $cwd . '/src' => ['App'],
+        $cwd . '/src/App' => ['Good.php'],
+        default => [],
+    });
+    allow($fs->mtime())->toReturn(1);
     allow($fs->read())->toReturnUsing(function (string $path) use ($journal): string {
         if (str_contains($path, 'journal.jsonl')) {
             return $journal;
         }
 
-        return "<?php\nclass Good {}\n";
+        return "<?php\nnamespace App;\n\nclass Good {}\n";
     });
     allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
         $written[$path] = $content;
@@ -58,7 +65,7 @@ function refactorConsentWorld(Filesystem $fs, array &$written, string $journal =
 
     $specRunner = fn(string $path): array => [0, '1 pass'];
 
-    $cmd = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $fs, $specRunner, null, $provider);
+    $cmd = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $fs, $specRunner, null, $model ?? $provider);
 
     // Registered on an application so the command has a helper set: the
     // consent question needs the question helper, exactly as in production.
@@ -89,7 +96,7 @@ describe(Refactor::class, function () {
 
             expect($exitCode)->toBe(0);
             expect($tester->getDisplay())->toContain('Extract Method');
-            expect($tester->getDisplay())->toContain('Apply this refactoring?');
+            expect($tester->getDisplay())->toContain('Apply? [Y/n]');
             expect($tester->getDisplay())->toContain('Not applied');
             expect(count($written))->toBe(0);
         });
@@ -107,6 +114,56 @@ describe(Refactor::class, function () {
             expect(implode('', $written))->toContain('extracted');
         });
 
+        it('shows the technique, its rationale and the diff after one progress line, asks once, and gives the verdict', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written);
+
+            $tester = new CommandTester($cmd);
+            $tester->setInputs(['']);
+            $tester->execute(['target' => 'App\\Good']);
+            $display = $tester->getDisplay();
+
+            expect(substr_count($display, '  Checking the specs...'))->toBe(1);
+            expect($display)->not()->toContain('Running baseline specs');
+            expect($display)->not()->toContain('Analysing code');
+            expect($display)->not()->toContain('Refactoring technique:');
+            expect($display)->toContain("  Extract Method\n  Pull the guard out\n\n  src/App/Good.php\n");
+            expect(substr_count($display, 'Apply? [Y/n]'))->toBe(1);
+            expect($display)->toContain('Specs still pass ✓');
+        });
+
+        it('takes the source modified last when given no target, and works on it without announcing it', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written);
+
+            $tester = new CommandTester($cmd);
+            $tester->setInputs(['n']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('src/App/Good.php');
+            expect($tester->getDisplay())->not()->toContain('Refactoring App');
+            expect($tester->getDisplay())->toContain('  src/App/Good.php');
+        });
+
+        it("says there is nothing to refactor in the class, in the model's own words, when it proposes nothing", function (Filesystem $fs) {
+            $written = [];
+            $model = new class implements ProviderInterface {
+                public function chat(array $messages, array $options = []): Response
+                {
+                    return new Response('It does one thing and its names say so.');
+                }
+            };
+            $cmd = refactorConsentWorld($fs, $written, model: $model);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute(['target' => 'App\\Good']);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('  Nothing to refactor in App\\Good: It does one thing and its names say so.');
+            expect($written)->toBe([]);
+        });
+
         it('applies without asking when non-interactive', function (Filesystem $fs) {
             $written = [];
             $cmd = refactorConsentWorld($fs, $written);
@@ -115,7 +172,7 @@ describe(Refactor::class, function () {
             $exitCode = $tester->execute(['target' => 'App\\Good'], ['interactive' => false]);
 
             expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->not()->toContain('Apply this refactoring?');
+            expect($tester->getDisplay())->not()->toContain('Apply? [Y/n]');
             expect(implode('', $written))->toContain('extracted');
         });
 
@@ -161,67 +218,6 @@ describe(Refactor::class, function () {
         $config = Configuration::load('.', $fs);
         $cmd = new Refactor($config, $fs);
         expect($cmd)->toBeAnInstanceOf(Refactor::class);
-    });
-
-    context('target resolution', function () {
-
-        it('resolves a FQCN to src and spec paths', function (Filesystem $fs) {
-            $config = Configuration::load('.', $fs);
-            $cmd = new Refactor($config, $fs);
-
-            $result = $cmd->resolveTarget('App\\Calculator');
-
-            expect($result)->not()->toBeNull();
-            expect($result[0])->toEndWith('src/App/Calculator.php');
-            expect($result[1])->toEndWith('spec/App/Calculator.spec.php');
-            expect($result[2])->toBeNull();
-        });
-
-        it('resolves a FQCN::method with method focus', function (Filesystem $fs) {
-            $config = Configuration::load('.', $fs);
-            $cmd = new Refactor($config, $fs);
-
-            $result = $cmd->resolveTarget('App\\Calculator::sum');
-
-            expect($result)->not()->toBeNull();
-            expect($result[0])->toEndWith('src/App/Calculator.php');
-            expect($result[1])->toEndWith('spec/App/Calculator.spec.php');
-            expect($result[2])->toBe('sum');
-        });
-
-        it('resolves a spec file path and infers src', function (Filesystem $fs) {
-            $config = Configuration::load('.', $fs);
-            $cmd = new Refactor($config, $fs);
-
-            $result = $cmd->resolveTarget('spec/App/Calculator.spec.php');
-
-            expect($result)->not()->toBeNull();
-            expect($result[0])->toEndWith('src/App/Calculator.php');
-            expect($result[1])->toEndWith('spec/App/Calculator.spec.php');
-            expect($result[2])->toBeNull();
-        });
-
-        it('resolves a deeply nested FQCN', function (Filesystem $fs) {
-            $config = Configuration::load('.', $fs);
-            $cmd = new Refactor($config, $fs);
-
-            $result = $cmd->resolveTarget('App\\Domain\\Service\\Calculator');
-
-            expect($result[0])->toEndWith('src/App/Domain/Service/Calculator.php');
-            expect($result[1])->toEndWith('spec/App/Domain/Service/Calculator.spec.php');
-            expect($result[2])->toBeNull();
-        });
-
-        it('resolves a spec file with .spec.php in the name', function (Filesystem $fs) {
-            $config = Configuration::load('.', $fs);
-            $cmd = new Refactor($config, $fs);
-
-            $result = $cmd->resolveTarget('spec/App/Service.spec.php');
-
-            expect($result[0])->toEndWith('src/App/Service.php');
-            expect($result[1])->toEndWith('spec/App/Service.spec.php');
-            expect($result[2])->toBeNull();
-        });
     });
 
     context('command execution', function () {
@@ -281,7 +277,7 @@ describe(Refactor::class, function () {
             $exitCode = $tester->execute(['target' => 'App\\Present']);
 
             expect($exitCode)->toBe(1);
-            expect($tester->getDisplay())->toContain('Spec file not found');
+            expect($tester->getDisplay())->toContain('App\\Present has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\\Present');
         });
 
         it('returns error when baseline specs fail', function (Filesystem $fs) {
@@ -342,7 +338,6 @@ describe(Refactor::class, function () {
             $exitCode = $tester->execute(['target' => 'App\\Good']);
 
             expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Refactoring technique:');
             expect($tester->getDisplay())->toContain('Extract Method');
             expect($tester->getDisplay())->toContain('Specs still pass');
         });
@@ -378,7 +373,6 @@ describe(Refactor::class, function () {
             $exitCode = $tester->execute(['target' => 'App\\Risky']);
 
             expect($exitCode)->toBe(1);
-            expect($tester->getDisplay())->toContain('Refactoring technique:');
             expect($tester->getDisplay())->toContain('Inline Variable');
             expect($tester->getDisplay())->toContain('Refactoring reverted');
         });
@@ -484,7 +478,28 @@ describe(Refactor::class, function () {
             $exitCode = $tester->execute(['target' => 'App\\Clean']);
 
             expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Code is already clean');
+            expect($tester->getDisplay())->toContain('Nothing to refactor in App\\Clean: Code is already clean.');
+        });
+
+        it('stops on a model it cannot reach, before checking the specs, rather than reporting nothing to refactor', function (Filesystem $fs) {
+            $cwd = getcwd();
+            $files = [$cwd . '/src/App/Good.php', $cwd . '/spec/App/Good.spec.php'];
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, $files, true));
+            $ranSpecs = false;
+            $specRunner = function (string $path) use (&$ranSpecs): array {
+                $ranSpecs = true;
+
+                return [0, '1 pass'];
+            };
+            $cmd = new Refactor(new Configuration(['ai' => ['provider' => 'anthropic', 'api_key' => 'test-key']]), $fs, $specRunner);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute(['target' => 'App\\Good']);
+
+            expect($exitCode)->toBe(1);
+            expect($tester->getDisplay())->toContain('composer require papi-ai/anthropic');
+            expect($tester->getDisplay())->not()->toContain('Nothing to refactor');
+            expect($ranSpecs)->toBeFalse();
         });
     });
 });

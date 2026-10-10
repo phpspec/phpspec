@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
  - `--format=agent` reports an example or scenario that passed but raised a PHP warning, deprecation or notice, each note on the entry or the step that raised it with the line that raised it, and the summary counts `warnings`, `deprecations` and `notices`; none counts in `actionable`
+ - `refactor` with no target takes the source file modified last under `src_path`, and the spec of the class it declares
 ### Changed
  - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
  - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
@@ -57,6 +58,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The console counts each warning, deprecation and notice raised, not the examples that raised them, and counts a step's on the steps line; notices are listed in a `Notices:` section by pretty and dot alike
  - The HTML report counts the run in the console's words, the stories on a line of their own and the specs named, and counts warnings, deprecations and notices in its header, footer and group bars; an example or step that raised one unfolds to each, with the line that raised it
  - A deprecation a library raises for another library's code calling it is no longer reported; one it raises because the project called something deprecated still is, through `trigger_error()` or `trigger_deprecation()`
+ - `refactor` shows one progress line, then the technique, why, and the diff, and asks `Apply? [Y/n]`; when the model proposes nothing it says `Nothing to refactor in App\Till:` and its reason, where it used to say the AI applied nothing; a class with no spec is refused with the `describe` command that gives it one; a model it cannot reach stops the run before the specs are checked, where it used to read as nothing to refactor
 ### Fixed
  - A story hook that throws, or calls `skip()` or `pending()`, no longer ends the whole run with only its message: a before hook's signal leaves the feature, scenario or step it wraps skipped or pending with the reason, an after hook's signal is an error saying it came too late, and any other error errors the step it affects, naming the hook, while the rest of the run goes on
  - `skip()` or `pending()` in `beforeEach` or `beforeAll` leaves the examples it wraps skipped or pending with the reason, the matching after-hook still running, where it errored them and failed the run; in `afterEach` or `afterAll` it is an error that says it came after the example ran
@@ -124,6 +126,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A step's deprecations and notices were marked and listed as warnings; a note raised before `pending()` was filed as a warning whatever its kind, and one raised before `skip()` was lost
  - `--stop-on-warning`, `--stop-on-deprecation` and `--stop-on-notice` stop at a note a step raised, as they did at an example's
  - `--stop-on-pending` stops at a pending or undefined step and `--stop-on-skipped` at a step that skipped itself, as they did at an example; `--stop-on-problems` stops at them too
+ - `/refactor` in pair with no target ran into "Not enough arguments"; it now takes the source file modified last
 
 ## [9.0.0-beta.20](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.20)
 
