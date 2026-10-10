@@ -1,0 +1,3 @@
+Writes one step of the plan: every PHP file it changes or creates, each in full
+(the whole file, not a diff), under the source or spec path. Set red to true
+only when the step writes a spec that is meant to fail until a later step.

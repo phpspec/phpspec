@@ -116,13 +116,22 @@ describe('prompt artifacts', function () {
         expect($text)->toContain('never write');   // unbidden writes stay forbidden
     });
 
-    it('ships the refactor command as a manifest with its rules as editable prose', function () use ($read) {
+    it('ships the refactor command as a manifest: a plan of baby steps, a spec first for a collaborator, and an honest decline', function () use ($read) {
         $text = $read('commands/refactor');
 
         expect($text)->toContain('temperature: 0.3');
-        expect($text)->toContain('ONE baby-step refactoring');
-        expect($text)->toContain('apply_refactoring');
-        expect($text)->toContain('no refactoring is worthwhile');
+        expect($text)->toContain('propose_plan');
+        expect($text)->toContain('propose_step');
+        expect($text)->toContain('A new collaborator gets its own spec first');
+        expect($text)->toContain('through a double');
+        expect($text)->toContain('decline_refactoring');
+        expect($text)->toContain('## PhpSpec DSL');
+    });
+
+    it('describes the refactor tools, the step one saying what red means', function () use ($read) {
+        expect($read('tools/propose_plan'))->toContain('baby');
+        expect($read('tools/propose_step'))->toContain('red to true');
+        expect($read('tools/decline_refactoring'))->toContain('nothing');
     });
 
     it('ships the pair base guidance with layout placeholders, composed from the primers', function () use ($read, $raw) {

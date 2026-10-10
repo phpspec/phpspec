@@ -1,0 +1,1 @@
+Says that nothing in the code is worth refactoring now, and why, in a sentence.
