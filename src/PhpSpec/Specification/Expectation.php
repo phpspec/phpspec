@@ -23,6 +23,7 @@ use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\ObjectName;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
+use Traversable;
 
 /**
  * Fluent assertion API returned by expect(). Provides built-in matchers (toBe, toContain, etc.)
@@ -266,12 +267,19 @@ class Expectation
     /**
      * Asserts that the subject holds nothing: a string of no characters, an
      * array or a Countable of no elements, or null. A number or a boolean is
-     * empty as PHP's empty() has it, at zero or false.
+     * empty as PHP's empty() has it, at zero or false. An iterator that is not
+     * Countable is refused: only advancing it would tell, and an iterator
+     * advanced is not the one the caller handed over.
      *
      * @return static
+     * @throws InvalidArgumentException when the subject is an iterator that cannot be counted
      */
     public function toBeEmpty(): static
     {
+        if ($this->subject instanceof Traversable && !$this->subject instanceof Countable) {
+            throw new InvalidArgumentException(sprintf('toBeEmpty() cannot tell whether "%s" holds anything without advancing it: it takes a string, an array, a Countable or null.', get_debug_type($this->subject)));
+        }
+
         return $this->match(
             fn($subject) => self::holdsNothing($subject),
             'Expected %s to be empty',

@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
- - `toBeEmpty()` takes a `Countable` by its count, as documented, where an empty `ArrayObject` failed and its negation passed, and a failure on one wants `[]`; a string is empty only with no characters, so `'0'`, which PHP's `empty()` calls empty, is not
+ - `toBeEmpty()` takes a `Countable` by its count, as documented, where an empty `ArrayObject` failed and its negation passed, and a failure on one wants `[]`; a string is empty only with no characters, so `'0'`, which PHP's `empty()` calls empty, is not; an iterator that is not `Countable` is refused rather than advanced
  - `toHaveKey()` takes an integer key in a spec that declares strict types, as documented, where it threw a TypeError
  - Line selectors add up: a line that runs a whole context keeps every example in it, nested contexts included, where another selector inside one of its examples narrowed it to that one; an example at the top of a file runs by its line, where it ran nothing
  - `--fake` writes each value exactly as the spec wrote it, where a string holding a double quote or a NUL byte, a float such as `90.0` or `0.1 + 0.2`, and `PHP_INT_MIN` came back changed; it fills a method called on a subject built inline, `expect((new Greeter())->greet())`, which it passed over

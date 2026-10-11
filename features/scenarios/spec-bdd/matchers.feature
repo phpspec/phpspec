@@ -212,3 +212,12 @@ Feature: Matchers
       """
     When I run the spec
     Then all examples should pass
+
+  Scenario: toBeEmpty refuses an iterator it could only judge by advancing it
+    Given a spec with example:
+      """
+      expect((function () { yield 1; })())->toBeEmpty();
+      """
+    When I run the spec
+    Then the output should contain "toBeEmpty() cannot tell whether"
+    And the output should contain "holds anything without advancing it: it takes a string, an array, a Countable or null."

@@ -73,6 +73,12 @@ expect('0')->toBeEmpty();                // fails: a string of one character
 Unlike PHP's `empty()`, the string `'0'` is not empty. A failure names the
 empty form of what it was given as the value it wanted: `''`, `[]`, `0`.
 
+An iterator that is not `Countable`, such as an `EmptyIterator` or a generator,
+is refused, and so is `not()->toBeEmpty()` on one: only advancing it would tell
+whether it holds anything, and a generator advanced no longer gives the caller
+what it would have. `toBeEmpty()` reads none of its values; count it into an
+array first when that is what you mean, `expect(iterator_to_array($it))`.
+
 ### `toBeTruthy()`
 
 Asserts the subject is loosely truthy (`(bool) $subject === true`).
