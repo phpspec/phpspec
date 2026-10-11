@@ -43,7 +43,7 @@ describe(Consent::class, function () {
         expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeFalse();
         expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeTrue();
         expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeTrue();
-        expect($this->output->fetch())->toContain("  Apply this step?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
+        expect(str_replace(PHP_EOL, "\n", $this->output->fetch()))->toContain("  Apply this step?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
     });
 
     it('tells nobody answering apart from a no, for the caller to decide what nobody means', function (Prompt $prompt) {

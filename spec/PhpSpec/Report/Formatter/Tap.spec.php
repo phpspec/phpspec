@@ -28,7 +28,7 @@ describe(Tap::class, function() {
 
         (new Tap($output))->format(new SuiteResult([new FeatureResult('Shop', $scenarios)]));
 
-        $text = $output->fetch();
+        $text = str_replace(PHP_EOL, "\n", $output->fetch());
         expect($text)->toContain("1..4");
         expect($text)->toContain("ok 1 - Pays\n");
         expect($text)->toContain("not ok 2 - Refunds\n  ---\n  message: \"Then the total is refunded: Expected 0 to be 5\"");
