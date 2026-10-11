@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Refactor;
 
+use PhpSpec\CommandLine;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
@@ -31,12 +32,19 @@ final readonly class TargetResolver
 {
     private string $root;
 
+    private CommandLine $commandLine;
+
+    /**
+     * @param CommandLine|null $commandLine how the describe a refusal suggests is typed; the one this process was started by when not given
+     */
     public function __construct(
         private Configuration $config,
         private Filesystem $filesystem,
         string $root,
+        ?CommandLine $commandLine = null,
     ) {
         $this->root = rtrim($root, '/\\');
+        $this->commandLine = $commandLine ?? CommandLine::invoked($config);
     }
 
     /**
@@ -50,7 +58,7 @@ final readonly class TargetResolver
         if (!$this->filesystem->exists($resolved->sourceFile)) {
             throw new UnresolvedTargetException(
                 sprintf('No class %s at %s.', $resolved->fqcn, $this->relative($resolved->sourceFile)),
-                sprintf('Describe it first: phpspec describe %s', str_replace('\\', '/', $resolved->fqcn)),
+                'Describe it first: ' . $this->commandLine->for('describe', str_replace('\\', '/', $resolved->fqcn)),
             );
         }
 
@@ -69,7 +77,7 @@ final readonly class TargetResolver
             throw new UnresolvedTargetException(
                 sprintf('%s has no spec, so nothing would catch a refactoring that broke it.', $resolved->fqcn),
                 $kind === 'class'
-                    ? sprintf('Describe it first: phpspec describe %s', str_replace('\\', '/', $resolved->fqcn))
+                    ? 'Describe it first: ' . $this->commandLine->for('describe', str_replace('\\', '/', $resolved->fqcn))
                     : sprintf('Write its spec first: %s', $this->relative($resolved->specFile)),
             );
         }
@@ -167,7 +175,7 @@ final readonly class TargetResolver
             }
         }
 
-        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->config->srcDir()), sprintf('Describe it first: phpspec describe %s', $shortName));
+        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->config->srcDir()), 'Describe it first: ' . $this->commandLine->for('describe', $shortName));
     }
 
     /**

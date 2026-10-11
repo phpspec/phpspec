@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\CommandLine;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 use PhpSpec\Guard\Activation;
@@ -89,7 +90,7 @@ final class Guard extends Command
         $guard = $this->config->getGuardConfig();
         $paths = $guard['paths'] ?? ['src'];
 
-        $recorded = (new Baseline($this->filesystem, new ShellGit($base), $base))
+        $recorded = (new Baseline($this->filesystem, new ShellGit($base), $base, CommandLine::invoked($this->config)))
             ->record($paths, $guard['detection'] ?? 'git');
 
         $output->writeln(sprintf('Config %s updated. Guard is on.', basename($written)));

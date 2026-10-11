@@ -436,7 +436,10 @@ is loaded instead (its format is resolved from the extension), and the command
 fails if the file does not exist. The option is available on every command, and
 every phpspec a command starts reads the same file: the workers of a
 `--parallel` run, a `run` in a `pair` session, and the `rerun` an agent is handed.
-So does `--bootstrap`, for the workers and the `rerun`.
+So does `--bootstrap`, for the workers and the `rerun`. A command PhpSpec
+suggests (what `next` proposes, the `describe` a `refactor` refusal points to,
+the `guard` that records a baseline) names the binary as you invoked it and
+carries the same `--config`.
 
 ### Parallel Execution
 

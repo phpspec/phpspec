@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Guard;
 
+use PhpSpec\CommandLine;
 use PhpSpec\Filesystem;
 
 /**
@@ -27,10 +28,14 @@ final readonly class Baseline
 {
     private const FILE = '.phpspec/guard/baseline.json';
 
+    /**
+     * @param CommandLine $commandLine how the guard command a refusal names is typed
+     */
     public function __construct(
         private Filesystem $filesystem,
         private Git $git,
         private string $baseDir = '.',
+        private CommandLine $commandLine = new CommandLine(),
     ) {}
 
     /**
@@ -73,14 +78,14 @@ final readonly class Baseline
     {
         $path = $this->path();
         if (!$this->filesystem->exists($path)) {
-            throw new CannotJudge('Guard is on but no baseline is recorded in this checkout: run "bin/phpspec guard" to judge from here.');
+            throw new CannotJudge(sprintf('Guard is on but no baseline is recorded in this checkout: run "%s" to judge from here.', $this->commandLine->for('guard')));
         }
 
         $document = json_decode($this->filesystem->read($path), true);
         $recorded = is_array($document) && isset($document['recorded']) ? $document['recorded'] : null;
 
         if (!is_array($recorded) || !isset($recorded['kind'])) {
-            throw new CannotJudge(sprintf('Guard cannot read the baseline in %s: run "bin/phpspec guard" to record it again.', self::FILE));
+            throw new CannotJudge(sprintf('Guard cannot read the baseline in %s: run "%s" to record it again.', self::FILE, $this->commandLine->for('guard')));
         }
 
         return $recorded;

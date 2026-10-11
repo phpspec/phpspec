@@ -27,6 +27,7 @@ use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\CodeGeneration\StepsHome;
+use PhpSpec\CommandLine;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
@@ -61,6 +62,8 @@ final class Next extends Command
 
     private readonly SpecRunner $specRunner;
 
+    private readonly CommandLine $commandLine;
+
     /** @var (callable(array{provider: string, model?: string, api_key?: string}, string): array{type: string, target: string, reason: string})|null */
     private $suggestFn;
 
@@ -70,6 +73,7 @@ final class Next extends Command
      * @param (callable(array{provider: string, model?: string, api_key?: string}, string): array{type: string, target: string, reason: string})|null $suggestFn injectable display seam; receives the AI config and the rendered situation
      * @param SpecRunner|null $specRunner runs the suite for feature grounding; defaults to a subprocess
      * @param ProviderInterface|null $provider injectable AI seam for the agent pipeline
+     * @param CommandLine|null $commandLine how a suggested command is typed; the one this process was started by when not given
      */
     public function __construct(
         private readonly Configuration $config,
@@ -78,8 +82,10 @@ final class Next extends Command
         ?SpecRunner $specRunner = null,
         private readonly ?ProviderInterface $provider = null,
         private readonly ?Prompt $prompt = null,
+        ?CommandLine $commandLine = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->commandLine = $commandLine ?? CommandLine::invoked($config);
         $this->suggestFn = $suggestFn;
         $this->specRunner = $specRunner ?? new SubprocessRunner($config);
         parent::__construct();
@@ -158,7 +164,7 @@ final class Next extends Command
         // The agent document carries the suggestion and the exact command that
         // acts on it; a machine consumer is never prompted.
         if ($forAgent) {
-            $run = $actuation !== null ? self::invokedBinary() . ' ' . $actuation['display'] : null;
+            $run = $actuation !== null ? $this->commandLine->for(...$actuation['words']) : null;
             $outcome = new Outcome(null, [], '', $suggestion);
             $output->write((new OutcomePresenter())->render('next', $outcome, [], $run), false, Output::OUTPUT_RAW);
 
@@ -171,24 +177,24 @@ final class Next extends Command
         // 6. Offer to act (only when the suggestion determined an actuation)
         if ($actuation === null) {
             if ($suggestion['type'] === 'implement' && $suggestion['target'] !== '') {
-                $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' run');
+                $output->writeln('  <fg=gray>Run:</> ' . $this->commandLine->for('run'));
             }
 
             return 0;
         }
 
-        return $this->offerToRun($input, $output, $actuation['display'], $actuation['command'], $actuation['args'], $actuation['ask']);
+        return $this->offerToRun($input, $output, $this->commandLine->for(...$actuation['words']), $actuation['command'], $actuation['args'], $actuation['ask']);
     }
 
     /**
      * The command a suggestion actuates through, with its bound arguments and
-     * display line, shared by the interactive offer and the agent document so
+     * the words of its command line, shared by the interactive offer and the agent document so
      * both always name the same invocation. Null when nothing actuates: an
      * info suggestion, or a failing subject that is no class (its honest next
      * move is a run, which shows the failure).
      *
      * @param array{type: string, target: string, reason: string} $suggestion
-     * @return array{command: string, args: array<string, mixed>, display: string, ask: string}|null
+     * @return array{command: string, args: array<string, mixed>, words: list<string>, ask: string}|null
      */
     private function actuationFor(array $suggestion): ?array
     {
@@ -201,7 +207,7 @@ final class Next extends Command
         $generate = fn(string $instruction): array => [
             'command' => 'generate',
             'args' => ['instruction' => [$instruction]],
-            'display' => sprintf('generate "%s"', $instruction),
+            'words' => ['generate', $instruction],
             'ask' => $create,
         ];
 
@@ -209,7 +215,7 @@ final class Next extends Command
             'spec' => [
                 'command' => 'describe',
                 'args' => ['class' => str_replace('\\', '/', $target)],
-                'display' => 'describe ' . str_replace('\\', '/', $target),
+                'words' => ['describe', str_replace('\\', '/', $target)],
                 'ask' => $create,
             ],
             'feature' => $generate('a feature for ' . $target),
@@ -221,7 +227,7 @@ final class Next extends Command
             'refactor' => [
                 'command' => 'refactor',
                 'args' => ['target' => str_replace('\\', '/', $target)],
-                'display' => 'refactor ' . str_replace('\\', '/', $target),
+                'words' => ['refactor', str_replace('\\', '/', $target)],
                 'ask' => 'Would you like me to run it now?',
             ],
             default => null,
@@ -328,7 +334,7 @@ final class Next extends Command
         $decided = $input->isInteractive() ? $consent->decide($output, "  <fg=yellow>$ask</>", 'next', 'act on suggestions') : null;
 
         if ($decided === null) {
-            $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' ' . $hint);
+            $output->writeln('  <fg=gray>Run:</> ' . $hint);
 
             return 0;
         }
@@ -383,18 +389,6 @@ final class Next extends Command
             'target' => '',
             'reason' => sprintf('"%s" was already refactored and has not changed since. Grow the story instead: add the next scenario or feature.', $suggestion['target']),
         ];
-    }
-
-    /**
-     * The phpspec invocation as the user typed it, so a hint points at a
-     * binary that exists in their install (vendor/bin/phpspec, bin/phpspec,
-     * or a global phpspec), never at a hardcoded path.
-     */
-    private static function invokedBinary(): string
-    {
-        $argv0 = $_SERVER['argv'][0] ?? '';
-
-        return is_string($argv0) && $argv0 !== '' ? $argv0 : 'phpspec';
     }
 
     /**

@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\CommandLine;
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Guard\Verdict as GuardVerdict;
 use PhpSpec\ProjectRoot;
@@ -965,22 +966,9 @@ final class Agent extends AbstractFormatter
     private function rerunOf(array $targets): array
     {
         return [
-            'rerun' => implode(' ', array_map($this->shellWord(...), ['run', ...$targets, ...$this->rerunOptions])),
+            'rerun' => (new CommandLine(null, $this->rerunOptions))->for('run', ...$targets),
             'rerun_argv' => ['run', ...$targets, '--format=agent', ...$this->rerunOptions],
         ];
-    }
-
-    /**
-     * An argument as a POSIX shell reads it back unchanged: bare when it holds
-     * nothing a shell splits or expands, else in single quotes.
-     */
-    private function shellWord(string $argument): string
-    {
-        if (preg_match('~^[A-Za-z0-9_@%+=:,./-]+$~', $argument) === 1) {
-            return $argument;
-        }
-
-        return "'" . str_replace("'", "'\\''", $argument) . "'";
     }
 
     /**
