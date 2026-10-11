@@ -190,6 +190,14 @@ describe(PairOutput::class, function () {
             expect($output)->toContain('+ changed');
         });
 
+        it('names the file from the project root in diff output', function () {
+            $this->pairOutput->fileDiff(getcwd() . '/src/App/Till.php', 'a', 'b');
+
+            $output = $this->buffer->fetch();
+            expect($output)->toContain('[MODIFIED] src/App/Till.php');
+            expect($output)->not()->toContain(getcwd());
+        });
+
         it('numbers the lines of the file as it will be in diff output, a removed line having none', function () {
             $this->pairOutput->fileDiff('/tmp/f.php', "a\nb", "a\nc");
             $output = $this->buffer->fetch();

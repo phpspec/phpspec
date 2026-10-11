@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 use PhpSpec\Console\Command\Refactor\Diff;
+use PhpSpec\ProjectRoot;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Terminal;
 
@@ -240,13 +241,14 @@ final class PairOutput
     }
 
     /**
-     * Displays a unified diff between old and new file content.
+     * Displays a unified diff between old and new file content, the file
+     * named from the project root.
      */
     public function fileDiff(string $path, string $oldContent, string $newContent): void
     {
         $out = $this->getOutput();
         $out->writeln('');
-        $out->writeln("  <fg=yellow>[MODIFIED]</> <fg=white>$path</>");
+        $out->writeln(sprintf('  <fg=yellow>[MODIFIED]</> <fg=white>%s</>', ProjectRoot::here()->relative($path)));
         $out->writeln('');
 
         $oldLines = explode("\n", $oldContent);
