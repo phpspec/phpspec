@@ -90,7 +90,7 @@ Scenario Outline is its own entry, named by its values
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
 | `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` when it raised a PHP warning, deprecation or notice, and otherwise only under `-v`. |
 | `message` | What went wrong, whatever the state; for `pending` and `skipped`, the reason the example gave, when it gave one. An `error` entry keeps `exception` too, for the class and the site. |
-| `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
+| `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing, pending or skipped example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
@@ -277,7 +277,9 @@ passed, and a deprecation raised in a vendor's code may be nothing the project
 can fix. The one number to branch on is
 **`actionable`** = failing + errors + pending, plus a coverage gate the run
 missed and anything that stopped it.
-**Zero means there is nothing to do**, and it never disagrees with the exit code.
+**Zero means there is nothing to do.** It counts more than the exit code
+does: a pending example is work left to do, but, like PHPUnit's incomplete
+tests, it leaves the exit code at `0`.
 `duration_ms` is the run's wall time.
 
 | Field | Present when | Meaning |
@@ -599,8 +601,10 @@ commands: skip any that don't fit the design.
 
 ## Exit codes
 
-Unchanged from every other formatter: `0` when all examples pass, `1` when any
-fail or error. `--accept-offers` exits `0` after applying offers.
+Unchanged from every other formatter: `1` when an example or scenario fails or
+errors, when a coverage gate is missed, or when guard finds untested logic;
+`0` otherwise, pending examples included. `--accept-offers` exits `0` after
+applying offers.
 
 ## See also
 

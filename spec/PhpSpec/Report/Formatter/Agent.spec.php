@@ -88,6 +88,22 @@ describe(Agent::class, function () {
         expect($summary['actionable'])->toBe(0);
     });
 
+    it("addresses a pending or skipped example by the line that declares it, to rerun alone", function () {
+        $pending = new ExampleResult("is pending", [], isPending: true);
+        $pending->declaredAt(__FILE__, 14);
+        $skipped = new ExampleResult("is skipped", [], isSkipped: true);
+        $skipped->declaredAt(__FILE__, 18);
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
+
+        $lines = explode("\n", trim($output->fetch()));
+        $entries = array_map(static fn(string $line): array => json_decode($line, true, flags: JSON_THROW_ON_ERROR), array_slice($lines, 1, 2));
+        expect($entries[0]['spec'])->toEndWith('Agent.spec.php:14');
+        expect($entries[0]['rerun'])->toEndWith('Agent.spec.php:14');
+        expect($entries[1]['spec'])->toEndWith('Agent.spec.php:18');
+    });
+
     it("carries the reason a pending or skipped example gave as its message, and no message without one", function () {
         $pending = new ExampleResult("is pending", [], isPending: true, reason: "Needs the rates API");
         $skipped = new ExampleResult("is skipped", [], isSkipped: true, reason: "No network here");

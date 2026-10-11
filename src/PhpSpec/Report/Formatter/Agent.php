@@ -553,6 +553,7 @@ final class Agent extends AbstractFormatter
             if ($example->isLeftOutByFocus()) {
                 $this->focusedOut++;
             }
+            $this->address($entry, $example, null, null);
         } elseif ($state === 'risky') {
             $entry['message'] = 'No expectation in this example.';
             $this->address($entry, $example, null, null);
