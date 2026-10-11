@@ -104,6 +104,29 @@ Feature: CLI options
     And the output should contain "starts out at zero"
     And the output should not contain "refuses a coupon"
 
+  Scenario: A filter that matches nothing says so
+    Given a spec file "spec/App/Kept.spec.php":
+      """
+      <?php
+      describe('Kept', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--filter zzz"
+    Then the output should contain:
+      """
+      No example or scenario matches --filter "zzz".
+      """
+    And the output should not contain "run with --story"
+
   Scenario: Filter scenarios by title
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/paths.feature":

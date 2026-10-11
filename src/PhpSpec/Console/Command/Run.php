@@ -1059,6 +1059,12 @@ final class Run extends Command implements InternalOptions
             return sprintf('No scenario matches --tags "%s".', $tags);
         }
 
+        $filter = $input->getOption('filter');
+
+        if (is_string($filter)) {
+            return sprintf('No example or scenario matches --filter "%s".', $filter);
+        }
+
         if ($given !== []) {
             return 'No specs found.';
         }
