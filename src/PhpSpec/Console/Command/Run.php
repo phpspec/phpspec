@@ -258,6 +258,12 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, "Path not found: $missing", 'Check the path, or give none to run the configured suite.');
         }
 
+        $unrunnable = $this->unrunnablePath($given);
+
+        if ($unrunnable !== null) {
+            return $this->stopped($prose, $formatter, "Not a spec or a feature: $unrunnable", 'Name a spec file (*' . $this->config->getSpecSuffix() . '), a feature file or a directory of them.');
+        }
+
         $tags = $input->getOption('tags');
 
         if (is_string($tags)) {
@@ -740,6 +746,25 @@ final class Run extends Command implements InternalOptions
     {
         foreach ($given as $path) {
             if (!file_exists((string) preg_replace('/:\d+$/', '', $path))) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The first path given that is a file run cannot take: neither a spec
+     * nor a feature.
+     *
+     * @param list<string> $given
+     */
+    private function unrunnablePath(array $given): ?string
+    {
+        foreach ($given as $path) {
+            $file = (string) preg_replace('/:\d+$/', '', $path);
+
+            if (is_file($file) && !str_ends_with($file, $this->config->getSpecSuffix()) && !str_ends_with($file, '.feature')) {
                 return $path;
             }
         }

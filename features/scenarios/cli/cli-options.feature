@@ -510,6 +510,20 @@ Feature: CLI options
     Then the exit code should not be 0
     And the output should contain "Path not found: spec/App/Missing.spec.php"
 
+  Scenario: A file that is neither a spec nor a feature is refused, saying what run takes
+    Given a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec run with option "src/App/Till.php --format=agent"
+    Then the exit code should be 1
+    And the output should be valid JSON
+    And the output should contain "Not a spec or a feature: src/App/Till.php"
+    And the output should contain "Name a spec file (*.spec.php), a feature file or a directory of them."
+
   Scenario: Random execution order with seed
     Given a spec file "spec/App/Random.spec.php":
       """
