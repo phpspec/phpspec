@@ -53,12 +53,25 @@ expect(null)->toBeNull();    // passes
 
 ### `toBeEmpty()`
 
-Asserts the subject is empty (works with arrays, strings, and countables).
+Asserts the subject holds nothing:
+
+| Subject | Empty when |
+|---|---|
+| string | it has no characters, `''` |
+| array | it has no elements, `[]` |
+| `Countable` (an `ArrayObject`, a collection) | it counts `0` |
+| `null` | always |
+| int, float, bool | it is `0`, `0.0` or `false`, as PHP's `empty()` has it |
 
 ```php
-expect([])->toBeEmpty();     // passes
-expect('')->toBeEmpty();     // passes
+expect([])->toBeEmpty();                 // passes
+expect('')->toBeEmpty();                 // passes
+expect(new ArrayObject())->toBeEmpty();  // passes
+expect('0')->toBeEmpty();                // fails: a string of one character
 ```
+
+Unlike PHP's `empty()`, the string `'0'` is not empty. A failure names the
+empty form of what it was given as the value it wanted: `''`, `[]`, `0`.
 
 ### `toBeTruthy()`
 

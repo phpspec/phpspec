@@ -199,3 +199,16 @@ Feature: Matchers
       """
     When I run the spec
     Then all examples should pass
+
+  Scenario: toBeEmpty takes a Countable by its count and a string by its length
+    Given a spec with example:
+      """
+      expect(new ArrayObject())->toBeEmpty();
+      expect(new ArrayObject([1]))->not()->toBeEmpty();
+      expect('')->toBeEmpty();
+      expect('0')->not()->toBeEmpty();
+      expect([])->toBeEmpty();
+      expect(null)->toBeEmpty();
+      """
+    When I run the spec
+    Then all examples should pass

@@ -16,6 +16,7 @@ namespace PhpSpec\Specification;
 
 use BadMethodCallException;
 use Closure;
+use Countable;
 use InvalidArgumentException;
 use PhpSpec\Browser\Response;
 use PhpSpec\Mock\Expectation as MockExpectation;
@@ -263,14 +264,16 @@ class Expectation
     }
 
     /**
-     * Asserts that the subject is empty (empty string, empty array, null, etc.).
+     * Asserts that the subject holds nothing: a string of no characters, an
+     * array or a Countable of no elements, or null. A number or a boolean is
+     * empty as PHP's empty() has it, at zero or false.
      *
      * @return static
      */
     public function toBeEmpty(): static
     {
         return $this->match(
-            fn($expected) => empty($expected),
+            fn($subject) => self::holdsNothing($subject),
             'Expected %s to be empty',
             $this->subject,
             self::emptyLike($this->subject),
@@ -988,11 +991,22 @@ class Expectation
     private static function emptyLike(mixed $subject): mixed
     {
         return match (true) {
-            is_array($subject) => [],
+            is_array($subject), $subject instanceof Countable => [],
             is_string($subject) => '',
             is_int($subject) => 0,
             is_float($subject) => 0.0,
+            is_bool($subject) => false,
             default => null,
+        };
+    }
+
+    private static function holdsNothing(mixed $subject): bool
+    {
+        return match (true) {
+            is_string($subject) => $subject === '',
+            is_array($subject) => $subject === [],
+            $subject instanceof Countable => count($subject) === 0,
+            default => empty($subject),
         };
     }
 

@@ -38,6 +38,9 @@ describe(Expectation::class, function() {
     context("empty matcher", function() {
         it("passes toBeEmpty for empty array", fn() => expect([])->toBeEmpty());
         it("passes toBeEmpty for empty string", fn() => expect("")->toBeEmpty());
+        it("passes toBeEmpty for an empty Countable", fn() => expect(new \ArrayObject())->toBeEmpty());
+        it("fails toBeEmpty for a Countable that holds something", fn() => expect(new \ArrayObject([1]))->not()->toBeEmpty());
+        it("fails toBeEmpty for the one-character string 0, unlike empty()", fn() => expect("0")->not()->toBeEmpty());
     });
 
     context("containment matchers", function() {
@@ -409,6 +412,8 @@ describe(Expectation::class, function() {
             expect($of("stuff"))->toBe("");
             expect($of(3434))->toBe(0);
             expect($of(new \stdClass()))->toBeNull();
+            expect($of(new \ArrayObject([1])))->toBe([]);
+            expect($of(true))->toBe(false);
         });
     });
 

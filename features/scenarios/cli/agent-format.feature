@@ -262,6 +262,21 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should expect "[]" and have got "[1,2]"
 
+  Scenario: An emptiness failure on a Countable wants an empty array
+    Given a spec file "spec/App/Bag.spec.php":
+      """
+      <?php
+      describe('App\Bag', function () {
+          it('holds nothing', function () { expect(new ArrayObject([1, 2]))->toBeEmpty(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain:
+      """
+      "expectation":{"matcher":"toBeEmpty","expected":[],"actual":"ArrayObject"
+      """
+
   Scenario: A scenario hands over the log it was watching, read before its teardown
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/watching.feature":
