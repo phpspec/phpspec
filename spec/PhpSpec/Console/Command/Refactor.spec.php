@@ -43,7 +43,7 @@ describe(Refactor::class, function () {
         'red' => $red,
     ])], 900));
     let('outage', fn() => new RuntimeException('Google API error (400): API key not valid.'));
-    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = [], bool $attended = true): CommandTester {
+    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = [], bool $attended = true, array $settings = []): CommandTester {
         $this->replay = new ReplayProvider($responses);
         $suite = new class ($checks) implements SpecSuite {
             public function __construct(private array $checks) {}
@@ -62,7 +62,7 @@ describe(Refactor::class, function () {
             }
         };
         $consent = new Consent('Run with --no-interaction to %s.', $interactive ? Generation::Asks : Generation::Declines, prompt: $prompt);
-        $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $this->project, $suite, $this->replay, $consent);
+        $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']] + $settings), $this->project, $suite, $this->replay, $consent);
         $app = new Application('phpspec-test', '1.0');
         $app->setAutoExit(false);
         $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($command);
@@ -97,7 +97,17 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(0);
             expect($tester->getDisplay())->toContain('Nothing was written: there is nobody to answer. Run with --no-interaction to carry out the plan.');
+            expect($tester->getDisplay())->not()->toContain('Left unchanged.');
             expect($this->replay->requests)->toHaveCount(1);
+        });
+
+        it('wraps the model\'s reason to decline as it wraps the plan\'s', function () {
+            $reason = 'CheckoutService already delegates its pricing and its discounts to collaborators named for their roles, and every method reads as one step of the checkout.';
+            $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => $reason])])], [$this->green]);
+
+            $declined = substr($tester->getDisplay(true), (int) strpos($tester->getDisplay(true), '  Nothing to refactor'));
+            expect(max(array_map('mb_strlen', explode("\n", $declined))))->toBeLessThan(80);
+            expect(preg_replace('/\s+/', ' ', $declined))->toContain('Nothing to refactor in App\\Checkout\\CheckoutService: ' . $reason);
         });
 
         it('says there is nothing to refactor in the class, in the model\'s words, when it declines', function () {
@@ -105,6 +115,43 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(0);
             expect($tester->getDisplay())->toContain('  Nothing to refactor in App\\Checkout\\CheckoutService: It does one thing.');
+        });
+    });
+
+    context('an interrupt', function () {
+
+        it('undoes the step under way and stops green, when Ctrl-C comes while its specs run', function () {
+            if (!function_exists('pcntl_signal') || !function_exists('posix_kill')) {
+                skip('Signals are not handled on this platform.');
+            }
+            $before = ($this->code)();
+            $interrupting = new class implements SpecSuite {
+                private int $checks = 0;
+
+                public function check(): SuiteCheck
+                {
+                    if (++$this->checks === 2) {
+                        posix_kill(posix_getpid(), SIGINT);
+                    }
+
+                    return SuiteCheck::fromStream('{"event":"summary","actionable":0}');
+                }
+            };
+            $previous = pcntl_signal_get_handler(SIGINT);
+            pcntl_signal(SIGINT, static fn() => null);
+            $replay = new ReplayProvider([($this->plan)('Introduce a DiscountPolicy abstraction'), ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n"])]);
+            $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]), $this->project, $interrupting, $replay, new Consent('%s', Generation::Accepts));
+
+            try {
+                $tester = new CommandTester($command);
+                $tester->execute(['target' => 'App\\Checkout\\CheckoutService']);
+            } finally {
+                pcntl_signal(SIGINT, $previous);
+            }
+
+            expect($tester->getStatusCode())->toBe(130);
+            expect($tester->getDisplay())->toContain('Stopped by an interrupt at step 1: step 1 is undone.');
+            expect(($this->code)())->toBe($before);
         });
     });
 
@@ -143,7 +190,7 @@ describe(Refactor::class, function () {
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('Specs failed ✘, asking for a fix...');
             expect($tester->getDisplay())->not()->toContain('[Y/n]');
-            expect($tester->getDisplay())->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: step 1 is undone.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
         });
     });
@@ -170,6 +217,16 @@ describe(Refactor::class, function () {
             expect($this->project->files[$this->cwd . '/.phpspec/ai/journal.jsonl'] ?? '')->toContain('Replace Conditional with Polymorphism');
         });
 
+        it('notes the steps kept under the class refactored, whatever the source path is spelled', function () {
+            ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n"]),
+            ], [$this->green, $this->green], ['', ''], settings: ['src_path' => 'src/']);
+
+            $entry = json_decode(trim($this->project->files[$this->cwd . '/.phpspec/ai/journal.jsonl'] ?? '{}'), true);
+            expect($entry['target'] ?? null)->toBe('App\\Checkout\\CheckoutService');
+        });
+
         it('lets a step meant to be red stay red in the spec it writes, until a later step makes it green', function () {
             $tester = ($this->run)([
                 ($this->plan)('Describe LoyaltyDiscount', 'Write LoyaltyDiscount'),
@@ -193,7 +250,7 @@ describe(Refactor::class, function () {
             expect($tester->getStatusCode())->toBe(0);
             expect($display)->toContain('  Specs failed ✘, asking for a fix...');
             expect($display)->toContain('spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100');
-            expect($display)->toContain('Apply this fix? [Y/n]');
+            expect($display)->toContain("  Apply this fix?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe("<?php // fixed\n");
             expect(end($this->replay->requests[2]['messages'])->content)->toContain('Expected 90 to be 100');
         });
@@ -211,10 +268,23 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($display)->toContain('  Examples lost ✘, asking for a fix...');
-            expect($display)->toContain('The specs have 3 examples where they had 4: a refactoring moves or rewrites an example, never drops one.');
-            expect($display)->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
-            expect(end($this->replay->requests[2]['messages'])->content)->toContain('The specs have 3 examples where they had 4');
+            expect($display)->toContain('3 examples ran where 4 did: a refactoring moves or rewrites an example, never drops, skips or leaves one pending.');
+            expect($display)->toContain('Stopped at step 1: step 1 is undone.');
+            expect(end($this->replay->requests[2]['messages'])->content)->toContain('3 examples ran where 4 did');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+        });
+
+        it('takes an example the step skips for one it lost', function () {
+            $ran = fn(int $examples, int $skipped): SuiteCheck => SuiteCheck::fromStream(json_encode(['event' => 'summary', 'examples' => $examples, 'skipped' => $skipped, 'actionable' => 0]));
+
+            $tester = ($this->run)([
+                ($this->plan)('Use a DiscountPolicy in CheckoutService'),
+                ($this->step)(['spec/App/Checkout/CheckoutService.spec.php' => "<?php // one example skipped\n"]),
+                ($this->step)(['spec/App/Checkout/CheckoutService.spec.php' => "<?php // still skipped\n"]),
+            ], [$ran(4, 0), $ran(4, 1), $ran(4, 1)], ['', '', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay(true))->toContain('3 examples ran where 4 did');
         });
 
         it('keeps a step that moves examples, the count holding', function () {
@@ -242,7 +312,7 @@ describe(Refactor::class, function () {
             ], [$this->green, $this->green, $broken, $broken], ['', '', '', '']);
 
             expect($tester->getStatusCode())->toBe(1);
-            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 2 is undone; step 1 is kept.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
             expect($this->project->files)->not()->toHaveKey($this->cwd . '/src/App/Checkout/LoyaltyDiscount.php');
@@ -259,8 +329,49 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
-            expect($tester->getDisplay())->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: step 1 is undone.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+        });
+
+        it('stops before the first step having written nothing, when that is turned down', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n"]),
+            ], [$this->green], ['', 'n']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('Stopped before step 1: nothing was written.');
+        });
+
+        it('undoes a spec written red first when the step that greens it is turned down, saying so in the No it offers', function () {
+            $before = ($this->code)();
+
+            $tester = ($this->run)([
+                ($this->plan)('Describe LoyaltyDiscount', 'Write LoyaltyDiscount'),
+                ($this->step)(['spec/App/Checkout/LoyaltyDiscount.spec.php' => "<?php // red first\n"], red: true),
+                ($this->step)(['src/App/Checkout/LoyaltyDiscount.php' => "<?php // green\n"]),
+            ], [$this->green, ($this->redIn)('spec/App/Checkout/LoyaltyDiscount.spec.php:3', 'Class not found')], ['', '', '2']);
+            $display = $tester->getDisplay(true);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($display)->toContain("  Apply this step?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
+            expect($display)->toContain('Stopped before step 2: step 1 is undone, back to the last green state.');
+            expect(($this->code)())->toBe($before);
+            expect($this->project->files)->not()->toHaveKey($this->cwd . '/.phpspec/ai/journal.jsonl');
+        });
+
+        it('undoes a spec written red first when the model fails on the step that greens it', function () {
+            $before = ($this->code)();
+
+            $tester = ($this->run)([
+                ($this->plan)('Describe LoyaltyDiscount', 'Write LoyaltyDiscount'),
+                ($this->step)(['spec/App/Checkout/LoyaltyDiscount.spec.php' => "<?php // red first\n"], red: true),
+                $this->outage,
+            ], [$this->green, ($this->redIn)('spec/App/Checkout/LoyaltyDiscount.spec.php:3', 'Class not found')], ['', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 1 is undone, back to the last green state.');
+            expect(($this->code)())->toBe($before);
         });
 
         it('stops before a step the developer turns down, keeping the steps before it', function () {
@@ -271,9 +382,24 @@ describe(Refactor::class, function () {
             ], [$this->green, $this->green], ['', '', 'n']);
 
             expect($tester->getStatusCode())->toBe(0);
-            expect($tester->getDisplay())->toContain('Stopped before step 2: the steps before it are kept.');
+            expect($tester->getDisplay())->toContain('Stopped before step 2: step 1 is kept.');
             expect($this->project->files)->toHaveKey($this->cwd . '/src/App/Checkout/DiscountPolicy.php');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->not()->toContain('not wanted');
+        });
+
+        it('stops on a step it cannot write, undoing what of it was written', function () {
+            $before = ($this->code)();
+            $this->project->locked = [$this->cwd . '/src/App/Checkout/Locked.php'];
+
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n", 'src/App/Checkout/Locked.php' => "<?php\n"]),
+            ], [$this->green], ['', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain(sprintf('Cannot write %s/src/App/Checkout/Locked.php: permission denied: nothing of the step was written.', $this->cwd));
+            expect($tester->getDisplay())->toContain('Stopped at step 1: nothing was written.');
+            expect(($this->code)())->toBe($before);
         });
 
         it('stops on a step that writes outside the source and spec paths, writing nothing of it', function () {
@@ -286,6 +412,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: nothing was written.');
             expect(($this->code)())->toBe($before);
         });
     });
@@ -308,7 +435,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The model did not answer: Google API error (400): API key not valid.');
-            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 1 is kept.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
         });
 
@@ -324,7 +451,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The model did not answer: Google API error (400): API key not valid.');
-            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 2 is undone; step 1 is kept.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
             expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
         });
@@ -357,6 +484,15 @@ describe(Refactor::class, function () {
             expect($this->replay->requests)->toHaveCount(1);
         });
 
+        it('refuses as a receipt when the offer cannot be kept, no id given that was never stored', function () {
+            $this->project->locked = [$this->cwd . '/.phpspec/offers.json'];
+
+            $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction')], [$this->green], options: ['--format' => 'agent']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect(($this->receipt)($tester))->toBe(['v' => 2, 'action' => 'refactor', 'error' => sprintf('Cannot write %s/.phpspec/offers.json: permission denied.', $this->cwd)]);
+        });
+
         it('answers with the model\'s reason when it declines', function () {
             $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => 'Clean.'])])], [$this->green], options: ['--format' => 'agent']);
 
@@ -381,7 +517,7 @@ describe(Refactor::class, function () {
                 'v' => 2,
                 'action' => 'refactor',
                 'error' => 'App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it.',
-                'remedy' => 'Describe it first: phpspec describe App\\Checkout\\CheckoutService',
+                'remedy' => 'Describe it first: phpspec describe App/Checkout/CheckoutService',
             ]);
         });
 
@@ -393,7 +529,7 @@ describe(Refactor::class, function () {
                 'v' => 2,
                 'action' => 'refactor',
                 'error' => 'Specs must pass before refactoring.',
-                'remedy' => 'Fix failing specs first.',
+                'remedy' => 'Fix what the run left first.',
                 'failures' => ['spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100'],
             ]);
         });
@@ -406,7 +542,8 @@ describe(Refactor::class, function () {
             expect($unanswered->getStatusCode())->toBe(1);
             expect(($this->receipt)($unanswered))->toBe(['v' => 2, 'action' => 'refactor', 'error' => 'The model did not answer: Google API error (400): API key not valid.']);
             expect($unconfigured->getStatusCode())->toBe(1);
-            expect(($this->receipt)($unconfigured)['error'])->toContain('AI configuration required');
+            expect(($this->receipt)($unconfigured)['error'])->toBe('AI configuration required. Create phpspec.yml with an "ai" section.');
+            expect(($this->receipt)($unconfigured)['remedy'])->toContain('api_key: YOUR_API_KEY');
         });
     });
 
@@ -427,7 +564,7 @@ describe(Refactor::class, function () {
             $tester = ($this->run)([], []);
 
             expect($tester->getStatusCode())->toBe(1);
-            expect($tester->getDisplay())->toContain('App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\\Checkout\\CheckoutService');
+            expect($tester->getDisplay())->toContain('App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Checkout/CheckoutService');
         });
 
         it('takes the source modified last when given no target, without announcing it', function () {
@@ -435,6 +572,13 @@ describe(Refactor::class, function () {
 
             expect($tester->getDisplay())->toContain('Nothing to refactor in App\\Checkout\\CheckoutService: Clean.');
             expect($tester->getDisplay())->not()->toContain('Refactoring App');
+        });
+
+        it('never loads the project\'s bootstrap, which nothing in its own process needs', function () {
+            $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => 'Clean.'])])], [$this->green], settings: ['bootstrap' => 'nowhere/autoload.php']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('Nothing to refactor in App\\Checkout\\CheckoutService: Clean.');
         });
 
         it('asks for AI configuration when there is none', function () {

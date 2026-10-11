@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 use PhpSpec\Console\Command\Refactor\Diff;
+use PhpSpec\ProjectRoot;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Terminal;
 
@@ -36,8 +37,13 @@ final class PairOutput
     /**
      * @param OutputInterface $output the underlying Symfony console output
      */
-    public function __construct(private readonly OutputInterface $output)
-    {
+    /**
+     * @param bool $onTerminal whether the output is a terminal, which the screen layout needs: a pipe gets plain lines
+     */
+    public function __construct(
+        private readonly OutputInterface $output,
+        private readonly bool $onTerminal = true,
+    ) {
         $terminal = new Terminal();
         $this->width = $terminal->getWidth() ?: 80;
         $this->height = $terminal->getHeight() ?: 24;
@@ -98,6 +104,14 @@ final class PairOutput
         $reserved = $this->statusBar !== null ? 5 : 2;
         $scrollBottom = max(1, $this->height - $reserved);
 
+        if (!$this->onTerminal) {
+            $this->output->writeln('');
+            $this->output->writeln('<fg=bright-blue;options=bold>  PhpSpec Pair Programming Mode</>');
+            $this->output->writeln('');
+
+            return;
+        }
+
         // Reset scroll region and clear entire screen
         $this->output->write("\033[r\033[2J\033[H");
 
@@ -137,6 +151,10 @@ final class PairOutput
      */
     public function prepareForInput(): void
     {
+        if (!$this->onTerminal) {
+            return;
+        }
+
         // Lazy init or resize detection
         $newHeight = (new Terminal())->getHeight() ?: 24;
         if ($this->scrollOutput === null || $newHeight !== $this->height) {
@@ -223,13 +241,14 @@ final class PairOutput
     }
 
     /**
-     * Displays a unified diff between old and new file content.
+     * Displays a unified diff between old and new file content, the file
+     * named from the project root.
      */
     public function fileDiff(string $path, string $oldContent, string $newContent): void
     {
         $out = $this->getOutput();
         $out->writeln('');
-        $out->writeln("  <fg=yellow>[MODIFIED]</> <fg=white>$path</>");
+        $out->writeln(sprintf('  <fg=yellow>[MODIFIED]</> <fg=white>%s</>', ProjectRoot::here()->relative($path)));
         $out->writeln('');
 
         $oldLines = explode("\n", $oldContent);

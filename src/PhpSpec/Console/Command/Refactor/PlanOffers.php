@@ -24,7 +24,6 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
-use PhpSpec\Guard\Inspection;
 use PhpSpec\Offers\Offer;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface as Output;
@@ -68,24 +67,24 @@ final readonly class PlanOffers
             return [$this->notApplied($e->getMessage())];
         }
 
-        $suite = $this->suite ?? new SubprocessSuite($this->root, Inspection::of($this->config, $this->filesystem, $this->root) !== null);
+        $suite = $this->suite ?? new SubprocessSuite($this->root, $this->config);
         $output->writeln('  <fg=gray>Checking the specs...</>');
         $baseline = $suite->check();
 
         if (!$baseline->green()) {
-            return [$this->notApplied(trim('Specs must pass before refactoring. ' . implode(' ', $baseline->failures())))];
+            return [$this->notApplied(implode("\n", ['Specs must pass before refactoring. Fix what the run left first.', ...$baseline->failures()]))];
         }
 
-        $plan = RefactorPlan::fromArray(is_array($offer->data['plan'] ?? null) ? $offer->data['plan'] : []);
+        $plan = RefactorPlan::fromArray($offer->plan());
         $model = new RefactorModel($provider, $this->config, $this->filesystem, $this->root, new PromptLibrary($this->filesystem));
         $journal = new RefactorJournal($this->filesystem);
         $model->adopt($target, $plan, $journal->rendered());
 
         $steps = new StepByStep($output, $model, $suite, new Consent('', Generation::Accepts), new Progress($output), new Writer($this->filesystem, $this->root), $journal, attended: false);
-        $carried = $steps->carryOut($plan, $baseline, (string) ($offer->data['subject'] ?? $target->fqcn));
+        $carried = $steps->carryOut($plan, $baseline, $target->fqcn);
         $written = array_map(static fn(string $file): array => ['file' => $file, 'applied' => true], $carried->files);
 
-        return $carried->exitCode === 0 && $carried->stopped === '' ? $written : [...$written, $this->notApplied($carried->stopped)];
+        return $carried->complete() ? $written : [...$written, $this->notApplied($carried->stopped)];
     }
 
     /**

@@ -30,18 +30,20 @@ namespace PhpSpec\Source;
  */
 final readonly class Members
 {
+    private const KINDS = [T_CLASS => 'class', T_INTERFACE => 'interface', T_TRAIT => 'trait', T_ENUM => 'enum'];
+
     /**
      * @param list<array{class: string, method: string, start: int, end: int}> $declared
-     * @param list<string> $classes
+     * @param array<string, string> $kinds each class, interface, trait and enum, in order, by what it is
      */
-    private function __construct(private array $declared, private array $classes) {}
+    private function __construct(private array $declared, private array $kinds) {}
 
     public static function in(string $source): self
     {
         $tokens = @token_get_all($source);
         $namespace = '';
         $class = null;
-        $classes = [];
+        $kinds = [];
         $declared = [];
 
         for ($i = 0; $i < count($tokens); $i++) {
@@ -56,12 +58,12 @@ final readonly class Members
                 continue;
             }
 
-            if (in_array($token[0], [T_CLASS, T_INTERFACE, T_TRAIT, T_ENUM], true)) {
+            if (isset(self::KINDS[$token[0]])) {
                 // "Foo::class" is not a declaration; only a name makes one.
                 $name = self::nameAfter($tokens, $i);
                 if ($name !== '') {
                     $class = $namespace . $name;
-                    $classes[] = $class;
+                    $kinds[$class] = self::KINDS[$token[0]];
                 }
 
                 continue;
@@ -77,7 +79,7 @@ final readonly class Members
             }
         }
 
-        return new self($declared, $classes);
+        return new self($declared, $kinds);
     }
 
     /**
@@ -87,7 +89,30 @@ final readonly class Members
      */
     public function classes(): array
     {
-        return $this->classes;
+        return array_keys($this->kinds);
+    }
+
+    /**
+     * What the file declares this name as (class, interface, trait or enum),
+     * or null when it declares no such name.
+     */
+    public function kindOf(string $class): ?string
+    {
+        return $this->kinds[ltrim($class, '\\')] ?? null;
+    }
+
+    /**
+     * Whether the class declares a method by this name.
+     */
+    public function declares(string $class, string $method): bool
+    {
+        foreach ($this->declared as $member) {
+            if ($member['class'] === ltrim($class, '\\') && strcasecmp($member['method'], $method) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -22,7 +22,6 @@ use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
-use PhpSpec\Console\Command\Refactor\ModelFailedException;
 use PhpSpec\Console\Command\Refactor\PlannedStep;
 use PhpSpec\Console\Command\Refactor\Progress;
 use PhpSpec\Console\Command\Refactor\RefactorModel;
@@ -36,8 +35,8 @@ use PhpSpec\Console\Command\Refactor\TargetResolver;
 use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Filesystem;
-use PhpSpec\Guard\Inspection;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\RealFilesystem;
@@ -83,21 +82,21 @@ final class Refactor extends Command
         $this
             ->setName('refactor')
             ->setDescription('AI-powered behaviour-preserving refactoring')
-            ->addArgument('target', Argument::OPTIONAL, 'Class FQCN, FQCN::method, or spec file path; the source modified last when left out')
+            ->addArgument('target', Argument::OPTIONAL, 'A class (App/Till), a short name (Till), Class::method, a source file or a spec file; the source modified last when left out')
             ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty');
     }
 
     protected function execute(Input $input, Output $output): int
     {
-        $forAgent = $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
         $aiConfig = $this->config->getAiConfig();
 
         if ($aiConfig === null) {
-            return $this->refuse($output, $forAgent, (string) $this->config->aiConfigProblem());
-        }
+            $refusal = $this->config->aiConfigRefusal() ?? ['problem' => '', 'remedy' => null];
 
-        if (!$this->loadBootstrap()) {
-            return $this->refuse($output, $forAgent, 'Bootstrap file not found.');
+            return $forAgent
+                ? $this->refuse($output, true, $refusal['problem'], (string) $refusal['remedy'])
+                : $this->refuse($output, false, (string) $this->config->aiConfigProblem());
         }
 
         $root = getcwd() ?: '.';
@@ -112,14 +111,14 @@ final class Refactor extends Command
             return $this->refuse($output, $forAgent, $e->getMessage());
         }
 
-        $suite = $this->suite ?? new SubprocessSuite($root, Inspection::of($this->config, $this->filesystem, $root) !== null);
+        $suite = $this->suite ?? new SubprocessSuite($root, $this->config);
         if (!$forAgent) {
             $output->writeln('  <fg=gray>Checking the specs...</>');
         }
         $baseline = $suite->check();
 
         if (!$baseline->green()) {
-            return $this->refuse($output, $forAgent, 'Specs must pass before refactoring.', 'Fix failing specs first.', $baseline->failures());
+            return $this->refuse($output, $forAgent, 'Specs must pass before refactoring.', 'Fix what the run left first.', $baseline->failures());
         }
 
         $model = new RefactorModel($provider, $this->config, $this->filesystem, $root, new PromptLibrary($this->filesystem));
@@ -129,7 +128,7 @@ final class Refactor extends Command
             return $forAgent
                 ? $this->planForAgent($output, $target, $model->plan($target, $journal->rendered()))
                 : $this->refactorStepByStep($input, $output, $target, $model, $suite, $baseline, $journal);
-        } catch (ModelFailedException $e) {
+        } catch (RuntimeException $e) {
             return $this->refuse($output, $forAgent, $e->getMessage());
         }
     }
@@ -149,7 +148,7 @@ final class Refactor extends Command
 
         if ($plan instanceof Declined) {
             $output->writeln('');
-            $output->writeln(sprintf('  <fg=yellow>Nothing to refactor in %s: %s</>', OutputFormatter::escape($target->fqcn), OutputFormatter::escape($plan->reason)));
+            $output->writeln(sprintf('<fg=yellow>%s</>', OutputFormatter::escape('  ' . wordwrap(sprintf('Nothing to refactor in %s: %s', $target->fqcn, $plan->reason), 76, "\n  "))));
 
             return 0;
         }
@@ -159,7 +158,15 @@ final class Refactor extends Command
         if ($attended) {
             $this->showPlan($output, $plan, $progress);
 
-            if (!$consent->confirm($output, '  Would you like to proceed?', 'refactor-plan', 'carry out the plan')) {
+            $decided = $consent->decide($output, '  Would you like to proceed?', 'refactor-plan', 'carry out the plan');
+
+            if ($decided === null) {
+                $consent->nobody($output, 'carry out the plan');
+
+                return 0;
+            }
+
+            if (!$decided) {
                 $output->writeln('  Left unchanged.');
 
                 return 0;
@@ -168,7 +175,7 @@ final class Refactor extends Command
 
         $steps = new StepByStep($output, $model, $suite, $consent, $progress, new Writer($this->filesystem, getcwd() ?: '.'), $journal, $attended);
 
-        return $steps->carryOut($plan, $baseline, $this->relativeClass($target))->exitCode;
+        return $steps->carryOut($plan, $baseline, $target->fqcn)->exitCode;
     }
 
     /**
@@ -188,7 +195,7 @@ final class Refactor extends Command
             return 0;
         }
 
-        $offer = Offer::refactor($target->fqcn . ($target->method === null ? '' : '::' . $target->method), $plan->toArray(), $plan->read, $this->relativeClass($target));
+        $offer = Offer::refactor($target->fqcn . ($target->method === null ? '' : '::' . $target->method), $plan->toArray(), $plan->read);
         (new OfferBook($this->filesystem))->record($offer);
 
         $this->receipt($output, $about + [
@@ -271,33 +278,5 @@ final class Refactor extends Command
     private function relative(string $file): string
     {
         return ltrim(substr($file, strlen(getcwd() ?: '.')), '/\\');
-    }
-
-    /**
-     * The class-ish name the journal keeps a target under: its source path
-     * under the source directory (src/App/X.php reads as App\X).
-     */
-    private function relativeClass(RefactorTarget $target): string
-    {
-        $relative = $this->relative($target->sourceFile);
-        $srcDir = ltrim($this->config->getSrcPath(), './');
-        if (str_starts_with($relative, $srcDir . '/')) {
-            $relative = substr($relative, strlen($srcDir) + 1);
-        }
-
-        return str_replace('/', '\\', preg_replace('/\.php$/', '', $relative) ?? $relative);
-    }
-
-    private function loadBootstrap(): bool
-    {
-        $bootstrap = $this->config->getBootstrap() ?? (file_exists('vendor/autoload.php') ? 'vendor/autoload.php' : null);
-        if ($bootstrap === null) {
-            return true;
-        }
-        if (!file_exists($bootstrap)) {
-            return false;
-        }
-        require_once $bootstrap;
-        return true;
     }
 }

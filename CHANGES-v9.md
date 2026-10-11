@@ -29,15 +29,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `phpspec api` describes the spec-writing API from the code itself: DSL, matchers, mocks, story steps and the timing rules; `--format=agent` gives it to a coding agent as one JSON object
  - An agent entry's `expectation` carries `diff` when both sides are strings or arrays of one shape: the byte offset, or the key path, where they part, with a window of each from there
  - An agent entry and the summary carry `rerun_argv`, the re-run as an argument list ending in `--format=agent`, next to the `rerun` string
- - The agent header says which PHP ran, whether coverage is collected and whether guard is on or off, also when a missing coverage driver stops the run, so a reader knows upfront which verdicts will follow
+ - The agent header says which PHP ran, whether coverage is collected and whether guard is on or off, so a reader knows upfront which verdicts will follow
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
  - `--format=agent` reports an example or scenario that passed but raised a PHP warning, deprecation or notice, each note on the entry or the step that raised it with the line that raised it, and the summary counts `warnings`, `deprecations` and `notices`; none counts in `actionable`
- - `refactor` with no target takes the source file modified last under `src_path`, and the spec of the class it declares
- - `refactor Calculator` takes the class by that short name modified last under `src_path`; a name no class there answers to is refused with the `describe` command
- - `refactor App/Calculator` reads as `App\Calculator`
- - `refactor --format=agent` answers with one JSON receipt: the plan (technique, rationale, steps) offered once and whole, or the model's reason to decline; `accept` with the offer's id carries the plan out with nobody asked and names the files written, or where it stopped; a plan made reading a file that changed since is refused. A refusal carries `error`, `remedy` and, over failing specs, `failures`
+ - `refactor` takes a short class name (`refactor Calculator`, the one modified last under `src_path`), a slashed one (`App/Calculator`), a source file, or no target, meaning the source file modified last; `/refactor` in pair takes the same. A name no class answers to is refused with the `describe` command that gives it one
+ - `refactor --format=agent` answers with the plan as one JSON receipt, offered once and whole, or the model's reason to decline; `accept` carries the plan out unattended and names the files written, or where it stopped
 ### Changed
+ - `toThrow()`'s first parameter is named `$exception`, as it takes an exception or its class; a call that named `exceptionClass:` names `exception:`
+ - `generate` and `next` under `--format=agent` answer with the receipt every other command gives, `{"v":2,"action":"generate",...}`, where they nested it under `command`; a model that does not answer is refused as an `error`, exit 1, where it read as a suggestion or as nothing generated
  - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
  - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
  - The file phpspec names, and writes, when a project has no configuration is `phpspec.yml`, the name the docs use; the lookup order of the four formats is unchanged
@@ -61,11 +61,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The console counts each warning, deprecation and notice raised, not the examples that raised them, and counts a step's on the steps line; notices are listed in a `Notices:` section by pretty and dot alike
  - The HTML report counts the run in the console's words, the stories on a line of their own and the specs named, and counts warnings, deprecations and notices in its header, footer and group bars; an example or step that raised one unfolds to each, with the line that raised it
  - A deprecation a library raises for another library's code calling it is no longer reported; one it raises because the project called something deprecated still is, through `trigger_error()` or `trigger_deprecation()`
- - `refactor` checks the specs on one progress line; when the model proposes nothing it says `Nothing to refactor in App\Till:` and its reason, where it used to say the AI applied nothing; a class with no spec is refused with the `describe` command that gives it one; a model it cannot reach stops the run before the specs are checked, where it used to read as nothing to refactor
- - `refactor` works through a plan: the model names the technique, says why, and lists baby steps; you agree to the plan, then to each step as its diffs are shown (a `[Y/n]` line, or the pair chooser, where always applies the rest). A step may span several files under `src_path` and `spec_path`; a new collaborator is described by its own spec first and talked to through a double. The whole spec suite runs before the plan and after each step, judged as `run` judges it (under coverage when guard is on): a step may be red only in a spec it writes first and may not leave fewer examples than it found, a step that breaks anything else gets one fix, then it is undone and the run stops, the steps before it kept. A model that does not answer stops the run in the provider's words, undoing a step it was fixing. Progress shows what is under way, how long the model took and how many tokens it wrote. With `--no-interaction` the plan is carried out without asking, each step naming the files it writes; input that ends before an answer writes nothing. The conversation is kept in `.phpspec/ai/last-refactor.json`
+ - `refactor` works through a plan: the model names the technique, says why and lists baby steps; you approve the plan, then each step as its diffs are shown, and `--no-interaction` carries it out without asking. A new collaborator is described by its own spec first and reached through a double. The whole spec suite runs before the plan and after every step; a step may leave red only the spec it just wrote, and may not leave fewer examples running. A step that breaks anything else gets one fix, then is undone, and however the run stops (a No, Ctrl-C, a model that does not answer) it stops green, undoing the steps since the specs last passed. A class with no spec is refused with the `describe` command that gives it one; when the model declines it says `Nothing to refactor in App\Till:` and why
 ### Fixed
+ - A JUnit failure or error says, as PHPUnit's does, what failed and where, under its message, where it carried the message alone
+ - An AI command without an `ai` section answers a coding agent with the problem as `error` and the section to add as `remedy`, where the example sat inside the error
+ - Pair names the file a change would make from the project root, where it showed the absolute path
+ - A `--filter` that matches nothing says so, where the run pointed at features run with `--story`
+ - An empty `api_key` is refused as a missing one is, where it went to the provider and came back 403
+ - A run a stop option cut short says which option stopped it and that what came after did not run, and the agent summary carries it as `stopped_by`, where it read as a complete run
+ - `pair --prompt` exits `1` when its line failed (a red run, a command that refused, an unknown command), where it always exited `0`; a pair session whose output is not a terminal prints plain lines, where it wrote the screen layout's escapes into the pipe
+ - `fake_method` is offered only for a method whose body is empty, where a method with an answer of its own was offered and accepting it applied nothing
+ - TAP reports each scenario of a story run as a test point, failed by the first step that failed, errored or is undefined, where it reported none; JUnit counts the tests, failures, errors and skipped steps of each feature and scenario, and fails an undefined step, which fails the run, where it skipped it
+ - A configuration that cannot be taken answers a coding agent in JSON, a `fatal` and the summary for `run`, an `error` receipt for the other commands, where it printed prose into the stream
+ - A pending or skipped example under `--format=agent` carries its `spec` and `rerun`, as a failing one does
+ - `run` given a file that is neither a spec nor a feature says so and what it takes, where it died with a TypeError after a summary saying nothing was left to do
+ - `generate` places a new class it is given by its bare name under the project's namespace, the default one the config names or the one it maps, as `describe` does: `a spec for a Coupon` in a `Brew\` project writes `spec/Brew/Coupon.spec.php`, where it wrote `spec/Coupon.spec.php`
+ - `accept` tells a person why an offer was not applied, as it tells an agent; an offer accepted once is refused as already accepted, where it read as changed since; a stale offer's refusal says how to get a fresh one; and `accept` with no id refuses on the reader's channel
+ - A file phpspec cannot write is refused in a sentence naming it, where a read-only directory printed PHP warnings and the command carried on as if it had written
+ - `describe`, `exemplify`, `generate`, `next`, `refactor`, `accept` and `api` refuse a `--format` they do not speak, as `run` does, where they answered in prose
+ - A question nobody answers, because the input ended, writes nothing in pair, `generate` and `next`, as in `run` and `refactor`: `generate` offers the change under an id and `next` prints the command to run. `yes` and `no` are taken as words at every question, and an answer the pair chooser does not know is a no
  - A diff, in `refactor`, `generate`, the run's offers and pair, numbers the lines of the file as it will be and leaves a removed line unnumbered; a removed line carried its number in the old file, so a stretch could read 5, 6, 5, 6
- - Pair's `/run`, its greeting and `next` run the specs with Xdebug collecting coverage when guard is on or a `--coverage` option asks for it; they ran with it off, so a guarded project's runs were refused for want of a coverage driver and `/run --coverage` said coverage needs Xdebug
+ - Pair's `/run`, its greeting and `next` collect coverage when guard is on or a `--coverage` option asks for it; `/run --coverage` said coverage needs Xdebug
  - A story hook that throws, or calls `skip()` or `pending()`, no longer ends the whole run with only its message: a before hook's signal leaves the feature, scenario or step it wraps skipped or pending with the reason, an after hook's signal is an error saying it came too late, and any other error errors the step it affects, naming the hook, while the rest of the run goes on
  - `skip()` or `pending()` in `beforeEach` or `beforeAll` leaves the examples it wraps skipped or pending with the reason, the matching after-hook still running, where it errored them and failed the run; in `afterEach` or `afterAll` it is an error that says it came after the example ran
  - The HTML report words its counts as the console does, `1 example (1 failed)`, `6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)`, where it said `1 pass` and `2 failures` and left risky examples out; its header counts an errored step among the failed, where it counted none
@@ -132,8 +148,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A step's deprecations and notices were marked and listed as warnings; a note raised before `pending()` was filed as a warning whatever its kind, and one raised before `skip()` was lost
  - `--stop-on-warning`, `--stop-on-deprecation` and `--stop-on-notice` stop at a note a step raised, as they did at an example's
  - `--stop-on-pending` stops at a pending or undefined step and `--stop-on-skipped` at a step that skipped itself, as they did at an example; `--stop-on-problems` stops at them too
- - `/refactor` in pair with no target ran into "Not enough arguments"; it now takes the source file modified last
- - `toThrow(new RuntimeException('boom'))` never matched, the exception read as a class name; an exception given stands for its class and message, as it did for phpspec 2's `shouldThrow()`
+ - `toThrow(new RuntimeException('boom'))` expects that class and that message; it read the exception as a class name and never matched
  - A command delegated from the pair prompt lost the backslashes typed into its arguments: `/refactor App\Till` reached refactor as `AppTill`
 
 ## [9.0.0-beta.20](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.20)
@@ -322,7 +337,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [9.0.0-beta.9](https://github.com/phpspec/phpspec/compare/9.0.0-beta.8...9.0.0-beta.9)
 
 ### Fixed
- - `generate` honours a file path named in the instruction and picks the artifact from its extension — a `.feature` request is written as Gherkin, never a spec — and infers a feature, spec, or code target from the wording when no path is given.
+ - `generate` honours a file path named in the instruction and picks the artifact from its extension (a `.feature` request is written as Gherkin, never a spec), and infers a feature, spec, or code target from the wording when no path is given.
  - `generate` rejects a spec the model wrote in phpspec-8 ObjectBehavior syntax instead of writing invalid DSL.
  - Pair `/next` no longer leaks the machine-readable `{type, target, reason}` suggestion JSON into its conversational reply.
 
@@ -333,7 +348,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Slash commands in pair mode: `/describe`, `/exemplify`, `/run`, `/next`, `/generate`, `/clear` (joining `/swap`, `/help`, `/quit`)
  - Generate command and `/generate` to turn a plain-English instruction into a spec example or code
  - Ghost-text next step, the prompt pre-fills a dim suggestion of the next command (Right-arrow/Tab accepts)
- - `next` follows outside-in, feature-first TDD — favours story tests and advises the next baby step from real suite state; works without AI.
+ - `next` follows outside-in, feature-first TDD: favours story tests and advises the next baby step from real suite state; works without AI.
 
 ### Fixed
  - Native PHP 8.4/8.5 deprecations in mock generation (nullable `?object` constructor param; dropped `setAccessible()`).
@@ -342,14 +357,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [9.0.0-beta.7](https://github.com/phpspec/phpspec/compare/9.0.0-beta.6...9.0.0-beta.7)
 
 ### Added
- - Roles & /swap — you drive or the AI drives (one artifact per turn); the navigator never writes files.
- - Grounded & self-verifying — it sees the suite's real red/green each turn and auto-runs specs after its own change, instead of guessing.
- - Designs in conversation — clarify → plan → confirm → make the change → present the diff.
- - Grows specs, never overwrites — describe + add_example; drops-examples or phpspec 8 ObjectBehavior writes are rejected.
+ - Roles & /swap: you drive or the AI drives (one artifact per turn); the navigator never writes files.
+ - Grounded & self-verifying: it sees the suite's real red/green each turn and auto-runs specs after its own change, instead of guessing.
+ - Designs in conversation: clarify → plan → confirm → make the change → present the diff.
+ - Grows specs, never overwrites: describe + add_example; drops-examples or phpspec 8 ObjectBehavior writes are rejected.
  - Plus: inspect_symbol, bounded long sessions, a suite-state greeting, real generated-code diffs, unified chooser, ai.max_tokens.
 
 ### Fixed
- - Fixed — next no longer loops on an existing spec; code generation won't offer to create a class/spec that already exists.
+ - next no longer loops on an existing spec; code generation won't offer to create a class/spec that already exists.
 
 ## [9.0.0-beta.6](https://github.com/phpspec/phpspec/compare/9.0.0-beta.5...9.0.0-beta.6)
 
@@ -382,8 +397,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Breaking Changes
 - Complete rewrite with Jasmine/RSpec-style syntax
-- Removed Prophecy dependency — built-in mock system
-- Removed ObjectBehavior base class — closures everywhere
+- Removed Prophecy dependency: built-in mock system
+- Removed ObjectBehavior base class: closures everywhere
 - Removed dependency on symfony/event-dispatcher, symfony/process, symfony/finder, doctrine/instantiator, sebastian/exporter, phpspec/php-diff
 - Spec files now use `.spec.php` suffix
 

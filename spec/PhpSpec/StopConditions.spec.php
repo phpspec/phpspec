@@ -19,6 +19,14 @@ describe(StopConditions::class, function () {
         expect((new StopConditions(onWarning: true))->metBy($errored))->toBeFalse();
     });
 
+    it("names the option a result reached, the first of them, and none when it reached none", function () {
+        $pending = new ExampleResult('later', [], isPending: true);
+
+        expect((new StopConditions(onFailure: true, onPending: true))->reachedBy(new SpecificationResult('S', [$pending])))->toBe('--stop-on-pending');
+        expect((new StopConditions(onFailure: true))->reachedBy(new SpecificationResult('S', [$pending])))->toBeNull();
+        expect((new StopConditions())->reachedBy(new SpecificationResult('S', [$pending])))->toBeNull();
+    });
+
     it("is not met by a passing example, whatever it stops on", function () {
         expect(StopConditions::fromProblems()->metBy(new ExampleResult('passes', [MatchResult::passed()])))->toBeFalse();
     });

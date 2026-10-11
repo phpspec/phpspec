@@ -36,13 +36,7 @@ final class OutcomePresenter
      */
     public function document(string $command, Outcome $outcome, array $applied = [], ?string $run = null): array
     {
-        $document = [
-            'command' => [
-                'v' => Schema::V,
-                'event' => 'command_result',
-                'command' => $command,
-            ],
-        ];
+        $document = ['v' => Schema::V, 'action' => $command];
 
         if ($outcome->step !== null) {
             $document['step'] = [

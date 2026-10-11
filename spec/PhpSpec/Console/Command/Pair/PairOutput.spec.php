@@ -11,6 +11,18 @@ describe(PairOutput::class, function () {
 
     it('instantiates', fn() => expect($this->pairOutput)->toBeAnInstanceOf(PairOutput::class));
 
+    it('draws no screen layout when its output is no terminal, only the header', function () {
+        $plain = new PairOutput($this->buffer, onTerminal: false);
+
+        $plain->setupLayout();
+        $plain->prepareForInput();
+
+        $text = $this->buffer->fetch();
+        expect($text)->toContain('PhpSpec Pair Programming Mode');
+        expect($text)->not()->toContain("\033[");
+        expect($plain->getOutput())->toBe($this->buffer);
+    });
+
     it('returns the raw output before setupLayout', function () {
         expect($this->pairOutput->getOutput())->toBe($this->buffer);
     });
@@ -176,6 +188,14 @@ describe(PairOutput::class, function () {
             $output = $this->buffer->fetch();
             expect($output)->toContain('- line2');
             expect($output)->toContain('+ changed');
+        });
+
+        it('names the file from the project root in diff output', function () {
+            $this->pairOutput->fileDiff(getcwd() . '/src/App/Till.php', 'a', 'b');
+
+            $output = $this->buffer->fetch();
+            expect($output)->toContain('[MODIFIED] src/App/Till.php');
+            expect($output)->not()->toContain(getcwd());
         });
 
         it('numbers the lines of the file as it will be in diff output, a removed line having none', function () {

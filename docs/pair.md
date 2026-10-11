@@ -22,16 +22,16 @@ The pair command requires an interactive terminal. It sets up a split-screen lay
 
 Pair mode opens by looking at your project once and greeting you with what matters right now, rather than a static menu:
 
-- **Red suite** — it names the failing subject and its example, and offers to start there.
-- **Green with a pending example** — it names the nearest `xit()` gap to make real.
-- **Green and clean** — a short observation, then it's your call.
-- **Empty project** — an invitation to write the first spec.
+- **Red suite**: it names the failing subject and its example, and offers to start there.
+- **Green with a pending example**: it names the nearest `xit()` gap to make real.
+- **Green and clean**: a short observation, then it's your call.
+- **Empty project**: an invitation to write the first spec.
 
 The greeting adapts to your configuration: with an AI provider configured it invites plain English; without one it points you at the deterministic commands (`/describe`, `/exemplify`, `/run`). The full command list is always available behind `/help`.
 
 ### Driving and navigating
 
-Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more — the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
+Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more: the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
 
 - **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead (intent, then location, then the exact line only when you ask), but it never writes files unbidden. When its advice becomes concrete it **offers** the change instead of dictating code: you see the exact diff and accept or decline through the numbered chooser; an accepted offer lands through the same write gate as every other change and auto-verifies. One offer per turn, and a declined offer is never re-offered. It never asks leave to offer either: if it asks "shall I offer that?" while the offer is still on the table, PhpSpec sends it back to make the offer, since the diff is the question. Once the turn's one offer is spent, a question is a question and it reaches you.
 - **The AI drives, you navigate** (after `/swap`). You give the intent; the AI makes it real one artifact at a time, shows the diff, runs the spec, and hands back.
@@ -48,7 +48,8 @@ These commands work without AI configuration, and each works with or without its
 | `/exemplify <Class> <method>` | Add a method example to an existing spec |
 | `/run [path\|keyword] [options]` | Run specs (or features) and offer code generation for failures |
 | `/next` | Suggest the next step from the real suite state |
-| `/generate <instruction>` | Turn plain English into a spec example or code — diff, then confirm (requires AI) |
+| `/generate <instruction>` | Turn plain English into a spec example or code, shown as a diff to confirm (requires AI) |
+| `/refactor [target]` | Refactor in baby steps, each asked through the chooser (requires AI) |
 | `/clear` | Clear the terminal |
 | `/swap` | Swap who drives (needs an AI provider) |
 | `/help` | Show available commands and AI status |
@@ -79,7 +80,7 @@ Anything else is a prompt for the AI, and the guards keep conversation as conver
 ### Suggested next command (ghost text)
 
 After each command the prompt is pre-filled with a dim **ghost** of the natural next
-step — describe a spec and it suggests running it, run and it suggests `/next`, and so on:
+step: describe a spec and it suggests running it, run and it suggests `/next`, and so on:
 
 ```
 > /describe App/Todo
@@ -147,8 +148,8 @@ composer require papi-ai/papi-core papi-ai/openai       # for GPT
 ```
 
 The status bar reflects whether the provider actually started, not merely that an `ai:`
-section exists. If a provider is configured but can't start — its package isn't installed,
-the name is misspelt, the key is for a different provider — the bar shows **`ai: unavailable`**
+section exists. If a provider is configured but can't start (its package isn't installed,
+the name is misspelt, the key is for a different provider), the bar shows **`ai: unavailable`**
 rather than `ai: on`, and the reason is shown the moment you type a prompt or run `/help`.
 So an `AIza…` (Google) key under `provider: openai` will read as unavailable until you set
 `provider: google`.
@@ -279,7 +280,7 @@ When you're not sure what to work on next, ask PhpSpec:
 bin/phpspec next
 ```
 
-The command coaches the single next step in **outside-in, story-first TDD**, favouring feature (story) tests. When feature files are present it runs the whole suite (`--all`) and reads the real red/green state: a red or unwritten scenario drives the inner spec cycle; when the features are green it offers one baby step over the files you last touched — refactor the last code, add a new scenario, or start a new feature. The shared coaching lives in `src/PhpSpec/Ai/Prompts/next.txt`. With no feature files it falls back to the spec cycle (describe the missing class, or make the nearest pending example real).
+The command coaches the single next step in **outside-in, story-first TDD**, favouring feature (story) tests. When feature files are present it runs the whole suite (`--all`) and reads the real red/green state: a red or unwritten scenario drives the inner spec cycle; when the features are green it offers one baby step over the files you last touched: refactor the last code, add a new scenario, or start a new feature. The shared coaching lives in `src/PhpSpec/Ai/Prompts/next.txt`. With no feature files it falls back to the spec cycle (describe the missing class, or make the nearest pending example real).
 
 Example output:
 
@@ -293,22 +294,23 @@ Example output:
   drive the step definitions and any missing specs.
 ```
 
-The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again — it points you at `bin/phpspec run` to drive out the missing class.
+The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again; it points you at `bin/phpspec run` to drive out the missing class.
 
-Inside pair mode, `/next` reads the real suite state rather than guessing, and follows the same outside-in, feature-first logic — a red scenario drops into the inner cycle, undefined steps get written, and green features prompt a baby step over the last-touched feature and source. **This works even without an AI provider**: the deterministic narrator gives the advice, and `next.txt` enriches it when a provider is configured (the navigator advises, the driver takes the step).
+Inside pair mode, `/next` reads the real suite state rather than guessing, and follows the same outside-in, feature-first logic: a red scenario drops into the inner cycle, undefined steps get written, and green features prompt a baby step over the last-touched feature and source. **This works even without an AI provider**: the deterministic narrator gives the advice, and `next.txt` enriches it when a provider is configured (the navigator advises, the driver takes the step).
 
 ## The `refactor` Command
 
-AI-powered, behaviour-preserving refactoring in baby steps. The model writes a
-plan; you agree to it, then to each step as it is shown; the whole spec suite
-runs after every step.
+Behaviour-preserving refactoring in baby steps. The model writes a plan; you
+approve it, then each step as it is shown; the whole spec suite runs after
+every step.
 
 ```bash
 bin/phpspec refactor
 bin/phpspec refactor Calculator
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
-bin/phpspec refactor "spec/App/Calculator.spec.php"
+bin/phpspec refactor src/App/Calculator.php
+bin/phpspec refactor spec/App/Calculator.spec.php
 ```
 
 ### Target Resolution
@@ -319,23 +321,35 @@ bin/phpspec refactor "spec/App/Calculator.spec.php"
 | `Calculator` | the `Calculator.php` modified last under `src_path` | the spec of the class it declares |
 | `App\Calculator` or `App/Calculator` | `src/App/Calculator.php` | `spec/App/Calculator.spec.php` |
 | `App\Calculator::sum` | `src/App/Calculator.php` (focused on `sum`) | `spec/App/Calculator.spec.php` |
-| `spec/App/Calculator.spec.php` | `src/App/Calculator.php` (inferred) | `spec/App/Calculator.spec.php` |
+| `src/App/Calculator.php` | that file | the spec of the class it declares |
+| `spec/App/Calculator.spec.php` | `src/App/Calculator.php` (inferred) | that file |
 
 In pair mode `/refactor` (or `refactor Calculator`) takes the same targets, typed as they are: `/refactor App\Calculator` needs no quoting.
 
 ### How It Works
 
-1. **Baseline** -- the whole spec suite runs first, judged as `run` judges it. If it leaves anything to act on (a failure, an error, a pending example, a missed coverage gate, logic guard finds no example reaching), refactoring is refused with what it left: you can't preserve behaviour that is already broken. A skipped or risky example, or a PHP warning, does not stop it. With [guard](guard.md) on, the suite runs under coverage so guard can judge it.
-2. **Plan** -- the model names the technique (Extract Class, Replace Conditional with Polymorphism, Introduce Parameter Object, ...), says why it improves the design, and lists the baby steps. You are asked `Would you like to proceed?`.
-3. **Steps** -- one at a time. A line says what is under way and, once the model answers, how long it took and how many tokens it wrote; the checklist marks the steps done (✔), under way (◼) and to come (◻). Every file the step writes is shown as a diff, and you are asked `Apply this step?`. No stops the run there; the steps before it stay.
-4. **Verify** -- the whole suite runs after each step. A step may be red only when it writes a spec first (a new collaborator described before it exists), and only in the spec it wrote; a later step makes it green, and the last step leaves everything green. Nor may a step leave fewer examples than it found: an example may move to a collaborator's spec or be rewritten, never dropped. A step that breaks anything else, or loses an example, gets one fix from the model, shown and asked for like the step; still wrong, the step is undone and the run stops, the steps before it kept.
+1. **Baseline**: the whole suite runs first and must leave nothing to act on, as `run` judges it (under coverage when [guard](guard.md) is on). Otherwise refactoring is refused with what it left: you can't preserve behaviour that is already broken.
+2. **Plan**: the model names the technique (Extract Class, Replace Conditional with Polymorphism, Introduce Parameter Object, ...), says why it improves the design, and lists the baby steps. You are asked `Would you like to proceed?`.
+3. **Steps**: one at a time, every file the step writes shown as a diff, then `Apply this step?`.
+4. **Verify**: the whole suite runs after each step and must stay green, with no fewer examples running (an example may move or be rewritten, never dropped or skipped). A step that writes a new collaborator's spec first may leave that spec red until the next step. A step that breaks anything else gets one fix, asked for like the step; if that fails too, the step is undone and the run stops.
 
-The model works the GOOS way: behaviour moves to the object that has the data,
-a new collaborator gets its own spec first, and the subject's spec talks to it
-through a double. A step writes PHP files under `src_path` or `spec_path`
-only; anything else stops the run before a line of it is written. A model
-that does not answer stops the run too, in the provider's words; a step it
-was fixing is undone.
+However the run stops, it stops green: a No, Ctrl-C, or a model that does not
+answer undoes the steps since the specs last passed, and the line says which
+steps were undone and which kept. When a No would undo a step already
+written, the question says so:
+
+```
+  Apply this step?
+    1. Yes
+    2. No (this will undo all changes until the last green state)
+  >
+```
+
+The model works the GOOS way (*Growing Object-Oriented Software, Guided by
+Tests*): behaviour moves to the object that has the data, a new collaborator
+gets its own spec first, and the subject's spec talks to it through a double.
+A step may only write PHP files under `src_path` or `spec_path`; anything else
+stops the run before it writes a line.
 
 When nothing is worth changing, it says so in its own words: `Nothing to refactor in App\Till: Till does one thing, and its names say what.`
 
@@ -345,12 +359,10 @@ On the command line each question is a `[Y/n]` line. In pair mode it is the
 chooser, where *Yes, and don't ask again* on a step applies the remaining
 steps without asking.
 
-`--no-interaction` refactors without asking anything: the plan and the
-diffs go unshown, each step names the files it writes and the verdict of
-the suite, and the rules above hold as they do for a person (one fix, then
-the step is undone). A single `pair --prompt "/refactor ..."` runs the same
-way. Input that ends before a question is answered writes nothing of what
-was asked, and says to run with `--no-interaction`.
+`--no-interaction` asks nothing: the plan and the diffs go unshown, and each
+step prints the files it wrote and the suite's verdict. `pair --prompt
+"/refactor ..."` runs the same way. Piped input that runs out before an
+answer writes nothing and points to `--no-interaction`.
 
 ```
 $ bin/phpspec refactor DrinkPricer --no-interaction
@@ -367,31 +379,12 @@ Extracting Size… (6s · ↓ 353 tokens)
   src/Brew/Size.php (new)
   Specs still pass ✓
 
-Describing Milk… (5s · ↓ 191 tokens)
-  spec/Brew/Milk.spec.php (new)
-  Red, as this step meant: spec/Brew/Milk.spec.php
-
-Extracting Milk… (5s · ↓ 281 tokens)
-  src/Brew/DrinkPricer.php
-  src/Brew/Milk.php (new)
-  Specs still pass ✓
-
-Describing Shots… (3s · ↓ 133 tokens)
-  spec/Brew/Shots.spec.php (new)
-  Red, as this step meant: spec/Brew/Shots.spec.php
-
-Extracting Shots… (6s · ↓ 240 tokens)
-  src/Brew/DrinkPricer.php
-  src/Brew/Shots.php (new)
-  Specs still pass ✓
+...
 
   Refactoring done: Extract Class ✓
 ```
 
-A coding agent asks with `--format=agent` and gets the plan, offered once
-and whole, or the model's reason to decline, as one JSON receipt; nothing
-is written until it runs `accept` with the offer's id, which carries the
-plan out as `--no-interaction` does (see [Coding Agents](agent.md#refactoring)).
+Coding agents use `--format=agent` and `accept` instead; see [Coding Agents](agent.md#refactoring).
 
 ### Example Output
 
@@ -407,10 +400,6 @@ CheckoutService decides itself how a loyal customer's discount is worked
 out. Discount rules change for reasons of their own, and every new one would
 grow the conditional in total().
 
-Introduce a DiscountPolicy role and move the loyalty rule behind it, so
-CheckoutService coordinates the checkout and the pricing rules can evolve
-independently.
-
 Plan:
 
   ◻ Introduce a DiscountPolicy abstraction
@@ -421,6 +410,8 @@ Plan:
 PhpSpec has written a refactoring plan and is ready to start.
 
   Would you like to proceed? [Y/n]
+
+...
 
 Describing LoyaltyDiscount… (6s · ↓ 420 tokens)
   ✔ Introduce a DiscountPolicy abstraction
@@ -451,9 +442,8 @@ Describing LoyaltyDiscount… (6s · ↓ 420 tokens)
 - The class must have a spec: one without is refused, with the `describe` command that gives it one
 - The whole spec suite must be green before refactoring begins
 
-The steps kept are noted in `.phpspec/ai/journal.jsonl`, so a later run
-neither undoes nor repeats them without a reason. The whole conversation is
-kept in `.phpspec/ai/last-refactor.json`, in the shape an eval replays. The
-rules the model follows are `commands/refactor.txt` and the tools
-`propose_plan`, `propose_step` and `decline_refactoring`, each overridable
-under `.phpspec/prompts` (see [Configuration](configuration.md)).
+Kept steps are recorded in `.phpspec/ai/journal.jsonl`, so a later run does
+not undo or repeat them. The last conversation is in
+`.phpspec/ai/last-refactor.json`. The rules (`commands/refactor.txt`) and
+tools (`propose_plan`, `propose_step`, `decline_refactoring`) can be
+overridden under `.phpspec/prompts` (see [Configuration](configuration.md)).

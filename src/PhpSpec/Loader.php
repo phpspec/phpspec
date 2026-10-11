@@ -219,8 +219,8 @@ final class Loader
             return [];
         }
 
-        if ($this->fs->isFile($directory) && str_ends_with($directory, $this->specSuffix)) {
-            return [$this->loadFile($directory)];
+        if ($this->fs->isFile($directory)) {
+            return str_ends_with($directory, $this->specSuffix) ? [$this->loadFile($directory)] : [];
         }
 
         $files = $this->fs->scandir($directory);

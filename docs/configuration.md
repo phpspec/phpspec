@@ -360,7 +360,7 @@ Every prompt the AI commands use is a text file. The shipped ones live inside th
   commands/navigator.txt       the pair navigator's manifest: its tools, params, and voice (also: driver.txt)
   instructions/write-spec.txt  step guidance (also: write-feature, write-steps, write-code, refactor, tdd-cycle)
   instructions/spec-syntax.txt syntax primers (also: steps-syntax, gherkin-syntax, pair-guidance)
-  tools/offer_change.txt       any tool description, by tool name (write tools, the live ones: run_specs, inspect_symbol, ask_user, read_file, list_files, and refactor's: propose_plan, propose_step, decline_refactoring)
+  tools/offer_change.txt       any tool description, by tool name (write tools; the live ones run_specs, inspect_symbol, ask_user, read_file, list_files; refactor's propose_plan, propose_step, decline_refactoring)
   navigator.txt                the pair navigator role contract (also: driver.txt, next.txt)
 ```
 

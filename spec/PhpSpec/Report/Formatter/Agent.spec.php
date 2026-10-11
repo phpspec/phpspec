@@ -88,6 +88,22 @@ describe(Agent::class, function () {
         expect($summary['actionable'])->toBe(0);
     });
 
+    it("addresses a pending or skipped example by the line that declares it, to rerun alone", function () {
+        $pending = new ExampleResult("is pending", [], isPending: true);
+        $pending->declaredAt(__FILE__, 14);
+        $skipped = new ExampleResult("is skipped", [], isSkipped: true);
+        $skipped->declaredAt(__FILE__, 18);
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
+
+        $lines = explode("\n", trim($output->fetch()));
+        $entries = array_map(static fn(string $line): array => json_decode($line, true, flags: JSON_THROW_ON_ERROR), array_slice($lines, 1, 2));
+        expect($entries[0]['spec'])->toEndWith('Agent.spec.php:14');
+        expect($entries[0]['rerun'])->toEndWith('Agent.spec.php:14');
+        expect($entries[1]['spec'])->toEndWith('Agent.spec.php:18');
+    });
+
     it("carries the reason a pending or skipped example gave as its message, and no message without one", function () {
         $pending = new ExampleResult("is pending", [], isPending: true, reason: "Needs the rates API");
         $skipped = new ExampleResult("is skipped", [], isSkipped: true, reason: "No network here");
@@ -373,6 +389,18 @@ describe(Agent::class, function () {
         $end->arrives(new Fatal('something later went wrong'));
 
         expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
+    });
+
+    it('says which option stopped the run early, and nothing when none did', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stoppedBy('--stop-on-warning');
+        $formatter->publish();
+        $plain = new BufferedOutput();
+        (new Agent($plain))->publish();
+
+        expect($stream($output->fetch())['result']['stopped_by'])->toBe('--stop-on-warning');
+        expect($stream($plain->fetch())['result'])->not()->toHaveKey('stopped_by');
     });
 
     it('keeps the first thing that stopped the run', function () use ($stream) {

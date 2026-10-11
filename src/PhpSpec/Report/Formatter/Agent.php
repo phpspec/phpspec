@@ -107,6 +107,8 @@ final class Agent extends AbstractFormatter
     /** Whether guard judges this run: on or off. */
     private string $guardStanding = 'off';
 
+    private ?string $stoppedBy = null;
+
     /**
      * @param OutputInterface $output the stream the document goes to
      * @param \Closure(SuiteResult): mixed|null $resolveCandidates resolves the run's generation candidates
@@ -139,6 +141,15 @@ final class Agent extends AbstractFormatter
     public function randomisedWith(int $seed): void
     {
         $this->seed = $seed;
+    }
+
+    /**
+     * Tells the formatter a stop option cut the run short, so the summary
+     * does not read as the whole of it.
+     */
+    public function stoppedBy(string $option): void
+    {
+        $this->stoppedBy = $option;
     }
 
     /**
@@ -365,7 +376,8 @@ final class Agent extends AbstractFormatter
             'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
             // A focused run is not the suite: the number says how much was left
             // out, so a reader does not take this run for the whole of it.
-        ] + ($this->focusedOut === 0 ? [] : ['focused' => $this->focusedOut]);
+        ] + ($this->focusedOut === 0 ? [] : ['focused' => $this->focusedOut])
+          + ($this->stoppedBy === null ? [] : ['stopped_by' => $this->stoppedBy]);
 
         // The one command that re-runs everything this run reported, so a fix
         // is checked against the whole of what it was meant to fix, as a string
@@ -553,6 +565,7 @@ final class Agent extends AbstractFormatter
             if ($example->isLeftOutByFocus()) {
                 $this->focusedOut++;
             }
+            $this->address($entry, $example, null, null);
         } elseif ($state === 'risky') {
             $entry['message'] = 'No expectation in this example.';
             $this->address($entry, $example, null, null);

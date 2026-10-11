@@ -1,11 +1,11 @@
 <?php
 
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
-use PhpSpec\Console\Command\Refactor\ModelFailedException;
 use PhpSpec\Console\Command\Refactor\PlannedStep;
 use PhpSpec\Console\Command\Refactor\RefactorModel;
 use PhpSpec\Console\Command\Refactor\RefactorPlan;
@@ -66,10 +66,28 @@ describe(RefactorModel::class, function () {
         expect(array_map(fn($tool) => $tool->getName(), $request['options']['tools']))->toBe(['propose_plan', 'decline_refactoring']);
     });
 
+    it('takes a plan with no steps, or an answer with neither plan nor reason, for a model that failed', function () {
+        $empty = ($this->model)(new Response('', [new ToolCall('p', 'propose_plan', ['technique' => 'Extract Class', 'rationale' => 'x', 'steps' => []])]));
+        $silent = ($this->model)(new Response(''));
+
+        expect(fn() => $empty->plan($this->target, ''))->toThrow(new ModelFailedException('The model proposed a plan with no steps.'));
+        expect(fn() => $silent->plan($this->target, ''))->toThrow(new ModelFailedException('The model answered with neither a plan nor a reason to decline.'));
+    });
+
     it('says the model did not answer, in the provider\'s words, when asking it fails', function () {
         $model = ($this->model)(new RuntimeException('Google API error (400): API key not valid.'));
 
         expect(fn() => $model->plan($this->target, ''))->toThrow(new ModelFailedException('The model did not answer: Google API error (400): API key not valid.'));
+    });
+
+    it('asks with the model, the token limit and the effort the configuration sets', function () {
+        $this->replay = new ReplayProvider([$this->plan]);
+        $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k', 'model' => 'gemini-x', 'max_tokens' => 2048, 'effort' => 'low']]);
+
+        (new RefactorModel($this->replay, $config, $this->filesystem, '/proj', new PromptLibrary($this->filesystem)))->plan($this->target, '');
+
+        $options = $this->replay->requests[0]['options'];
+        expect([$options['model'], $options['maxTokens'], $options['effort']])->toBe(['gemini-x', 2048, 'low']);
     });
 
     it('reads a decline, or an answer in prose, as nothing to refactor, in the model\'s words', function () {

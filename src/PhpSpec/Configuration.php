@@ -254,6 +254,24 @@ final class Configuration
     }
 
     /**
+     * The source directory relative to the project root, as code joins and
+     * compares it: no leading "./", no trailing slash.
+     */
+    public function srcDir(): string
+    {
+        return $this->projectDir($this->getSrcPath());
+    }
+
+    /**
+     * The spec directory relative to the project root, as code joins and
+     * compares it: no leading "./", no trailing slash.
+     */
+    public function specDir(): string
+    {
+        return $this->projectDir($this->getSpecPath());
+    }
+
+    /**
      * Returns the PSR-4 namespace prefix mapped to the source directory.
      * When set, namespace segments matching the prefix are not reflected
      * in the directory structure during code generation; '' means every
@@ -277,7 +295,7 @@ final class Configuration
         $default = $this->get('default_namespace');
 
         return new SourceLayout(
-            ltrim(is_string($srcPath) ? $srcPath : './src', './'),
+            $this->projectDir(is_string($srcPath) ? $srcPath : 'src'),
             $this->mappings(),
             is_string($default) && trim($default, '\\') !== '' ? $default : null,
         );
@@ -341,6 +359,13 @@ final class Configuration
         }
 
         return $this->composerLayout() ?? ['src' => './src', 'prefix' => ''];
+    }
+
+    private function projectDir(string $path): string
+    {
+        $dir = rtrim((string) preg_replace('~^(\./)+~', '', str_replace('\\', '/', $path)), '/');
+
+        return $dir === '.' ? '' : $dir;
     }
 
     /**
@@ -599,6 +624,25 @@ final class Configuration
     }
 
     /**
+     * Whether guard judges runs: a usable guard section that makes it active.
+     */
+    public function guardIsOn(): bool
+    {
+        return ($this->getGuardConfig()['status'] ?? 'off') === 'active';
+    }
+
+    /**
+     * The options a phpspec started from this one needs to read the same
+     * configuration: the file it was read from, when there is one.
+     *
+     * @return list<string>
+     */
+    public function childOptions(): array
+    {
+        return $this->settingsFile === null ? [] : ['--config=' . $this->settingsFile];
+    }
+
+    /**
      * Says what is wrong with the guard section, or null when it is usable. An
      * absent section is not a problem: it means guard is off.
      */
@@ -810,19 +854,40 @@ final class Configuration
      */
     public function aiConfigProblem(): ?string
     {
+        $refusal = $this->aiConfigRefusal();
+
+        if ($refusal === null || $refusal['remedy'] === null) {
+            return $refusal['problem'] ?? null;
+        }
+
+        return sprintf("%s, for example:\n\n%s", rtrim($refusal['problem'], '.'), $refusal['remedy']);
+    }
+
+    /**
+     * The same as {@see aiConfigProblem()}, the problem apart from the
+     * config that would answer it, for a reader that keeps them apart.
+     *
+     * @return array{problem: string, remedy: string|null}|null
+     */
+    public function aiConfigRefusal(): ?array
+    {
         $ai = $this->normalisedAiSection();
         if ($ai === null) {
             return $this->missingAiSection();
         }
 
-        return $this->aiSectionGap($ai);
+        $gap = $this->aiSectionGap($ai);
+
+        return $gap === null ? null : ['problem' => $gap, 'remedy' => null];
     }
 
     /**
      * Which file to put the ai section in, and what one looks like in that
      * file's own notation, with the installed provider when there is one.
+     *
+     * @return array{problem: string, remedy: string}
      */
-    private function missingAiSection(): string
+    private function missingAiSection(): array
     {
         $installed = ProviderFactory::installed();
         $provider = count($installed) === 1 ? $installed[0] : 'anthropic';
@@ -835,12 +900,14 @@ final class Configuration
             default => sprintf("ai:\n  provider: %s\n  api_key: YOUR_API_KEY", $provider),
         };
 
-        return sprintf(
-            "AI configuration required. %s an \"ai\" section%s, for example:\n\n%s",
-            $this->settingsFile === null ? 'Create ' . $shown . ' with' : 'Add',
-            $this->settingsFile === null ? '' : ' to ' . $shown,
-            $example,
-        );
+        return [
+            'problem' => sprintf(
+                'AI configuration required. %s an "ai" section%s.',
+                $this->settingsFile === null ? 'Create ' . $shown . ' with' : 'Add',
+                $this->settingsFile === null ? '' : ' to ' . $shown,
+            ),
+            'remedy' => $example,
+        ];
     }
 
     /**
@@ -887,6 +954,10 @@ final class Configuration
 
             if (!is_string($ai['api_key'])) {
                 return 'The ai section\'s api_key must be a string. Quote it in your phpspec config.';
+            }
+
+            if (trim($ai['api_key']) === '') {
+                return 'The ai section\'s api_key is empty. Put your key in your phpspec config.';
             }
         }
 

@@ -31,6 +31,14 @@ describe(Chooser::class, function () {
         expect($text)->toContain('3. No');
     });
 
+    it('says what a no would do, when it would do something', function () {
+        $this->answers = ['3'];
+        $chooser = new Chooser($this->output, true, $this->reader);
+
+        expect($chooser->choose('Apply this step?', 'refactor-step', 'apply the steps', 'this will undo all changes until the last green state'))->toBeFalse();
+        expect($this->buffer->fetch())->toContain('3. No (this will undo all changes until the last green state)');
+    });
+
     it('accepts on 1, empty input and y', function () {
         $chooser = new Chooser($this->output, true, $this->reader);
 
@@ -49,6 +57,29 @@ describe(Chooser::class, function () {
         expect($chooser->choose('Generate?', 'k', 'do it'))->toBeFalse();
         $this->answers = ['n'];
         expect($chooser->choose('Generate?', 'k2', 'do it'))->toBeFalse();
+    });
+
+    it('takes yes, always and no as words, and an answer it does not know for no', function () {
+        $chooser = new Chooser($this->output, true, $this->reader);
+
+        $this->answers = ['yes'];
+        expect($chooser->choose('Generate?', 'k', 'do it'))->toBeTrue();
+        $this->answers = ['no'];
+        expect($chooser->choose('Generate?', 'k2', 'do it'))->toBeFalse();
+        $this->answers = ['maybe'];
+        expect($chooser->choose('Generate?', 'k3', 'do it'))->toBeFalse();
+        $this->answers = ['always'];
+        expect($chooser->choose('Generate?', 'k4', 'do it'))->toBeTrue();
+        expect($chooser->hasAlways('k4'))->toBeTrue();
+    });
+
+    it('takes input that ends for nobody answering: nothing is done, and it says so', function () {
+        $line = new Chooser($this->output, true, fn(): ?string => null);
+        $keys = new Chooser($this->output, true, null, fn(): ?string => null);
+
+        expect($line->choose('Apply this step?', 'refactor-step', 'apply the steps'))->toBeFalse();
+        expect($keys->choose('Apply this step?', 'refactor-step', 'apply the steps'))->toBeFalse();
+        expect(substr_count($this->buffer->fetch(), 'Nothing was written: there is nobody to answer.'))->toBe(2);
     });
 
     it('remembers always per question kind and stops asking', function () {

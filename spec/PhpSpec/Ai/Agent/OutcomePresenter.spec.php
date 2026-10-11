@@ -18,7 +18,8 @@ describe(OutcomePresenter::class, function () {
 
         $document = (new OutcomePresenter())->document('next', $outcome, [], 'vendor/bin/phpspec generate "a feature for deleting_a_task"');
 
-        expect($document['command']['command'])->toBe('next');
+        expect(array_slice($document, 0, 2))->toBe(['v' => 2, 'action' => 'next']);
+        expect($document)->not()->toHaveKey('command');
         expect($document['suggestion']['type'])->toBe('feature');
         expect($document['suggestion']['target'])->toBe('deleting_a_task');
         expect($document['suggestion']['run'])->toBe('vendor/bin/phpspec generate "a feature for deleting_a_task"');
@@ -55,7 +56,7 @@ describe(OutcomePresenter::class, function () {
     it('emits one JSON line, raw and unescaped', function () {
         $json = (new OutcomePresenter())->render('next', new Outcome(null, [], 'a/b stays a/b'));
 
-        expect($json)->toContain('"command":"next"');
+        expect($json)->toContain('"action":"next"');
         expect($json)->toContain('a/b stays a/b');
         expect($json)->not()->toContain('a\/b');
     });

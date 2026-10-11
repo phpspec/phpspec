@@ -23,6 +23,7 @@ use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Request;
 use PhpSpec\Ai\Agent\Step;
 use PhpSpec\Ai\Contracts\ProviderInterface;
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\CodeGeneration\StepsHome;
@@ -31,19 +32,20 @@ use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\Consent;
+use PhpSpec\Console\Prompt;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Filesystem;
-use PhpSpec\Guard\Inspection;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\StoryBDD\StepVocabulary;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface as Output;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * @internal
@@ -75,10 +77,11 @@ final class Next extends Command
         ?callable $suggestFn = null,
         ?SpecRunner $specRunner = null,
         private readonly ?ProviderInterface $provider = null,
+        private readonly ?Prompt $prompt = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->suggestFn = $suggestFn;
-        $this->specRunner = $specRunner ?? new SubprocessRunner(Inspection::of($config, $this->filesystem) !== null);
+        $this->specRunner = $specRunner ?? new SubprocessRunner($config->guardIsOn());
         parent::__construct();
     }
 
@@ -92,29 +95,22 @@ final class Next extends Command
 
     protected function execute(Input $input, Output $output): int
     {
-        $forAgent = $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
 
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $problem = (string) $this->config->aiConfigProblem();
+            $refusal = $this->config->aiConfigRefusal() ?? ['problem' => '', 'remedy' => null];
 
-            if ($forAgent) {
-                $json = json_encode(['v' => Schema::V, 'action' => 'next', 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
-                $output->write($json . "\n", false, Output::OUTPUT_RAW);
-
-                return 1;
-            }
-
-            $output->writeln('<fg=red>' . $problem . '</>');
-
-            return 1;
+            return $forAgent
+                ? $this->refuse($output, true, $refusal['problem'], $refusal['remedy'])
+                : $this->refuse($output, false, (string) $this->config->aiConfigProblem());
         }
 
         // 2. Load bootstrap
-        if (!$this->loadBootstrap()) {
-            $output->writeln('<fg=red>Bootstrap file not found.</>');
-            return 1;
+        $missingBootstrap = $this->loadBootstrap();
+        if ($missingBootstrap !== null) {
+            return $this->refuse($output, $forAgent, sprintf('Bootstrap file not found: %s', $missingBootstrap));
         }
 
         // 3. Scan project and get suggestion
@@ -124,7 +120,11 @@ final class Next extends Command
             $output->writeln('');
         }
 
-        $suggestion = $this->getSuggestion($aiConfig);
+        try {
+            $suggestion = $this->getSuggestion($aiConfig);
+        } catch (ModelFailedException $e) {
+            return $this->refuse($output, $forAgent, $e->getMessage());
+        }
 
         // 4. Validate — if we got no target and no reason, the response was unusable
         if ($suggestion['target'] === '' && $suggestion['reason'] === '') {
@@ -234,7 +234,7 @@ final class Next extends Command
      */
     private function specFileExists(string $fqcn): bool
     {
-        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specPath = $this->config->specDir();
         $file = getcwd() . DIRECTORY_SEPARATOR . $specPath . DIRECTORY_SEPARATOR
             . str_replace('\\', DIRECTORY_SEPARATOR, $fqcn) . $this->config->getSpecSuffix();
 
@@ -249,6 +249,8 @@ final class Next extends Command
      *
      * @param array{provider: string, model?: string, api_key?: string} $aiConfig
      * @return array{type: string, target: string, reason: string}
+     *
+     * @throws ModelFailedException
      */
     private function getSuggestion(array $aiConfig): array
     {
@@ -271,6 +273,10 @@ final class Next extends Command
 
         $agent = new Agent($this->config, $this->filesystem, $this->provider);
         $outcome = $agent->chat('next', '', $grounding);
+
+        if ($outcome->failure !== null) {
+            throw new ModelFailedException(sprintf('The model did not answer: %s', $outcome->failure));
+        }
 
         $reason = (string) ($outcome->data['reason'] ?? '');
 
@@ -311,24 +317,23 @@ final class Next extends Command
     }
 
     /**
-     * Offers to act on the suggestion: a printed hint when not interactive, a
-     * [Y/n] confirmation and the command run when it is.
+     * Offers to act on the suggestion: a [Y/n] confirmation and the command
+     * run on a yes, the command to run printed when nobody is there to ask.
      *
      * @param array<string, mixed> $args the bound arguments for the command
      */
     private function offerToRun(Input $input, Output $output, string $hint, string $command, array $args, string $ask = 'Would you like me to create that for you?'): int
     {
-        if (!$input->isInteractive()) {
+        $consent = new Consent('', prompt: $this->prompt ?? new Prompt($input instanceof StreamableInputInterface ? $input->getStream() : null));
+        $decided = $input->isInteractive() ? $consent->decide($output, "  <fg=yellow>$ask</>", 'next', 'act on suggestions') : null;
+
+        if ($decided === null) {
             $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' ' . $hint);
 
             return 0;
         }
 
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
-        $question = new ConfirmationQuestion("  <fg=yellow>$ask</> [Y/n] ", true);
-
-        if (!$helper->ask($input, $output, $question)) {
+        if (!$decided) {
             return 0;
         }
 
@@ -368,8 +373,7 @@ final class Next extends Command
             return $suggestion;
         }
 
-        $srcDir = getcwd() . '/' . ltrim($this->config->getSrcPath(), './');
-        $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($srcDir);
+        $polished = (new RefactorJournal($this->filesystem))->unchangedTargets(getcwd() ?: '.', $this->config->getSourceLayout());
         if (!in_array($suggestion['target'], $polished, true)) {
             return $suggestion;
         }
@@ -439,7 +443,7 @@ final class Next extends Command
         return new Grounding(
             $summary,
             ProjectPath::relativeOrNull($recency->mostRecentFeature($featuresDir)),
-            ProjectPath::relativeOrNull($recency->mostRecentSource(getcwd() . '/' . ltrim($this->config->getSrcPath(), './'))),
+            ProjectPath::relativeOrNull($recency->mostRecentSource(getcwd() . '/' . $this->config->srcDir())),
             namedFiles: $this->workingStoryFiles($summary, $recency),
         );
     }
@@ -464,8 +468,8 @@ final class Next extends Command
         $feature = ProjectPath::normalize($red['path']);
         $candidates = [$feature, ...$this->stepsServing($cwd . '/' . $feature)];
 
-        $spec = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSpecPath(), './'));
-        $source = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+        $spec = $recency->mostRecentSource($cwd . '/' . $this->config->specDir());
+        $source = $recency->mostRecentSource($cwd . '/' . $this->config->srcDir());
         foreach ([$spec, $source] as $absolute) {
             if ($absolute !== null) {
                 $candidates[] = ProjectPath::relativeOrNull($absolute) ?? $absolute;
@@ -502,16 +506,38 @@ final class Next extends Command
         );
     }
 
-    private function loadBootstrap(): bool
+    /**
+     * Says why there will be no suggestion, as a receipt for a coding agent,
+     * else in red.
+     */
+    private function refuse(Output $output, bool $forAgent, string $problem, ?string $remedy = null): int
+    {
+        if ($forAgent) {
+            $json = json_encode(['v' => Schema::V, 'action' => 'next', 'error' => $problem] + ($remedy === null ? [] : ['remedy' => $remedy]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+            $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+            return 1;
+        }
+
+        $output->writeln('<fg=red>' . $problem . '</>');
+
+        return 1;
+    }
+
+    /**
+     * Loads the project's bootstrap. The file it could not find, or null.
+     */
+    private function loadBootstrap(): ?string
     {
         $bootstrap = $this->config->getBootstrap() ?? (file_exists('vendor/autoload.php') ? 'vendor/autoload.php' : null);
         if ($bootstrap === null) {
-            return true;
+            return null;
         }
         if (!file_exists($bootstrap)) {
-            return false;
+            return $bootstrap;
         }
         require_once $bootstrap;
-        return true;
+
+        return null;
     }
 }

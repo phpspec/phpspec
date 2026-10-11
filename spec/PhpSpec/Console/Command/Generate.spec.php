@@ -4,6 +4,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Generate;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -39,7 +40,8 @@ describe(Generate::class, function () {
 
         $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         expect($document['action'])->toBe('generate');
-        expect($document['error'])->toContain('Create phpspec.yml with an "ai" section');
+        expect($document['error'])->toBe('AI configuration required. Create phpspec.yml with an "ai" section.');
+        expect($document['remedy'])->toContain('api_key: YOUR_API_KEY');
         expect($tester->getStatusCode())->toBe(1);
     });
 
@@ -71,6 +73,34 @@ describe(Generate::class, function () {
         expect($out)->toContain('[NEW FILE]');
         expect($out)->toContain('src/App/Calc.php');
         expect($out)->toContain('phpspec accept o_');
+        expect($projectWrites($written))->toBe([]);
+    });
+
+    it('writes the change when told yes', function (Filesystem $fs) use ($withAi, $proposing, $projectWrites) {
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+        $tester = new CommandTester(new Generate($withAi(), $fs, $proposing()));
+        $tester->setInputs(['yes']);
+
+        $tester->execute(['instruction' => ['a', 'Calc', 'class']]);
+
+        expect($tester->getDisplay())->toContain('Created src/App/Calc.php');
+        expect(array_keys($projectWrites($written)))->toBe([getcwd() . '/src/App/Calc.php']);
+    });
+
+    it('offers the change rather than writing it when nobody answers', function (Filesystem $fs, Prompt $prompt) use ($withAi, $proposing, $projectWrites) {
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+        allow($prompt->ask())->toReturn(null);
+        $tester = new CommandTester(new Generate($withAi(), $fs, $proposing(), $prompt));
+
+        $tester->execute(['instruction' => ['a', 'Calc', 'class']]);
+
+        expect($tester->getDisplay())->toContain('phpspec accept o_');
         expect($projectWrites($written))->toBe([]);
     });
 
@@ -106,6 +136,20 @@ describe(Generate::class, function () {
         $book = json_decode($stored[getcwd() . '/.phpspec/offers.json'] ?? '{}', true);
         expect($book['offers'][0]['target'])->toBe('src/App/Calc.php');
         expect($book['offers'][0]['data']['content'])->toContain('class Calc');
+    });
+
+    it('refuses when the model does not answer, on the channel its reader reads', function (Filesystem $fs) use ($withAi) {
+        allow($fs->write());
+        $pretty = new CommandTester(new Generate($withAi(), $fs, new ReplayProvider([new RuntimeException('Google API error (500): boom')])));
+        $agent = new CommandTester(new Generate($withAi(), $fs, new ReplayProvider([new RuntimeException('Google API error (500): boom')])));
+
+        $pretty->execute(['instruction' => ['a', 'Calc', 'class']], ['interactive' => false]);
+        $agent->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
+
+        expect($pretty->getStatusCode())->toBe(1);
+        expect($pretty->getDisplay())->toContain('The model did not answer: Google API error (500): boom');
+        expect($agent->getStatusCode())->toBe(1);
+        expect(json_decode(trim($agent->getDisplay()), true))->toBe(['v' => 2, 'action' => 'generate', 'error' => 'The model did not answer: Google API error (500): boom']);
     });
 
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {

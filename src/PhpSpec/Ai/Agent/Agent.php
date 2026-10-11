@@ -40,7 +40,6 @@ use Throwable;
 final class Agent
 {
     /** Fallback output-token ceiling; a tight cap returns EMPTY from reasoning models (gemini-3.1-pro-preview at 8192). */
-    private const DEFAULT_MAX_TOKENS = 16384;
 
     private readonly Filesystem $filesystem;
 
@@ -320,9 +319,9 @@ final class Agent
         if (str_contains($system, '%')) {
             $roots = $this->layout->roots($this->filesystem);
             $system = strtr($system, [
-                '%spec_path%' => ltrim($this->config->getSpecPath(), './'),
+                '%spec_path%' => $this->config->specDir(),
                 '%spec_suffix%' => $this->config->getSpecSuffix(),
-                '%src_path%' => ltrim($this->config->getSrcPath(), './'),
+                '%src_path%' => $this->config->srcDir(),
                 '%features_path%' => $roots['features'],
                 '%steps_path%' => $this->steps->directory(),
             ]);
@@ -361,13 +360,13 @@ final class Agent
         $scanner = new TreeScanner($this->filesystem);
         $sections = [];
 
-        $srcPath = ltrim($this->config->getSrcPath(), './');
+        $srcPath = $this->config->srcDir();
         $srcTree = $scanner->scan($cwd . '/' . $srcPath, 3);
         if ($srcTree !== '') {
             $sections[] = "## Source files ($srcPath/)\n$srcTree";
         }
 
-        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specPath = $this->config->specDir();
         $specTree = $scanner->scan($cwd . '/' . $specPath, 3);
         if ($specTree !== '') {
             $sections[] = "## Spec files ($specPath/)\n$specTree";
@@ -414,10 +413,10 @@ final class Agent
     {
         $fallback = $this->registry->featureFallback($step);
         if ($fallback !== null) {
-            return new Outcome($step, [$fallback], $error);
+            return new Outcome($step, [$fallback], $error, failure: $error);
         }
 
-        return new Outcome($step, [], $error);
+        return new Outcome($step, [], $error, failure: $error);
     }
 
     /**
@@ -442,24 +441,7 @@ final class Agent
      */
     private function providerOptions(CommandProfile $profile, array $aiConfig): array
     {
-        $options = [
-            'maxTokens' => $aiConfig['maxTokens'] ?? $profile->maxTokens ?? self::DEFAULT_MAX_TOKENS,
-        ];
-
-        // Providers that cannot map effort ignore the option.
-        if (isset($aiConfig['effort'])) {
-            $options['effort'] = $aiConfig['effort'];
-        }
-
-        $model = $aiConfig['model'] ?? (isset($aiConfig['provider']) ? ProviderFactory::defaultModel($aiConfig['provider']) : null);
-        if ($model !== null) {
-            $options['model'] = $model;
-        }
-
-        if ($profile->temperature !== null) {
-            $options['temperature'] = $profile->temperature;
-        }
-
+        $options = $profile->providerOptions($aiConfig);
         $tools = $this->registry->definitions($profile);
         if ($tools !== []) {
             $options['tools'] = $tools;
@@ -484,13 +466,13 @@ final class Agent
         if (in_array('recency', $profile->grounding, true) && $recentFeature === null && $recentSource === null) {
             $scanner = new RecencyScanner($this->filesystem);
             $recentFeature = ProjectPath::relativeOrNull($scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './')));
-            $recentSource = ProjectPath::relativeOrNull($scanner->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './')));
+            $recentSource = ProjectPath::relativeOrNull($scanner->mostRecentSource($cwd . '/' . $this->config->srcDir()));
         }
 
         if (in_array('tree', $profile->grounding, true) && $tree === '') {
             $scanner = new TreeScanner($this->filesystem);
             $sections = [];
-            foreach ([ltrim($this->config->getSrcPath(), './'), ltrim($this->config->getSpecPath(), './')] as $dir) {
+            foreach ([$this->config->srcDir(), $this->config->specDir()] as $dir) {
                 $listing = $scanner->scan($cwd . '/' . $dir, 3);
                 if ($listing !== '') {
                     $sections[] = "$dir/:\n" . $listing;
@@ -505,7 +487,7 @@ final class Agent
 
         $polished = $seed->polished ?? [];
         if (in_array('journal', $profile->grounding, true) && $polished === []) {
-            $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+            $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($cwd, $this->config->getSourceLayout());
         }
 
         return new Grounding($seed?->suite, $recentFeature, $recentSource, $tree, $namedFiles, $polished);
@@ -517,8 +499,8 @@ final class Agent
     private function filesNamedIn(string $instruction): array
     {
         $cwd = getcwd() ?: '.';
-        $specPath = ltrim($this->config->getSpecPath(), './');
-        $srcPath = ltrim($this->config->getSrcPath(), './');
+        $specPath = $this->config->specDir();
+        $srcPath = $this->config->srcDir();
         $files = [];
         preg_match_all('/\b[A-Z][A-Za-z0-9]+\b/', $instruction, $matches);
 
@@ -578,18 +560,36 @@ final class Agent
         }
 
         $resolved = $this->uniqueClassFor($step->subject);
-        if ($resolved === null || $resolved === $step->subject) {
+        if ($resolved !== null && $resolved !== $step->subject) {
+            return new Step($step->phase, null, $resolved, $step->because . sprintf(', resolved to "%s" from the project tree', $resolved));
+        }
+
+        $namespace = $resolved === null ? $this->theOneNamespace() : null;
+        if ($namespace === null) {
             return $step;
         }
 
-        return new Step($step->phase, null, $resolved, $step->because . sprintf(', resolved to "%s" from the project tree', $resolved));
+        return new Step($step->phase, null, $namespace . '\\' . $step->subject, $step->because . sprintf(', placed under %s\\ as the project\'s namespace', $namespace));
+    }
+
+    /**
+     * The namespace a new class named bare belongs under, as describe would
+     * place it: the default namespace the config names, else the one the
+     * project maps, or none when it maps several.
+     */
+    private function theOneNamespace(): ?string
+    {
+        $layout = $this->config->getSourceLayout();
+        $mappings = $layout->mappings();
+
+        return $layout->defaultNamespace() ?? (count($mappings) === 1 ? (string) array_key_first($mappings) : null);
     }
 
     private function uniqueClassFor(string $class): ?string
     {
         $cwd = getcwd() ?: '.';
-        $specDir = ltrim($this->config->getSpecPath(), './');
-        $srcDir = ltrim($this->config->getSrcPath(), './');
+        $specDir = $this->config->specDir();
+        $srcDir = $this->config->srcDir();
         $suffix = $this->config->getSpecSuffix();
         $prefix = trim($this->config->getPsr4Prefix(), '\\');
 

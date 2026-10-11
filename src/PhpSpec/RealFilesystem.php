@@ -14,41 +14,38 @@
 
 namespace PhpSpec;
 
+use RuntimeException;
+
 /**
  * @internal
  * Production filesystem implementation backed by PHP's native file functions.
  */
 final class RealFilesystem implements Filesystem
 {
-    /** {@inheritdoc} */
     public function exists(string $path): bool
     {
         return file_exists($path);
     }
 
-    /** {@inheritdoc} */
     public function isFile(string $path): bool
     {
         return is_file($path);
     }
 
-    /** {@inheritdoc} */
     public function isDir(string $path): bool
     {
         return is_dir($path);
     }
 
-    /** {@inheritdoc} */
     public function read(string $path): string
     {
         $content = file_get_contents($path);
         if ($content === false) {
-            throw new \RuntimeException("Failed to read file: {$path}");
+            throw new RuntimeException("Failed to read file: {$path}");
         }
         return $content;
     }
 
-    /** {@inheritdoc} */
     public function readLines(string $path): array
     {
         if (!is_file($path)) {
@@ -59,16 +56,22 @@ final class RealFilesystem implements Filesystem
         return $lines !== false ? $lines : [];
     }
 
-    /** {@inheritdoc} */
+    /**
+     * @throws RuntimeException when the file, or the directory it goes in, cannot be written
+     */
     public function write(string $path, string $content): void
     {
-        if (!$this->exists(dirname($path))) {
-            $this->mkdir(dirname($path));
+        $dir = dirname($path);
+
+        if (!is_dir($dir)) {
+            $this->mkdir($dir);
         }
-        file_put_contents($path, $content);
+
+        if (!is_writable(file_exists($path) ? $path : $dir) || file_put_contents($path, $content) === false) {
+            throw new RuntimeException(sprintf('Cannot write %s: permission denied.', $path));
+        }
     }
 
-    /** {@inheritdoc} */
     public function delete(string $path): void
     {
         if (is_file($path)) {
@@ -76,27 +79,34 @@ final class RealFilesystem implements Filesystem
         }
     }
 
-    /** {@inheritdoc} */
     public function scandir(string $path): array
     {
         return scandir($path);
     }
 
-    /** {@inheritdoc} */
+    /**
+     * @throws RuntimeException when the nearest directory above it cannot be written
+     */
     public function mkdir(string $path): void
     {
-        mkdir(directory: $path, recursive: true);
+        $existing = dirname($path);
+
+        while (!is_dir($existing) && dirname($existing) !== $existing) {
+            $existing = dirname($existing);
+        }
+
+        if (!is_writable($existing) || !mkdir(directory: $path, recursive: true)) {
+            throw new RuntimeException(sprintf('Cannot create %s: permission denied.', $path));
+        }
     }
 
-    /** {@inheritdoc} */
     public function requirePhp(string $path): mixed
     {
         return require $path;
     }
 
-    /** {@inheritdoc} */
     public function mtime(string $path): int
     {
-        return @filemtime($path) ?: 0;
+        return file_exists($path) ? (filemtime($path) ?: 0) : 0;
     }
 }

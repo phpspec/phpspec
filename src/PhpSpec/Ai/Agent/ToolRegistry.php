@@ -393,7 +393,7 @@ final class ToolRegistry
         }
 
         if ($step->phase === Phase::WriteSpec) {
-            $specDir = ltrim(str_replace('\\', '/', $this->config->getSpecPath()), './');
+            $specDir = $this->config->specDir();
 
             return $specDir . '/' . str_replace('\\', '/', $step->subject) . $this->config->getSpecSuffix();
         }
@@ -445,8 +445,8 @@ final class ToolRegistry
 
         $dir = match (true) {
             str_ends_with($path, '.feature') => trim($this->config->getFeaturesPath(), './'),
-            str_ends_with($path, $this->config->getSpecSuffix()) => ltrim(str_replace('\\', '/', $this->config->getSpecPath()), './'),
-            str_ends_with($path, '.php') => ltrim($this->config->getSrcPath(), './'),
+            str_ends_with($path, $this->config->getSpecSuffix()) => $this->config->specDir(),
+            str_ends_with($path, '.php') => $this->config->srcDir(),
             default => null,
         };
 

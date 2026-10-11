@@ -192,7 +192,7 @@ Whether that stops you depends on which command asked and why:
 | the `guard:` section cannot be read | refuses, exit `1` | refuses, exit `1` |
 | no baseline is recorded in this checkout | says so, exit `0` | refuses, exit `1` |
 | the baseline is unreadable, or its commit is not in this checkout | says so, exit `0` | refuses, exit `1` |
-| no coverage was collected, or Xdebug is not in coverage mode | says so, exit `0` | refuses, exit `1` |
+| no coverage driver is available, or Xdebug is not in coverage mode | refuses, exit `1` | refuses, exit `1` |
 
 A misread config is the same in every checkout and one edit away from fixed, so
 refusing costs a moment and can never flap. The rest depend on where the code is

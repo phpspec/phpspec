@@ -104,6 +104,29 @@ Feature: CLI options
     And the output should contain "starts out at zero"
     And the output should not contain "refuses a coupon"
 
+  Scenario: A filter that matches nothing says so
+    Given a spec file "spec/App/Kept.spec.php":
+      """
+      <?php
+      describe('Kept', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--filter zzz"
+    Then the output should contain:
+      """
+      No example or scenario matches --filter "zzz".
+      """
+    And the output should not contain "run with --story"
+
   Scenario: Filter scenarios by title
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/paths.feature":
@@ -509,6 +532,20 @@ Feature: CLI options
     When I run phpspec run "spec/App/Missing.spec.php"
     Then the exit code should not be 0
     And the output should contain "Path not found: spec/App/Missing.spec.php"
+
+  Scenario: A file that is neither a spec nor a feature is refused, saying what run takes
+    Given a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec run with option "src/App/Till.php --format=agent"
+    Then the exit code should be 1
+    And the output should be valid JSON
+    And the output should contain "Not a spec or a feature: src/App/Till.php"
+    And the output should contain "Name a spec file (*.spec.php), a feature file or a directory of them."
 
   Scenario: Random execution order with seed
     Given a spec file "spec/App/Random.spec.php":
@@ -1081,6 +1118,32 @@ Feature: CLI options
     When I run phpspec run with option "--format tap"
     Then the output should contain "ok 1 - TapReasons is pending # SKIP Needs the rates API"
     And the output should contain "ok 2 - TapReasons is skipped # SKIP No network on this machine"
+
+  Scenario: A run a stop option cut short says so
+    Given a spec file "spec/App/Careful.spec.php":
+      """
+      <?php
+      describe('Careful', function () {
+          it('warns', function () {
+              trigger_error('careful', E_USER_WARNING);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-warning"
+    Then the output should contain "Stopped early by --stop-on-warning: what came after it did not run."
+
+  Scenario: TAP reports each scenario of a story run as one test point
+    Given a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--story --format tap"
+    Then the output should contain "1..1"
+    And the output should contain "not ok 1 - Paying"
+    And the output should contain "Undefined step: When I pay"
 
   Scenario: JUnit carries the reason an example was left pending or skipped
     Given a spec file "spec/App/JunitReasons.spec.php":

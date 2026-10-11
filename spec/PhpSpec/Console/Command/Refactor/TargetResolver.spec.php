@@ -11,7 +11,7 @@ describe(TargetResolver::class, function () {
     // are written at the times given.
     let('project', fn() => new ArrayObject([
         'files' => [
-            '/proj/src/App/Basket.php' => ["<?php\nnamespace App;\n\nclass Basket {}\n", 100],
+            '/proj/src/App/Basket.php' => ["<?php\nnamespace App;\n\nclass Basket\n{\n    public function total(): int\n    {\n        return 0;\n    }\n}\n", 100],
             '/proj/src/App/Till.php' => ["<?php\nnamespace App;\n\nclass Till {}\n", 200],
             '/proj/lib/Acme/Ledger.php' => ["<?php\nnamespace Acme;\n\nclass Ledger {}\n", 300],
             '/proj/spec/App/Basket.spec.php' => ["<?php\n", 50],
@@ -56,7 +56,7 @@ describe(TargetResolver::class, function () {
             unset($files['/proj/spec/App/Till.spec.php']);
             $this->project['files'] = $files;
 
-            expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'App\\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\\Till');
+            expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'App\\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till');
         });
 
         it('refuses when there is no source, naming where it looked', function () {
@@ -86,7 +86,7 @@ describe(TargetResolver::class, function () {
 
         it('resolves a short name to the class by that name modified last under the source path', function () {
             $files = $this->project['files'];
-            $files['/proj/src/App/Legacy/Till.php'] = ["<?php\nnamespace App\\Legacy;\n\nclass Till {}\n", 250];
+            $files['/proj/src/App/Legacy/Till.php'] = ["<?php\nnamespace App\\Legacy;\n\nclass Till\n{\n    public function total(): int\n    {\n        return 0;\n    }\n}\n", 250];
             $files['/proj/spec/App/Legacy/Till.spec.php'] = ["<?php\n", 50];
             $this->project['files'] = $files;
 
@@ -125,8 +125,48 @@ describe(TargetResolver::class, function () {
             expect($target->specFile)->toBe('/proj/spec/Acme/Ledger.spec.php');
         });
 
-        it('refuses a class whose source is not there', function () {
-            expect(fn() => $this->resolver->resolve('App\\Missing'))->toThrow(UnresolvedTargetException::class, 'Source file not found: /proj/src/App/Missing.php');
+        it('refuses a class whose source is not there, saying where it looked and how to give it one', function () {
+            expect(fn() => $this->resolver->resolve('App\\Missing'))->toThrow(UnresolvedTargetException::class, 'No class App\\Missing at src/App/Missing.php. Describe it first: phpspec describe App/Missing');
+        });
+
+        it('refuses a method the class does not declare, and takes a target ending in :: for the class alone', function () {
+            expect(fn() => $this->resolver->resolve('App\\Basket::nope'))->toThrow(UnresolvedTargetException::class, 'App\\Basket has no method nope().');
+            expect($this->resolver->resolve('App/Basket::')->method)->toBeNull();
+        });
+
+        it('resolves a source file, or a spec file, written with a leading ./ or not', function () {
+            expect($this->resolver->resolve('src/App/Basket.php')->fqcn)->toBe('App\\Basket');
+            expect($this->resolver->resolve('./src/App/Basket.php')->specFile)->toBe('/proj/spec/App/Basket.spec.php');
+            expect($this->resolver->resolve('./spec/Acme/Ledger.spec.php')->fqcn)->toBe('Acme\\Ledger');
+        });
+
+        it('refuses a source file that is not there, or declares no class', function () {
+            $files = $this->project['files'];
+            $files['/proj/src/App/helpers.php'] = ["<?php\nfunction helper(): void {}\n", 300];
+            $this->project['files'] = $files;
+
+            expect(fn() => $this->resolver->resolve('src/App/Gone.php'))->toThrow(UnresolvedTargetException::class, 'Source file not found: src/App/Gone.php.');
+            expect(fn() => $this->resolver->resolve('src/App/helpers.php'))->toThrow(UnresolvedTargetException::class, 'src/App/helpers.php declares no class to refactor.');
+        });
+
+        it('refuses an interface, which has no behaviour of its own', function () {
+            $files = $this->project['files'];
+            $files['/proj/src/App/Clock.php'] = ["<?php\nnamespace App;\n\ninterface Clock {}\n", 300];
+            $this->project['files'] = $files;
+
+            expect(fn() => $this->resolver->resolve('App\\Clock'))->toThrow(UnresolvedTargetException::class, 'App\\Clock is an interface, with no behaviour of its own to refactor. Refactor a class that implements it.');
+        });
+
+        it('asks for a spec written by hand for an enum or a trait with none, describe being for classes', function () {
+            $files = $this->project['files'];
+            $files['/proj/src/App/Size.php'] = ["<?php\nnamespace App;\n\nenum Size { case Small; }\n", 300];
+            $this->project['files'] = $files;
+
+            expect(fn() => $this->resolver->resolve('App\\Size'))->toThrow(UnresolvedTargetException::class, 'App\\Size has no spec, so nothing would catch a refactoring that broke it. Write its spec first: spec/App/Size.spec.php');
+        });
+
+        it('refuses what is not a class name', function () {
+            expect(fn() => $this->resolver->resolve('../../etc/passwd'))->toThrow(UnresolvedTargetException::class, 'Not a class name: ../../etc/passwd. Name a class (App/Till), its source file or its spec file.');
         });
 
         it('refuses a class with no spec as it refuses the source modified last', function () {
@@ -134,7 +174,7 @@ describe(TargetResolver::class, function () {
             unset($files['/proj/spec/App/Basket.spec.php']);
             $this->project['files'] = $files;
 
-            expect(fn() => $this->resolver->resolve('App\\Basket'))->toThrow(UnresolvedTargetException::class, 'App\\Basket has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\\Basket');
+            expect(fn() => $this->resolver->resolve('App\\Basket'))->toThrow(UnresolvedTargetException::class, 'App\\Basket has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Basket');
         });
     });
 });

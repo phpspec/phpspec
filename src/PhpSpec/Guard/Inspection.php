@@ -41,7 +41,7 @@ final readonly class Inspection
     public static function of(Configuration $config, Filesystem $filesystem, string $baseDir = '.'): ?self
     {
         $guard = $config->getGuardConfig();
-        if ($guard === null || $guard['status'] !== 'active') {
+        if ($guard === null || !$config->guardIsOn()) {
             return null;
         }
 

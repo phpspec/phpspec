@@ -87,6 +87,34 @@ final readonly class StopConditions
     }
 
     /**
+     * The option a result reached, the first of them when it reached several,
+     * or null when it reached none.
+     */
+    public function reachedBy(Results $result): ?string
+    {
+        foreach ($this->options() as $option) {
+            if ($this->alone($option)->metBy($result)) {
+                return $option;
+            }
+        }
+
+        return null;
+    }
+
+    private function alone(string $option): self
+    {
+        return match ($option) {
+            '--stop-on-failure' => new self(onFailure: true),
+            '--stop-on-error' => new self(onError: true),
+            '--stop-on-warning' => new self(onWarning: true),
+            '--stop-on-deprecation' => new self(onDeprecation: true),
+            '--stop-on-notice' => new self(onNotice: true),
+            '--stop-on-pending' => new self(onPending: true),
+            default => new self(onSkipped: true),
+        };
+    }
+
+    /**
      * The run options that would set these conditions again, for a worker
      * process to halt as its parent would.
      *

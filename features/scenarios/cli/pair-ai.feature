@@ -86,6 +86,11 @@ Feature: AI-assisted pair programming
     And the output should contain "3. No"
     And a class file "src/App/Wanted.php" should be generated
 
+  Scenario: Input that ends before an answer creates nothing
+    When I run phpspec pair with input "/describe App/Unanswered" and nobody answering
+    Then the output should contain "Nothing was written: there is nobody to answer."
+    And no file "src/App/Unanswered.php" should be generated
+
   Scenario: Answering No declines the offer
     When I run phpspec pair with input "/describe App/Declined" answering "3,3"
     Then no file "src/App/Declined.php" should be generated
@@ -270,3 +275,8 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "/run" answering "1"
     Then the output should contain "function subtract"
     And the output should not contain "+ }"
+
+  Scenario: A single prompt that fails exits 1
+    When I run phpspec command "pair --prompt /nonsense"
+    Then the exit code should be 1
+    And the output should contain "Unknown command: /nonsense"

@@ -18,6 +18,7 @@ use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;
@@ -77,7 +78,7 @@ final class RefactorModel
      */
     public function plan(RefactorTarget $target, string $journal): RefactorPlan|Declined
     {
-        $ask = $this->begin($target, $journal);
+        $ask = $this->planRequestStartingTheConversation($target, $journal);
 
         $response = $this->ask($ask, [$this->tool('propose_plan', [
             'technique' => ['type' => 'string', 'description' => 'the named refactoring'],
@@ -95,11 +96,17 @@ final class RefactorModel
         ])], 'required');
 
         foreach ($response->toolCalls as $call) {
-            if ($call->name === 'propose_plan' && is_array($call->arguments['steps'] ?? null) && $call->arguments['steps'] !== []) {
+            if ($call->name === 'propose_plan') {
+                $steps = is_array($call->arguments['steps'] ?? null) ? $call->arguments['steps'] : [];
+
+                if ($steps === []) {
+                    throw new ModelFailedException('The model proposed a plan with no steps.');
+                }
+
                 return new RefactorPlan(
                     (string) ($call->arguments['technique'] ?? ''),
                     (string) ($call->arguments['rationale'] ?? ''),
-                    array_values(array_map($this->plannedStep(...), $call->arguments['steps'])),
+                    array_values(array_map($this->plannedStep(...), $steps)),
                     $response->outputTokens,
                     $this->read(),
                 );
@@ -110,7 +117,11 @@ final class RefactorModel
             }
         }
 
-        return new Declined(trim($response->text) !== '' ? (string) preg_replace('/\s+/', ' ', trim($response->text)) : 'The model proposed no plan.', $response->outputTokens);
+        if (trim($response->text) === '') {
+            throw new ModelFailedException('The model answered with neither a plan nor a reason to decline.');
+        }
+
+        return new Declined((string) preg_replace('/\s+/', ' ', trim($response->text)), $response->outputTokens);
     }
 
     /**
@@ -123,7 +134,7 @@ final class RefactorModel
     {
         $call = new ToolCall('propose_plan', 'propose_plan', $plan->toArray());
 
-        $this->messages[] = Message::user($this->begin($target, $journal));
+        $this->messages[] = Message::user($this->planRequestStartingTheConversation($target, $journal));
         $this->messages[] = Message::assistant('', [$call]);
         $this->messages[] = Message::toolResult($call->id, 'Shown to the developer.');
         $this->rounds[] = ['response' => ['text' => '', 'tool_calls' => [['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments]]]];
@@ -158,10 +169,10 @@ final class RefactorModel
     }
 
     /**
-     * Starts the conversation about the target: the subject, its spec and
-     * the classes it imports under the source path. What to ask for the plan.
+     * Starts the conversation about the target, showing the subject, its
+     * spec and the classes it imports under the source path.
      */
-    private function begin(RefactorTarget $target, string $journal): string
+    private function planRequestStartingTheConversation(RefactorTarget $target, string $journal): string
     {
         $this->messages = [Message::system($this->profile()->body)];
         $this->shown = [];
@@ -207,6 +218,8 @@ final class RefactorModel
 
         try {
             $response = $this->provider->chat($this->messages, $this->options($tools, $choice));
+        } catch (InterruptedException $e) {
+            throw $e;
         } catch (Throwable $e) {
             throw new ModelFailedException(sprintf('The model did not answer: %s', $e->getMessage()), 0, $e);
         }
@@ -286,7 +299,7 @@ final class RefactorModel
     private function proposal(string $path, string $content): Proposal
     {
         $path = (string) preg_replace('~^(\./)+~', '', str_replace('\\', '/', $path));
-        $roots = [$this->rootOf($this->config->getSrcPath()), $this->rootOf($this->config->getSpecPath())];
+        $roots = [$this->config->srcDir(), $this->config->specDir()];
         $under = array_filter($roots, static fn(string $root): bool => str_starts_with($path, $root . '/'));
 
         if ($under === [] || !str_ends_with($path, '.php') || in_array('..', explode('/', $path), true)) {
@@ -343,24 +356,7 @@ final class RefactorModel
      */
     private function options(array $tools, string|array $choice): array
     {
-        $ai = $this->config->getAiConfig() ?? ['provider' => 'google'];
-        $profile = $this->profile();
-        $options = [
-            'model' => $ai['model'] ?? ProviderFactory::defaultModel($ai['provider']),
-            'maxTokens' => $profile->maxTokens ?? 8192,
-            'tools' => $tools,
-            'toolChoice' => $choice,
-        ];
-
-        if ($profile->temperature !== null) {
-            $options['temperature'] = $profile->temperature;
-        }
-
-        if (isset($ai['effort'])) {
-            $options['effort'] = $ai['effort'];
-        }
-
-        return $options;
+        return $this->profile()->providerOptions($this->config->getAiConfig() ?? []) + ['tools' => $tools, 'toolChoice' => $choice];
     }
 
     private function stepTool(): Tool
@@ -387,10 +383,5 @@ final class RefactorModel
     private function relative(string $file): string
     {
         return ltrim(substr($file, strlen($this->root)), '/\\');
-    }
-
-    private function rootOf(string $path): string
-    {
-        return rtrim(ltrim($path, './'), '/');
     }
 }

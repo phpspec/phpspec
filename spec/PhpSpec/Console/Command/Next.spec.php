@@ -7,6 +7,7 @@ use PhpSpec\Console\Command\Next;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
@@ -68,11 +69,26 @@ describe(Next::class, function () {
 
             $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             expect($document['action'])->toBe('next');
-            expect($document['error'])->toContain('AI configuration required');
+            expect($document['error'])->toStartWith('AI configuration required.');
+            expect($document['error'])->not()->toContain('api_key');
+            expect($document['remedy'])->toContain('api_key: YOUR_API_KEY');
             expect($exitCode)->toBe(1);
         });
 
-        it('displays a spec suggestion with target and reason', function (Filesystem $fs) {
+        it('names the bootstrap it cannot find, on the channel its reader reads', function (Filesystem $fs) {
+        $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k'], 'bootstrap' => 'nowhere/autoload.php']);
+        $pretty = new CommandTester(new Next($config, $fs));
+        $agent = new CommandTester(new Next($config, $fs));
+
+        $pretty->execute([], ['interactive' => false]);
+        $agent->execute(['--format' => 'agent'], ['interactive' => false]);
+
+        expect($pretty->getStatusCode())->toBe(1);
+        expect($pretty->getDisplay())->toContain('Bootstrap file not found: nowhere/autoload.php');
+        expect(json_decode(trim($agent->getDisplay()), true)['error'] ?? null)->toBe('Bootstrap file not found: nowhere/autoload.php');
+    });
+
+    it('displays a spec suggestion with target and reason', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
@@ -220,6 +236,27 @@ describe(Next::class, function () {
             expect($fakeGenerate->received)->toBe('a feature for deleting_a_task');
             expect($tester->getDisplay())->toContain('feature written');
             expect($tester->getDisplay())->not()->toContain('Specification');
+        });
+
+        it('hints the command, running nothing, when nobody answers', function (Filesystem $fs, Prompt $prompt) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($prompt->ask())->toReturn(null);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'feature',
+                'target' => 'deleting_a_task',
+                'reason' => 'The suite is green; grow the story.',
+            ];
+            $cmd = new Next(Configuration::load('.', $fs), $fs, $suggestFn, prompt: $prompt);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
+            expect($tester->getDisplay())->toContain('Run:');
+            expect($tester->getDisplay())->toContain('generate "a feature for deleting_a_task"');
         });
 
         it('hints generate for a feature suggestion when not interactive', function (Filesystem $fs) {
@@ -693,6 +730,37 @@ describe(Next::class, function () {
             expect($replay->requests[0]['messages'][0]->content)->toContain('refactor');    // so did the derived step
         });
 
+        it('refuses when the model does not answer, on the channel its reader reads', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $featuresDir = getcwd() . '/features';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir())->toReturn([]);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->mkdir())->toReturn(null);
+            allow($fs->write())->toReturn(null);
+            $runner = new NextFakeRunner();
+            $runner->outcome = new RunOutcome(null, new SuiteSummary(
+                'green',
+                ['examples' => 3, 'passes' => 3, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 0],
+                [['path' => 'features/adding.feature', 'status' => 'green', 'undefined' => 0]],
+            ));
+            $failing = fn(): Next => new Next(Configuration::load('.', $fs), $fs, null, $runner, new ReplayProvider([new RuntimeException('Google API error (500): boom')]));
+
+            $pretty = new CommandTester($failing());
+            $pretty->execute([], ['interactive' => false]);
+            $agent = new CommandTester($failing());
+            $agent->execute(['--format' => 'agent'], ['interactive' => false]);
+
+            expect($pretty->getStatusCode())->toBe(1);
+            expect($pretty->getDisplay())->toContain('The model did not answer: Google API error (500): boom');
+            expect($agent->getStatusCode())->toBe(1);
+            expect(json_decode(trim($agent->getDisplay()), true))->toBe(['v' => 2, 'action' => 'next', 'error' => 'The model did not answer: Google API error (500): boom']);
+        });
+
         it('shows the model the working story files when a feature is red', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $cwd = getcwd();
@@ -901,7 +969,7 @@ describe(Next::class, function () {
 
             expect($exitCode)->toBe(0);
             $document = json_decode(trim($tester->getDisplay()), true);
-            expect($document['command']['command'])->toBe('next');
+            expect($document['action'])->toBe('next');
             expect($document['suggestion']['type'])->toBe('feature');
             expect($document['suggestion']['run'])->toContain('generate "a feature for deleting_a_task"');
             expect($tester->getDisplay())->not()->toContain('Would you like');

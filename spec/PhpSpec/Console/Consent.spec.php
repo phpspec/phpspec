@@ -27,6 +27,33 @@ describe(Consent::class, function () {
         expect($this->output->fetch())->toContain('  Apply this step? [Y/n]');
     });
 
+    it('takes yes and no as words, whatever their case', function (Prompt $prompt) {
+        $consent = new Consent('Run with --accept-offers to %s.', prompt: ($this->answering)($prompt, 'yes', 'YES', 'no', 'maybe'));
+
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeTrue();
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeTrue();
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeFalse();
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeFalse();
+    });
+
+    it('numbers the answers when a no has a consequence to say', function (Prompt $prompt) {
+        $consent = new Consent('Run with --no-interaction to %s.', prompt: ($this->answering)($prompt, '2', '1', ''));
+        $undoes = 'this will undo all changes until the last green state';
+
+        expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeFalse();
+        expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeTrue();
+        expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeTrue();
+        expect(str_replace(PHP_EOL, "\n", $this->output->fetch()))->toContain("  Apply this step?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
+    });
+
+    it('tells nobody answering apart from a no, for the caller to decide what nobody means', function (Prompt $prompt) {
+        $consent = new Consent('Run with --accept-offers to %s.', prompt: ($this->answering)($prompt, 'n'));
+
+        expect($consent->decide($this->output, '  Apply?', 'k', 'apply'))->toBeFalse();
+        expect($consent->decide($this->output, '  Apply?', 'k', 'apply'))->toBeNull();
+        expect($this->output->fetch())->not()->toContain('nobody to answer');
+    });
+
     it('says nothing was written, and how to have it anyway, when nobody answers', function (Prompt $prompt) {
         $consent = new Consent('Run phpspec refactor in a terminal to %s.', prompt: ($this->answering)($prompt));
 

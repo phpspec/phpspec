@@ -23,10 +23,9 @@ use PhpSpec\Source\Members;
  * @internal
  * Finds what a refactor run works on: the class named in full (with
  * backslashes or slashes), the class by a short name modified last under the
- * source path, the class a spec file
- * describes, or with no target the source modified last under the source
- * path. A target with no spec is refused: nothing would catch a refactoring
- * that broke it.
+ * source path, the class a source file declares or a spec file describes, or
+ * with no target the source modified last under the source path. A target
+ * with no spec is refused: nothing would catch a refactoring that broke it.
  */
 final readonly class TargetResolver
 {
@@ -49,13 +48,29 @@ final readonly class TargetResolver
         $resolved = $target === '' ? $this->modifiedLast() : $this->named($target);
 
         if (!$this->filesystem->exists($resolved->sourceFile)) {
-            throw new UnresolvedTargetException(sprintf('Source file not found: %s', $resolved->sourceFile));
+            throw new UnresolvedTargetException(
+                sprintf('No class %s at %s.', $resolved->fqcn, $this->relative($resolved->sourceFile)),
+                sprintf('Describe it first: phpspec describe %s', str_replace('\\', '/', $resolved->fqcn)),
+            );
+        }
+
+        $members = Members::in($this->filesystem->read($resolved->sourceFile));
+        $kind = $members->kindOf($resolved->fqcn) ?? 'class';
+
+        if ($kind === 'interface') {
+            throw new UnresolvedTargetException(sprintf('%s is an interface, with no behaviour of its own to refactor.', $resolved->fqcn), 'Refactor a class that implements it.');
+        }
+
+        if ($resolved->method !== null && !$members->declares($resolved->fqcn, $resolved->method)) {
+            throw new UnresolvedTargetException(sprintf('%s has no method %s().', $resolved->fqcn, $resolved->method));
         }
 
         if (!$this->filesystem->exists($resolved->specFile)) {
             throw new UnresolvedTargetException(
                 sprintf('%s has no spec, so nothing would catch a refactoring that broke it.', $resolved->fqcn),
-                sprintf('Describe it first: phpspec describe %s', $resolved->fqcn),
+                $kind === 'class'
+                    ? sprintf('Describe it first: phpspec describe %s', str_replace('\\', '/', $resolved->fqcn))
+                    : sprintf('Write its spec first: %s', $this->relative($resolved->specFile)),
             );
         }
 
@@ -64,16 +79,16 @@ final readonly class TargetResolver
 
     private function modifiedLast(): RefactorTarget
     {
-        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource($this->root . '/' . $this->srcPath());
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource($this->root . '/' . $this->config->srcDir());
 
         if ($newest === null) {
-            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $this->srcPath()));
+            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $this->config->srcDir()));
         }
 
         $fqcn = Members::in($this->filesystem->read($newest))->classes()[0] ?? null;
 
         if ($fqcn === null) {
-            throw new UnresolvedTargetException(sprintf('%s, the source modified last, declares no class to refactor.', substr($newest, strlen($this->root) + 1)));
+            throw new UnresolvedTargetException(sprintf('%s, the source modified last, declares no class to refactor.', $this->relative($newest)));
         }
 
         return new RefactorTarget($fqcn, $newest, $this->specFileFor($fqcn));
@@ -82,28 +97,59 @@ final readonly class TargetResolver
     private function named(string $target): RefactorTarget
     {
         $suffix = $this->config->getSpecSuffix();
+        $path = (string) preg_replace('~^(\./)+~', '', str_replace('\\', '/', $target));
 
-        if (str_ends_with($target, $suffix)) {
-            $specFile = str_starts_with($target, '/') ? $target : $this->root . '/' . $target;
+        if (str_ends_with($path, $suffix)) {
+            $specFile = $this->absolute($path);
             $fqcn = $this->classDescribedBy($specFile, $suffix);
 
             return new RefactorTarget($fqcn, $this->sourceFileFor($fqcn), $specFile);
         }
 
-        $fqcn = $target;
-        $method = null;
-
-        if (str_contains($target, '::')) {
-            [$fqcn, $method] = explode('::', $target, 2);
+        if (str_ends_with($path, '.php')) {
+            return $this->declaredIn($this->absolute($path));
         }
 
+        [$fqcn, $method] = str_contains($path, '::') ? explode('::', $path, 2) : [$path, ''];
         $fqcn = ltrim(str_replace('/', '\\', $fqcn), '\\');
+
+        if (preg_match('~^[A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*(\\\\[A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*)*$~', $fqcn) !== 1) {
+            throw new UnresolvedTargetException(sprintf('Not a class name: %s.', $target), 'Name a class (App/Till), its source file or its spec file.');
+        }
 
         if (!str_contains($fqcn, '\\')) {
             $fqcn = $this->classNamed($fqcn);
         }
 
-        return new RefactorTarget($fqcn, $this->sourceFileFor($fqcn), $this->specFileFor($fqcn), $method);
+        return new RefactorTarget($fqcn, $this->sourceFileFor($fqcn), $this->specFileFor($fqcn), $method === '' ? null : $method);
+    }
+
+    /**
+     * The class a source file declares, and its spec.
+     */
+    private function declaredIn(string $sourceFile): RefactorTarget
+    {
+        if (!$this->filesystem->exists($sourceFile)) {
+            throw new UnresolvedTargetException(sprintf('Source file not found: %s.', $this->relative($sourceFile)));
+        }
+
+        $fqcn = Members::in($this->filesystem->read($sourceFile))->classes()[0] ?? null;
+
+        if ($fqcn === null) {
+            throw new UnresolvedTargetException(sprintf('%s declares no class to refactor.', $this->relative($sourceFile)));
+        }
+
+        return new RefactorTarget($fqcn, $sourceFile, $this->specFileFor($fqcn));
+    }
+
+    private function absolute(string $path): string
+    {
+        return str_starts_with($path, '/') || preg_match('~^[A-Za-z]:/~', $path) === 1 ? $path : $this->root . '/' . $path;
+    }
+
+    private function relative(string $file): string
+    {
+        return str_starts_with($file, $this->root . '/') ? substr($file, strlen($this->root) + 1) : $file;
     }
 
     /**
@@ -112,7 +158,7 @@ final readonly class TargetResolver
      */
     private function classNamed(string $shortName): string
     {
-        $newest = (new RecencyScanner($this->filesystem))->mostRecentNamed($this->root . '/' . $this->srcPath(), $shortName . '.php');
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentNamed($this->root . '/' . $this->config->srcDir(), $shortName . '.php');
         $declared = $newest === null ? [] : Members::in($this->filesystem->read($newest))->classes();
 
         foreach ($declared as $fqcn) {
@@ -121,7 +167,7 @@ final readonly class TargetResolver
             }
         }
 
-        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->srcPath()), sprintf('Describe it first: phpspec describe %s', $shortName));
+        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->config->srcDir()), sprintf('Describe it first: phpspec describe %s', $shortName));
     }
 
     /**
@@ -131,7 +177,7 @@ final readonly class TargetResolver
     private function classDescribedBy(string $specFile, string $suffix): string
     {
         $relative = substr($specFile, strlen($this->root) + 1, -strlen($suffix));
-        $specPath = $this->specPath() . '/';
+        $specPath = $this->config->specDir() . '/';
 
         if (str_starts_with($relative, $specPath)) {
             $relative = substr($relative, strlen($specPath));
@@ -147,16 +193,6 @@ final readonly class TargetResolver
 
     private function specFileFor(string $fqcn): string
     {
-        return $this->root . '/' . $this->specPath() . '/' . str_replace('\\', '/', $fqcn) . $this->config->getSpecSuffix();
-    }
-
-    private function srcPath(): string
-    {
-        return rtrim(ltrim($this->config->getSrcPath(), './'), '/');
-    }
-
-    private function specPath(): string
-    {
-        return rtrim(ltrim($this->config->getSpecPath(), './'), '/');
+        return $this->root . '/' . $this->config->specDir() . '/' . str_replace('\\', '/', $fqcn) . $this->config->getSpecSuffix();
     }
 }

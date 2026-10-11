@@ -659,7 +659,7 @@ final class PairToolExecutor implements ToolExecutor
 
     private function describeHandler(): Closure
     {
-        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specPath = $this->config->specDir();
         $specSuffix = $this->config->getSpecSuffix();
         $filesystem = $this->filesystem;
         $output = $this->output;
@@ -690,7 +690,7 @@ final class PairToolExecutor implements ToolExecutor
 
     private function addExampleHandler(): Closure
     {
-        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specPath = $this->config->specDir();
         $specSuffix = $this->config->getSpecSuffix();
         $filesystem = $this->filesystem;
         $output = $this->output;
@@ -1026,7 +1026,7 @@ final class PairToolExecutor implements ToolExecutor
      */
     private function specDir(): string
     {
-        return getcwd() . DIRECTORY_SEPARATOR . ltrim($this->config->getSpecPath(), './') . DIRECTORY_SEPARATOR;
+        return getcwd() . DIRECTORY_SEPARATOR . $this->config->specDir() . DIRECTORY_SEPARATOR;
     }
 
     /**

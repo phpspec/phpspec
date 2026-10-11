@@ -978,6 +978,32 @@ Feature: Agent output format
     And a class file "src/App/Calculator.php" should be generated
     And it should contain "return 3"
 
+  Scenario: A method that has a body is never offered a fake
+    Given a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+      use App\Calculator;
+
+      describe(Calculator::class, function () {
+          let("calc", fn() => new Calculator());
+          it("adds", function () {
+              expect($this->calc->add(1, 2))->toBe(3);
+          });
+      });
+      """
+    And a class "src/App/Calculator.php":
+      """
+      <?php
+      namespace App;
+
+      class Calculator {
+          public function add($a, $b) { return $a - $b; }
+      }
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should not contain "fake_method"
+
   Scenario: A pending step's reason reaches the scenario entry and the step
     Given a feature file "features/pending.feature":
       """
@@ -1013,3 +1039,24 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the output should contain "Needs the rates API"
     And the output should contain "No network on this machine"
+
+  Scenario: A configuration that cannot be taken still answers a coding agent in JSON
+    Given a phpspec.yaml config:
+      """
+      ai: yes
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the exit code should be 1
+    And the output should be valid JSON
+    And the first event should be "run_started"
+    And the output should contain "ai expects a map"
+
+  Scenario: A configuration that cannot be taken answers a receipt command's agent in JSON
+    Given a phpspec.yaml config:
+      """
+      ai: yes
+      """
+    When I run phpspec command "describe App/Basket --agent"
+    Then the exit code should be 1
+    And the output should be valid JSON
+    And the output should contain "ai expects a map"

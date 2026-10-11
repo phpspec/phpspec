@@ -28,6 +28,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface as Output;
+use Symfony\Component\Console\Output\StreamOutput;
 
 /**
  * @internal
@@ -73,7 +74,7 @@ final class Pair extends Command
         }
 
         $roleState = new RoleState();
-        $pairOutput = new PairOutput($output);
+        $pairOutput = new PairOutput($output, $output instanceof StreamOutput && stream_isatty($output->getStream()));
 
         $dispatcher = new CommandDispatcher(
             $this->specGenerator,
@@ -106,7 +107,7 @@ final class Pair extends Command
         if ($prompt !== null) {
             $dispatcher->dispatch($prompt);
 
-            return 0;
+            return $dispatcher->lastFailed() ? 1 : 0;
         }
 
         $repl = new Repl($dispatcher, $pairOutput, $dispatcher->aiIsReady());

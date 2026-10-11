@@ -106,9 +106,23 @@ final readonly class CodeGenerator
             $this->scanner->collectMissingMockTypes($results),
             $this->scanner->collectUndefinedMockInterfaceMethods($results),
             $this->scanner->collectUndefinedClassMethods($results),
-            $this->scanner->collectFakeableMethods($results),
+            $this->emptyOnes($this->scanner->collectFakeableMethods($results)),
             $this->steps->defaultFile(),
         );
+    }
+
+    /**
+     * The methods a fake can fill: those whose body is empty. A method with a
+     * body has an answer of its own, however wrong.
+     *
+     * @param array<array{className: string, methodName: string, fakeExpression: string, file: string, line: int}> $methods
+     * @return array<array{className: string, methodName: string, fakeExpression: string, file: string, line: int}>
+     */
+    private function emptyOnes(array $methods): array
+    {
+        $generator = new MethodStubGenerator($this->layout);
+
+        return array_values(array_filter($methods, static fn(array $method): bool => $generator->hasEmptyMethod($method['className'], $method['methodName'])));
     }
 
     /**

@@ -17,10 +17,12 @@ namespace PhpSpec\Report\Formatter;
 use DOMDocument;
 use DOMElement;
 use DOMException;
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
@@ -127,11 +129,13 @@ final class Junit extends AbstractFormatter
                 $error = $xml->createElement('error');
                 $error->setAttribute('message', $example['message']);
                 $error->setAttribute('type', $example['type']);
+                $error->appendChild($xml->createTextNode(trim($example['message'] . "\n\n" . $example['at'])));
                 $testcase->appendChild($error);
                 $errors++;
             } elseif ($example['failure']) {
                 $failure = $xml->createElement('failure');
                 $failure->setAttribute('message', $example['message']);
+                $failure->appendChild($xml->createTextNode(trim($example['message'] . "\n\n" . $example['at'])));
                 $testcase->appendChild($failure);
                 $failures++;
             }
@@ -144,6 +148,19 @@ final class Junit extends AbstractFormatter
         $suite->setAttribute('skipped', (string) $skipped);
         $suite->setAttribute('time', self::seconds($time));
         $parent->appendChild($suite);
+    }
+
+    /**
+     * Where an example failed or errored, from the project root, as PHPUnit
+     * writes it under the message; empty when that is not known.
+     */
+    private function whereItFailed(ExampleResult $example): string
+    {
+        $failed = array_values(array_filter($example->getResults(), static fn(MatchResult $match): bool => $match->isFailure()))[0] ?? null;
+        $file = $failed?->getFile() ?? $example->getError()?->getFile();
+        $line = $failed?->getLine() ?? $example->getError()?->getLine();
+
+        return $file === null || $file === '' || $line === null ? '' : ProjectRoot::here()->relative($file) . ':' . $line;
     }
 
     /**
@@ -172,6 +189,7 @@ final class Junit extends AbstractFormatter
         }
 
         $featureTime = 0.0;
+        $featureCounts = ['tests' => 0, 'failures' => 0, 'errors' => 0, 'skipped' => 0];
 
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
@@ -186,40 +204,60 @@ final class Junit extends AbstractFormatter
             }
 
             $scenarioTime = 0.0;
+            $counts = ['tests' => 0, 'failures' => 0, 'errors' => 0, 'skipped' => 0];
 
             foreach ($scenario->getResults() as $step) {
                 if (!$step instanceof StepResult) {
                     continue;
                 }
+                $counts['tests']++;
                 $testcase = $xml->createElement('testcase');
                 $testcase->setAttribute('name', $step->getTitle());
                 $testcase->setAttribute('classname', $feature->getTitle() . ' > ' . $scenario->getTitle());
                 $testcase->setAttribute('time', self::seconds($step->getDuration()));
                 $scenarioTime += $step->getDuration();
 
-                if ($step->isPending() || $step->isUndefined() || $step->isSkipped()) {
+                if ($step->isUndefined()) {
+                    // An undefined step fails the run, so it fails the report.
+                    $failure = $xml->createElement('failure');
+                    $failure->setAttribute('message', 'Undefined step: ' . $step->getTitle());
+                    $testcase->appendChild($failure);
+                    $counts['failures']++;
+                } elseif ($step->isPending() || $step->isSkipped()) {
                     $skip = $xml->createElement('skipped');
                     if ($step->getReason() !== null) {
                         $skip->setAttribute('message', $step->getReason());
                     }
                     $testcase->appendChild($skip);
+                    $counts['skipped']++;
                 } elseif ($step->isError()) {
                     $error = $xml->createElement('error');
                     $error->setAttribute('message', $step->getError()?->getMessage() ?? 'Errored');
                     $error->setAttribute('type', $step->getError()?->getType() ?? 'Error');
                     $testcase->appendChild($error);
+                    $counts['errors']++;
                 } elseif ($step->isFailure()) {
                     $failure = $xml->createElement('failure');
                     $failure->setAttribute('message', $step->getError()?->getMessage() ?? 'Failed');
                     $testcase->appendChild($failure);
+                    $counts['failures']++;
                 }
 
                 $scenarioSuite->appendChild($testcase);
             }
 
+            foreach ($counts as $count => $value) {
+                $scenarioSuite->setAttribute($count, (string) $value);
+                $featureCounts[$count] += $value;
+            }
+
             $scenarioSuite->setAttribute('time', self::seconds($scenarioTime));
             $featureTime += $scenarioTime;
             $featureSuite->appendChild($scenarioSuite);
+        }
+
+        foreach ($featureCounts as $count => $value) {
+            $featureSuite->setAttribute($count, (string) $value);
         }
 
         $featureSuite->setAttribute('time', self::seconds($featureTime));
@@ -229,8 +267,8 @@ final class Junit extends AbstractFormatter
     /**
      * Recursively collects all examples into a flat list for testsuite construction.
      *
-     * @param array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}> $examples
-     * @return array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string}>
+     * @param array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string, at: string}> $examples
+     * @return array<int, array{title: string, context: string, duration: float, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string, type: string, at: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array
     {
@@ -247,6 +285,7 @@ final class Junit extends AbstractFormatter
                     'failure' => $result->isFailure(),
                     'message' => $result->getMessage(),
                     'type' => $result->getError()?->getType() ?? 'Error',
+                    'at' => $this->whereItFailed($result),
                 ];
             } elseif ($result instanceof Results) {
                 $newPrefix = $prefix;

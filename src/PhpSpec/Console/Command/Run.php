@@ -143,6 +143,7 @@ final class Run extends Command implements InternalOptions
             ->addOption('coverage-json', null, Option::VALUE_REQUIRED, 'Generate JSON coverage report with per-example detail, for mutation testing tools (experimental)')
             ->addOption('coverage-src', null, Option::VALUE_REQUIRED, 'Source directory to scope coverage reports to (overrides config src_path)')
             ->addOption('coverage-partial', null, Option::VALUE_REQUIRED, 'Dump raw coverage state to a file (internal, used by parallel workers)')
+            ->addOption('suite-check', null, Option::VALUE_NONE, 'Run every example whatever the config stops on, keeping no offers (internal, used by refactor\'s suite check)')
             ->addOption('parallel', null, Option::VALUE_OPTIONAL, 'Run specs in parallel processes (--parallel=N for N workers)', false)
             ->setDescription('Runs specifications');
     }
@@ -257,6 +258,12 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, "Path not found: $missing", 'Check the path, or give none to run the configured suite.');
         }
 
+        $unrunnable = $this->unrunnablePath($given);
+
+        if ($unrunnable !== null) {
+            return $this->stopped($prose, $formatter, "Not a spec or a feature: $unrunnable", 'Name a spec file (*' . $this->config->getSpecSuffix() . '), a feature file or a directory of them.');
+        }
+
         $tags = $input->getOption('tags');
 
         if (is_string($tags)) {
@@ -343,6 +350,16 @@ final class Run extends Command implements InternalOptions
         $this->writeReportFiles($input, $prose, $results);
         $this->printProfile($input, $prose, $results);
 
+        $stoppedBy = $this->stopConditions($input)->reachedBy($results);
+
+        if ($stoppedBy !== null) {
+            $prose->writeln(sprintf('<fg=yellow>Stopped early by %s: what came after it did not run.</>', $stoppedBy));
+
+            if ($formatter instanceof Agent) {
+                $formatter->stoppedBy($stoppedBy);
+            }
+        }
+
         $failed = null;
 
         if ($coverageReporter) {
@@ -402,7 +419,7 @@ final class Run extends Command implements InternalOptions
             $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive() ? Generation::Asks : Generation::Declines);
         }
 
-        if ($formatter instanceof Agent) {
+        if ($formatter instanceof Agent && !$input->getOption('suite-check')) {
             // A reader that was told about an offer can take it later by id,
             // so what was reported has to still be there when they do.
             $this->recordOffers($results);
@@ -747,6 +764,46 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
+     * What the run stops on: the options given, and the config's stop_on
+     * settings unless this is refactor's suite check.
+     */
+    private function stopConditions(Input $input): StopConditions
+    {
+        $problems = (bool) $input->getOption('stop-on-problems');
+        $configStop = $input->getOption('suite-check') ? new StopConditions() : $this->config->getStopConditions();
+        $stopOnFailure = $input->getOption('stop-on-failure') || $configStop->onFailure;
+
+        return new StopConditions(
+            onFailure: $stopOnFailure || $problems,
+            onError: $stopOnFailure || $input->getOption('stop-on-error') || $configStop->onError || $problems,
+            onWarning: $input->getOption('stop-on-warning') || $configStop->onWarning || $problems,
+            onDeprecation: $input->getOption('stop-on-deprecation') || $configStop->onDeprecation || $problems,
+            onNotice: $input->getOption('stop-on-notice') || $configStop->onNotice || $problems,
+            onPending: $input->getOption('stop-on-pending') || $configStop->onPending || $problems,
+            onSkipped: $input->getOption('stop-on-skipped') || $configStop->onSkipped || $problems,
+        );
+    }
+
+    /**
+     * The first path given that is a file run cannot take: neither a spec
+     * nor a feature.
+     *
+     * @param list<string> $given
+     */
+    private function unrunnablePath(array $given): ?string
+    {
+        foreach ($given as $path) {
+            $file = (string) preg_replace('/:\d+$/', '', $path);
+
+            if (is_file($file) && !str_ends_with($file, $this->config->getSpecSuffix()) && !str_ends_with($file, '.feature')) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Checks whether any coverage option was given.
      *
      * @param Input $input the console input to check coverage options
@@ -814,18 +871,7 @@ final class Run extends Command implements InternalOptions
         $tags = $input->getOption('tags');
         $suite = $this->loader->load($files, $filter, is_string($tags) ? $tags : null);
 
-        $problems = (bool) $input->getOption('stop-on-problems');
-        $configStop = $this->config->getStopConditions();
-        $stopOnFailure = $input->getOption('stop-on-failure') || $configStop->onFailure;
-        $stop = new StopConditions(
-            onFailure: $stopOnFailure || $problems,
-            onError: $stopOnFailure || $input->getOption('stop-on-error') || $configStop->onError || $problems,
-            onWarning: $input->getOption('stop-on-warning') || $configStop->onWarning || $problems,
-            onDeprecation: $input->getOption('stop-on-deprecation') || $configStop->onDeprecation || $problems,
-            onNotice: $input->getOption('stop-on-notice') || $configStop->onNotice || $problems,
-            onPending: $input->getOption('stop-on-pending') || $configStop->onPending || $problems,
-            onSkipped: $input->getOption('stop-on-skipped') || $configStop->onSkipped || $problems,
-        );
+        $stop = $this->stopConditions($input);
 
         $seed = null;
         if ($input->getOption('order') === 'random') {
@@ -1013,6 +1059,12 @@ final class Run extends Command implements InternalOptions
             return sprintf('No scenario matches --tags "%s".', $tags);
         }
 
+        $filter = $input->getOption('filter');
+
+        if (is_string($filter)) {
+            return sprintf('No example or scenario matches --filter "%s".', $filter);
+        }
+
         if ($given !== []) {
             return 'No specs found.';
         }
@@ -1034,7 +1086,7 @@ final class Run extends Command implements InternalOptions
 
     public function internalOptions(): array
     {
-        return ['coverage-partial'];
+        return ['coverage-partial', 'suite-check'];
     }
 
     private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
@@ -1169,7 +1221,7 @@ final class Run extends Command implements InternalOptions
     {
         return new CodeGenerator(
             $this->config->getSourceLayout(),
-            ltrim($this->config->getSpecPath(), './'),
+            $this->config->specDir(),
             $generation,
             $this->config->getSpecSuffix(),
             steps: new StepsHome($this->config),

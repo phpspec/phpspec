@@ -425,6 +425,30 @@ describe(Configuration::class, function () {
         ]);
     });
 
+    it('gives the source and spec directories as code joins them: no leading ./, no trailing slash, a parent kept', function () {
+        expect((new Configuration(['src_path' => 'src/', 'spec_path' => './spec']))->srcDir())->toBe('src');
+        expect((new Configuration(['src_path' => 'src/', 'spec_path' => './spec']))->specDir())->toBe('spec');
+        expect((new Configuration(['src_path' => '../lib', 'spec_path' => 'tests\\spec\\']))->srcDir())->toBe('../lib');
+        expect((new Configuration(['src_path' => '../lib', 'spec_path' => 'tests\\spec\\']))->specDir())->toBe('tests/spec');
+        expect((new Configuration(['src_path' => '.']))->srcDir())->toBe('');
+        expect((new Configuration())->srcDir())->toBe('src');
+    });
+
+    it('says guard is on only when a usable section makes it active', function () {
+        expect((new Configuration())->guardIsOn())->toBeFalse();
+        expect((new Configuration(['guard' => ['status' => 'off']]))->guardIsOn())->toBeFalse();
+        expect((new Configuration(['guard' => ['status' => 'active']]))->guardIsOn())->toBeTrue();
+        expect((new Configuration(['guard' => ['status' => 'active', 'detecton' => 'git']]))->guardIsOn())->toBeFalse();
+    });
+
+    it('names the options a phpspec it starts needs to read this same configuration', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/conf/qa.yml');
+        allow($fs->read())->toReturn("spec_path: altspec\n");
+
+        expect(Configuration::load('/app', $fs, '/app/conf/qa.yml')->childOptions())->toBe(['--config=/app/conf/qa.yml']);
+        expect((new Configuration())->childOptions())->toBe([]);
+    });
+
     it('names the guard key it does not know, and the one it thinks was meant', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
@@ -540,6 +564,20 @@ describe(Configuration::class, function () {
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('The ai section is missing api_key. Add it to your phpspec config.');
+    });
+
+    it('gives a missing ai section as a problem and, apart, the section that would answer it', function () {
+        $refusal = (new Configuration([], '/app'))->aiConfigRefusal();
+
+        expect($refusal['problem'] ?? null)->toBe('AI configuration required. Create phpspec.yml with an "ai" section.');
+        expect($refusal['remedy'] ?? null)->toContain("ai:\n  provider: ");
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '']]))->aiConfigRefusal())->toBe(['problem' => 'The ai section\'s api_key is empty. Put your key in your phpspec config.', 'remedy' => null]);
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]))->aiConfigRefusal())->toBeNull();
+    });
+
+    it('takes an empty api_key for a missing one', function () {
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '']]))->aiConfigProblem())->toBe('The ai section\'s api_key is empty. Put your key in your phpspec config.');
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '  ']]))->getAiConfig())->toBeNull();
     });
 
     it('requires provider, and names the installed papi package as the answer', function (Filesystem $fs) {

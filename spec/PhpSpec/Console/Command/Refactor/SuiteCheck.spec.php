@@ -14,7 +14,7 @@ describe(SuiteCheck::class, function () {
 
         expect($check->green())->toBeTrue();
         expect($check->confinedTo([]))->toBeTrue();
-        expect($check->report())->toBe('');
+        expect($check->failures())->toBe([]);
     });
 
     it('reads an entry the run reported but does not count against it as no failure: skipped, risky, or passing with a note', function () {
@@ -26,7 +26,7 @@ describe(SuiteCheck::class, function () {
         ));
 
         expect($check->green())->toBeTrue();
-        expect($check->report())->toBe('');
+        expect($check->failures())->toBe([]);
     });
 
     it('says why it is red when nothing failed but the run still left work to do', function () {
@@ -36,17 +36,17 @@ describe(SuiteCheck::class, function () {
 
         expect($check->green())->toBeFalse();
         expect($check->confinedTo(['spec/App/Till.spec.php']))->toBeFalse();
-        expect($check->report())->toBe(
-            "src/App/Till.php:14  Write an example that reaches App\\Till::refund.\n"
-            . 'Coverage is 81.3%, under the 90% required.',
-        );
+        expect($check->failures())->toBe([
+            'src/App/Till.php:14  Write an example that reaches App\\Till::refund.',
+            'Coverage is 81.3%, under the 90% required.',
+        ]);
     });
 
-    it('counts the examples the run ran, none when it printed no summary', function () {
-        $ran = SuiteCheck::fromStream(($this->stream)(['event' => 'summary', 'examples' => 24, 'actionable' => 0]));
+    it('counts the examples that ran, leaving out the skipped and the pending, none when it printed no summary', function () {
+        $ran = SuiteCheck::fromStream(($this->stream)(['event' => 'summary', 'examples' => 24, 'skipped' => 2, 'pending' => 1, 'actionable' => 1]));
 
-        expect($ran->examples())->toBe(24);
-        expect(SuiteCheck::fromStream('')->examples())->toBe(0);
+        expect($ran->ran())->toBe(21);
+        expect(SuiteCheck::fromStream('')->ran())->toBe(0);
     });
 
     it('keeps every failure inside the spec files named, and none outside them', function () {
@@ -63,7 +63,6 @@ describe(SuiteCheck::class, function () {
             'spec/App/Checkout/LoyaltyDiscount.spec.php:7  LoyaltyDiscount > discounts: Class "App\\Checkout\\LoyaltyDiscount" not found',
             'spec/App/Checkout/LoyaltyDiscount.spec.php:12  LoyaltyDiscount > caps: Expected 10 to be 5',
         ]);
-        expect($check->report())->toBe(implode("\n", $check->failures()));
     });
 
     it('keeps no failure it cannot place, nor a run that died, inside any file', function () {
@@ -77,9 +76,9 @@ describe(SuiteCheck::class, function () {
         ));
 
         expect($unplaced->confinedTo(['spec/App/Checkout.spec.php']))->toBeFalse();
-        expect($unplaced->report())->toBe('Checkout > later: pending');
+        expect($unplaced->failures())->toBe(['Checkout > later: pending']);
         expect($died->confinedTo(['spec/App/Till.spec.php']))->toBeFalse();
-        expect($died->report())->toBe('Cannot redeclare class App\Till');
+        expect($died->failures())->toBe(['Cannot redeclare class App\Till']);
     });
 
     it('is red, saying what it got, when what came back is no run at all', function () {
@@ -87,6 +86,6 @@ describe(SuiteCheck::class, function () {
 
         expect($check->green())->toBeFalse();
         expect($check->confinedTo([]))->toBeFalse();
-        expect($check->report())->toBe('PHP Parse error: syntax error in src/App/Till.php on line 3');
+        expect($check->failures())->toBe(['PHP Parse error: syntax error in src/App/Till.php on line 3']);
     });
 });

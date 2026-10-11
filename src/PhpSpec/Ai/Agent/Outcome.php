@@ -28,11 +28,13 @@ final readonly class Outcome
      * @param list<Proposal> $proposals the file changes to confirm and apply
      * @param string $prose text for the human: advice, or the reason nothing was proposed
      * @param array<string, string> $data a reporting tool's structured payload (e.g. suggest_next)
+     * @param string|null $failure what the provider said when the model did not answer, null when it did
      */
     public function __construct(
         public ?Step $step,
         public array $proposals = [],
         public string $prose = '',
         public array $data = [],
+        public ?string $failure = null,
     ) {}
 }

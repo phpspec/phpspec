@@ -24,7 +24,7 @@ final readonly class Carried
     /**
      * @param list<string> $kept the titles of the steps kept
      * @param list<string> $files the files the kept steps wrote, project-relative
-     * @param string $stopped why it stopped short, empty when every step was kept
+     * @param string $stopped where it stopped short and why, empty when every step was kept
      */
     public function __construct(
         public int $exitCode,
@@ -32,4 +32,12 @@ final readonly class Carried
         public array $files,
         public string $stopped = '',
     ) {}
+
+    /**
+     * Whether every step of the plan was kept.
+     */
+    public function complete(): bool
+    {
+        return $this->stopped === '';
+    }
 }

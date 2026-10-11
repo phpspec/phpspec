@@ -35,12 +35,10 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Console\Consent;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
-use PhpSpec\Guard\Inspection;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -93,6 +91,8 @@ final class CommandDispatcher
      */
     private ?string $suggestion = null;
 
+    private bool $failed = false;
+
     /**
      * @param SpecGenerator $specGenerator the spec file generator
      * @param ClassGenerator $classGenerator the class file generator
@@ -125,7 +125,7 @@ final class CommandDispatcher
         $this->prompts = new PromptLibrary($this->filesystem);
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->notes = $this->chooser->notes();
-        $this->specRunner = $specRunner ?? new SubprocessRunner(Inspection::of($config, $this->filesystem) !== null);
+        $this->specRunner = $specRunner ?? new SubprocessRunner($config->guardIsOn());
         $this->roleState = $roleState ?? new RoleState();
         $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
         $this->refactor = $refactor ?? fn(Consent $consent): Refactor => new Refactor($this->config, $this->filesystem, consent: $consent);
@@ -246,7 +246,7 @@ final class CommandDispatcher
         $recency = new RecencyScanner($this->filesystem);
         $cwd = getcwd() ?: '.';
         $recentFeature = $recency->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './'));
-        $recentSource = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+        $recentSource = $recency->mostRecentSource($cwd . '/' . $this->config->srcDir());
 
         $next = (new SuiteNarrator())->next($outcome, $this->roleState->current(), $recentFeature, $recentSource);
 
@@ -301,6 +301,15 @@ final class CommandDispatcher
     }
 
     /**
+     * Whether the line dispatched last failed: a run that went red or left no
+     * report, a command that refused, or a command there is none of.
+     */
+    public function lastFailed(): bool
+    {
+        return $this->failed;
+    }
+
+    /**
      * Dispatches a raw input string to the appropriate handler.
      *
      * @param string $input the raw user input
@@ -309,6 +318,7 @@ final class CommandDispatcher
     public function dispatch(string $input): int
     {
         PairLogger::log('CMD', $input);
+        $this->failed = false;
         $parsed = $this->parser->parse($input);
         $command = $parsed['command'];
 
@@ -333,7 +343,7 @@ final class CommandDispatcher
             '/run' => $this->handleRun($this->runArgument($parsed['tail'])),
             '/next' => $this->handleNext(),
             '/generate' => $this->handleGenerate($parsed['argument']),
-            '/refactor' => $this->handleRefactor($parsed['argument']),
+            '/refactor' => $this->handleRefactor($parsed['tail']),
             '/clear' => $this->handleClear(),
             '/swap' => $this->handleSwap(),
             '/help' => $this->handleHelp(),
@@ -580,6 +590,7 @@ final class CommandDispatcher
     {
         $outcome = $this->specRunner->run($argument, $this->output->getOutput());
         $this->lastSituation = $outcome->summary ?? $this->lastSituation;
+        $this->failed = $outcome?->summary === null || $outcome->summary->isRed();
 
         $candidates = $outcome?->candidates;
         if ($candidates !== null && !$candidates->isEmpty()) {
@@ -599,13 +610,26 @@ final class CommandDispatcher
     {
         $codeGenerator = new CodeGenerator(
             $this->config->getSourceLayout(),
-            ltrim($this->config->getSpecPath(), './'),
+            $this->config->specDir(),
             $this->interactive ? Generation::Asks : Generation::Accepts,
             $this->config->getSpecSuffix(),
             $this->chooser,
             new StepsHome($this->config, $this->filesystem),
         );
         $codeGenerator->apply($this->output->getOutput(), $candidates, false);
+    }
+
+    /**
+     * A line typed at the prompt as a command's input. What was typed is
+     * literal, with no shell in front of it: a backslash is part of a class
+     * name, not an escape to resolve.
+     */
+    private function typed(string $line): StringInput
+    {
+        $input = new StringInput(trim(str_replace('\\', '\\\\', $line)));
+        $input->setInteractive($this->interactive);
+
+        return $input;
     }
 
     /**
@@ -616,11 +640,9 @@ final class CommandDispatcher
     private function handleRefactor(string $argument): int
     {
         $consent = new Consent('Run phpspec refactor --no-interaction to %s.', chooser: $this->chooser);
-        $input = new ArrayInput(trim($argument) === '' ? [] : ['target' => trim($argument)]);
-        $input->setInteractive($this->interactive);
 
         try {
-            ($this->refactor)($consent)->run($input, $this->output->getOutput());
+            $this->failed = ($this->refactor)($consent)->run($this->typed($argument), $this->output->getOutput()) !== 0;
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }
@@ -659,13 +681,8 @@ final class CommandDispatcher
             return self::CONTINUE;
         }
 
-        // What was typed at the prompt is literal, with no shell in front of
-        // it: a backslash is part of a class name, not an escape to resolve.
-        $input = new StringInput(trim($name . ' ' . str_replace('\\', '\\\\', $argString)));
-        $input->setInteractive($this->interactive);
-
         try {
-            $this->application->doRun($input, $this->output->getOutput());
+            $this->failed = $this->application->doRun($this->typed($name . ' ' . $argString), $this->output->getOutput()) !== 0;
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }
@@ -910,6 +927,7 @@ final class CommandDispatcher
     private function handleUnknown(string $command): int
     {
         $this->output->error("Unknown command: $command. Type /help for the available commands.");
+        $this->failed = true;
 
         return self::CONTINUE;
     }
@@ -923,10 +941,7 @@ final class CommandDispatcher
      */
     private function registerAutoloader(): void
     {
-        $srcPath = rtrim($this->config->getSrcPath(), '/.');
-        if ($srcPath === '') {
-            $srcPath = '.';
-        }
+        $srcPath = $this->config->srcDir() === '' ? '.' : $this->config->srcDir();
 
         spl_autoload_register(function (string $class) use ($srcPath) {
             $file = $srcPath . '/' . str_replace('\\', '/', $class) . '.php';

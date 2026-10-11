@@ -36,6 +36,8 @@ use PhpSpec\Console\Command\Refactor;
 use PhpSpec\Console\Command\Run;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Loader;
+use PhpSpec\Report\Formatter\Agent;
+use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Runner;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Command\Command;
@@ -99,10 +101,37 @@ final class Application extends BaseApplication
         try {
             return parent::doRun($input, $output);
         } catch (ConfigurationException $e) {
-            $output->writeln(sprintf('<fg=red>%s</>', $e->getMessage()));
+            return $this->refuseConfiguration($input, $output, $e->getMessage());
+        }
+    }
+
+    /**
+     * Says the configuration cannot be taken, on the channel the caller
+     * reads: a coding agent gets a run's fatal and summary, or a command's
+     * error receipt, rather than prose in its JSON.
+     */
+    private function refuseConfiguration(InputInterface $input, OutputInterface $output, string $problem): int
+    {
+        $forAgent = $input->getParameterOption(['--format', '-f'], 'pretty', true) === 'agent' || $input->hasParameterOption('--agent', true);
+        $command = $input->getFirstArgument() ?? 'run';
+
+        if (!$forAgent) {
+            $output->writeln(sprintf('<fg=red>%s</>', $problem));
 
             return 1;
         }
+
+        if ($command === 'run') {
+            $document = new Agent($output);
+            $document->stopped($problem);
+            $document->publish();
+
+            return 1;
+        }
+
+        $output->write((json_encode(['v' => Schema::V, 'action' => $command, 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}') . "\n", false, OutputInterface::OUTPUT_RAW);
+
+        return 1;
     }
 
     public function getDefaultCommands(): array
@@ -127,15 +156,15 @@ final class Application extends BaseApplication
             $extensionLoader,
         );
         $defaultCommands[] = new Describe(
-            new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
+            new SpecGenerator($config->specDir(), specSuffix: $specSuffix),
             $config->getSourceLayout(),
         );
         $defaultCommands[] = new Exemplify(
-            new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
+            new SpecGenerator($config->specDir(), specSuffix: $specSuffix),
             $config->getSourceLayout(),
         );
         $defaultCommands[] = new Pair(
-            new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
+            new SpecGenerator($config->specDir(), specSuffix: $specSuffix),
             new ClassGenerator($config->getSourceLayout()),
             $config,
             $extensionLoader,
