@@ -671,6 +671,36 @@ Feature: Agent output format
     When I run phpspec run with option "--story --format=agent"
     Then the failing entries should have distinct ids
 
+  Scenario: Examples of one title in one context are told apart by number, in every formatter
+    Given a spec file "spec/App/Total.spec.php":
+      """
+      <?php
+      describe('Total', function () {
+          context('when empty', function () {
+              it('returns the total', fn () => expect(0)->toBe(1));
+              it('returns the total', fn () => expect(0)->toBe(2));
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain "when empty > returns the total #2"
+    When I run phpspec run with option "--no-ansi"
+    Then the output should contain "when empty > returns the total #2"
+
+  Scenario: Scenarios of one title in one feature are told apart by number
+    Given a feature file "features/paying.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+        Scenario: Paying
+          When I pay twice
+      """
+    When I run phpspec run with option "--story --format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain "Checkout > Paying #2"
+
   Scenario: Each row of a scenario outline is told apart by its values
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/adding.feature":

@@ -7,6 +7,15 @@ use PhpSpec\Specification\SkippedException;
 
 describe(Example::class, function() {
 
+    it("keeps the number it was given among namesakes, in its results and in a copy for the next run", function() {
+        $example = new Example("returns the total", function() { expect(true)->toBeTrue(); });
+        $example->numberAmongNamesakes(2);
+
+        expect($example->writtenTitle())->toBe("returns the total");
+        expect($example->run()->getTitle())->toBe("returns the total #2");
+        expect($example->withWorld(new PhpSpec\Specification\Subject())->run()->getTitle())->toBe("returns the total #2");
+    });
+
     it("instantiates", function() {
         $example = new Example("does something", function() {});
         expect($example)->toBeAnInstanceOf(Example::class);

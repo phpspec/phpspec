@@ -9,6 +9,12 @@ use PhpSpec\StoryBDD\DataTable;
 
 describe(GherkinParser::class, function () {
 
+    it('numbers a scenario whose title one before it in the feature has', function () {
+        $feature = (new GherkinParser())->parse("Feature: Checkout\n  Scenario: Paying\n    When I pay\n  Scenario: Paying\n    When I pay twice\n  Scenario: Paying\n    When I pay thrice\n");
+
+        expect(array_map(fn(ScenarioNode $scenario) => $scenario->title, $feature->scenarios))->toBe(['Paying', 'Paying #2', 'Paying #3']);
+    });
+
     let("parser", fn() => new GherkinParser());
 
     it("parses a feature title", function () {

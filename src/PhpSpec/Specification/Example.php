@@ -37,7 +37,7 @@ use ReflectionFunction;
  * Represents a single it() example. Executes the test closure, captures
  * match results and errors, and reports timing information.
  */
-class Example implements ExampleResultRegistry, Rebindable
+class Example implements ExampleResultRegistry, Rebindable, Titled
 {
     /** @var array<Closure> collected match closures from expectations */
     private array $matches = [];
@@ -63,6 +63,9 @@ class Example implements ExampleResultRegistry, Rebindable
     /** @var array{string, int}|null where the spec declared this example, when not where its closure is */
     private ?array $declaration = null;
 
+    /** @var int its place among the siblings that share its title, 1 for the first */
+    private int $ordinal = 1;
+
     /**
      * @param string $title descriptive label for the example
      * @param Closure $example executable test body
@@ -84,18 +87,28 @@ class Example implements ExampleResultRegistry, Rebindable
         $copy->focused = $this->focused;
         $copy->leftOutByFocus = $this->leftOutByFocus;
         $copy->declaration = $this->declaration;
+        $copy->ordinal = $this->ordinal;
 
         return $copy;
     }
 
     /**
-     * Returns the descriptive label of the example.
-     *
-     * @return string the example title
+     * The example's title, numbered when a sibling declared before it has the
+     * same one.
      */
     public function getTitle(): string
     {
+        return $this->ordinal === 1 ? $this->title : $this->title . ' #' . $this->ordinal;
+    }
+
+    public function writtenTitle(): string
+    {
         return $this->title;
+    }
+
+    public function numberAmongNamesakes(int $ordinal): void
+    {
+        $this->ordinal = $ordinal;
     }
 
     /**
@@ -212,13 +225,13 @@ class Example implements ExampleResultRegistry, Rebindable
      */
     public function failedInHook(ExampleError $error): ExampleResult
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
 
         $this->isError = true;
-        $this->exampleResult = new ExampleResult($this->title, [], true);
+        $this->exampleResult = new ExampleResult($this->getTitle(), [], true);
         $this->exampleResult->setError($error);
 
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
 
         return $this->declared($this->exampleResult);
     }
@@ -230,13 +243,13 @@ class Example implements ExampleResultRegistry, Rebindable
      */
     public function leftOutBy(PendingException|SkippedException $signal): ExampleResult
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
 
         $this->exampleResult = $signal instanceof PendingException
-            ? new ExampleResult($this->title, [], isPending: true, reason: $signal->getMessage())
-            : new ExampleResult($this->title, [], isSkipped: true, reason: $signal->getMessage());
+            ? new ExampleResult($this->getTitle(), [], isPending: true, reason: $signal->getMessage())
+            : new ExampleResult($this->getTitle(), [], isSkipped: true, reason: $signal->getMessage());
 
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
 
         return $this->declared($this->exampleResult);
     }
@@ -251,16 +264,16 @@ class Example implements ExampleResultRegistry, Rebindable
         $attachments = new Attachments();
         DispatcherRegistry::dispatcher()->addSubscriber($attachments);
 
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
 
         if ($this->pending) {
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
-            $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $this->leftOutByFocus ? 'left out by focus' : null);
+            $this->exampleResult = new ExampleResult($this->getTitle(), [], isPending: true, reason: $this->leftOutByFocus ? 'left out by focus' : null);
             if ($this->leftOutByFocus) {
                 $this->exampleResult->markLeftOutByFocus();
             }
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         }
 
@@ -277,30 +290,30 @@ class Example implements ExampleResultRegistry, Rebindable
         } catch (PendingException $e) {
             $caught->stop();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
-            $this->exampleResult = new ExampleResult($this->title, [], isPending: true, reason: $e->getMessage());
+            $this->exampleResult = new ExampleResult($this->getTitle(), [], isPending: true, reason: $e->getMessage());
             $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
             $caught->stop();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
-            $this->exampleResult = new ExampleResult($this->title, [], isSkipped: true, reason: $e->getMessage());
+            $this->exampleResult = new ExampleResult($this->getTitle(), [], isSkipped: true, reason: $e->getMessage());
             $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
             DispatcherRegistry::dispatcher()->dispatch(
-                new ExampleErrored($this->title, new ExampleError($e->getMessage(), $e)),
+                new ExampleErrored($this->getTitle(), new ExampleError($e->getMessage(), $e)),
                 ExampleErrored::NAME,
             );
         }
 
         $elapsed = (hrtime(true) - $start) / 1e9;
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleRunned($this->title), ExampleRunned::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleRunned($this->getTitle()), ExampleRunned::NAME);
         $caught->stop();
         DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
@@ -311,7 +324,7 @@ class Example implements ExampleResultRegistry, Rebindable
         }
         $this->exampleResult->raised($caught->notes());
         $this->keepAttachments($attachments);
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;
     }
 

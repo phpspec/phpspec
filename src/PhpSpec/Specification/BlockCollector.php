@@ -24,6 +24,8 @@ final class BlockCollector implements ExampleRegistry
     /** @var list<SpecBlock> top-level blocks registered during the parse */
     private array $blocks = [];
 
+    private ?Namesakes $namesakes = null;
+
     /**
      * Records a top-level spec block registered during the parse.
      *
@@ -32,6 +34,7 @@ final class BlockCollector implements ExampleRegistry
      */
     public function addSpecBlock(SpecBlock $example): void
     {
+        ($this->namesakes ??= new Namesakes())->number($example);
         $this->blocks[] = $example;
     }
 
