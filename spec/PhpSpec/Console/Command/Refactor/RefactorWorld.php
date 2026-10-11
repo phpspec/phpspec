@@ -17,6 +17,9 @@ final class RefactorWorldFilesystem implements Filesystem
     /** @var array<string, int> absolute path => modification time */
     public array $times = [];
 
+    /** @var list<string> paths under which a write is refused, as a read-only directory refuses it */
+    public array $locked = [];
+
     public function exists(string $path): bool
     {
         return isset($this->files[$path]) || $this->isDir($path);
@@ -50,6 +53,12 @@ final class RefactorWorldFilesystem implements Filesystem
 
     public function write(string $path, string $content): void
     {
+        foreach ($this->locked as $locked) {
+            if (str_starts_with($path, $locked)) {
+                throw new RuntimeException(sprintf('Cannot write %s: permission denied.', $path));
+            }
+        }
+
         $this->files[$path] = $content;
         $this->times[$path] = max([0, ...array_values($this->times)]) + 1;
     }

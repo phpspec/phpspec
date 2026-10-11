@@ -18,6 +18,7 @@ use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Console\Consent;
+use RuntimeException;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
@@ -93,7 +94,13 @@ final readonly class StepByStep
                 return $this->stopped(0, sprintf('before step %d', $number), $kept);
             }
 
-            $standing = $this->standing($step, $number === count($plan->steps), $examples);
+            try {
+                $standing = $this->standing($step, $number === count($plan->steps), $examples);
+            } catch (RefusedStepException $e) {
+                $this->output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
+
+                return $this->stopped(1, sprintf('at step %d', $number), $kept, $e->getMessage());
+            }
 
             if ($standing['check'] === null) {
                 return $this->stopped(1, sprintf('at step %d', $number), $kept, $standing['cause'], $number);
@@ -235,7 +242,14 @@ final readonly class StepByStep
                 return $this->undone($applied, 'The fix was turned down.');
             }
 
-            $applied = [...$this->apply($step), ...$applied];
+            try {
+                $applied = [...$this->apply($step), ...$applied];
+            } catch (RefusedStepException $e) {
+                $this->output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
+
+                return $this->undone($applied, $e->getMessage());
+            }
+
             $check = $this->suite->check();
             $wrong = $this->wrongWith($check, $step, $last, $examples);
 
@@ -290,15 +304,30 @@ final readonly class StepByStep
     }
 
     /**
+     * Writes every file of the step, or none: a file that cannot be written
+     * undoes the ones written before it.
+     *
      * @return list<Proposal> what was written, to undo in this order
+     *
+     * @throws RefusedStepException
      */
     private function apply(RefactorStep $step): array
     {
+        $applied = [];
+
         foreach ($step->files as $file) {
-            $this->writer->apply($file);
+            try {
+                $this->writer->apply($file);
+            } catch (RuntimeException $e) {
+                array_map($this->writer->revert(...), $applied);
+
+                throw new RefusedStepException(sprintf('%s: nothing of the step was written.', rtrim($e->getMessage(), '.')), 0, $e);
+            }
+
+            array_unshift($applied, $file);
         }
 
-        return array_reverse($step->files);
+        return $applied;
     }
 
     /**

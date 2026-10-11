@@ -53,6 +53,24 @@ describe(RealFilesystem::class, function() {
         rmdir($dir);
     });
 
+    it("refuses to write where it may not, in a sentence, with no warning printed", function() {
+        if (DIRECTORY_SEPARATOR === '\\' || (function_exists('posix_getuid') && posix_getuid() === 0)) {
+            skip('File modes do not stop this user writing.');
+        }
+        $fs = new RealFilesystem();
+        $dir = sys_get_temp_dir() . '/phpspec_real_fs_locked_' . uniqid();
+        mkdir($dir);
+        chmod($dir, 0555);
+
+        try {
+            expect(fn() => $fs->write($dir . '/offers.json', '{}'))->toThrow(new RuntimeException(sprintf('Cannot write %s/offers.json: permission denied.', $dir)));
+            expect(fn() => $fs->write($dir . '/ai/journal.jsonl', '{}'))->toThrow(new RuntimeException(sprintf('Cannot create %s/ai: permission denied.', $dir)));
+        } finally {
+            chmod($dir, 0755);
+            rmdir($dir);
+        }
+    });
+
     it("deletes a file, and leaves a path with nothing there alone", function() {
         $file = sys_get_temp_dir() . '/phpspec_delete_' . getmypid() . '.php';
         file_put_contents($file, '<?php');

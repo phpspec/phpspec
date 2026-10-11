@@ -340,6 +340,21 @@ describe(Refactor::class, function () {
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->not()->toContain('not wanted');
         });
 
+        it('stops on a step it cannot write, undoing what of it was written', function () {
+            $before = ($this->code)();
+            $this->project->locked = [$this->cwd . '/src/App/Checkout/Locked.php'];
+
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n", 'src/App/Checkout/Locked.php' => "<?php\n"]),
+            ], [$this->green], ['', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain(sprintf('Cannot write %s/src/App/Checkout/Locked.php: permission denied: nothing of the step was written.', $this->cwd));
+            expect($tester->getDisplay())->toContain('Stopped at step 1: nothing was written.');
+            expect(($this->code)())->toBe($before);
+        });
+
         it('stops on a step that writes outside the source and spec paths, writing nothing of it', function () {
             $before = $this->project->files;
 
@@ -420,6 +435,15 @@ describe(Refactor::class, function () {
             expect($offer?->data['plan']['steps'][1]['title'])->toBe('Use it in CheckoutService');
             expect(($this->code)())->toBe($before);
             expect($this->replay->requests)->toHaveCount(1);
+        });
+
+        it('refuses as a receipt when the offer cannot be kept, no id given that was never stored', function () {
+            $this->project->locked = [$this->cwd . '/.phpspec/offers.json'];
+
+            $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction')], [$this->green], options: ['--format' => 'agent']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect(($this->receipt)($tester))->toBe(['v' => 2, 'action' => 'refactor', 'error' => sprintf('Cannot write %s/.phpspec/offers.json: permission denied.', $this->cwd)]);
         });
 
         it('answers with the model\'s reason when it declines', function () {

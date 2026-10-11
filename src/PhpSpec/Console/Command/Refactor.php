@@ -22,7 +22,6 @@ use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
-use PhpSpec\Console\Command\Refactor\ModelFailedException;
 use PhpSpec\Console\Command\Refactor\PlannedStep;
 use PhpSpec\Console\Command\Refactor\Progress;
 use PhpSpec\Console\Command\Refactor\RefactorModel;
@@ -125,7 +124,7 @@ final class Refactor extends Command
             return $forAgent
                 ? $this->planForAgent($output, $target, $model->plan($target, $journal->rendered()))
                 : $this->refactorStepByStep($input, $output, $target, $model, $suite, $baseline, $journal);
-        } catch (ModelFailedException $e) {
+        } catch (RuntimeException $e) {
             return $this->refuse($output, $forAgent, $e->getMessage());
         }
     }
