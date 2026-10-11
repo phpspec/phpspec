@@ -33,6 +33,11 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class SubprocessRunner implements SpecRunner
 {
+    /**
+     * @param bool $guarded whether the project has guard on, which judges a run by its coverage
+     */
+    public function __construct(private readonly bool $guarded = false) {}
+
     public function run(string $argument, OutputInterface $output): ?RunOutcome
     {
         $reportPath = self::reportPath();
@@ -41,7 +46,7 @@ final class SubprocessRunner implements SpecRunner
         try {
             $command = [
                 PHP_BINARY,
-                '-d', 'xdebug.mode=off',
+                '-d', 'xdebug.mode=' . ($this->guarded || preg_match('/(^|\s)--coverage/', $argument) === 1 ? 'coverage' : 'off'),
                 ParallelRunner::findPhpspecBin(),
                 'run',
             ];
