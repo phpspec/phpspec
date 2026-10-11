@@ -65,7 +65,7 @@ final class Loader
         $blocks = [];
 
         foreach ($this->targets($files) as $path => $lines) {
-            if ($this->isFeaturePath($path)) {
+            if ($this->runsAsFeatures($path)) {
                 $blocks = array_merge($blocks, $this->loadFeatures($path, $lines));
             } else {
                 LineTargetRegistry::add($path, ...$lines);
@@ -82,6 +82,23 @@ final class Loader
         }
 
         return new Suite($blocks);
+    }
+
+    /**
+     * Whether a path runs as features: a .feature file, or the features root
+     * or anything inside it, however either is spelled. Any other path runs
+     * as specs, whatever words it holds.
+     */
+    public function runsAsFeatures(string $path): bool
+    {
+        if (str_ends_with($path, '.feature')) {
+            return true;
+        }
+
+        $root = ProjectRoot::at($this->plainly($this->featuresPath));
+        $given = rtrim($this->plainly($path), '/') . '/';
+
+        return $root->holds($given) || $root->holds((getcwd() ?: '.') . '/' . $given);
     }
 
     /**
@@ -196,13 +213,9 @@ final class Loader
         return null;
     }
 
-    /**
-     * Determines whether the path points to Gherkin feature files.
-     */
-    private function isFeaturePath(string $path): bool
+    private function plainly(string $path): string
     {
-        return str_ends_with($path, '.feature')
-            || str_contains($path, 'features');
+        return (string) preg_replace('~^(\./)+~', '', str_replace('\\', '/', $path));
     }
 
     /**

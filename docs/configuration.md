@@ -100,8 +100,10 @@ src_path: lib
 
 ### `features_path`
 
-Directory containing Gherkin `.feature` files, used by `--story` and step
-discovery. Default: `features/`.
+Directory containing Gherkin `.feature` files, used by `--story`, `--all` and
+step discovery. A path given to `run` runs as features when it is a `.feature`
+file or lies inside this directory, and as specs otherwise, whatever words it
+holds. Default: `features/`.
 
 ```yaml
 features_path: acceptance

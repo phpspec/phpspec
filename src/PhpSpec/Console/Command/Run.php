@@ -711,7 +711,13 @@ final class Run extends Command implements InternalOptions
         if ($input->getOption('all')) {
             $suitePaths = $this->config->getAllLoadPaths();
 
-            return str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
+            foreach (explode(',', $suitePaths) as $suitePath) {
+                if ($this->loader->runsAsFeatures(trim($suitePath))) {
+                    return $suitePaths;
+                }
+            }
+
+            return $suitePaths . ',' . $this->config->getFeaturesPath();
         }
 
         return $this->config->getAllLoadPaths();

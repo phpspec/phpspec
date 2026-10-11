@@ -259,7 +259,7 @@ describe(Loader::class, function () {
         );
 
         try {
-            $loader = new Loader(featuresPath: $root . '/nowhere');
+            $loader = new Loader(featuresPath: $root . '/features/scenarios');
             $suite = $loader->load($root . '/features/scenarios/checkout');
 
             $steps = $suite->getSpecifications()[0]->run()->getResults()[0]->getResults();
@@ -461,5 +461,34 @@ describe(Loader::class, function () {
             rmdir($root . '/features');
             rmdir($root);
         }
+    });
+    describe('runsAsFeatures()', function () {
+        it('runs a feature file, and the features root or anything inside it, however spelled, as features', function (Filesystem $fs) {
+            $loader = new Loader($fs, featuresPath: 'features/');
+
+            expect($loader->runsAsFeatures('stories/checkout.feature'))->toBeTrue();
+            expect($loader->runsAsFeatures('features'))->toBeTrue();
+            expect($loader->runsAsFeatures('./features/'))->toBeTrue();
+            expect($loader->runsAsFeatures('features/scenarios/cli'))->toBeTrue();
+            expect($loader->runsAsFeatures('features\\scenarios\\cli'))->toBeTrue();
+            expect($loader->runsAsFeatures(getcwd() . '/features/scenarios'))->toBeTrue();
+        });
+
+        it('runs any other path as specs, whatever words it holds', function (Filesystem $fs) {
+            $loader = new Loader($fs, featuresPath: 'features/');
+
+            expect($loader->runsAsFeatures('spec/features'))->toBeFalse();
+            expect($loader->runsAsFeatures('spec/features/Checkout.spec.php'))->toBeFalse();
+            expect($loader->runsAsFeatures('spec/App/featuresFlag.spec.php'))->toBeFalse();
+            expect($loader->runsAsFeatures('featuresets'))->toBeFalse();
+        });
+
+        it('takes the features root from the configuration, whatever its name', function (Filesystem $fs) {
+            $loader = new Loader($fs, featuresPath: 'acceptance/');
+
+            expect($loader->runsAsFeatures('acceptance'))->toBeTrue();
+            expect($loader->runsAsFeatures('acceptance/checkout'))->toBeTrue();
+            expect($loader->runsAsFeatures('features'))->toBeFalse();
+        });
     });
 });

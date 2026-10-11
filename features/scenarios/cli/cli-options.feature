@@ -547,6 +547,87 @@ Feature: CLI options
     And the output should contain "Not a spec or a feature: src/App/Till.php"
     And the output should contain "Name a spec file (*.spec.php), a feature file or a directory of them."
 
+  Scenario: A spec in a folder named features runs as a spec
+    Given a spec file "spec/features/Checkout.spec.php":
+      """
+      <?php
+      describe('Checkout', function () {
+          it('totals the basket', fn() => expect(1 + 1)->toBe(2));
+      });
+      """
+    When I run phpspec run with option "spec/features/Checkout.spec.php --format=agent"
+    Then the output should contain:
+      """
+      "examples":1,"scenarios":0
+      """
+
+  Scenario: Specs whose path holds the word features run as specs, by folder or by name
+    Given a spec file "spec/features/Checkout.spec.php":
+      """
+      <?php
+      describe('Checkout', function () {
+          it('totals the basket', fn() => expect(1 + 1)->toBe(2));
+      });
+      """
+    And a spec file "spec/App/featuresFlag.spec.php":
+      """
+      <?php
+      describe('Flag', function () {
+          it('flags', fn() => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec run with option "spec/features spec/App/featuresFlag.spec.php --format=agent"
+    Then the output should contain:
+      """
+      "examples":2,"scenarios":0
+      """
+
+  Scenario: The features under a features_path of another name run with --story, and by their path
+    Given a phpspec.yaml config:
+      """
+      features_path: acceptance/
+      """
+    And a feature file "acceptance/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--story --format=agent"
+    Then the output should contain:
+      """
+      "examples":0,"scenarios":1
+      """
+    When I run phpspec run with option "acceptance --format=agent"
+    Then the output should contain:
+      """
+      "examples":0,"scenarios":1
+      """
+
+  Scenario: --all runs the features under the configured features_path alongside the specs
+    Given a phpspec.yaml config:
+      """
+      features_path: acceptance/
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      describe('Till', function () {
+          it('rings', fn() => expect(true)->toBeTrue());
+      });
+      """
+    And a feature file "acceptance/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--all --format=agent"
+    Then the output should contain:
+      """
+      "examples":1,"scenarios":1
+      """
+
   Scenario: Random execution order with seed
     Given a spec file "spec/App/Random.spec.php":
       """
