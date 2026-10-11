@@ -245,7 +245,7 @@ final class CommandDispatcher
         $recency = new RecencyScanner($this->filesystem);
         $cwd = getcwd() ?: '.';
         $recentFeature = $recency->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './'));
-        $recentSource = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+        $recentSource = $recency->mostRecentSource($cwd . '/' . $this->config->srcDir());
 
         $next = (new SuiteNarrator())->next($outcome, $this->roleState->current(), $recentFeature, $recentSource);
 
@@ -598,7 +598,7 @@ final class CommandDispatcher
     {
         $codeGenerator = new CodeGenerator(
             $this->config->getSourceLayout(),
-            ltrim($this->config->getSpecPath(), './'),
+            $this->config->specDir(),
             $this->interactive ? Generation::Asks : Generation::Accepts,
             $this->config->getSpecSuffix(),
             $this->chooser,
@@ -922,10 +922,7 @@ final class CommandDispatcher
      */
     private function registerAutoloader(): void
     {
-        $srcPath = rtrim($this->config->getSrcPath(), '/.');
-        if ($srcPath === '') {
-            $srcPath = '.';
-        }
+        $srcPath = $this->config->srcDir() === '' ? '.' : $this->config->srcDir();
 
         spl_autoload_register(function (string $class) use ($srcPath) {
             $file = $srcPath . '/' . str_replace('\\', '/', $class) . '.php';

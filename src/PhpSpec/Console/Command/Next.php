@@ -235,7 +235,7 @@ final class Next extends Command
      */
     private function specFileExists(string $fqcn): bool
     {
-        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specPath = $this->config->specDir();
         $file = getcwd() . DIRECTORY_SEPARATOR . $specPath . DIRECTORY_SEPARATOR
             . str_replace('\\', DIRECTORY_SEPARATOR, $fqcn) . $this->config->getSpecSuffix();
 
@@ -368,8 +368,7 @@ final class Next extends Command
             return $suggestion;
         }
 
-        $srcDir = getcwd() . '/' . ltrim($this->config->getSrcPath(), './');
-        $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($srcDir);
+        $polished = (new RefactorJournal($this->filesystem))->unchangedTargets(getcwd() ?: '.', $this->config->getSourceLayout());
         if (!in_array($suggestion['target'], $polished, true)) {
             return $suggestion;
         }
@@ -439,7 +438,7 @@ final class Next extends Command
         return new Grounding(
             $summary,
             ProjectPath::relativeOrNull($recency->mostRecentFeature($featuresDir)),
-            ProjectPath::relativeOrNull($recency->mostRecentSource(getcwd() . '/' . ltrim($this->config->getSrcPath(), './'))),
+            ProjectPath::relativeOrNull($recency->mostRecentSource(getcwd() . '/' . $this->config->srcDir())),
             namedFiles: $this->workingStoryFiles($summary, $recency),
         );
     }
@@ -464,8 +463,8 @@ final class Next extends Command
         $feature = ProjectPath::normalize($red['path']);
         $candidates = [$feature, ...$this->stepsServing($cwd . '/' . $feature)];
 
-        $spec = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSpecPath(), './'));
-        $source = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+        $spec = $recency->mostRecentSource($cwd . '/' . $this->config->specDir());
+        $source = $recency->mostRecentSource($cwd . '/' . $this->config->srcDir());
         foreach ([$spec, $source] as $absolute) {
             if ($absolute !== null) {
                 $candidates[] = ProjectPath::relativeOrNull($absolute) ?? $absolute;

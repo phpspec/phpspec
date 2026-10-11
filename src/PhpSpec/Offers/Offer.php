@@ -109,17 +109,27 @@ final readonly class Offer
      * @param string $target the class refactored, with the method when it named one
      * @param array<string, mixed> $plan the serialised plan
      * @param array<string, string> $read each file the plan was made reading, project-relative, with a sha1 of its content
-     * @param string $subject what the journal keeps the steps kept under
      */
-    public static function refactor(string $target, array $plan, array $read, string $subject): self
+    public static function refactor(string $target, array $plan, array $read): self
     {
         return new self(
             self::identify(self::REFACTOR, $target, (string) json_encode($plan)),
             self::REFACTOR,
             'refactor',
             $target,
-            ['plan' => $plan, 'read' => $read, 'subject' => $subject],
+            ['plan' => $plan, 'read' => $read],
         );
+    }
+
+    /**
+     * The serialised plan a refactoring offer would carry out, empty for
+     * any other offer.
+     *
+     * @return array<string, mixed>
+     */
+    public function plan(): array
+    {
+        return is_array($this->data['plan'] ?? null) ? $this->data['plan'] : [];
     }
 
     /**

@@ -75,13 +75,13 @@ final readonly class PlanOffers
             return [$this->notApplied(trim('Specs must pass before refactoring. ' . implode(' ', $baseline->failures())))];
         }
 
-        $plan = RefactorPlan::fromArray(is_array($offer->data['plan'] ?? null) ? $offer->data['plan'] : []);
+        $plan = RefactorPlan::fromArray($offer->plan());
         $model = new RefactorModel($provider, $this->config, $this->filesystem, $this->root, new PromptLibrary($this->filesystem));
         $journal = new RefactorJournal($this->filesystem);
         $model->adopt($target, $plan, $journal->rendered());
 
         $steps = new StepByStep($output, $model, $suite, new Consent('', Generation::Accepts), new Progress($output), new Writer($this->filesystem, $this->root), $journal, attended: false);
-        $carried = $steps->carryOut($plan, $baseline, (string) ($offer->data['subject'] ?? $target->fqcn));
+        $carried = $steps->carryOut($plan, $baseline, $target->fqcn);
         $written = array_map(static fn(string $file): array => ['file' => $file, 'applied' => true], $carried->files);
 
         return $carried->complete() ? $written : [...$written, $this->notApplied($carried->stopped)];

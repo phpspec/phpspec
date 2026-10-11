@@ -286,7 +286,7 @@ final class RefactorModel
     private function proposal(string $path, string $content): Proposal
     {
         $path = (string) preg_replace('~^(\./)+~', '', str_replace('\\', '/', $path));
-        $roots = [$this->rootOf($this->config->getSrcPath()), $this->rootOf($this->config->getSpecPath())];
+        $roots = [$this->config->srcDir(), $this->config->specDir()];
         $under = array_filter($roots, static fn(string $root): bool => str_starts_with($path, $root . '/'));
 
         if ($under === [] || !str_ends_with($path, '.php') || in_array('..', explode('/', $path), true)) {
@@ -387,10 +387,5 @@ final class RefactorModel
     private function relative(string $file): string
     {
         return ltrim(substr($file, strlen($this->root)), '/\\');
-    }
-
-    private function rootOf(string $path): string
-    {
-        return rtrim(ltrim($path, './'), '/');
     }
 }

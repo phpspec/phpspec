@@ -1170,7 +1170,7 @@ final class Run extends Command implements InternalOptions
     {
         return new CodeGenerator(
             $this->config->getSourceLayout(),
-            ltrim($this->config->getSpecPath(), './'),
+            $this->config->specDir(),
             $generation,
             $this->config->getSpecSuffix(),
             steps: new StepsHome($this->config),

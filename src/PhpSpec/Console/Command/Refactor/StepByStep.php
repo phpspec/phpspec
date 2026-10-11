@@ -51,14 +51,14 @@ final readonly class StepByStep
 
     /**
      * @param SuiteCheck $baseline the suite before the first step
-     * @param string $subject what the journal keeps the steps kept under
+     * @param string $class the class refactored, which the journal keeps the steps kept under
      */
-    public function carryOut(RefactorPlan $plan, SuiteCheck $baseline, string $subject): Carried
+    public function carryOut(RefactorPlan $plan, SuiteCheck $baseline, string $class): Carried
     {
         $carried = $this->stepThrough($plan, $baseline);
 
         if ($carried->kept !== []) {
-            $this->journal->record($subject, $plan->technique, implode('; ', $carried->kept));
+            $this->journal->record($class, $plan->technique, implode('; ', $carried->kept));
         }
 
         return $carried;

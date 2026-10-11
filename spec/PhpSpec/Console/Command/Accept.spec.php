@@ -175,7 +175,7 @@ describe(Accept::class, function () {
             $this->offer = Offer::refactor('App\\Till', $plan->toArray(), [
                 'src/App/Till.php' => sha1($this->world->files['/project/src/App/Till.php']),
                 'spec/App/Till.spec.php' => sha1($this->world->files['/project/spec/App/Till.spec.php']),
-            ], 'App\\Till');
+            ]);
             $this->planBook = new OfferBook($this->world, '/project');
             $this->planBook->record($this->offer);
             $this->green = SuiteCheck::fromStream('{"event":"summary","examples":1,"actionable":0}');

@@ -201,7 +201,7 @@ final class Accept extends Command
 
         $generator = new CodeGenerator(
             $this->config->getSourceLayout(),
-            ltrim($this->config->getSpecPath(), './'),
+            $this->config->specDir(),
             // Asked for by name on the command line: the person has already
             // said yes, and there is nothing left to put to them.
             Generation::Accepts,

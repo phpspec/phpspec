@@ -167,7 +167,7 @@ final class Refactor extends Command
 
         $steps = new StepByStep($output, $model, $suite, $consent, $progress, new Writer($this->filesystem, getcwd() ?: '.'), $journal, $attended);
 
-        return $steps->carryOut($plan, $baseline, $this->relativeClass($target))->exitCode;
+        return $steps->carryOut($plan, $baseline, $target->fqcn)->exitCode;
     }
 
     /**
@@ -187,7 +187,7 @@ final class Refactor extends Command
             return 0;
         }
 
-        $offer = Offer::refactor($target->fqcn . ($target->method === null ? '' : '::' . $target->method), $plan->toArray(), $plan->read, $this->relativeClass($target));
+        $offer = Offer::refactor($target->fqcn . ($target->method === null ? '' : '::' . $target->method), $plan->toArray(), $plan->read);
         (new OfferBook($this->filesystem))->record($offer);
 
         $this->receipt($output, $about + [
@@ -270,21 +270,6 @@ final class Refactor extends Command
     private function relative(string $file): string
     {
         return ltrim(substr($file, strlen(getcwd() ?: '.')), '/\\');
-    }
-
-    /**
-     * The class-ish name the journal keeps a target under: its source path
-     * under the source directory (src/App/X.php reads as App\X).
-     */
-    private function relativeClass(RefactorTarget $target): string
-    {
-        $relative = $this->relative($target->sourceFile);
-        $srcDir = ltrim($this->config->getSrcPath(), './');
-        if (str_starts_with($relative, $srcDir . '/')) {
-            $relative = substr($relative, strlen($srcDir) + 1);
-        }
-
-        return str_replace('/', '\\', preg_replace('/\.php$/', '', $relative) ?? $relative);
     }
 
     private function loadBootstrap(): bool

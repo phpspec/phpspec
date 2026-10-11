@@ -127,15 +127,15 @@ final class Application extends BaseApplication
             $extensionLoader,
         );
         $defaultCommands[] = new Describe(
-            new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
+            new SpecGenerator($config->specDir(), specSuffix: $specSuffix),
             $config->getSourceLayout(),
         );
         $defaultCommands[] = new Exemplify(
-            new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
+            new SpecGenerator($config->specDir(), specSuffix: $specSuffix),
             $config->getSourceLayout(),
         );
         $defaultCommands[] = new Pair(
-            new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
+            new SpecGenerator($config->specDir(), specSuffix: $specSuffix),
             new ClassGenerator($config->getSourceLayout()),
             $config,
             $extensionLoader,

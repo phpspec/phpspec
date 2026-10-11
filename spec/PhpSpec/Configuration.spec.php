@@ -425,6 +425,15 @@ describe(Configuration::class, function () {
         ]);
     });
 
+    it('gives the source and spec directories as code joins them: no leading ./, no trailing slash, a parent kept', function () {
+        expect((new Configuration(['src_path' => 'src/', 'spec_path' => './spec']))->srcDir())->toBe('src');
+        expect((new Configuration(['src_path' => 'src/', 'spec_path' => './spec']))->specDir())->toBe('spec');
+        expect((new Configuration(['src_path' => '../lib', 'spec_path' => 'tests\\spec\\']))->srcDir())->toBe('../lib');
+        expect((new Configuration(['src_path' => '../lib', 'spec_path' => 'tests\\spec\\']))->specDir())->toBe('tests/spec');
+        expect((new Configuration(['src_path' => '.']))->srcDir())->toBe('');
+        expect((new Configuration())->srcDir())->toBe('src');
+    });
+
     it('says guard is on only when a usable section makes it active', function () {
         expect((new Configuration())->guardIsOn())->toBeFalse();
         expect((new Configuration(['guard' => ['status' => 'off']]))->guardIsOn())->toBeFalse();

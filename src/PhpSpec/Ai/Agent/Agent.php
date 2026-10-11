@@ -320,9 +320,9 @@ final class Agent
         if (str_contains($system, '%')) {
             $roots = $this->layout->roots($this->filesystem);
             $system = strtr($system, [
-                '%spec_path%' => ltrim($this->config->getSpecPath(), './'),
+                '%spec_path%' => $this->config->specDir(),
                 '%spec_suffix%' => $this->config->getSpecSuffix(),
-                '%src_path%' => ltrim($this->config->getSrcPath(), './'),
+                '%src_path%' => $this->config->srcDir(),
                 '%features_path%' => $roots['features'],
                 '%steps_path%' => $this->steps->directory(),
             ]);
@@ -361,13 +361,13 @@ final class Agent
         $scanner = new TreeScanner($this->filesystem);
         $sections = [];
 
-        $srcPath = ltrim($this->config->getSrcPath(), './');
+        $srcPath = $this->config->srcDir();
         $srcTree = $scanner->scan($cwd . '/' . $srcPath, 3);
         if ($srcTree !== '') {
             $sections[] = "## Source files ($srcPath/)\n$srcTree";
         }
 
-        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specPath = $this->config->specDir();
         $specTree = $scanner->scan($cwd . '/' . $specPath, 3);
         if ($specTree !== '') {
             $sections[] = "## Spec files ($specPath/)\n$specTree";
@@ -484,13 +484,13 @@ final class Agent
         if (in_array('recency', $profile->grounding, true) && $recentFeature === null && $recentSource === null) {
             $scanner = new RecencyScanner($this->filesystem);
             $recentFeature = ProjectPath::relativeOrNull($scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './')));
-            $recentSource = ProjectPath::relativeOrNull($scanner->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './')));
+            $recentSource = ProjectPath::relativeOrNull($scanner->mostRecentSource($cwd . '/' . $this->config->srcDir()));
         }
 
         if (in_array('tree', $profile->grounding, true) && $tree === '') {
             $scanner = new TreeScanner($this->filesystem);
             $sections = [];
-            foreach ([ltrim($this->config->getSrcPath(), './'), ltrim($this->config->getSpecPath(), './')] as $dir) {
+            foreach ([$this->config->srcDir(), $this->config->specDir()] as $dir) {
                 $listing = $scanner->scan($cwd . '/' . $dir, 3);
                 if ($listing !== '') {
                     $sections[] = "$dir/:\n" . $listing;
@@ -505,7 +505,7 @@ final class Agent
 
         $polished = $seed->polished ?? [];
         if (in_array('journal', $profile->grounding, true) && $polished === []) {
-            $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+            $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($cwd, $this->config->getSourceLayout());
         }
 
         return new Grounding($seed?->suite, $recentFeature, $recentSource, $tree, $namedFiles, $polished);
@@ -517,8 +517,8 @@ final class Agent
     private function filesNamedIn(string $instruction): array
     {
         $cwd = getcwd() ?: '.';
-        $specPath = ltrim($this->config->getSpecPath(), './');
-        $srcPath = ltrim($this->config->getSrcPath(), './');
+        $specPath = $this->config->specDir();
+        $srcPath = $this->config->srcDir();
         $files = [];
         preg_match_all('/\b[A-Z][A-Za-z0-9]+\b/', $instruction, $matches);
 
@@ -588,8 +588,8 @@ final class Agent
     private function uniqueClassFor(string $class): ?string
     {
         $cwd = getcwd() ?: '.';
-        $specDir = ltrim($this->config->getSpecPath(), './');
-        $srcDir = ltrim($this->config->getSrcPath(), './');
+        $specDir = $this->config->specDir();
+        $srcDir = $this->config->srcDir();
         $suffix = $this->config->getSpecSuffix();
         $prefix = trim($this->config->getPsr4Prefix(), '\\');
 

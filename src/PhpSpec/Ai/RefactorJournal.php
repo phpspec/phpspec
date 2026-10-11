@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Ai;
 
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Filesystem;
 
 /**
@@ -92,10 +93,11 @@ final class RefactorJournal
      * refactoring: polishing is done there, so the next step is growth. A
      * class modified after (or gone) is fair game for refactoring again.
      *
-     * @param string $srcDir absolute path of the source root the targets live under
-     * @return list<string>
+     * @param string $root the project root the layout's paths are relative to
+     * @param SourceLayout $layout where each journalled class's source lives
+     * @return list<string> the classes, by their full names
      */
-    public function unchangedTargets(string $srcDir): array
+    public function unchangedTargets(string $root, SourceLayout $layout): array
     {
         $latest = [];
         foreach ($this->entries() as $entry) {
@@ -105,7 +107,7 @@ final class RefactorJournal
 
         $unchanged = [];
         foreach ($latest as $target => $at) {
-            $file = $srcDir . '/' . str_replace('\\', '/', $target) . '.php';
+            $file = $root . '/' . str_replace('\\', '/', $layout->relativeFileFor($target));
             if ($this->filesystem->exists($file) && $this->filesystem->mtime($file) <= $at) {
                 $unchanged[] = $target;
             }

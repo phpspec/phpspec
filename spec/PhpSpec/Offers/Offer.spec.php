@@ -82,10 +82,10 @@ describe(Offer::class, function () {
     context('a refactoring plan', function () {
         let('plan', fn() => ['technique' => 'Extract Class', 'rationale' => 'Till prints its own receipt.', 'steps' => [['title' => 'Describe Printer', 'doing' => 'Describing Printer']]]);
         let('read', fn() => ['src/App/Till.php' => sha1('<?php till'), 'spec/App/Till.spec.php' => sha1('<?php spec')]);
-        let('offer', fn() => Offer::refactor('App\\Till', $this->plan, $this->read, 'App\\Till'));
+        let('offer', fn() => Offer::refactor('App\\Till', $this->plan, $this->read));
 
         it('is offered under its target, identified by the plan', function () {
-            $other = Offer::refactor('App\\Till', ['technique' => 'Inline Class'] + $this->plan, $this->read, 'App\\Till');
+            $other = Offer::refactor('App\\Till', ['technique' => 'Inline Class'] + $this->plan, $this->read);
 
             expect($this->offer->kind)->toBe(Offer::REFACTOR);
             expect($this->offer->action)->toBe('refactor');
@@ -103,9 +103,9 @@ describe(Offer::class, function () {
             expect($this->offer->changedFile($as(['spec/App/Till.spec.php' => '<?php spec'])))->toBe('src/App/Till.php');
         });
 
-        it('carries the plan and what the journal keeps it under', function () {
-            expect($this->offer->data['plan'])->toBe($this->plan);
-            expect($this->offer->data['subject'])->toBe('App\\Till');
+        it('carries the plan', function () {
+            expect($this->offer->plan())->toBe($this->plan);
+            expect(Offer::write('src/App/Till.php', '<?php', true)->plan())->toBe([]);
         });
     });
 });

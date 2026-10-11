@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Ai\RefactorJournal;
+use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Filesystem;
 
 describe(RefactorJournal::class, function () {
@@ -49,7 +50,15 @@ describe(RefactorJournal::class, function () {
             allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
             allow($fs->mtime())->toReturn(900);
 
-            expect((new RefactorJournal($fs))->unchangedTargets('/project/src'))->toBe(['App\\TodoList']);
+            expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toBe(['App\\TodoList']);
+        });
+
+        it('finds a class by its name where the project maps its namespace', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/Brew/DrinkPricer.php');
+            allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"Brew\\\\DrinkPricer","technique":"Extract Class","description":"x"}' . "\n");
+            allow($fs->mtime())->toReturn(900);
+
+            expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src/Brew', ['Brew' => 'src/Brew'])))->toBe(['Brew\\DrinkPricer']);
         });
 
         it('omits a class modified after its refactoring', function (Filesystem $fs) {
@@ -57,14 +66,14 @@ describe(RefactorJournal::class, function () {
             allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
             allow($fs->mtime())->toReturn(1100);
 
-            expect((new RefactorJournal($fs))->unchangedTargets('/project/src'))->toHaveLength(0);
+            expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toHaveLength(0);
         });
 
         it('omits a class whose source file no longer exists', function (Filesystem $fs) {
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl'));
             allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
 
-            expect((new RefactorJournal($fs))->unchangedTargets('/project/src'))->toHaveLength(0);
+            expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toHaveLength(0);
         });
 
         it('judges each class by its own refactoring, not by the latest overall', function (Filesystem $fs) {
@@ -75,7 +84,7 @@ describe(RefactorJournal::class, function () {
             );
             allow($fs->mtime())->toReturn(1500);
 
-            expect((new RefactorJournal($fs))->unchangedTargets('/project/src'))->toBe(['App\\Polished']);
+            expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toBe(['App\\Polished']);
         });
 
         it('uses the latest entry when a class was refactored more than once', function (Filesystem $fs) {
@@ -86,7 +95,7 @@ describe(RefactorJournal::class, function () {
             );
             allow($fs->mtime())->toReturn(1500);
 
-            expect((new RefactorJournal($fs))->unchangedTargets('/project/src'))->toBe(['App\\TodoList']);
+            expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toBe(['App\\TodoList']);
         });
 
     });

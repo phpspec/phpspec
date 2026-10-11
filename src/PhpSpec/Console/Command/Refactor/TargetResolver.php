@@ -64,10 +64,10 @@ final readonly class TargetResolver
 
     private function modifiedLast(): RefactorTarget
     {
-        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource($this->root . '/' . $this->srcPath());
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource($this->root . '/' . $this->config->srcDir());
 
         if ($newest === null) {
-            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $this->srcPath()));
+            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $this->config->srcDir()));
         }
 
         $fqcn = Members::in($this->filesystem->read($newest))->classes()[0] ?? null;
@@ -112,7 +112,7 @@ final readonly class TargetResolver
      */
     private function classNamed(string $shortName): string
     {
-        $newest = (new RecencyScanner($this->filesystem))->mostRecentNamed($this->root . '/' . $this->srcPath(), $shortName . '.php');
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentNamed($this->root . '/' . $this->config->srcDir(), $shortName . '.php');
         $declared = $newest === null ? [] : Members::in($this->filesystem->read($newest))->classes();
 
         foreach ($declared as $fqcn) {
@@ -121,7 +121,7 @@ final readonly class TargetResolver
             }
         }
 
-        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->srcPath()), sprintf('Describe it first: phpspec describe %s', $shortName));
+        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->config->srcDir()), sprintf('Describe it first: phpspec describe %s', $shortName));
     }
 
     /**
@@ -131,7 +131,7 @@ final readonly class TargetResolver
     private function classDescribedBy(string $specFile, string $suffix): string
     {
         $relative = substr($specFile, strlen($this->root) + 1, -strlen($suffix));
-        $specPath = $this->specPath() . '/';
+        $specPath = $this->config->specDir() . '/';
 
         if (str_starts_with($relative, $specPath)) {
             $relative = substr($relative, strlen($specPath));
@@ -147,16 +147,6 @@ final readonly class TargetResolver
 
     private function specFileFor(string $fqcn): string
     {
-        return $this->root . '/' . $this->specPath() . '/' . str_replace('\\', '/', $fqcn) . $this->config->getSpecSuffix();
-    }
-
-    private function srcPath(): string
-    {
-        return rtrim(ltrim($this->config->getSrcPath(), './'), '/');
-    }
-
-    private function specPath(): string
-    {
-        return rtrim(ltrim($this->config->getSpecPath(), './'), '/');
+        return $this->root . '/' . $this->config->specDir() . '/' . str_replace('\\', '/', $fqcn) . $this->config->getSpecSuffix();
     }
 }

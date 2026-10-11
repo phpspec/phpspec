@@ -43,7 +43,7 @@ describe(Refactor::class, function () {
         'red' => $red,
     ])], 900));
     let('outage', fn() => new RuntimeException('Google API error (400): API key not valid.'));
-    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = [], bool $attended = true): CommandTester {
+    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = [], bool $attended = true, array $settings = []): CommandTester {
         $this->replay = new ReplayProvider($responses);
         $suite = new class ($checks) implements SpecSuite {
             public function __construct(private array $checks) {}
@@ -62,7 +62,7 @@ describe(Refactor::class, function () {
             }
         };
         $consent = new Consent('Run with --no-interaction to %s.', $interactive ? Generation::Asks : Generation::Declines, prompt: $prompt);
-        $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $this->project, $suite, $this->replay, $consent);
+        $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']] + $settings), $this->project, $suite, $this->replay, $consent);
         $app = new Application('phpspec-test', '1.0');
         $app->setAutoExit(false);
         $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($command);
@@ -168,6 +168,16 @@ describe(Refactor::class, function () {
             expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toContain('interface DiscountPolicy');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toContain('/* policy */');
             expect($this->project->files[$this->cwd . '/.phpspec/ai/journal.jsonl'] ?? '')->toContain('Replace Conditional with Polymorphism');
+        });
+
+        it('notes the steps kept under the class refactored, whatever the source path is spelled', function () {
+            ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n"]),
+            ], [$this->green, $this->green], ['', ''], settings: ['src_path' => 'src/']);
+
+            $entry = json_decode(trim($this->project->files[$this->cwd . '/.phpspec/ai/journal.jsonl'] ?? '{}'), true);
+            expect($entry['target'] ?? null)->toBe('App\\Checkout\\CheckoutService');
         });
 
         it('lets a step meant to be red stay red in the spec it writes, until a later step makes it green', function () {

@@ -254,6 +254,24 @@ final class Configuration
     }
 
     /**
+     * The source directory relative to the project root, as code joins and
+     * compares it: no leading "./", no trailing slash.
+     */
+    public function srcDir(): string
+    {
+        return $this->projectDir($this->getSrcPath());
+    }
+
+    /**
+     * The spec directory relative to the project root, as code joins and
+     * compares it: no leading "./", no trailing slash.
+     */
+    public function specDir(): string
+    {
+        return $this->projectDir($this->getSpecPath());
+    }
+
+    /**
      * Returns the PSR-4 namespace prefix mapped to the source directory.
      * When set, namespace segments matching the prefix are not reflected
      * in the directory structure during code generation; '' means every
@@ -277,7 +295,7 @@ final class Configuration
         $default = $this->get('default_namespace');
 
         return new SourceLayout(
-            ltrim(is_string($srcPath) ? $srcPath : './src', './'),
+            $this->projectDir(is_string($srcPath) ? $srcPath : 'src'),
             $this->mappings(),
             is_string($default) && trim($default, '\\') !== '' ? $default : null,
         );
@@ -341,6 +359,13 @@ final class Configuration
         }
 
         return $this->composerLayout() ?? ['src' => './src', 'prefix' => ''];
+    }
+
+    private function projectDir(string $path): string
+    {
+        $dir = rtrim((string) preg_replace('~^(\./)+~', '', str_replace('\\', '/', $path)), '/');
+
+        return $dir === '.' ? '' : $dir;
     }
 
     /**
