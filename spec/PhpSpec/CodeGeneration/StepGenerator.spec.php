@@ -8,7 +8,7 @@ describe(StepGenerator::class, function () {
     let('written', fn() => new ArrayObject());
     let('filesystem', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {
             $this->written['content'] = $content;
         });

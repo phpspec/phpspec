@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
+ - A stub is held strictly to what the real method returns: a value it could never return is refused where the spec sets it, and a `toReturnUsing()` callback's answer when the call is made, naming the real method; it failed only at the call, naming the double's generated class, and `toReturn()` on a `void` method was ignored
  - A call to a double written with a matcher declares a call and is answered by no stub, where it ran a stub's callback with the matcher; an error a stub's callback raises goes through, where an `ArgumentCountError` was swallowed and the call answered with a default
  - `cetera()` followed by another argument is refused, where what followed was ignored
  - A stub set through `expect()`, or on the call itself, answers only the call it was written with: `expect($m->pay(1))->toReturn(9)`, its `->toThrow()` and `$m->pay(1)->toReturn(9)` answered `pay(2)` too

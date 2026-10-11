@@ -35,8 +35,8 @@ describe('E13 generate: step bodies come from the model when the scaffold is com
             str_ends_with($p, '/features/steps') => ['completing_a_task.steps.php'],
             default => [],
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-steps-bodies.json'), true);
         $replay = ReplayProvider::fromRecording($rec);

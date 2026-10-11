@@ -18,7 +18,7 @@ describe(Generate::class, function () {
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
         allow($fs->read(any()))->toReturn('');
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
     });
 
     $withAi = fn(): Configuration => new Configuration(['ai' => ['provider' => 'openai', 'api_key' => 'test-key']]);

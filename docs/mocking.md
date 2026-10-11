@@ -65,6 +65,18 @@ it('returns user data', function (UserRepository $repo) {
 });
 ```
 
+The value has to be one the real method could return, held strictly: a method
+returning `int` is not given `'42'`, and one returning `void` is not given
+anything, its call is declared with `allow()` alone. A value it could never
+return is refused where the spec sets it:
+
+```
+App\Counter::count() returns int, so it cannot return string "three".
+```
+
+What a `toReturnUsing()` callback answers is held the same way when the call
+is made.
+
 ### `allow()` + `toThrow()`
 
 Stub a method to throw an exception:

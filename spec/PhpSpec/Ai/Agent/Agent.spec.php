@@ -89,7 +89,7 @@ describe(Agent::class, function () {
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
         allow($fs->read(any()))->toReturn('');
-        allow($fs->mkdir(any()))->toReturn(null)->ignoreOthers();
+        allow($fs->mkdir(any()))->ignoreOthers();
         $this->written = [];
         $written = &$this->written;
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {

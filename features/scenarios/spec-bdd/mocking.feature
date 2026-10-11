@@ -496,6 +496,27 @@ Feature: Mocking
     Then the exit code should be 1
     And the output should contain "Too few arguments to function App\Stock::reserve(), 1 passed in src/App/Checkout.php on line 8 and exactly 2 expected"
 
+  Scenario: A stub given what the method cannot return is refused, naming the method
+    Given an interface "src/App/Counter.php":
+      """
+      <?php
+      namespace App;
+
+      interface Counter {
+          public function count(): int;
+      }
+      """
+    And a spec with example:
+      """
+      $counter = mock(App\Counter::class);
+      allow($counter->count())->toReturn('three');
+      """
+    When I run the spec
+    Then the exit code should be 1
+    And the output should contain:
+      """
+      App\Counter::count() returns int, so it cannot return string "three".
+      """
   Scenario: Fluent call count with once
     Given an interface "src/App/Counter.php":
       """

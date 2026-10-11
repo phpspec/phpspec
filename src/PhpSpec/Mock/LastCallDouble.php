@@ -71,6 +71,7 @@ final class LastCallDouble implements MatchableDouble
     public function toReturn(mixed $value): static
     {
         if ($this->double instanceof GeneratedDouble) {
+            (new ReturnType($this->double->______PhpSpecNameOfClassDoubled(), $this->method))->holdStub($value);
             $this->double->______PhpSpecStubReturn($this->method, $value, $this->args);
             $this->double->______PhpSpecGetStubbedCalls()->pop();
         }

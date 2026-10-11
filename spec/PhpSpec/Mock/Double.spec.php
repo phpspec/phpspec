@@ -40,6 +40,15 @@ if (!function_exists('double_spec_outsider_reserves')) {
     require DOUBLE_SPEC_OUTSIDER;
 }
 
+interface DoubleSpecLedger {
+    public function balance(): int;
+    public function rate(): float;
+    public function owner(): ?DoubleSpecContract;
+    public function either(): int|string;
+    public function record(string $line): void;
+    public function same(): static;
+}
+
 interface DoubleSpecMachine {
     public function each(): iterable;
     public function hook(): Closure;
@@ -923,6 +932,41 @@ describe(Double::class, function() {
             expect($till->find())->toBe('first');
             expect($till->find(0))->toBe('first');
             expect($till->find(5))->toBe('');
+        });
+    });
+
+    context("a stub given what the method cannot return", function () {
+        it("is refused where the value is not of the type the method returns, held strictly", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+
+            expect(fn() => allow($ledger->balance())->toReturn('42'))->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so it cannot return string "42".');
+            expect(fn() => expect($ledger->balance())->toReturn('42'))->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so it cannot return string "42".');
+            expect(fn() => allow($ledger->owner())->toReturn(new stdClass()))->toThrow(LogicException::class, 'DoubleSpecLedger::owner() returns ?DoubleSpecContract, so it cannot return stdClass.');
+            expect(fn() => allow($ledger->either())->toReturn(1.5))->toThrow(LogicException::class, 'DoubleSpecLedger::either() returns string|int, so it cannot return float 1.5.');
+        });
+
+        it("takes what the method could return", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+            allow($ledger->rate())->toReturn(3);
+            allow($ledger->owner())->toReturn(null);
+            allow($ledger->either())->toReturn('many');
+            allow($ledger->same())->toReturn($ledger);
+
+            expect($ledger->rate())->toBe(3.0);
+            expect($ledger->either())->toBe('many');
+        });
+
+        it("is refused on a method that returns void, which has nothing to return", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+
+            expect(fn() => allow($ledger->record('sale'))->toReturn(true))->toThrow(LogicException::class, 'DoubleSpecLedger::record() returns void, so toReturn() has nothing to give it: declare the call with allow() alone.');
+        });
+
+        it("holds what a callback answers to the type the method returns", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+            allow($ledger->balance())->toReturnUsing(fn() => 'lots');
+
+            expect(fn() => $ledger->balance())->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so its toReturnUsing() callback cannot answer string "lots".');
         });
     });
 

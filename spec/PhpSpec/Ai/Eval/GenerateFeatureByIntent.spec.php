@@ -19,8 +19,8 @@ describe('E2 generate: feature by intent', function () {
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
         allow($fs->read(any()))->toReturn('');
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
     });
 
     it('writes a .feature under features/, never a spec', function (Filesystem $fs) {

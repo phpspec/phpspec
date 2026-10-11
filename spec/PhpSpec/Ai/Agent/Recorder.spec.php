@@ -19,7 +19,7 @@ describe(Recorder::class, function () {
         $this->written = [];
         $written = &$this->written;
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });

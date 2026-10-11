@@ -18,8 +18,8 @@ describe('E7 generate: the prompt example never leaks into the path', function (
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
         allow($fs->read(any()))->toReturn('');
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
     });
 
     it('derives the path from the instruction, not the echoed Calculator example', function (Filesystem $fs) {

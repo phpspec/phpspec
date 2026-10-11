@@ -392,8 +392,8 @@ describe(Next::class, function () {
                 return '';
             });
             allow($fs->mtime(any()))->toReturn(900);
-            allow($fs->mkdir(any()))->toReturn(null);
-            allow($fs->write(cetera()))->toReturn(null);
+            allow($fs->mkdir(any()));
+            allow($fs->write(cetera()));
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -699,8 +699,8 @@ describe(Next::class, function () {
             allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
             allow($fs->scandir(any()))->toReturn([]);
             allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
-            allow($fs->mkdir(any()))->toReturn(null);
-            allow($fs->write(cetera()))->toReturn(null);
+            allow($fs->mkdir(any()));
+            allow($fs->write(cetera()));
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -737,8 +737,8 @@ describe(Next::class, function () {
             allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
             allow($fs->scandir(any()))->toReturn([]);
             allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
-            allow($fs->mkdir(any()))->toReturn(null);
-            allow($fs->write(cetera()))->toReturn(null);
+            allow($fs->mkdir(any()));
+            allow($fs->write(cetera()));
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
                 'green',
@@ -783,8 +783,8 @@ describe(Next::class, function () {
             allow($fs->isFile(any()))->toReturnUsing(fn(string $p): bool => isset($known[$p]));
             allow($fs->mtime(any()))->toReturn(100);
             allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : ($known[$p] ?? ''));
-            allow($fs->mkdir(any()))->toReturn(null);
-            allow($fs->write(cetera()))->toReturn(null);
+            allow($fs->mkdir(any()));
+            allow($fs->write(cetera()));
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(

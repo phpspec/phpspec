@@ -35,8 +35,8 @@ describe('E12 generate: a bare subject resolves against the project tree', funct
             str_ends_with($p, '/spec/App') => ['TodoList.spec.php'],
             default => [],
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-update-todolist-spec.json'), true);
         $replay = ReplayProvider::fromRecording($rec);

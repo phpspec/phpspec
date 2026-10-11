@@ -33,7 +33,7 @@ describe(Baseline::class, function () {
         allow($fs->isDir(any()))->toReturnUsing(fn(string $path) => $path === '/app/src');
         allow($fs->scandir(any()))->toReturn(['.', '..', 'Basket.php', 'notes.txt']);
         allow($fs->read(any()))->toReturn('<?php class Basket {}');
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         $recorded = (new Baseline($fs, $git, '/app'))->record(['src']);
 
@@ -50,7 +50,7 @@ describe(Baseline::class, function () {
         allow($git->head())->toReturn(null);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->isDir(any()))->toReturn(false);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         expect((new Baseline($fs, $git, '/app'))->record(['src'])['kind'])->toBe('snapshot');
     });
@@ -60,7 +60,7 @@ describe(Baseline::class, function () {
         allow($git->isRepository())->toReturn(true);
         allow($git->head())->toReturn('abc123');
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
         allow($fs->mkdir(any()))->toReturnUsing(function (string $path) use (&$made) {
             $made = $path;
         });
@@ -78,7 +78,7 @@ describe(Baseline::class, function () {
         allow($git->head())->toReturn('abc123');
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->isDir(any()))->toReturn(false);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         expect((new Baseline($fs, $git, '/app'))->record(['src'], 'mtime')['kind'])->toBe('snapshot');
     });

@@ -24,7 +24,7 @@ describe(AiAssistant::class, function () {
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->isFile(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         // Every write is tracked by path; the debug capture under .phpspec/ai/
         // is bookkeeping, so artifact assertions look through this helper.
@@ -100,7 +100,7 @@ describe(AiAssistant::class, function () {
         allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $captured = null;
         $turn = 0;
@@ -131,7 +131,7 @@ describe(AiAssistant::class, function () {
     it('keeps a declined offer unwritten and steers the model to re-plan', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old");
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $captured = null;
         $turn = 0;
@@ -159,7 +159,7 @@ describe(AiAssistant::class, function () {
     it('verifies a feature offer with the whole suite, not specs alone', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -182,7 +182,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('keeps the plain spec run when the landed artifact is a spec', function (Filesystem $fs) {
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -206,7 +206,7 @@ describe(AiAssistant::class, function () {
     it('winds the turn down after a verified change instead of registering another suggestion', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $captured = null;
         $toolsByRound = [];
@@ -247,7 +247,7 @@ describe(AiAssistant::class, function () {
     it('hands the acceptance note to the model when an offer is applied', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $captured = null;
         $turn = 0;
@@ -276,7 +276,7 @@ describe(AiAssistant::class, function () {
     it('hands the decline note to the model as the direction to take instead', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old");
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $captured = null;
         $turn = 0;
@@ -352,7 +352,7 @@ describe(AiAssistant::class, function () {
     it('allows at most one offer per turn, withholding and refusing the second', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old");
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         $written = [];
         allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
@@ -561,7 +561,7 @@ describe(AiAssistant::class, function () {
 
         $captured = null;
         $turn = 0;
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         $accepting = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, new RoleState(PairRole::AiDrives), $this->specRunner);
         $this->answers = ['1, then run it'];
         $accepting->handle('spec App/Wanted');
@@ -1154,7 +1154,7 @@ describe(AiAssistant::class, function () {
         allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
 
         $seen = [];
         $turn = 0;
@@ -1272,7 +1272,7 @@ describe(AiAssistant::class, function () {
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         $this->provider->responder = fn() => new Response('hello there');
 
         $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);

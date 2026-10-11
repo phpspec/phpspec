@@ -150,8 +150,8 @@ describe(CommandDispatcher::class, function () {
             str_ends_with($p, '.spec.php') => false,
             default => false,
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $result = $this->dispatcher->dispatch('/describe Acme\Greeter');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
@@ -163,8 +163,8 @@ describe(CommandDispatcher::class, function () {
 
     it('describe offers class creation after spec generation', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -176,8 +176,8 @@ describe(CommandDispatcher::class, function () {
             str_ends_with($p, '.php') && !str_ends_with($p, '.spec.php') => false,
             default => false,
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -186,8 +186,8 @@ describe(CommandDispatcher::class, function () {
 
     it('describe offers to run specs after generation', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -212,8 +212,8 @@ describe(CommandDispatcher::class, function () {
             }
             return false;
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
         allow($fs->read(any()))->toReturn("<?php\n// spec content");
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
@@ -235,8 +235,8 @@ describe(CommandDispatcher::class, function () {
             }
             return false;
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
         allow($fs->read(any()))->toReturn("<?php\nclass Greeter {}");
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
@@ -261,8 +261,8 @@ describe(CommandDispatcher::class, function () {
             str_ends_with($p, '.spec.php') => false,
             default => false,
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
 
         $result = $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
@@ -274,8 +274,8 @@ describe(CommandDispatcher::class, function () {
 
     it('exemplify generates spec when it does not exist', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
 
         $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
@@ -420,7 +420,7 @@ describe(CommandDispatcher::class, function () {
             allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use ($example) {
                 $example->written[$p] = $c;
             });
-            allow($fs->mkdir(any()))->toReturn(null);
+            allow($fs->mkdir(any()));
 
             $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]);
 
@@ -666,7 +666,7 @@ describe(CommandDispatcher::class, function () {
         it('shows a diff and writes the proposal once confirmed', function (Filesystem $fs) {
             allow($fs->exists(any()))->toReturn(false);
             allow($fs->read(any()))->toReturn('');
-            allow($fs->mkdir(any()))->toReturn(null);
+            allow($fs->mkdir(any()));
             $written = [];
             allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
                 $written[$p] = $c;
@@ -823,8 +823,8 @@ describe(CommandDispatcher::class, function () {
 
         it('suggests running the new spec after /describe', function (Filesystem $fs) {
             allow($fs->exists(any()))->toReturn(false);
-            allow($fs->mkdir(any()))->toReturn(null);
-            allow($fs->write(cetera()))->toReturn(null);
+            allow($fs->mkdir(any()));
+            allow($fs->write(cetera()));
 
             $this->dispatcher->dispatch('/describe App/Basket');
 
@@ -840,7 +840,7 @@ describe(CommandDispatcher::class, function () {
         it('suggests /run after /exemplify', function (Filesystem $fs) {
             allow($fs->exists(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
             allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
-            allow($fs->write(cetera()))->toReturn(null);
+            allow($fs->write(cetera()));
 
             $this->dispatcher->dispatch('/exemplify App/Calc add');
 

@@ -10,7 +10,7 @@ describe(OfferBook::class, function () {
         $this->stored = null;
         allow($fs->exists(any()))->toReturn(false);
         allow($fs->read(any()))->toReturnUsing(fn(): string => $this->stored ?? '');
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {
             $this->stored = $content;
             allow($this->fs->exists(any()))->toReturn(true);

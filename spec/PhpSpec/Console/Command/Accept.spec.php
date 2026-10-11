@@ -24,7 +24,7 @@ describe(Accept::class, function () {
         $this->written = [];
         allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
         allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         // The book keeps itself on disk, so a write to .phpspec is bookkeeping
         // rather than a change to the project: assert on the project's files.
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {

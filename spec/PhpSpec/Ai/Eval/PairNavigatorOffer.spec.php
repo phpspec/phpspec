@@ -25,7 +25,7 @@ describe('E12 pair: navigator offer, replayed from a live session', function () 
         allow($fs->isFile(any()))->toReturn(false);
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         $this->written = [];
         $written = &$this->written;
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {

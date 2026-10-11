@@ -9,7 +9,7 @@ describe(RefactorJournal::class, function () {
     beforeEach(function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
         allow($fs->isDir(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
     });
 
     it('records an applied refactoring as one JSON line with a timestamp', function (Filesystem $fs) {

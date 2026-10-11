@@ -19,8 +19,8 @@ describe('E5/E6 generate: reject ObjectBehavior spec syntax', function () {
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
         allow($fs->read(any()))->toReturn('');
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
     });
 
     $reject = function (string $case) {

@@ -22,8 +22,8 @@ describe('E10 generate: inferred paths respect the project layout', function () 
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->isFile(any()))->toReturn(false);
         allow($fs->scandir(any()))->toReturn([]);
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         return new Agent(new Configuration($config), $fs, $replay);
     };

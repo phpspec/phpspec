@@ -9,7 +9,7 @@ describe(ClassGenerator::class, function () {
     it('leaves no empty line inside an empty body', function (Filesystem $fs) {
         $written = '';
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
@@ -22,7 +22,7 @@ describe(ClassGenerator::class, function () {
     it('ends every line with a line feed alone, whatever line ending its own source was checked out with', function (Filesystem $fs) {
         $written = '';
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
@@ -36,7 +36,7 @@ describe(ClassGenerator::class, function () {
     it('makes a class named like an exception extend Exception, imported, so it can be thrown', function (Filesystem $fs) {
         $written = '';
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
@@ -49,7 +49,7 @@ describe(ClassGenerator::class, function () {
     it('extends Exception without importing it for an exception in the global namespace', function (Filesystem $fs) {
         $written = '';
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });

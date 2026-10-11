@@ -25,7 +25,7 @@ describe(RefactorModel::class, function () {
     let('filesystem', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
         allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {
             $this->files[$path] = $content;
         });

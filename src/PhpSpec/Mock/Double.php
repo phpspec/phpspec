@@ -705,6 +705,7 @@ PHP;
             $paramString = implode(', ', $paramStrings);
             $arguments = self::argumentsCode($parameters);
             $hold = $depth === 0 ? self::holdCode($reflectionClass->getName(), $method) : '';
+            $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('(new \\PhpSpec\\Mock\\ReturnType(%s, %s))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
 
             // Unique suffix for MockedMethodFor classes, includes parent class hash to avoid collisions
             $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($reflectionClass->getName() . '::' . $methodName), 0, 8) . '_' . uniqid();
@@ -870,7 +871,7 @@ PHP;
             } elseif ($simpleReturnName !== 'never') {
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', \$__args, \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { \$__ret = (\$__match['data'])(...\$__args); \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
+                    . " if (\$__match['type'] === 'callback') { \$__ret = (\$__match['data'])(...\$__args); $holdAnswer \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
                     . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 

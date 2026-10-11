@@ -34,8 +34,8 @@ describe(Exemplify::class, function () {
             }
             return false;
         });
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
         allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
@@ -61,7 +61,7 @@ describe(Exemplify::class, function () {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         $output = new BufferedOutput();
         $this->exemplify->run(
@@ -103,7 +103,7 @@ describe(Exemplify::class, function () {
             it("should add", fn() => null);
         });
         PHP);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         $output = new BufferedOutput();
         $this->exemplify->run(
@@ -124,7 +124,7 @@ describe(Exemplify::class, function () {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         $output = new BufferedOutput();
         $this->exemplify->run(

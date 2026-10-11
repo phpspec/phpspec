@@ -17,7 +17,7 @@ describe(Describe::class, function() {
 
     it("delegates generation to spec generator", function(Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         expect($fs->write(cetera()))->toBeCalled();
         $this->describe->run(new ArrayInput(['class' => 'Some/Spec']), new NullOutput());
     });
@@ -46,8 +46,8 @@ describe(Describe::class, function() {
 
     it("names the spec it wrote from the project root, in colour, after a blank line", function(Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, true);
         $this->describe->run(new ArrayInput(['class' => 'App/Calculator']), $output);
@@ -145,8 +145,8 @@ describe(Describe::class, function() {
 
     it("emits a JSON receipt with --agent instead of prose", function(Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $output = new BufferedOutput();
         $this->describe->run(new ArrayInput(['class' => 'App/Basket', '--agent' => true]), $output);
@@ -205,7 +205,7 @@ describe(Describe::class, function() {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         $output = new BufferedOutput();
         $this->describe->run(
@@ -226,7 +226,7 @@ describe(Describe::class, function() {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->write(cetera()));
 
         $output = new \Symfony\Component\Console\Output\BufferedOutput();
         $this->describe->run(

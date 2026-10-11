@@ -25,7 +25,7 @@ describe(InterfaceGenerator::class, function () {
     it("leaves no empty line inside an empty body", function (Filesystem $fs) {
         $written = '';
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
@@ -38,7 +38,7 @@ describe(InterfaceGenerator::class, function () {
     it("ends every line with a line feed alone, whatever line ending its own source was checked out with", function (Filesystem $fs) {
         $written = '';
         allow($fs->exists(any()))->toReturn(false);
-        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
