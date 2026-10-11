@@ -16,11 +16,11 @@ use PhpSpec\Filesystem;
 describe(ToolRegistry::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
-        allow($fs->read())->toReturn('');
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
+        allow($fs->read(any()))->toReturn('');
     });
 
     let('config', fn(Filesystem $fs) => new Configuration());
@@ -30,8 +30,8 @@ describe(ToolRegistry::class, function () {
     context('definitions', function () {
 
         it('builds the declared tools with their prompt-file descriptions', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p) => !str_contains($p, 'phpspec.'));
-            allow($fs->read())->toReturnUsing(fn(string $path): string => str_contains($path, 'write_steps') ? 'STEPS TOOL DESC' : 'OTHER');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p) => !str_contains($p, 'phpspec.'));
+            allow($fs->read(any()))->toReturnUsing(fn(string $path): string => str_contains($path, 'write_steps') ? 'STEPS TOOL DESC' : 'OTHER');
             $profile = new CommandProfile(name: 'generate', body: '', tools: ['write_feature', 'write_steps']);
 
             $tools = $this->registry->definitions($profile);
@@ -97,8 +97,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('parses the subject feature and drafts its steps file deterministically', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding_a_task.feature'));
-            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n    When I add the task \"Buy milk\"\n");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding_a_task.feature'));
+            allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n    When I add the task \"Buy milk\"\n");
             $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'steps are undefined');
 
             $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
@@ -110,8 +110,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('appends only the missing steps when the steps file already exists', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
-            allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
+            allow($fs->read(any()))->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
                 ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n    Then I should have 1 task on my list\n"
                 : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
             $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'steps are undefined');
@@ -124,8 +124,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('declines the steps short-circuit when every step is already defined', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
-            allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
+            allow($fs->read(any()))->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
                 ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n"
                 : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
             $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'you asked for steps');
@@ -134,8 +134,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('declines to re-scaffold a feature file that already exists', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
-            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: Adding\n    Given something\n");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: Adding\n    Given something\n");
             $step = new Step(Phase::WriteFeature, 'features/adding.feature', null, 'you named it');
 
             expect($this->registry->deterministic($step, Grounding::empty(), $this->genProfile))->toBeNull();
@@ -218,8 +218,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('keeps the model path for a propose_edit with no step to derive from', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'src/App/Calc.php'));
-            allow($fs->read())->toReturn("<?php\n// old");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'src/App/Calc.php'));
+            allow($fs->read(any()))->toReturn("<?php\n// old");
             $call = new ToolCall('1', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => "<?php\n// new"]);
 
             $proposals = $this->registry->fromCalls([$call], null);
@@ -230,8 +230,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('skips a write_steps call when every step is already defined', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
-            allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, 'steps.php'));
+            allow($fs->read(any()))->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
                 ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n"
                 : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
             $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'you asked for steps');
@@ -241,8 +241,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('skips a write_feature call for a feature file that already exists', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
-            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: Adding\n    Given something\n");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: Adding\n    Given something\n");
             $step = new Step(Phase::WriteFeature, 'features/adding.feature', null, 'you named it');
             $call = new ToolCall('1', 'write_feature', ['path' => 'features/adding.feature']);
 
@@ -292,15 +292,15 @@ describe(ToolRegistry::class, function () {
 
         it('rejects a steps edit that redefines a title another steps file owns', function (Filesystem $fs) {
             $cwd = getcwd();
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $cwd . '/features');
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
-            allow($fs->isFile())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.steps.php'));
-            allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $cwd . '/features');
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+            allow($fs->isFile(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.steps.php'));
+            allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
                 $cwd . '/features' => ['steps'],
                 $cwd . '/features/steps' => ['adding.steps.php'],
                 default => [],
             });
-            allow($fs->read())->toReturn("<?php\ngiven('I have a todo list', function () {});\n");
+            allow($fs->read(any()))->toReturn("<?php\ngiven('I have a todo list', function () {});\n");
 
             $call = new ToolCall('1', 'propose_edit', [
                 'path' => 'features/steps/clearing.steps.php',
@@ -313,15 +313,15 @@ describe(ToolRegistry::class, function () {
 
         it('lets a steps edit replace the titles of the file it targets', function (Filesystem $fs) {
             $cwd = getcwd();
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $cwd . '/features');
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
-            allow($fs->isFile())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.steps.php'));
-            allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $cwd . '/features');
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+            allow($fs->isFile(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.steps.php'));
+            allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
                 $cwd . '/features' => ['steps'],
                 $cwd . '/features/steps' => ['clearing.steps.php'],
                 default => [],
             });
-            allow($fs->read())->toReturn("<?php\nwhen('I clear the list', function () { pending(); });\n");
+            allow($fs->read(any()))->toReturn("<?php\nwhen('I clear the list', function () { pending(); });\n");
 
             $call = new ToolCall('1', 'propose_edit', [
                 'path' => 'features/steps/clearing.steps.php',
@@ -336,15 +336,15 @@ describe(ToolRegistry::class, function () {
         it('scaffolds no stub for a step another steps file already defines', function (Filesystem $fs) {
             $cwd = getcwd();
             $feature = $cwd . '/features/clearing.feature';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $feature || $p === $cwd . '/features');
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
-            allow($fs->isFile())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.steps.php'));
-            allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $feature || $p === $cwd . '/features');
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+            allow($fs->isFile(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.steps.php'));
+            allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
                 $cwd . '/features' => ['steps'],
                 $cwd . '/features/steps' => ['adding.steps.php'],
                 default => [],
             });
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $feature
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $feature
                 ? "Feature: Clearing\n  Scenario: Clears\n    Given I have a todo list\n    When I clear the list\n"
                 : "<?php\ngiven('I have a todo list', function () {});\n");
 
@@ -356,8 +356,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('drafts the steps into the steps file the step names, for the last-touched feature', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
-            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
             $step = new Step(Phase::WriteSteps, 'features/steps/web.steps.php', null, 'you named it');
 
             $proposals = $this->registry->deterministic($step, new Grounding(recentFeature: 'features/adding.feature'), $this->genProfile);
@@ -367,8 +367,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('writes a write_steps call into the steps file it names', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
-            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
 
             $proposals = $this->registry->fromCalls([new ToolCall('1', 'write_steps', ['feature_path' => 'features/adding.feature', 'steps_file' => 'web'])], null);
 
@@ -378,14 +378,14 @@ describe(ToolRegistry::class, function () {
         it('declines a scaffold that adds no step, even for a steps file not written yet', function (Filesystem $fs) {
             $cwd = getcwd();
             $feature = $cwd . '/features/clearing.feature';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $feature || $p === $cwd . '/features');
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
-            allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $feature || $p === $cwd . '/features');
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+            allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
                 $cwd . '/features' => ['steps'],
                 $cwd . '/features/steps' => ['lists.steps.php'],
                 default => [],
             });
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $feature
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $feature
                 ? "Feature: Clearing\n  Scenario: Clears\n    Given I have a todo list\n"
                 : "<?php\ngiven('I have a todo list', function () {});\n");
             $step = new Step(Phase::WriteSteps, null, 'features/clearing.feature', 'steps asked for');
@@ -400,8 +400,8 @@ describe(ToolRegistry::class, function () {
         });
 
         it('serves a write_steps call from the argument feature path when the step has none', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
-            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: A\n    Given a list\n");
 
             $proposals = $this->registry->fromCalls([new ToolCall('1', 'write_steps', ['feature_path' => 'features/adding.feature'])], null);
 

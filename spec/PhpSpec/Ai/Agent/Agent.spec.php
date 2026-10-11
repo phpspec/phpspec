@@ -84,15 +84,15 @@ class AgentSpecScriptedExecutor implements PhpSpec\Ai\Contracts\ToolExecutor
 describe(Agent::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
-        allow($fs->read())->toReturn('');
-        allow($fs->mkdir())->toReturn(null)->ignoreOthers();
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
+        allow($fs->read(any()))->toReturn('');
+        allow($fs->mkdir(any()))->toReturn(null)->ignoreOthers();
         $this->written = [];
         $written = &$this->written;
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
     });
@@ -119,14 +119,14 @@ describe(Agent::class, function () {
             "$cwd/features/clearing.feature" => "Feature: Clearing\n  Scenario: Clears\n    When I clear completed tasks\n",
             "$cwd/features/steps/lists.steps.php" => "<?php\nwhen('I clear completed tasks', fn() => \$this->todoList->getTasks());\n",
         ];
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => isset($files[$p]) || in_array($p, ["$cwd/features", "$cwd/features/steps"], true));
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, ["$cwd/features", "$cwd/features/steps"], true));
-        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => isset($files[$p]) || in_array($p, ["$cwd/features", "$cwd/features/steps"], true));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, ["$cwd/features", "$cwd/features/steps"], true));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
             "$cwd/features" => ['clearing.feature', 'steps'],
             "$cwd/features/steps" => ['lists.steps.php'],
             default => [],
         });
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $files[$p] ?? '');
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $files[$p] ?? '');
         $replay = new ReplayProvider([new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'features/steps/lists.steps.php', 'content' => "<?php\nwhen('I clear completed tasks', function () {});\n"])])]);
 
         (new Agent($this->config, $fs, $replay))->chat('generate', 'the body of the steps for features/clearing.feature');
@@ -220,8 +220,8 @@ describe(Agent::class, function () {
 
     it('sends no toolChoice for a prose command, resolved from a project prompt', function (Filesystem $fs) {
         $override = getcwd() . '/.phpspec/prompts/commands/advice.txt';
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $override);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $override ? 'TALK to the human.' : '');
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $override);
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $override ? 'TALK to the human.' : '');
         $replay = new ReplayProvider([new Response('some advice')]);
         $agent = new Agent($this->config, $fs, $replay);
 
@@ -233,8 +233,8 @@ describe(Agent::class, function () {
 
     it('folds a project override over the shipped manifest per key', function (Filesystem $fs) {
         $override = getcwd() . '/.phpspec/prompts/commands/generate.txt';
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $override);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $override ? "---\ntemperature: 0.9\n---\nOUR house rules." : '');
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $override);
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $override ? "---\ntemperature: 0.9\n---\nOUR house rules." : '');
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
@@ -321,10 +321,10 @@ describe(Agent::class, function () {
     });
 
     it('feeds the model the project tree and the files the instruction names', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '/src') || str_ends_with($p, 'src/Calc.php'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '/src'));
-        allow($fs->scandir())->toReturn(['Calc.php']);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, 'Calc.php') ? '<?php class Calc {}' : '');
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, '/src') || str_ends_with($p, 'src/Calc.php'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, '/src'));
+        allow($fs->scandir(any()))->toReturn(['Calc.php']);
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => str_ends_with($p, 'Calc.php') ? '<?php class Calc {}' : '');
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/Calc.php', 'content' => '<?php // updated'])]),
         ]);

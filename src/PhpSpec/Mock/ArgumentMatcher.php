@@ -148,6 +148,23 @@ final readonly class ArgumentMatcher
     }
 
     /**
+     * Whether a call carries a matcher: a call a spec writes to declare what
+     * will be called, never a call made.
+     *
+     * @param array<int|string, mixed> $arguments
+     */
+    public static function among(array $arguments): bool
+    {
+        foreach ($arguments as $argument) {
+            if ($argument instanceof self) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Returns true if this matcher is the cetera() wildcard.
      */
     public function isCetera(): bool

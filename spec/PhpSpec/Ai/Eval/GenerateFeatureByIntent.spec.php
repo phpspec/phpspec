@@ -14,13 +14,13 @@ require_once __DIR__ . '/../ReplayProvider.php';
 describe('E2 generate: feature by intent', function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
-        allow($fs->read())->toReturn('');
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
+        allow($fs->read(any()))->toReturn('');
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
     });
 
     it('writes a .feature under features/, never a spec', function (Filesystem $fs) {

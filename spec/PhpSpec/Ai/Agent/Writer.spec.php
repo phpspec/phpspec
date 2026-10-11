@@ -13,16 +13,16 @@ describe(Writer::class, function () {
         $this->made = [];
         $written = &$this->written;
         $made = &$this->made;
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
-        allow($fs->mkdir())->toReturnUsing(function (string $path) use (&$made) {
+        allow($fs->mkdir(any()))->toReturnUsing(function (string $path) use (&$made) {
             $made[] = $path;
         });
     });
 
     it('creates the directory and writes a new file under the base dir', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         (new Writer($fs, '/proj'))->apply(new Proposal('features/steps/adding.steps.php', '', '<?php // steps', true, 'write_steps'));
 
@@ -31,7 +31,7 @@ describe(Writer::class, function () {
     });
 
     it('writes into an existing directory without recreating it', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists(any()))->toReturn(true);
 
         (new Writer($fs, '/proj'))->apply(new Proposal('src/Calc.php', '<?php // old', '<?php // new', false));
 
@@ -41,7 +41,7 @@ describe(Writer::class, function () {
 
     it('reverts a change by writing back what the file held, and a new file by deleting it', function (Filesystem $fs) {
         $deleted = [];
-        allow($fs->delete())->toReturnUsing(function (string $path) use (&$deleted) {
+        allow($fs->delete(any()))->toReturnUsing(function (string $path) use (&$deleted) {
             $deleted[] = $path;
         });
         $writer = new Writer($fs, '/proj');

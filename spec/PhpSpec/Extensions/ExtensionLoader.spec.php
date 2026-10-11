@@ -13,7 +13,7 @@ use PhpSpec\Specification\Expectation;
 describe(ExtensionLoader::class, function () {
 
     it('loads formatter extensions from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -26,7 +26,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('loads command extensions from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -39,7 +39,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('returns false for unknown formatter', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => false);
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => false);
 
         $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
@@ -49,7 +49,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('does not load twice', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -63,7 +63,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('loads matcher extensions from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -77,7 +77,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('loads listener extensions from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -91,7 +91,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('loads tool provider extensions from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -115,12 +115,12 @@ describe(ExtensionLoader::class, function () {
             ],
         ]]);
 
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => false,
             'vendor/composer/installed.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => $installed,
             default => '',
         });
@@ -144,11 +144,11 @@ describe(ExtensionLoader::class, function () {
             ],
         ]]);
 
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => $installed,
             default => '',
         });
@@ -161,7 +161,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('returns formatter by name', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -174,12 +174,12 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('handles invalid JSON in installed.json gracefully', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => false,
             'vendor/composer/installed.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => 'not valid json{{{',
             default => '',
         });
@@ -196,12 +196,12 @@ describe(ExtensionLoader::class, function () {
             ['name' => 'vendor/plain-package'],
         ]]);
 
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => false,
             'vendor/composer/installed.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => $installed,
             default => '',
         });
@@ -225,11 +225,11 @@ describe(ExtensionLoader::class, function () {
             ],
         ]]);
 
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => $installed,
             default => '',
         });
@@ -243,7 +243,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('skips classes that exist but do not implement the expected interface', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -258,7 +258,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('skips classes that do not exist', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => false,
             default => false,
         });
@@ -271,7 +271,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('puts the browser named in config behind the DSL', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             default => false,
         });
 
@@ -283,7 +283,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('has no browser opinion when none is registered', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
@@ -293,7 +293,7 @@ describe(ExtensionLoader::class, function () {
     });
 
     it('refuses a browser that does not implement the contract', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             default => false,
         });
 
@@ -312,8 +312,8 @@ describe(ExtensionLoader::class, function () {
             ['name' => 'acme/one', 'extra' => ['phpspec' => ['browser' => StubBrowser::class]]],
             ['name' => 'acme/two', 'extra' => ['phpspec' => ['browser' => OtherStubBrowser::class]]],
         ]]);
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json');
-        allow($fs->read())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json' ? $installed : '');
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json');
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json' ? $installed : '');
 
         $config = new Configuration([], '/app');
         $loader = new ExtensionLoader($config, $fs);
@@ -329,8 +329,8 @@ describe(ExtensionLoader::class, function () {
             ['name' => 'acme/one', 'extra' => ['phpspec' => ['browser' => StubBrowser::class]]],
             ['name' => 'acme/two', 'extra' => ['phpspec' => ['browser' => OtherStubBrowser::class]]],
         ]]);
-        allow($fs->exists())->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.yaml', 'vendor/composer/installed.json'], true));
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.yaml', 'vendor/composer/installed.json'], true));
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => match ($path) {
             'vendor/composer/installed.json' => $installed,
             default => '',
         });

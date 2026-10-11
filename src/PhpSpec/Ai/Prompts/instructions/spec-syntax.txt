@@ -46,9 +46,9 @@ toStartWith, toEndWith, toHaveProperty, toBeCallable, toBeOfType, toThrow
 Type-hinted parameters in it() closures are auto-mocked:
 ```php
 it('uses a collaborator', function (Logger $logger) {
-    allow($logger->log())->toReturn(true);
+    allow($logger->log(any()))->toReturn(true);
     // ... use $logger
-    expect($logger->log())->toBeCalled();
+    expect($logger->log('Order placed'))->toBeCalled();
 });
 ```
 

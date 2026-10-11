@@ -116,19 +116,15 @@ final class Expectation extends BaseExpectation
             $trace['file'] ?? 'unknown',
             $trace['line'] ?? 0,
             $this->negated,
-            // Arguments written in the expect call are a promise: deposit(101)
-            // is not satisfied by deposit(100). Written bare, it means called
-            // at all.
-            $method->arguments === [] ? null : $method->arguments,
+            $method->arguments,
         );
     }
 
     /**
      * Judges now, from the calls recorded so far, that the call expect() was
      * handed has been made: the past tense, for after the act. The arguments
-     * it was written with are part of the question; written bare, it asks
-     * whether the method was called at all. toBeCalled() is the future tense,
-     * declared before the act and judged when the example ends.
+     * it was written with are part of the question. toBeCalled() is the
+     * future tense, declared before the act and judged when the example ends.
      */
     public function toHaveBeenCalled(): static
     {
@@ -143,7 +139,7 @@ final class Expectation extends BaseExpectation
 
         $methodName = $method->method;
         $method->unCall();
-        $argPattern = $method->arguments === [] ? null : $method->arguments;
+        $argPattern = $method->arguments;
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
         return $this->should(
@@ -204,7 +200,7 @@ final class Expectation extends BaseExpectation
         $trace = debug_backtrace()[0];
         $file = $trace['file'] ?? 'unknown';
         $line = $trace['line'] ?? 0;
-        $argPattern = $method->arguments === [] ? null : $method->arguments;
+        $argPattern = $method->arguments;
 
         return $this->expectation(function () use ($double, $methodName, $argPattern, $times, $class, $file, $line) {
             $stack = $double->______PhpSpecGetStubbedCalls();

@@ -63,10 +63,10 @@ function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRun
 describe(CommandDispatcher::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->scandir())->toReturn([])->ignoreOthers();
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([])->ignoreOthers();
     });
 
     let('buffer', fn() => new BufferedOutput());
@@ -87,7 +87,7 @@ describe(CommandDispatcher::class, function () {
 
     it('normalises slash paths to namespaced classes in /describe', function (Filesystem $fs) {
         $written = [];
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
 
@@ -146,12 +146,12 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('describe auto-generates spec and shows confirmation', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p) => match (true) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p) => match (true) {
             str_ends_with($p, '.spec.php') => false,
             default => false,
         });
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $result = $this->dispatcher->dispatch('/describe Acme\Greeter');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
@@ -162,9 +162,9 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('describe offers class creation after spec generation', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -172,12 +172,12 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('describe shows generated class file', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p) => match (true) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p) => match (true) {
             str_ends_with($p, '.php') && !str_ends_with($p, '.spec.php') => false,
             default => false,
         });
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -185,9 +185,9 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('describe offers to run specs after generation', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -195,8 +195,8 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('describe shows existing spec message when spec exists', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
-        allow($fs->write());
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
+        allow($fs->write(cetera()));
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -205,16 +205,16 @@ describe(CommandDispatcher::class, function () {
 
     it('describe displays spec file content after generation', function (Filesystem $fs) {
         $specCalls = 0;
-        allow($fs->exists())->toReturnUsing(function (string $p) use (&$specCalls) {
+        allow($fs->exists(any()))->toReturnUsing(function (string $p) use (&$specCalls) {
             if (str_ends_with($p, '.spec.php')) {
                 // First call from SpecGenerator: not exists. Second call from CommandDispatcher: exists.
                 return $specCalls++ > 0;
             }
             return false;
         });
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
-        allow($fs->read())->toReturn("<?php\n// spec content");
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->read(any()))->toReturn("<?php\n// spec content");
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -225,7 +225,7 @@ describe(CommandDispatcher::class, function () {
     it('describe displays class file content after generation', function (Filesystem $fs) {
         $specCalls = 0;
         $classCalls = 0;
-        allow($fs->exists())->toReturnUsing(function (string $p) use (&$specCalls, &$classCalls) {
+        allow($fs->exists(any()))->toReturnUsing(function (string $p) use (&$specCalls, &$classCalls) {
             if (str_ends_with($p, '.spec.php')) {
                 return $specCalls++ > 0;
             }
@@ -235,9 +235,9 @@ describe(CommandDispatcher::class, function () {
             }
             return false;
         });
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
-        allow($fs->read())->toReturn("<?php\nclass Greeter {}");
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->read(any()))->toReturn("<?php\nclass Greeter {}");
 
         $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
@@ -257,13 +257,13 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('exemplify adds example and shows confirmation', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p) => match (true) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p) => match (true) {
             str_ends_with($p, '.spec.php') => false,
             default => false,
         });
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
 
         $result = $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
@@ -273,10 +273,10 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('exemplify generates spec when it does not exist', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
 
         $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
         $output = $this->buffer->fetch();
@@ -284,8 +284,8 @@ describe(CommandDispatcher::class, function () {
     });
 
     it('exemplify reports when an example already exists instead of duplicating it', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => expect(\$this->calculator->add())->toBe(null));\n});");
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => expect(\$this->calculator->add())->toBe(null));\n});");
 
         $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
         $output = $this->buffer->fetch();
@@ -343,7 +343,7 @@ describe(CommandDispatcher::class, function () {
 
         it('routes a bare "describe Class" to the describe command', function (Filesystem $fs) {
             $written = [];
-            allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
                 $written[$path] = $content;
             });
 
@@ -415,12 +415,12 @@ describe(CommandDispatcher::class, function () {
 
         function generateNoteWorld(Filesystem $fs, PairOutput $pairOutput, object $example): CommandDispatcher
         {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->read())->toReturn('');
-            allow($fs->write())->toReturnUsing(function (string $p, string $c) use ($example) {
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->read(any()))->toReturn('');
+            allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use ($example) {
                 $example->written[$p] = $c;
             });
-            allow($fs->mkdir())->toReturn(null);
+            allow($fs->mkdir(any()))->toReturn(null);
 
             $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]);
 
@@ -518,8 +518,8 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('hands the AI the outside-in next.txt coaching, in both roles', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '/Prompts/next.txt'));
-            allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, '/Prompts/next.txt') ? 'OUTSIDE-IN feature-first BABY STEP coaching' : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, '/Prompts/next.txt'));
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => str_ends_with($p, '/Prompts/next.txt') ? 'OUTSIDE-IN feature-first BABY STEP coaching' : '');
 
             foreach ([new RoleState(\PhpSpec\Console\Command\Pair\PairRole::HumanDrives), new RoleState(\PhpSpec\Console\Command\Pair\PairRole::AiDrives)] as $roleState) {
                 $captured = null;
@@ -558,8 +558,8 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('leaves how the advice is delivered to the role artifact, not the next coaching', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->read())->toReturn('');
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->read(any()))->toReturn('');
 
             $captured = null;
             $provider = new class implements ProviderInterface {
@@ -664,11 +664,11 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('shows a diff and writes the proposal once confirmed', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->read())->toReturn('');
-            allow($fs->mkdir())->toReturn(null);
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->read(any()))->toReturn('');
+            allow($fs->mkdir(any()))->toReturn(null);
             $written = [];
-            allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
                 $written[$p] = $c;
             });
 
@@ -696,11 +696,11 @@ describe(CommandDispatcher::class, function () {
 
     context('next-command suggestion (ghost hint)', function () {
         it('pre-fills a /generate ghost from the suggestion the AI registered on /next', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->isDir())->toReturn(false);
-            allow($fs->isFile())->toReturn(false);
-            allow($fs->scandir())->toReturn([]);
-            allow($fs->read())->toReturn('');
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->isDir(any()))->toReturn(false);
+            allow($fs->isFile(any()))->toReturn(false);
+            allow($fs->scandir(any()))->toReturn([]);
+            allow($fs->read(any()))->toReturn('');
 
             $provider = new class implements ProviderInterface {
                 public int $turn = 0;
@@ -738,11 +738,11 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('pre-fills a /refactor ghost from a refactor suggestion the AI registered on /next', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->isDir())->toReturn(false);
-            allow($fs->isFile())->toReturn(false);
-            allow($fs->scandir())->toReturn([]);
-            allow($fs->read())->toReturn('');
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->isDir(any()))->toReturn(false);
+            allow($fs->isFile(any()))->toReturn(false);
+            allow($fs->scandir(any()))->toReturn([]);
+            allow($fs->read(any()))->toReturn('');
 
             $provider = new class implements ProviderInterface {
                 public int $turn = 0;
@@ -780,11 +780,11 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('pre-fills a /generate ghost for steps and implement suggestions', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->isDir())->toReturn(false);
-            allow($fs->isFile())->toReturn(false);
-            allow($fs->scandir())->toReturn([]);
-            allow($fs->read())->toReturn('');
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->isDir(any()))->toReturn(false);
+            allow($fs->isFile(any()))->toReturn(false);
+            allow($fs->scandir(any()))->toReturn([]);
+            allow($fs->read(any()))->toReturn('');
 
             $provider = new class implements ProviderInterface {
                 public int $turn = 0;
@@ -822,9 +822,9 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('suggests running the new spec after /describe', function (Filesystem $fs) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->mkdir())->toReturn(null);
-            allow($fs->write())->toReturn(null);
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->mkdir(any()))->toReturn(null);
+            allow($fs->write(cetera()))->toReturn(null);
 
             $this->dispatcher->dispatch('/describe App/Basket');
 
@@ -838,9 +838,9 @@ describe(CommandDispatcher::class, function () {
         });
 
         it('suggests /run after /exemplify', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
-            allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
-            allow($fs->write())->toReturn(null);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
+            allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
+            allow($fs->write(cetera()))->toReturn(null);
 
             $this->dispatcher->dispatch('/exemplify App/Calc add');
 

@@ -11,9 +11,9 @@ describe(StepsHome::class, function () {
         '/project/features/steps' => ['web.steps.php', 'steps.php', 'assertions.steps.php', 'helpers.php'],
     ]));
     let('filesystem', function (Filesystem $fs) {
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => isset($this->tree[$p]));
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => isset($this->tree[$p]));
-        allow($fs->scandir())->toReturnUsing(fn(string $p): array => $this->tree[$p] ?? []);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => isset($this->tree[$p]));
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => isset($this->tree[$p]));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => $this->tree[$p] ?? []);
 
         return $fs;
     });
@@ -71,8 +71,8 @@ describe(StepsHome::class, function () {
 
     it('builds its paths on the project root as it is spelled, so a Windows root finds the files it lists', function (Filesystem $fs) {
         $tree = ['C:\\project/features' => ['steps'], 'C:\\project/features/steps' => ['web.steps.php', 'steps.php']];
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => isset($tree[$p]));
-        allow($fs->scandir())->toReturnUsing(fn(string $p): array => $tree[$p] ?? []);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => isset($tree[$p]));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => $tree[$p] ?? []);
         $home = new StepsHome(new Configuration(), $fs, 'C:\\project\\');
 
         expect($home->roots())->toBe(['C:\\project/features']);

@@ -26,7 +26,7 @@ describe(MethodCallsStack::class, function() {
         expect($stack->peek())->toBe(null);
     });
 
-    it("names the arguments the last call was written with, for that method alone", function() {
+    it("names the arguments the last call was written with, none being none, for that method alone", function() {
         $this->stack->push(new MockedMethod(new \stdClass(), "pay", [10, "EUR"]));
 
         expect($this->stack->writtenFor("pay"))->toBe([10, "EUR"]);
@@ -34,7 +34,7 @@ describe(MethodCallsStack::class, function() {
 
         $this->stack->push(new MockedMethod(new \stdClass(), "refund", []));
 
-        expect($this->stack->writtenFor("refund"))->toBeNull();
+        expect($this->stack->writtenFor("refund"))->toBe([]);
         expect((new MethodCallsStack())->writtenFor("pay"))->toBeNull();
     });
 

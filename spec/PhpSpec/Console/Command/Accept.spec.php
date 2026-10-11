@@ -22,12 +22,12 @@ describe(Accept::class, function () {
     beforeEach(function (Filesystem $fs) {
         $this->files = [];
         $this->written = [];
-        allow($fs->exists())->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
-        allow($fs->read())->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
+        allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
+        allow($fs->mkdir(any()))->toReturn(null);
         // The book keeps itself on disk, so a write to .phpspec is bookkeeping
         // rather than a change to the project: assert on the project's files.
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {
             $this->files[$path] = $content;
             if (!str_contains($path, '/.phpspec/')) {
                 $this->written[$path] = $content;

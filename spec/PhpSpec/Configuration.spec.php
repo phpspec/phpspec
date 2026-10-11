@@ -9,8 +9,8 @@ describe(Configuration::class, function () {
 
     context('what a project states is checked as it is read', function () {
         $yaml = function (Filesystem $fs, string $content): void {
-            allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
-            allow($fs->read())->toReturn($content);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
+            allow($fs->read(any()))->toReturn($content);
         };
 
         it('refuses an unknown key, naming the file and the nearest known key', function (Filesystem $fs) use ($yaml) {
@@ -68,7 +68,7 @@ describe(Configuration::class, function () {
     });
 
     it('returns defaults when no config file exists', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecPath())->toBe('./spec');
@@ -80,8 +80,8 @@ describe(Configuration::class, function () {
     });
 
     it('lays generated classes out by the first PSR-4 mapping in composer.json when nothing configures it', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
-        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/', 'Tests\\' => 'tests/']]]));
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
+        allow($fs->read(any()))->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/', 'Tests\\' => 'tests/']]]));
 
         $config = Configuration::load('/app', $fs);
 
@@ -90,8 +90,8 @@ describe(Configuration::class, function () {
     });
 
     it('lays every composer mapping out, not only the first', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
-        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Brew\\' => 'src/Brew/', 'Another\\' => ['src/Another/', 'lib/']]]]));
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
+        allow($fs->read(any()))->toReturn(json_encode(['autoload' => ['psr-4' => ['Brew\\' => 'src/Brew/', 'Another\\' => ['src/Another/', 'lib/']]]]));
 
         $layout = (Configuration::load('/app', $fs))->getSourceLayout();
 
@@ -101,8 +101,8 @@ describe(Configuration::class, function () {
     });
 
     it('lays out by the autoload map and the default namespace the config states', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
-        allow($fs->read())->toReturn("default_namespace: Brew\\Acme\nautoload:\n  Brew\\Acme\\: src/Brew/Acme\n  Another\\Acme\\: src/Another\n");
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
+        allow($fs->read(any()))->toReturn("default_namespace: Brew\\Acme\nautoload:\n  Brew\\Acme\\: src/Brew/Acme\n  Another\\Acme\\: src/Another\n");
 
         $layout = (Configuration::load('/app', $fs))->getSourceLayout();
 
@@ -112,8 +112,8 @@ describe(Configuration::class, function () {
     });
 
     it('lays out by src_path and psr4_prefix as one mapping when the config states them', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
-        allow($fs->read())->toReturn("src_path: lib\npsr4_prefix: App\\\n");
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
+        allow($fs->read(any()))->toReturn("src_path: lib\npsr4_prefix: App\\\n");
 
         $layout = (Configuration::load('/app', $fs))->getSourceLayout();
 
@@ -122,8 +122,8 @@ describe(Configuration::class, function () {
     });
 
     it('takes the first directory of a composer mapping that lists several', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
-        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['App\\' => ['src/', 'lib/']]]]));
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
+        allow($fs->read(any()))->toReturn(json_encode(['autoload' => ['psr-4' => ['App\\' => ['src/', 'lib/']]]]));
 
         $config = Configuration::load('/app', $fs);
 
@@ -137,8 +137,8 @@ describe(Configuration::class, function () {
         $root = sys_get_temp_dir() . '/phpspec_autoload_' . uniqid();
         mkdir(dirname($root . '/' . $classFile), 0777, true);
         file_put_contents($root . '/' . $classFile, $code);
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === $root . '/composer.json');
-        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => $mapping]]]));
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === $root . '/composer.json');
+        allow($fs->read(any()))->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => $mapping]]]));
 
         return $root;
     };
@@ -160,8 +160,8 @@ describe(Configuration::class, function () {
     });
 
     it('keeps a configured layout over the one composer.json declares', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.json', '/app/composer.json'], true));
-        allow($fs->read())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json'
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.json', '/app/composer.json'], true));
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json'
             ? json_encode(['src_path' => 'lib'])
             : json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/']]]));
 
@@ -178,12 +178,12 @@ describe(Configuration::class, function () {
             'bootstrap' => 'vendor/autoload.php',
             'stop_on_failure' => true,
         ]);
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml', '/app/phpspec.yml' => false,
             '/app/phpspec.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturn($json);
+        allow($fs->read(any()))->toReturn($json);
 
         $config = Configuration::load('/app', $fs);
 
@@ -194,12 +194,12 @@ describe(Configuration::class, function () {
     });
 
     it('reads arbitrary keys via get()', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml', '/app/phpspec.yml' => false,
             '/app/phpspec.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturn(json_encode(['custom_key' => 'custom_value']));
+        allow($fs->read(any()))->toReturn(json_encode(['custom_key' => 'custom_value']));
 
         $config = Configuration::load('/app', $fs);
 
@@ -208,12 +208,12 @@ describe(Configuration::class, function () {
     });
 
     it('exposes config as array via toArray()', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml', '/app/phpspec.yml' => false,
             '/app/phpspec.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturn(json_encode(['format' => 'tap']));
+        allow($fs->read(any()))->toReturn(json_encode(['format' => 'tap']));
 
         $config = Configuration::load('/app', $fs);
 
@@ -221,12 +221,12 @@ describe(Configuration::class, function () {
     });
 
     it('falls back to phpspec.php when json does not exist', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml', '/app/phpspec.yml', '/app/phpspec.json' => false,
             '/app/phpspec.php' => true,
             default => false,
         });
-        allow($fs->requirePhp())->toReturn(['format' => 'junit']);
+        allow($fs->requirePhp(any()))->toReturn(['format' => 'junit']);
 
         $config = Configuration::load('/app', $fs);
 
@@ -234,11 +234,11 @@ describe(Configuration::class, function () {
     });
 
     it('loads from phpspec.yaml when it exists', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("spec_path: ./tests\nformat: dot\n");
+        allow($fs->read(any()))->toReturn("spec_path: ./tests\nformat: dot\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -247,12 +247,12 @@ describe(Configuration::class, function () {
     });
 
     it('loads from phpspec.yml when yaml does not exist', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => false,
             '/app/phpspec.yml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("format: tap\n");
+        allow($fs->read(any()))->toReturn("format: tap\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -260,11 +260,11 @@ describe(Configuration::class, function () {
     });
 
     it('prioritises yaml over yml over json', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml', '/app/phpspec.yml', '/app/phpspec.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => "format: yaml_format\n",
             '/app/phpspec.yml' => "format: yml_format\n",
             '/app/phpspec.json' => json_encode(['format' => 'json_format']),
@@ -277,11 +277,11 @@ describe(Configuration::class, function () {
     });
 
     it('synthesises a default suite when no suites key exists', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("spec_path: ./tests\nsrc_path: ./lib\n");
+        allow($fs->read(any()))->toReturn("spec_path: ./tests\nsrc_path: ./lib\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -291,11 +291,11 @@ describe(Configuration::class, function () {
     });
 
     it('returns named suites from the suites key', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn(
+        allow($fs->read(any()))->toReturn(
             "suites:\n  unit:\n    paths:\n      - unit_specs\n    src: src\n  acceptance:\n    paths:\n      - features\n    steps:\n      - features/steps\n",
         );
 
@@ -309,11 +309,11 @@ describe(Configuration::class, function () {
     });
 
     it('returns all load paths combined from suites', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn(
+        allow($fs->read(any()))->toReturn(
             "suites:\n  unit:\n    paths:\n      - unit_specs\n  integration:\n    paths:\n      - integration_specs\n",
         );
 
@@ -323,11 +323,11 @@ describe(Configuration::class, function () {
     });
 
     it('returns stop_on_error from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("stop_on_error: true\n");
+        allow($fs->read(any()))->toReturn("stop_on_error: true\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -342,11 +342,11 @@ describe(Configuration::class, function () {
     });
 
     it('returns StopConditions value object from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("stop_on_failure: true\nstop_on_warning: true\n");
+        allow($fs->read(any()))->toReturn("stop_on_failure: true\nstop_on_warning: true\n");
 
         $config = Configuration::load('/app', $fs);
         $stop = $config->getStopConditions();
@@ -359,11 +359,11 @@ describe(Configuration::class, function () {
     });
 
     it('returns spec_suffix from config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("spec_suffix: Spec.php\n");
+        allow($fs->read(any()))->toReturn("spec_suffix: Spec.php\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -371,18 +371,18 @@ describe(Configuration::class, function () {
     });
 
     it('returns default spec_suffix when not configured', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $config = Configuration::load('/app', $fs);
 
         expect($config->getSpecSuffix())->toBe('.spec.php');
     });
 
     it('returns extensions config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("extensions:\n  formatters:\n    - MyFormatter\n");
+        allow($fs->read(any()))->toReturn("extensions:\n  formatters:\n    - MyFormatter\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -392,7 +392,7 @@ describe(Configuration::class, function () {
     // Guard is off until a project says otherwise, and every value it needs has
     // a default, so `guard: {status: active}` is a complete configuration.
     it('leaves guard off when nothing says otherwise', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $config = Configuration::load('/app', $fs);
 
         expect($config->getGuardConfig())->toBe([
@@ -407,11 +407,11 @@ describe(Configuration::class, function () {
     });
 
     it('takes the guard settings a project states and defaults the rest', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("guard:\n  status: active\n  scope: story\n  allow: [\"src/Migrations/**\"]\n");
+        allow($fs->read(any()))->toReturn("guard:\n  status: active\n  scope: story\n  allow: [\"src/Migrations/**\"]\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -442,19 +442,19 @@ describe(Configuration::class, function () {
     });
 
     it('names the options a phpspec it starts needs to read this same configuration', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/conf/qa.yml');
-        allow($fs->read())->toReturn("spec_path: altspec\n");
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/conf/qa.yml');
+        allow($fs->read(any()))->toReturn("spec_path: altspec\n");
 
         expect(Configuration::load('/app', $fs, '/app/conf/qa.yml')->childOptions())->toBe(['--config=/app/conf/qa.yml']);
         expect((new Configuration())->childOptions())->toBe([]);
     });
 
     it('names the guard key it does not know, and the one it thinks was meant', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("guard:\n  status: active\n  detecton: git\n");
+        allow($fs->read(any()))->toReturn("guard:\n  status: active\n  detecton: git\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -463,11 +463,11 @@ describe(Configuration::class, function () {
     });
 
     it('says which values a guard setting accepts when given another', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("guard:\n  status: on\n");
+        allow($fs->read(any()))->toReturn("guard:\n  status: on\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -475,11 +475,11 @@ describe(Configuration::class, function () {
     });
 
     it('refuses a guarded root that is not a list of paths', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("guard:\n  status: active\n  paths: src\n");
+        allow($fs->read(any()))->toReturn("guard:\n  status: active\n  paths: src\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -487,11 +487,11 @@ describe(Configuration::class, function () {
     });
 
     it('returns ai config when configured with api_key', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  model: gemini-2.5-flash\n  api_key: test-key-123\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  model: gemini-2.5-flash\n  api_key: test-key-123\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -503,11 +503,11 @@ describe(Configuration::class, function () {
     });
 
     it('accepts hyphenated spellings of the ai keys, api-key and max-tokens', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api-key: test-key-123\n  max-tokens: 32000\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api-key: test-key-123\n  max-tokens: 32000\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -519,11 +519,11 @@ describe(Configuration::class, function () {
     });
 
     it('names the config file to add the ai section to, and shows one', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("spec_path: spec\n");
+        allow($fs->read(any()))->toReturn("spec_path: spec\n");
 
         $problem = Configuration::load('/app', $fs)->aiConfigProblem();
 
@@ -533,11 +533,11 @@ describe(Configuration::class, function () {
     });
 
     it('shows the ai section in the shape of the config file the project has', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.json' => true,
             default => false,
         });
-        allow($fs->read())->toReturn('{"spec_path": "spec"}');
+        allow($fs->read(any()))->toReturn('{"spec_path": "spec"}');
 
         $problem = Configuration::load('/app', $fs)->aiConfigProblem();
 
@@ -554,11 +554,11 @@ describe(Configuration::class, function () {
     });
 
     it('names the missing key when the ai section exists without api_key', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -581,11 +581,11 @@ describe(Configuration::class, function () {
     });
 
     it('requires provider, and names the installed papi package as the answer', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  api_key: test-key-123\n");
+        allow($fs->read(any()))->toReturn("ai:\n  api_key: test-key-123\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -594,11 +594,11 @@ describe(Configuration::class, function () {
     });
 
     it('rejects an unknown provider, listing the known ones', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: googel\n  api_key: test-key-123\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: googel\n  api_key: test-key-123\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -607,11 +607,11 @@ describe(Configuration::class, function () {
     });
 
     it('accepts an ollama section without api_key, passing its base_url through', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: ollama\n  base_url: http://localhost:11434\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: ollama\n  base_url: http://localhost:11434\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -623,11 +623,11 @@ describe(Configuration::class, function () {
     });
 
     it('catches a misspelled ai key with a suggestion', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_keys: test-key-123\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_keys: test-key-123\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -636,11 +636,11 @@ describe(Configuration::class, function () {
     });
 
     it('names a wrong-typed optional key instead of silently dropping it', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  max_tokens: plenty\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  max_tokens: plenty\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -649,11 +649,11 @@ describe(Configuration::class, function () {
     });
 
     it('names the wrong type when api_key is present but not a string', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: 12345\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_key: 12345\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -662,11 +662,11 @@ describe(Configuration::class, function () {
     });
 
     it('asks for the ai section when the config has none', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("spec_path: spec\n");
+        allow($fs->read(any()))->toReturn("spec_path: spec\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -674,11 +674,11 @@ describe(Configuration::class, function () {
     });
 
     it('reports no ai config problem when the section is usable', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -686,11 +686,11 @@ describe(Configuration::class, function () {
     });
 
     it('exposes a configured max_tokens as an int', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  max_tokens: 32000\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  max_tokens: 32000\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -702,11 +702,11 @@ describe(Configuration::class, function () {
     });
 
     it('exposes a configured reasoning effort, ignoring a non-string value', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: high\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: high\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -717,7 +717,7 @@ describe(Configuration::class, function () {
         ]);
 
         // A wrong-typed effort is named, never silently dropped.
-        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: 12\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: 12\n");
         $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
@@ -725,18 +725,18 @@ describe(Configuration::class, function () {
     });
 
     it('returns null for ai config when not configured', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();
     });
 
     it('returns null for ai config when api_key is missing', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("ai:\n  provider: google\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -744,11 +744,11 @@ describe(Configuration::class, function () {
     });
 
     it('loads config from phpspec.php when no yaml or json exists', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.php' => true,
             default => false,
         });
-        allow($fs->requirePhp())->toReturn(['spec_path' => 'tests', 'src_path' => 'lib']);
+        allow($fs->requirePhp(any()))->toReturn(['spec_path' => 'tests', 'src_path' => 'lib']);
 
         $config = Configuration::load('/app', $fs);
 
@@ -757,18 +757,18 @@ describe(Configuration::class, function () {
     });
 
     it('returns default features path when not configured', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $config = Configuration::load('/app', $fs);
 
         expect($config->getFeaturesPath())->toBe('features/');
     });
 
     it('returns configured features_path', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("features_path: tests/features\n");
+        allow($fs->read(any()))->toReturn("features_path: tests/features\n");
 
         $config = Configuration::load('/app', $fs);
 
@@ -776,11 +776,11 @@ describe(Configuration::class, function () {
     });
 
     it('returns src_path from first suite when flat key absent', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn(
+        allow($fs->read(any()))->toReturn(
             "suites:\n  unit:\n    paths:\n      - unit_specs\n    src: lib\n",
         );
 
@@ -790,28 +790,28 @@ describe(Configuration::class, function () {
     });
 
     it('returns psr4_prefix from top-level config', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn('psr4_prefix: App\\Models\\');
+        allow($fs->read(any()))->toReturn('psr4_prefix: App\\Models\\');
         $config = Configuration::load('/app', $fs);
         expect($config->getPsr4Prefix())->toBe('App\\Models');
     });
 
     it('returns namespace from suite config as psr4_prefix', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read())->toReturn("suites:\n  default:\n    namespace: App\n    src: src");
+        allow($fs->read(any()))->toReturn("suites:\n  default:\n    namespace: App\n    src: src");
         $config = Configuration::load('/app', $fs);
         expect($config->getPsr4Prefix())->toBe('App');
     });
 
     it('loads an explicit config file instead of the working directory cascade', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'custom/my-config.json');
-        allow($fs->read())->toReturn(json_encode(['format' => 'dot']));
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === 'custom/my-config.json');
+        allow($fs->read(any()))->toReturn(json_encode(['format' => 'dot']));
 
         $config = Configuration::load('/app', $fs, configFile: 'custom/my-config.json');
 
@@ -819,7 +819,7 @@ describe(Configuration::class, function () {
     });
 
     it('throws when the explicit config file does not exist', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         expect(fn() => Configuration::load('/app', $fs, configFile: 'nope.yaml'))
             ->toThrow(RuntimeException::class);
@@ -833,14 +833,14 @@ describe(Configuration::class, function () {
     });
 
     it('has no steps path by default', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $config = Configuration::load('/app', $fs);
         expect($config->getStepsPath())->toBeNull();
     });
 
     it('returns the configured steps path', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json');
-        allow($fs->read())->toReturn(json_encode(['steps_path' => 'acceptance_steps']));
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json');
+        allow($fs->read(any()))->toReturn(json_encode(['steps_path' => 'acceptance_steps']));
 
         $config = Configuration::load('/app', $fs);
 

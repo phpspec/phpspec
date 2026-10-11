@@ -13,8 +13,8 @@ describe(Baseline::class, function () {
         $written = null;
         allow($git->isRepository())->toReturn(true);
         allow($git->head())->toReturn('9f2c1ab3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9');
-        allow($fs->exists())->toReturn(true);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = ['path' => $path, 'content' => $content];
         });
 
@@ -29,11 +29,11 @@ describe(Baseline::class, function () {
     // what each guarded file held instead.
     it('records what the guarded files hold when there is no repository', function (Filesystem $fs, Git $git) {
         allow($git->isRepository())->toReturn(false);
-        allow($fs->exists())->toReturn(true);
-        allow($fs->isDir())->toReturnUsing(fn(string $path) => $path === '/app/src');
-        allow($fs->scandir())->toReturn(['.', '..', 'Basket.php', 'notes.txt']);
-        allow($fs->read())->toReturn('<?php class Basket {}');
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $path) => $path === '/app/src');
+        allow($fs->scandir(any()))->toReturn(['.', '..', 'Basket.php', 'notes.txt']);
+        allow($fs->read(any()))->toReturn('<?php class Basket {}');
+        allow($fs->write(cetera()))->toReturn(null);
 
         $recorded = (new Baseline($fs, $git, '/app'))->record(['src']);
 
@@ -48,9 +48,9 @@ describe(Baseline::class, function () {
     it('falls back to a snapshot when the repository has no commit yet', function (Filesystem $fs, Git $git) {
         allow($git->isRepository())->toReturn(true);
         allow($git->head())->toReturn(null);
-        allow($fs->exists())->toReturn(true);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->write(cetera()))->toReturn(null);
 
         expect((new Baseline($fs, $git, '/app'))->record(['src'])['kind'])->toBe('snapshot');
     });
@@ -59,9 +59,9 @@ describe(Baseline::class, function () {
         $made = null;
         allow($git->isRepository())->toReturn(true);
         allow($git->head())->toReturn('abc123');
-        allow($fs->exists())->toReturn(false);
-        allow($fs->write())->toReturn(null);
-        allow($fs->mkdir())->toReturnUsing(function (string $path) use (&$made) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->mkdir(any()))->toReturnUsing(function (string $path) use (&$made) {
             $made = $path;
         });
 
@@ -76,16 +76,16 @@ describe(Baseline::class, function () {
     it('records what the project asked for, even where git could have answered', function (Filesystem $fs, Git $git) {
         allow($git->isRepository())->toReturn(true);
         allow($git->head())->toReturn('abc123');
-        allow($fs->exists())->toReturn(true);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->write(cetera()))->toReturn(null);
 
         expect((new Baseline($fs, $git, '/app'))->record(['src'], 'mtime')['kind'])->toBe('snapshot');
     });
 
     it('reads back what was recorded', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn('{"recorded":{"kind":"commit","commit":"abc123"}}');
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn('{"recorded":{"kind":"commit","commit":"abc123"}}');
 
         expect((new Baseline($fs, $git, '/app'))->recorded())->toBe(['kind' => 'commit', 'commit' => 'abc123']);
     });
@@ -94,15 +94,15 @@ describe(Baseline::class, function () {
     // Guard has to say so: a silent pass here leaves a whole team believing
     // they are guarded when nobody is.
     it('refuses to judge when guard was never turned on here', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         expect(fn() => (new Baseline($fs, $git, '/app'))->recorded())
             ->toThrow(CannotJudge::class, 'Guard is on but no baseline is recorded in this checkout: run "bin/phpspec guard" to judge from here.');
     });
 
     it('refuses to judge on a baseline it cannot read', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn('{ this is not the file we wrote');
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn('{ this is not the file we wrote');
 
         expect(fn() => (new Baseline($fs, $git, '/app'))->recorded())
             ->toThrow(CannotJudge::class, 'Guard cannot read the baseline in .phpspec/guard/baseline.json: run "bin/phpspec guard" to record it again.');

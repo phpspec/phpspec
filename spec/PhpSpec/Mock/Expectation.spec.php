@@ -45,12 +45,12 @@ describe(Expectation::class, function() {
         expect($service->save())->toHaveBeenCalled();
     });
 
-    it("holds toHaveBeenCalled to the arguments it was written with, and bare to the method", function(ExpectationSpecService $service) {
+    it("holds toHaveBeenCalled to the arguments it was written with, cetera() standing for any", function(ExpectationSpecService $service) {
         $service->store('a', 1);
 
         expect($service->store('a', 1))->toHaveBeenCalled();
         expect($service->store('b', 2))->not()->toHaveBeenCalled();
-        expect($service->store())->toHaveBeenCalled();
+        expect($service->store(cetera()))->toHaveBeenCalled();
         expect($service->save())->not()->toHaveBeenCalled();
     });
 
@@ -141,8 +141,10 @@ describe(Expectation::class, function() {
         $service->processWith("something else");
     });
 
-    it("still means called-at-all when written without arguments", function(ExpectationSpecService $service) {
-        expect($service->processWith())->toBeCalled();
+    it("holds a call written without arguments to the call made with none, its defaults filled in", function(ExpectationSpecService $service) {
+        expect($service->processWith())->not()->toBeCalled();
+        expect($service->processWith(""))->not()->toBeCalled();
+        expect($service->processWith(cetera()))->toBeCalled();
 
         $service->processWith("anything");
     });

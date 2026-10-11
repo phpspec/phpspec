@@ -16,20 +16,20 @@ describe(Describe::class, function() {
     it("instantiates", fn() => expect($this->describe)->toBeAnInstanceOf(Describe::class));
 
     it("delegates generation to spec generator", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        expect($fs->write())->toBeCalled();
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()))->toReturn(null);
+        expect($fs->write(cetera()))->toBeCalled();
         $this->describe->run(new ArrayInput(['class' => 'Some/Spec']), new NullOutput());
     });
 
     it("calls addExample when -e option is provided", function(Filesystem $fs) {
         // generate() call
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match (true) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match (true) {
             str_ends_with($path, '.spec.php') => true,
             default => true,
         });
         // addExample() reads the spec file
-        allow($fs->read())->toReturn(<<<'PHP'
+        allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
         describe(Spec::class, function() {
@@ -37,7 +37,7 @@ describe(Describe::class, function() {
         });
         PHP);
 
-        expect($fs->write())->toBeCalled();
+        expect($fs->write(cetera()))->toBeCalled();
         $this->describe->run(
             new ArrayInput(['class' => 'Some/Spec', '--exemplify' => 'doSomething']),
             new NullOutput()
@@ -45,9 +45,9 @@ describe(Describe::class, function() {
     });
 
     it("names the spec it wrote from the project root, in colour, after a blank line", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, true);
         $this->describe->run(new ArrayInput(['class' => 'App/Calculator']), $output);
@@ -62,9 +62,9 @@ describe(Describe::class, function() {
         $specFile = fn(string $path): callable => fn(string $written): bool => str_ends_with($written, str_replace('/', DIRECTORY_SEPARATOR, $path));
 
         it("asks which mapped namespace to describe it under, and describes the answer", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->mkdir());
-            allow($prompt->ask())->toReturn('2');
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->mkdir(any()));
+            allow($prompt->ask(any()))->toReturn('2');
             expect($fs->write(satisfy($specFile('spec/Another/Acme/Thing.spec.php')), any()))->toBeCalled();
 
             $output = new BufferedOutput();
@@ -75,27 +75,27 @@ describe(Describe::class, function() {
         });
 
         it("keeps the name as written when told to", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->mkdir());
-            allow($prompt->ask())->toReturn('0');
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->mkdir(any()));
+            allow($prompt->ask(any()))->toReturn('0');
             expect($fs->write(satisfy($specFile('spec/Acme/Thing.spec.php')), any()))->toBeCalled();
 
             (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing']), new NullOutput());
         });
 
         it("puts it into the default namespace without asking", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->mkdir());
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->mkdir(any()));
             expect($fs->write(satisfy($specFile('spec/Brew/Acme/Thing.spec.php')), any()))->toBeCalled();
-            expect($prompt->ask())->not()->toBeCalled();
+            expect($prompt->ask(any()))->not()->toBeCalled();
 
             (new Describe(new SpecGenerator('spec', $fs), $mapped('Brew'), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing']), new NullOutput());
         });
 
         it("writes nothing and says why when nobody can answer, with the remedies", function (Filesystem $fs, Prompt $prompt) use ($mapped) {
-            allow($fs->exists())->toReturn(false);
-            expect($fs->write())->not()->toBeCalled();
-            expect($prompt->ask())->not()->toBeCalled();
+            allow($fs->exists(any()))->toReturn(false);
+            expect($fs->write(cetera()))->not()->toBeCalled();
+            expect($prompt->ask(any()))->not()->toBeCalled();
 
             $input = new ArrayInput(['class' => 'Acme/Thing']);
             $input->setInteractive(false);
@@ -107,8 +107,8 @@ describe(Describe::class, function() {
         });
 
         it("answers an agent with the error and the remedy", function (Filesystem $fs, Prompt $prompt) use ($mapped) {
-            allow($fs->exists())->toReturn(false);
-            expect($fs->write())->not()->toBeCalled();
+            allow($fs->exists(any()))->toReturn(false);
+            expect($fs->write(cetera()))->not()->toBeCalled();
 
             $output = new BufferedOutput();
             $exit = (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing', '--format' => 'agent']), $output);
@@ -121,10 +121,10 @@ describe(Describe::class, function() {
         });
 
         it("treats an empty answer as the first choice and asks again on a number it does not have", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {
-            allow($fs->exists())->toReturn(false);
-            allow($fs->mkdir());
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->mkdir(any()));
             $answers = ['7', ''];
-            allow($prompt->ask())->toReturnUsing(function () use (&$answers) {
+            allow($prompt->ask(any()))->toReturnUsing(function () use (&$answers) {
                 return array_shift($answers);
             });
             expect($fs->write(satisfy($specFile('spec/Brew/Acme/Thing.spec.php')), any()))->toBeCalled();
@@ -137,16 +137,16 @@ describe(Describe::class, function() {
     });
 
     it("does not add example without -e option", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists(any()))->toReturn(true);
         $output = new \Symfony\Component\Console\Output\BufferedOutput();
         $this->describe->run(new ArrayInput(['class' => 'Some/Spec']), $output);
         expect($output->fetch())->not()->toContain("Example for method");
     });
 
     it("emits a JSON receipt with --agent instead of prose", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $output = new BufferedOutput();
         $this->describe->run(new ArrayInput(['class' => 'App/Basket', '--agent' => true]), $output);
@@ -162,8 +162,8 @@ describe(Describe::class, function() {
     });
 
     it("says the spec already existed, and writes nothing, when it did", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        expect($fs->write())->not()->toBeCalled();
+        allow($fs->exists(any()))->toReturn(true);
+        expect($fs->write(cetera()))->not()->toBeCalled();
 
         $output = new BufferedOutput();
         $this->describe->run(new ArrayInput(['class' => 'App/Basket']), $output);
@@ -174,9 +174,9 @@ describe(Describe::class, function() {
     });
 
     it("says the example already existed when -e names a method the spec has", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n\ndescribe(Spec::class, function() {\n    it(\"should greet\", fn() => null);\n});\n");
-        expect($fs->write())->not()->toBeCalled();
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n\ndescribe(Spec::class, function() {\n    it(\"should greet\", fn() => null);\n});\n");
+        expect($fs->write(cetera()))->not()->toBeCalled();
 
         $output = new BufferedOutput();
         $this->describe->run(new ArrayInput(['class' => 'Some/Spec', '--exemplify' => 'greet']), $output);
@@ -187,7 +187,7 @@ describe(Describe::class, function() {
     });
 
     it("reports created false in the receipt when the spec already exists", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists(any()))->toReturn(true);
 
         $output = new BufferedOutput();
         $this->describe->run(new ArrayInput(['class' => 'App/Basket', '--agent' => true]), $output);
@@ -197,15 +197,15 @@ describe(Describe::class, function() {
     });
 
     it("includes the example receipt when --agent is combined with -e", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn(<<<'PHP'
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
         describe(Spec::class, function() {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write())->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $output = new BufferedOutput();
         $this->describe->run(
@@ -218,15 +218,15 @@ describe(Describe::class, function() {
     });
 
     it("outputs confirmation when -e option is used", function(Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn(<<<'PHP'
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
         describe(Spec::class, function() {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write())->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $output = new \Symfony\Component\Console\Output\BufferedOutput();
         $this->describe->run(

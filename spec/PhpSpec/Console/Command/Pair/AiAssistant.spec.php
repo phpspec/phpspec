@@ -19,18 +19,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 describe(AiAssistant::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->read())->toReturn('');
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->read(any()))->toReturn('');
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
+        allow($fs->mkdir(any()))->toReturn(null);
 
         // Every write is tracked by path; the debug capture under .phpspec/ai/
         // is bookkeeping, so artifact assertions look through this helper.
         $this->writtenPaths = [];
         $writtenPaths = &$this->writtenPaths;
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$writtenPaths) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$writtenPaths) {
             $writtenPaths[] = $path;
         });
         $this->artifactWrites = fn() => array_values(array_filter($this->writtenPaths, fn(string $path) => !str_contains($path, '.phpspec/ai/')));
@@ -94,13 +94,13 @@ describe(AiAssistant::class, function () {
     });
 
     it('shows a navigator offer as a diff and applies it on yes', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
         $written = [];
-        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $captured = null;
         $turn = 0;
@@ -129,9 +129,9 @@ describe(AiAssistant::class, function () {
     });
 
     it('keeps a declined offer unwritten and steers the model to re-plan', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n// old");
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n// old");
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $captured = null;
         $turn = 0;
@@ -157,9 +157,9 @@ describe(AiAssistant::class, function () {
     });
 
     it('verifies a feature offer with the whole suite, not specs alone', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -182,7 +182,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('keeps the plain spec run when the landed artifact is a spec', function (Filesystem $fs) {
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -204,9 +204,9 @@ describe(AiAssistant::class, function () {
     });
 
     it('winds the turn down after a verified change instead of registering another suggestion', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $captured = null;
         $toolsByRound = [];
@@ -245,9 +245,9 @@ describe(AiAssistant::class, function () {
     });
 
     it('hands the acceptance note to the model when an offer is applied', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $captured = null;
         $turn = 0;
@@ -274,9 +274,9 @@ describe(AiAssistant::class, function () {
     });
 
     it('hands the decline note to the model as the direction to take instead', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n// old");
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n// old");
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $captured = null;
         $turn = 0;
@@ -304,8 +304,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects an offer that would drop spec examples, before any chooser', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe('TodoList', function () {\n    it(\"should add\", fn() => expect(null)->toBe(null));\n    it(\"should tasks\", fn() => expect(null)->toBe(null));\n});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe('TodoList', function () {\n    it(\"should add\", fn() => expect(null)->toBe(null));\n    it(\"should tasks\", fn() => expect(null)->toBe(null));\n});\n");
 
         $captured = null;
         $turn = 0;
@@ -350,11 +350,11 @@ describe(AiAssistant::class, function () {
     });
 
     it('allows at most one offer per turn, withholding and refusing the second', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n// old");
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n// old");
+        allow($fs->mkdir(any()))->toReturn(null);
         $written = [];
-        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
 
@@ -561,7 +561,7 @@ describe(AiAssistant::class, function () {
 
         $captured = null;
         $turn = 0;
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->mkdir(any()))->toReturn(null);
         $accepting = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, new RoleState(PairRole::AiDrives), $this->specRunner);
         $this->answers = ['1, then run it'];
         $accepting->handle('spec App/Wanted');
@@ -572,8 +572,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('ends the driver turn after one artifact instead of chasing a bigger goal', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(A::class, function () {});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(A::class, function () {});\n");
 
         $calls = 0;
         $this->provider->responder = function () use (&$calls) {
@@ -604,8 +604,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects phpspec 8 ObjectBehavior syntax written to a spec path via update_file', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(Wallet::class, function () {});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Wallet::class, function () {});\n");
 
         $captured = null;
         $turn = 0;
@@ -632,15 +632,15 @@ describe(AiAssistant::class, function () {
 
     it('rejects steps content redefining a title another steps file owns, steering to reuse', function (Filesystem $fs) {
         $cwd = getcwd();
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps/adding.steps.php'], true));
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
-        allow($fs->isFile())->toReturnUsing(fn(string $p): bool => str_ends_with($p, 'adding.steps.php'));
-        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps/adding.steps.php'], true));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, 'adding.steps.php'));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
             $cwd . '/features' => ['steps'],
             $cwd . '/features/steps' => ['adding.steps.php'],
             default => [],
         });
-        allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, 'adding.steps.php')
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => str_ends_with($p, 'adding.steps.php')
             ? "<?php\ngiven('I have a todo list', function () { \$this->list = new App\\TodoList(); });\n"
             : '');
 
@@ -697,14 +697,14 @@ describe(AiAssistant::class, function () {
 
     it('rejects generated steps that drop a definition the steps file already holds', function (Filesystem $fs) {
         $cwd = getcwd();
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps/steps.php'], true));
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
-        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps/steps.php'], true));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
             $cwd . '/features' => ['steps'],
             $cwd . '/features/steps' => ['steps.php'],
             default => [],
         });
-        allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, '/features/steps/steps.php')
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => str_ends_with($p, '/features/steps/steps.php')
             ? "<?php\ngiven('I have a todo list', function () {});\n"
             : '');
 
@@ -729,8 +729,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects shouldXxx spec content even without the ObjectBehavior literal', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(Basket::class, function () {});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Basket::class, function () {});\n");
 
         $captured = null;
         $turn = 0;
@@ -791,8 +791,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('updates an existing file showing what changed', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n// old body\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n// old body\n");
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -813,9 +813,9 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects a spec overwrite via update_file that would drop existing examples', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists(any()))->toReturn(true);
         // The spec on disk has two examples; the rewrite keeps only one.
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"adds\", fn() => null);\n    it(\"subtracts\", fn() => null);\n});\n");
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"adds\", fn() => null);\n    it(\"subtracts\", fn() => null);\n});\n");
 
         $captured = null;
         $turn = 0;
@@ -839,10 +839,10 @@ describe(AiAssistant::class, function () {
     });
 
     it('appends a single example with add_example instead of rewriting the whole spec', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
         $written = null;
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             if (!str_contains($path, '.phpspec/ai/')) {
                 $written = $content;
             }
@@ -871,8 +871,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('does not duplicate an example when add_example targets an already-exemplified method', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n    it(\"should total\", fn() => null);\n});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n    it(\"should total\", fn() => null);\n});\n");
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -910,8 +910,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('is idempotent: describe on an existing spec writes nothing', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(Ledger::class, function () {});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Ledger::class, function () {});\n");
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -1016,8 +1016,8 @@ describe(AiAssistant::class, function () {
     });
 
     it('auto-verifies after the driver writes, feeding the fresh state back to the model', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function () {});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function () {});\n");
 
         $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary(
             'green',
@@ -1148,13 +1148,13 @@ describe(AiAssistant::class, function () {
     });
 
     it('turns a request for permission to offer into the offer itself', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
         $written = [];
-        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->mkdir(any()))->toReturn(null);
 
         $seen = [];
         $turn = 0;
@@ -1269,10 +1269,10 @@ describe(AiAssistant::class, function () {
 
     it('captures the pair turn to the ai debug recording', function (Filesystem $fs) {
         $written = [];
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->mkdir(any()))->toReturn(null);
         $this->provider->responder = fn() => new Response('hello there');
 
         $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);

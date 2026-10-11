@@ -18,9 +18,9 @@ describe(Recorder::class, function () {
     beforeEach(function (Filesystem $fs) {
         $this->written = [];
         $written = &$this->written;
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
     });
@@ -28,13 +28,13 @@ describe(Recorder::class, function () {
     it('appends each turn of a conversation to the session capture', function (Filesystem $fs) {
         $store = [];
         $stored = &$store;
-        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+        allow($fs->exists(any()))->toReturnUsing(function (string $path) use (&$stored): bool {
             return isset($stored[$path]);
         });
-        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+        allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$stored): string {
             return $stored[$path] ?? '';
         });
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$stored) {
             $stored[$path] = $content;
         });
         $recorder = new Recorder($fs, '/proj');
@@ -53,13 +53,13 @@ describe(Recorder::class, function () {
     it('keeps session turns slim: the request never repeats into the session capture', function (Filesystem $fs) {
         $store = [];
         $stored = &$store;
-        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+        allow($fs->exists(any()))->toReturnUsing(function (string $path) use (&$stored): bool {
             return isset($stored[$path]);
         });
-        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+        allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$stored): string {
             return $stored[$path] ?? '';
         });
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$stored) {
             $stored[$path] = $content;
         });
         $recorder = new Recorder($fs, '/proj');
@@ -75,13 +75,13 @@ describe(Recorder::class, function () {
     it('starts the session capture over when the conversation is fresh', function (Filesystem $fs) {
         $store = [];
         $stored = &$store;
-        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+        allow($fs->exists(any()))->toReturnUsing(function (string $path) use (&$stored): bool {
             return isset($stored[$path]);
         });
-        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+        allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$stored): string {
             return $stored[$path] ?? '';
         });
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$stored) {
             $stored[$path] = $content;
         });
         $recorder = new Recorder($fs, '/proj');

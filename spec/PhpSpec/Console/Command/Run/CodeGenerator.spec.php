@@ -545,7 +545,7 @@ describe(CodeGenerator::class, function () {
             return ['web' => $this->root . '/features/steps/web.steps.php', 'assertions' => $this->root . '/features/steps/assertions.steps.php'];
         });
         let('answering', fn() => function (Prompt $prompt, string ...$answers): Prompt {
-            allow($prompt->ask())->toReturnUsing(function () use (&$answers): ?string {
+            allow($prompt->ask(any()))->toReturnUsing(function () use (&$answers): ?string {
                 return array_shift($answers);
             });
 

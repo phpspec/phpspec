@@ -17,13 +17,13 @@ describe('E10 generate: inferred paths respect the project layout', function () 
     // An Agent on the given configuration, replaying a fixed model reply (the
     // derived path must win over the reply's own path).
     $agentFor = function (Filesystem $fs, array $config, ReplayProvider $replay): Agent {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->read())->toReturn('');
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->read(any()))->toReturn('');
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         return new Agent(new Configuration($config), $fs, $replay);
     };

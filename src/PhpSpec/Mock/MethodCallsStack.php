@@ -54,7 +54,7 @@ final class MethodCallsStack
     /**
      * The arguments the last call was written with, when it was a call to
      * $method: the call a declaration or a stub made next is about. Null, for
-     * any arguments, when the last call was another or had none.
+     * any arguments, when the last call was another.
      *
      * @return array<int, mixed>|null
      */
@@ -62,7 +62,7 @@ final class MethodCallsStack
     {
         $last = $this->peek();
 
-        return $last !== null && $last->method === $method && $last->arguments !== [] ? $last->arguments : null;
+        return $last !== null && $last->method === $method ? $last->arguments : null;
     }
 
     /**

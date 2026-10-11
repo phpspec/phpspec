@@ -23,7 +23,7 @@ describe(JsonReportBuilder::class, function () {
     });
 
     it('keeps only sources under the src path, relative to the project root, with checksums', function (Filesystem $filesystem) {
-        allow($filesystem->read())->toReturnUsing(
+        allow($filesystem->read(any()))->toReturnUsing(
             fn(string $path) => $path === '/project/src/App/Calculator.php' ? 'source code' : 'other',
         );
         $builder = new JsonReportBuilder($filesystem);
@@ -48,7 +48,7 @@ describe(JsonReportBuilder::class, function () {
     // A mutation testing tool mutates one method and re-runs the examples that
     // covered it, so it has to know where that method starts and stops.
     it('says which lines each method of a source spans', function (Filesystem $filesystem) {
-        allow($filesystem->read())->toReturn("<?php\n\nclass Calculator\n{\n    public function add(int \$a, int \$b): int\n    {\n        return \$a + \$b;\n    }\n}\n");
+        allow($filesystem->read(any()))->toReturn("<?php\n\nclass Calculator\n{\n    public function add(int \$a, int \$b): int\n    {\n        return \$a + \$b;\n    }\n}\n");
         $builder = new JsonReportBuilder($filesystem);
 
         $report = $builder->build($this->collector, '/project/src', '/project');
@@ -63,7 +63,7 @@ describe(JsonReportBuilder::class, function () {
         allow($winDriver->stop())->toReturn([
             'C:\\project\\src\\App\\Calculator.php' => [12 => 1],
         ]);
-        allow($filesystem->read())->toReturn('code');
+        allow($filesystem->read(any()))->toReturn('code');
         $collector = new PerExampleCollector($winDriver);
         $collector->beginSpec('spec\\App\\Calculator.spec.php');
         $collector->beginExample();
@@ -77,7 +77,7 @@ describe(JsonReportBuilder::class, function () {
     });
 
     it('adds a checksum of each spec file to the test metadata', function (Filesystem $filesystem) {
-        allow($filesystem->read())->toReturnUsing(
+        allow($filesystem->read(any()))->toReturnUsing(
             fn(string $path) => $path === 'spec/App/Calculator.spec.php' ? 'spec code' : 'other',
         );
         $builder = new JsonReportBuilder($filesystem);

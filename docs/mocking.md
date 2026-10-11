@@ -102,15 +102,29 @@ App\Stock::reserve("tea", 2) was called but not expected, at src/App/Checkout.ph
 Declare the call with allow() or expect(), or make the double a dummy() if its calls do not matter.
 ```
 
-A call is declared by the arguments it was written with; written bare, the
-declaration covers any arguments. `allow()` declares on its own, a stub is
+A call is declared by the arguments it was written with, read as PHP reads
+the call: `any()` stands for one argument whose value does not matter,
+`cetera()` for the rest, and a call that leaves out an argument with a default
+is the call with that default. `allow()` declares on its own, a stub is
 optional:
 
 ```php
-allow($stock->reserve('tea', 2));                // reserve('tea', 2) may be called, returns false
+allow($stock->reserve('tea', 2));                 // reserve('tea', 2) may be called, returns false
 allow($stock->reserve('tea', 2))->toReturn(true); // and returns true
-expect($stock->reserve())->toBeCalled();         // any reserve() may be called, and must be
+expect($stock->reserve(cetera()))->toBeCalled();  // any reserve() may be called, and must be
 ```
+
+`reserve()` is a call with no arguments, which no object taking two could be
+given, so it is refused where the spec writes it:
+
+```
+App\Stock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with none can never be made.
+Write the arguments it is called with, any() for one whose value does not matter, or cetera() for the rest.
+```
+
+The code under spec calling a double with too few arguments fails as it would
+on the real object: `Too few arguments to function App\Stock::reserve(), 1
+passed in src/App/Checkout.php on line 8 and exactly 2 expected`.
 
 The spec file itself is free to call anything: that is how `allow()` and
 `expect()` reach the call they declare. A collaborator whose calls do not
@@ -120,8 +134,8 @@ matter is a `dummy()`. A double that was injected by type hint, which
 
 ```php
 beforeEach(function (Filesystem $fs) {
-    allow($fs->exists())->toReturn(false);
-    allow($fs->isDir())->toReturn(false)->ignoreOthers();
+    allow($fs->exists(any()))->toReturn(false);
+    allow($fs->isDir(any()))->toReturn(false)->ignoreOthers();
 });
 ```
 
@@ -136,8 +150,8 @@ matchers.
 Declared before the act, judged when the example ends: the method must be
 called at least once by then. Arguments written in the expect call are part
 of the promise: `save($user)` is not satisfied by a `save()` of something
-else. Written without arguments, it means called at all. The declaration also
-makes the call expected, so the code under spec may make it:
+else, `save(any())` by a `save()` of anything. The declaration also makes the
+call expected, so the code under spec may make it:
 
 ```php
 it('calls save', function (UserRepository $repo) {
@@ -147,7 +161,7 @@ it('calls save', function (UserRepository $repo) {
 });
 
 it('saves something', function (UserRepository $repo) {
-    expect($repo->save())->toBeCalled();
+    expect($repo->save(any()))->toBeCalled();
 
     (new Registration($repo))->register($anyUser);
 });
@@ -185,8 +199,7 @@ it('saves with correct data', function (Logger $logger) {
 ### `toBeCalledTimes(int $count)`
 
 Verifies the exact number of times a method was called, counting only calls
-that match the arguments written in the expect call (all calls when written
-bare):
+that match the arguments written in the expect call:
 
 ```php
 it('calls exactly twice', function (Logger $logger) {

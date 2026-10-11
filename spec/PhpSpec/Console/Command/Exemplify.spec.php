@@ -14,9 +14,9 @@ describe(Exemplify::class, function () {
     it('instantiates', fn() => expect($this->exemplify)->toBeAnInstanceOf(Exemplify::class));
 
     it('puts a class under no mapping into the default namespace', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir());
-        allow($fs->read())->toReturn("<?php\n\ndescribe(Thing::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->read(any()))->toReturn("<?php\n\ndescribe(Thing::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
         $layout = new SourceLayout('src', ['Brew\\Acme\\' => 'src/Brew/Acme'], 'Brew\\Acme');
         expect($fs->write(satisfy(fn(string $path): bool => str_ends_with($path, str_replace('/', DIRECTORY_SEPARATOR, 'spec/Brew/Acme/Thing.spec.php'))), any()))->toBeCalled();
 
@@ -27,16 +27,16 @@ describe(Exemplify::class, function () {
     });
 
     it('generates spec and adds example', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(function (string $p) {
+        allow($fs->exists(any()))->toReturnUsing(function (string $p) {
             static $specCalls = 0;
             if (str_ends_with($p, '.spec.php')) {
                 return $specCalls++ > 0;
             }
             return false;
         });
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
-        allow($fs->read())->toReturn(<<<'PHP'
+        allow($fs->mkdir(any()))->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
+        allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
         describe(Calculator::class, function() {
@@ -53,15 +53,15 @@ describe(Exemplify::class, function () {
     });
 
     it('emits a JSON receipt with --agent instead of prose', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn(<<<'PHP'
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
         describe(Calculator::class, function() {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write())->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $output = new BufferedOutput();
         $this->exemplify->run(
@@ -81,9 +81,9 @@ describe(Exemplify::class, function () {
     });
 
     it('says the example already existed instead of claiming to have added it', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => null);\n});\n");
-        expect($fs->write())->not()->toBeCalled();
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => null);\n});\n");
+        expect($fs->write(cetera()))->not()->toBeCalled();
 
         $output = new BufferedOutput();
         $this->exemplify->run(new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add']), $output);
@@ -94,8 +94,8 @@ describe(Exemplify::class, function () {
     });
 
     it('reports added false in the receipt when the example already exists', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn(<<<'PHP'
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
         describe(Calculator::class, function() {
@@ -103,7 +103,7 @@ describe(Exemplify::class, function () {
             it("should add", fn() => null);
         });
         PHP);
-        allow($fs->write())->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $output = new BufferedOutput();
         $this->exemplify->run(
@@ -116,15 +116,15 @@ describe(Exemplify::class, function () {
     });
 
     it('does not duplicate spec when it already exists', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn(<<<'PHP'
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
 
         describe(Calculator::class, function() {
             it("instantiates", fn() => null);
         });
         PHP);
-        allow($fs->write())->toReturn(null);
+        allow($fs->write(cetera()))->toReturn(null);
 
         $output = new BufferedOutput();
         $this->exemplify->run(

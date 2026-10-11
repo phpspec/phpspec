@@ -11,7 +11,7 @@ describe(Consent::class, function () {
 
     let('output', fn() => new BufferedOutput());
     let('answering', fn() => function (Prompt $prompt, string ...$answers): Prompt {
-        allow($prompt->ask())->toReturnUsing(function () use (&$answers): ?string {
+        allow($prompt->ask(any()))->toReturnUsing(function () use (&$answers): ?string {
             return array_shift($answers);
         });
 
@@ -62,7 +62,7 @@ describe(Consent::class, function () {
     });
 
     it('puts the question without asking when told nobody is there, and when told to accept', function (Prompt $prompt) {
-        expect($prompt->ask())->not()->toBeCalled();
+        expect($prompt->ask(any()))->not()->toBeCalled();
 
         expect((new Consent('Run with --accept-offers to %s.', Generation::Declines, prompt: $prompt))->confirm($this->output, '  Create it?', 'create-class', 'create classes'))->toBeFalse();
         expect((new Consent('Run with --accept-offers to %s.', Generation::Accepts, prompt: $prompt))->confirm($this->output, '  Create it?', 'create-class', 'create classes'))->toBeTrue();

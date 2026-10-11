@@ -21,7 +21,7 @@ describe(Inspection::class, function () {
     // Answering "clean" here is how a team ends up believing it is guarded
     // when nobody is.
     it('refuses to judge a checkout that recorded no baseline', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $inspection = new Inspection(new Baseline($fs, $git, '/app'), new FakeChanges(Delta::nothing()), new Guard($fs, '/app'));
 
         $verdict = $inspection->judge($this->exercised);
@@ -31,8 +31,8 @@ describe(Inspection::class, function () {
     });
 
     it('refuses to judge a run that collected no coverage', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn($this->recorded);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn($this->recorded);
         $inspection = new Inspection(new Baseline($fs, $git, '/app'), new FakeChanges(Delta::nothing()), new Guard($fs, '/app'));
 
         $verdict = $inspection->judge(Coverage::nothing());
@@ -44,8 +44,8 @@ describe(Inspection::class, function () {
     // A shallow clone, or a commit that has been rebased away: git cannot
     // answer for it, and a delta of nothing would read as a change of nothing.
     it('refuses to judge against a baseline the reader cannot reach', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn($this->recorded);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn($this->recorded);
         $changes = new FakeChanges(null, 'Guard cannot compare against the recorded commit.');
         $inspection = new Inspection(new Baseline($fs, $git, '/app'), $changes, new Guard($fs, '/app'));
 
@@ -56,8 +56,8 @@ describe(Inspection::class, function () {
     });
 
     it('judges what changed once it has a baseline and coverage', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn($this->recorded);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn($this->recorded);
         $inspection = new Inspection(new Baseline($fs, $git, '/app'), new FakeChanges(Delta::nothing()), new Guard($fs, '/app'));
 
         $verdict = $inspection->judge($this->exercised);
@@ -67,7 +67,7 @@ describe(Inspection::class, function () {
     });
 
     it('judges against a commit named on the command line without reading a baseline', function (Filesystem $fs, Git $git) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $inspection = new Inspection(new Baseline($fs, $git, '/app'), new FakeChanges(Delta::nothing()), new Guard($fs, '/app'));
 
         $verdict = $inspection->judgeAgainst('origin/main', $this->exercised);

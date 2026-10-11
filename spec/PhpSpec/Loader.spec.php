@@ -13,14 +13,14 @@ describe(Loader::class, function () {
     });
 
     it("returns empty suite for non-existent path", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
         $suite = (new Loader($fs))->load('./missing');
         expect($suite)->toBeAnInstanceOf(Suite::class);
     });
 
     it("loads a single spec file", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $path) => $path === './spec/Foo.spec.php');
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $path) => $path === './spec/Foo.spec.php');
 
         $suite = (new Loader($fs))->load('./spec/Foo.spec.php');
 
@@ -31,9 +31,9 @@ describe(Loader::class, function () {
         $files = ['.', '..', 'One.spec.php', 'Two.spec.php'];
         $dirs = ['./spec'];
 
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => in_array($p, $dirs));
-        allow($fs->scandir())->toReturn($files);
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => in_array($p, $dirs));
+        allow($fs->scandir(any()))->toReturn($files);
 
         $suite = (new Loader($fs))->load('./spec');
 
@@ -43,9 +43,9 @@ describe(Loader::class, function () {
     it("recurses into subdirectories", function (Filesystem $fs) {
         $dirs = ['./spec', './spec/Sub'];
 
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => in_array($p, $dirs));
-        allow($fs->scandir())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => in_array($p, $dirs));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './spec' => ['.', '..', 'Sub'],
             './spec/Sub' => ['.', '..', 'Bar.spec.php'],
             default => ['.', '..'],
@@ -57,9 +57,9 @@ describe(Loader::class, function () {
     });
 
     it("defaults to ./spec when null is passed", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './spec');
-        allow($fs->scandir())->toReturn(['.', '..']);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => $p === './spec');
+        allow($fs->scandir(any()))->toReturn(['.', '..']);
 
         $suite = (new Loader($fs))->load(null);
 
@@ -67,9 +67,9 @@ describe(Loader::class, function () {
     });
 
     it("loads multiple comma-separated paths", function (Filesystem $fs) {
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './spec' || $p === './features');
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->scandir())->toReturn(['.', '..']);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => $p === './spec' || $p === './features');
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn(['.', '..']);
 
         $suite = (new Loader($fs))->load('./spec,./features');
 
@@ -77,9 +77,9 @@ describe(Loader::class, function () {
     });
 
     it("ignores non-spec files", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.php'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './spec');
-        allow($fs->scandir())->toReturn(['.', '..', 'Helper.php', 'Test.spec.php']);
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.php'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => $p === './spec');
+        allow($fs->scandir(any()))->toReturn(['.', '..', 'Helper.php', 'Test.spec.php']);
 
         $suite = (new Loader($fs))->load('./spec');
 
@@ -90,9 +90,9 @@ describe(Loader::class, function () {
         $files = ['.', '..', 'OneSpec.php', 'Two.spec.php'];
         $dirs = ['./spec'];
 
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.php'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => in_array($p, $dirs));
-        allow($fs->scandir())->toReturn($files);
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.php'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => in_array($p, $dirs));
+        allow($fs->scandir(any()))->toReturn($files);
 
         $suite = (new Loader($fs, 'Spec.php'))->load('./spec');
 
@@ -100,9 +100,9 @@ describe(Loader::class, function () {
     });
 
     it("filters specs by path", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './spec');
-        allow($fs->scandir())->toReturn(['.', '..', 'One.spec.php', 'Two.spec.php']);
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => $p === './spec');
+        allow($fs->scandir(any()))->toReturn(['.', '..', 'One.spec.php', 'Two.spec.php']);
 
         $suite = (new Loader($fs))->load('./spec', 'One');
 
@@ -110,19 +110,19 @@ describe(Loader::class, function () {
     });
 
     it("keeps only the scenarios a tag expression matches, and no spec at all, since a spec has no tags", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature') || str_ends_with($p, '.spec.php'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => in_array($p, ['./spec', 'features', 'features/steps'], true));
-        allow($fs->scandir())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature') || str_ends_with($p, '.spec.php'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => in_array($p, ['./spec', 'features', 'features/steps'], true));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './spec' => ['.', '..', 'One.spec.php'],
             'features' => ['.', '..', 'tagged.feature', 'plain.feature'],
             default => ['.', '..'],
         });
-        allow($fs->read())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->read(any()))->toReturnUsing(fn(string $p) => match ($p) {
             'features/tagged.feature' => "Feature: Tagged\n  @smoke\n  Scenario: Quick\n    Given a step\n  @wip\n  Scenario: Unfinished\n    Given a step\n",
             'features/plain.feature' => "Feature: Plain\n  Scenario: Plain\n    Given a step\n",
             default => '',
         });
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         $suite = (new Loader($fs))->load('./spec,features', null, '@smoke');
 
@@ -133,24 +133,24 @@ describe(Loader::class, function () {
     });
 
     it("knows whether its features path holds any feature, however deep", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => in_array($p, ['./features', './features/nested'], true));
-        allow($fs->scandir())->toReturnUsing(fn(string $p) => $p === './features' ? ['.', '..', 'nested', 'readme.md'] : ['.', '..', 'deep.feature']);
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => in_array($p, ['./features', './features/nested'], true));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p) => $p === './features' ? ['.', '..', 'nested', 'readme.md'] : ['.', '..', 'deep.feature']);
 
         expect((new Loader($fs))->holdsFeatures())->toBeTrue();
     });
 
     it("knows its features path holds no feature when the directory is missing", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
 
         expect((new Loader($fs))->holdsFeatures())->toBeFalse();
     });
 
     it("detects feature path by extension", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => false);
-        allow($fs->read())->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => false);
+        allow($fs->read(any()))->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
 
         $suite = (new Loader($fs))->load('test.feature');
 
@@ -158,10 +158,10 @@ describe(Loader::class, function () {
     });
 
     it("detects feature path by directory name", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './features');
-        allow($fs->scandir())->toReturn(['.', '..', 'greeting.feature']);
-        allow($fs->read())->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => $p === './features');
+        allow($fs->scandir(any()))->toReturn(['.', '..', 'greeting.feature']);
+        allow($fs->read(any()))->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
 
         $suite = (new Loader($fs))->load('./features');
 
@@ -169,18 +169,18 @@ describe(Loader::class, function () {
     });
 
     it("loads feature with steps directory without step files", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) =>
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) =>
             str_ends_with($p, '.feature')
         );
-        allow($fs->isDir())->toReturnUsing(fn(string $p) =>
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) =>
             $p === './features' || $p === './features/steps'
         );
-        allow($fs->scandir())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './features' => ['.', '..', 'greeting.feature', 'steps'],
             './features/steps' => ['.', '..'],
             default => ['.', '..'],
         });
-        allow($fs->read())->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
+        allow($fs->read(any()))->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
 
         $suite = (new Loader($fs))->load('./features');
 
@@ -188,8 +188,8 @@ describe(Loader::class, function () {
     });
 
     it("returns empty suite for non-existent feature directory", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
 
         $suite = (new Loader($fs))->load('./features');
 
@@ -197,9 +197,9 @@ describe(Loader::class, function () {
     });
 
     it("loads a single feature file with steps dir", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => false);
-        allow($fs->read())->toReturn("Feature: Single\n  Scenario: One\n    Given step\n");
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => false);
+        allow($fs->read(any()))->toReturn("Feature: Single\n  Scenario: One\n    Given step\n");
 
         $suite = (new Loader($fs))->load('./features/test.feature');
 
@@ -207,18 +207,18 @@ describe(Loader::class, function () {
     });
 
     it("scans nested feature subdirectories", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './features' => true,
             './features/scenarios' => true,
             default => false,
         });
-        allow($fs->scandir())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './features' => ['.', '..', 'scenarios'],
             './features/scenarios' => ['.', '..', 'test.feature'],
             default => ['.', '..'],
         });
-        allow($fs->read())->toReturn("Feature: Nested\n  Scenario: Basic\n    Given a step\n");
+        allow($fs->read(any()))->toReturn("Feature: Nested\n  Scenario: Basic\n    Given a step\n");
 
         $suite = (new Loader($fs))->load('./features');
 
@@ -226,19 +226,19 @@ describe(Loader::class, function () {
     });
 
     it("walks up directories to find steps when loading a single feature file", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './features/scenarios/test.feature' => true,
             default => false,
         });
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './features/steps' => true,
             default => false,
         });
-        allow($fs->scandir())->toReturnUsing(fn(string $p) => match ($p) {
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p) => match ($p) {
             './features/steps' => ['.', '..'],
             default => ['.', '..'],
         });
-        allow($fs->read())->toReturn("Feature: Walk\n  Scenario: Up\n    Given a step\n");
+        allow($fs->read(any()))->toReturn("Feature: Walk\n  Scenario: Up\n    Given a step\n");
 
         $suite = (new Loader($fs))->load('./features/scenarios/test.feature');
 
@@ -353,10 +353,10 @@ describe(Loader::class, function () {
     });
 
     it("filters features by path", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
-        allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './features');
-        allow($fs->scandir())->toReturn(['.', '..', 'greeting.feature', 'other.feature']);
-        allow($fs->read())->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p) => $p === './features');
+        allow($fs->scandir(any()))->toReturn(['.', '..', 'greeting.feature', 'other.feature']);
+        allow($fs->read(any()))->toReturn("Feature: Test\n  Scenario: Basic\n    Given a step\n");
 
         $suite = (new Loader($fs))->load('./features', 'greeting');
 
@@ -364,9 +364,9 @@ describe(Loader::class, function () {
     });
 
     it("loads only the scenario at the targeted line for a feature.feature:LINE path", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->read())->toReturn(
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->read(any()))->toReturn(
             "Feature: Test\n  Scenario: First\n    Given a step\n\n  Scenario: Second\n    Given a step\n"
         );
 
@@ -380,9 +380,9 @@ describe(Loader::class, function () {
     });
 
     it("loads a feature once with the scenarios at every line targeted on it", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->read())->toReturn(
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->read(any()))->toReturn(
             "Feature: Test\n  Scenario: First\n    Given a step\n\n  Scenario: Second\n    Given a step\n\n  Scenario: Third\n    Given a step\n"
         );
 
@@ -395,8 +395,8 @@ describe(Loader::class, function () {
     });
 
     it("loads a spec file once however many of its lines are targeted", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './spec/Picky.spec.php');
-        allow($fs->isDir())->toReturn(false);
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => $p === './spec/Picky.spec.php');
+        allow($fs->isDir(any()))->toReturn(false);
 
         $suite = (new Loader($fs))->load('./spec/Picky.spec.php:3,./spec/Picky.spec.php:9');
 
@@ -404,9 +404,9 @@ describe(Loader::class, function () {
     });
 
     it("loads a file whole when it is asked for whole as well as by a line", function (Filesystem $fs) {
-        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->read())->toReturn(
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->read(any()))->toReturn(
             "Feature: Test\n  Scenario: First\n    Given a step\n\n  Scenario: Second\n    Given a step\n"
         );
 

@@ -11,9 +11,9 @@ describe(Run::class, function () {
     context('execute', function () {
 
         beforeEach(function (Filesystem $execFs) {
-            allow($execFs->exists())->toReturn(false);
-            allow($execFs->isFile())->toReturnUsing(fn() => false);
-            allow($execFs->isDir())->toReturnUsing(fn() => false);
+            allow($execFs->exists(any()))->toReturn(false);
+            allow($execFs->isFile(any()))->toReturnUsing(fn() => false);
+            allow($execFs->isDir(any()))->toReturnUsing(fn() => false);
         });
 
         it('runs with empty spec directory', function (Filesystem $execFs) {
@@ -27,9 +27,9 @@ describe(Run::class, function () {
         });
 
         it('points at the features when a plain run finds no specs but features exist', function (Filesystem $execFs) {
-            allow($execFs->isDir())->toReturnUsing(fn(string $p) => $p === './features');
-            allow($execFs->scandir())->toReturnUsing(fn(string $p) => $p === './features' ? ['.', '..', 'only.feature'] : []);
-            allow($execFs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
+            allow($execFs->isDir(any()))->toReturnUsing(fn(string $p) => $p === './features');
+            allow($execFs->scandir(any()))->toReturnUsing(fn(string $p) => $p === './features' ? ['.', '..', 'only.feature'] : []);
+            allow($execFs->isFile(any()))->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
             $cmd = new Run(new Loader($execFs), new Runner(), new Configuration());
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -378,8 +378,8 @@ describe(Run::class, function () {
         });
 
         it('PSR-4 autoloader skips non-matching prefix', function (Filesystem $execFs) {
-            allow($execFs->exists())->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
-            allow($execFs->read())->toReturn(json_encode(['autoload' => ['SpecificPrefix\\' => '/tmp/']]));
+            allow($execFs->exists(any()))->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
+            allow($execFs->read(any()))->toReturn(json_encode(['autoload' => ['SpecificPrefix\\' => '/tmp/']]));
             $config = new Configuration();
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
@@ -391,8 +391,8 @@ describe(Run::class, function () {
         });
 
         it('uses config format when CLI format is pretty', function (Filesystem $execFs) {
-            allow($execFs->exists())->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
-            allow($execFs->read())->toReturn(json_encode(['format' => 'dot']));
+            allow($execFs->exists(any()))->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
+            allow($execFs->read(any()))->toReturn(json_encode(['format' => 'dot']));
             $config = new Configuration();
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 

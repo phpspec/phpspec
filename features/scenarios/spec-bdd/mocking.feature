@@ -427,13 +427,74 @@ Feature: Mocking
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
-      allow($repo->find())->toReturn('default');
+      allow($repo->find(any()))->toReturn('default');
       allow($repo->find(42))->toReturn('special');
       expect($repo->find(42))->toBe('special');
       expect($repo->find(99))->toBe('default');
       """
     When I run the spec
     Then all examples should pass
+
+  Scenario: A call written without the arguments the method requires is refused, saying what to write
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      allow($repo->find())->toReturn('Alice');
+      """
+    When I run the spec
+    Then the exit code should be 1
+    And the output should contain "App\UserRepository::find() takes 1 argument (int $id), so a call written with none can never be made."
+    And the output should contain "any() for one whose value does not matter, or cetera() for the rest"
+
+  Scenario: The code under spec calling a double with too few arguments fails as it would on the real object
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders tea', function (Stock $stock) {
+              allow($stock->reserve(cetera()))->toReturn(true);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "Too few arguments to function App\Stock::reserve(), 1 passed in src/App/Checkout.php on line 8 and exactly 2 expected"
 
   Scenario: Fluent call count with once
     Given an interface "src/App/Counter.php":
@@ -661,7 +722,7 @@ Feature: Mocking
 
       describe('Checkout', function () {
           it('orders coffee', function (Stock $stock) {
-              allow($stock->reserve());
+              allow($stock->reserve(cetera()));
 
               (new Checkout($stock))->order('tea');
 
@@ -708,7 +769,7 @@ Feature: Mocking
 
       describe('Checkout', function () {
           beforeEach(function (Stock $stock) {
-              allow($stock->reserve())->toReturn(true)->ignoreOthers();
+              allow($stock->reserve(cetera()))->toReturn(true)->ignoreOthers();
           });
 
           it('orders two of everything', function (Stock $stock) {

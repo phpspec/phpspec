@@ -38,9 +38,9 @@ class NextFakeRunner implements SpecRunner
 describe(Next::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
     });
 
     it('instantiates', function (Filesystem $fs) {
@@ -90,10 +90,10 @@ describe(Next::class, function () {
 
     it('displays a spec suggestion with target and reason', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
+            allow($fs->exists(any()))->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+            allow($fs->read(any()))->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -126,8 +126,8 @@ describe(Next::class, function () {
         it('does not re-describe a spec that already exists, coaching to run instead', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $specFile = getcwd() . DIRECTORY_SEPARATOR . 'spec' . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Existing.spec.php';
-            allow($fs->exists())->toReturnUsing(fn(string $path): bool => $path === $yamlPath || $path === $specFile);
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => $path === $yamlPath || $path === $specFile);
+            allow($fs->read(any()))->toReturnUsing(function (string $path) use ($yamlPath): string {
                 return $path === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '';
             });
 
@@ -152,10 +152,10 @@ describe(Next::class, function () {
 
         it('displays a feature suggestion with confirmation', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
+            allow($fs->exists(any()))->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+            allow($fs->read(any()))->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -185,8 +185,8 @@ describe(Next::class, function () {
 
         it('actuates an accepted feature suggestion through generate, never describe', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -240,9 +240,9 @@ describe(Next::class, function () {
 
         it('hints the command, running nothing, when nobody answers', function (Filesystem $fs, Prompt $prompt) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
-            allow($prompt->ask())->toReturn(null);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($prompt->ask(any()))->toReturn(null);
             $suggestFn = fn(array $aiConfig): array => [
                 'type' => 'feature',
                 'target' => 'deleting_a_task',
@@ -261,8 +261,8 @@ describe(Next::class, function () {
 
         it('hints generate for a feature suggestion when not interactive', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -284,8 +284,8 @@ describe(Next::class, function () {
             $yamlPath = './phpspec.yaml';
             $cwd = getcwd();
             $srcFile = $cwd . '/src/App/TodoList.php';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
-            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read(any()))->toReturnUsing(function (string $p) use ($yamlPath): string {
                 if ($p === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -294,7 +294,7 @@ describe(Next::class, function () {
                 }
                 return '';
             });
-            allow($fs->mtime())->toReturn(900);
+            allow($fs->mtime(any()))->toReturn(900);
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -316,8 +316,8 @@ describe(Next::class, function () {
             $yamlPath = './phpspec.yaml';
             $cwd = getcwd();
             $srcFile = $cwd . '/src/App/TodoList.php';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
-            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read(any()))->toReturnUsing(function (string $p) use ($yamlPath): string {
                 if ($p === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -326,7 +326,7 @@ describe(Next::class, function () {
                 }
                 return '';
             });
-            allow($fs->mtime())->toReturn(1100);
+            allow($fs->mtime(any()))->toReturn(1100);
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -347,8 +347,8 @@ describe(Next::class, function () {
             $yamlPath = './phpspec.yaml';
             $cwd = getcwd();
             $srcFile = $cwd . '/src/App/TaskQueue.php';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
-            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read(any()))->toReturnUsing(function (string $p) use ($yamlPath): string {
                 if ($p === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -357,7 +357,7 @@ describe(Next::class, function () {
                 }
                 return '';
             });
-            allow($fs->mtime())->toReturn(900);
+            allow($fs->mtime(any()))->toReturn(900);
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -379,10 +379,10 @@ describe(Next::class, function () {
             $cwd = getcwd();
             $featuresDir = $cwd . '/features';
             $srcFile = $cwd . '/src/App/TodoList.php';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir || $p === $srcFile || str_contains($p, 'journal.jsonl'));
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
-            allow($fs->scandir())->toReturn([]);
-            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir(any()))->toReturn([]);
+            allow($fs->read(any()))->toReturnUsing(function (string $p) use ($yamlPath): string {
                 if ($p === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -391,9 +391,9 @@ describe(Next::class, function () {
                 }
                 return '';
             });
-            allow($fs->mtime())->toReturn(900);
-            allow($fs->mkdir())->toReturn(null);
-            allow($fs->write())->toReturn(null);
+            allow($fs->mtime(any()))->toReturn(900);
+            allow($fs->mkdir(any()))->toReturn(null);
+            allow($fs->write(cetera()))->toReturn(null);
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -424,8 +424,8 @@ describe(Next::class, function () {
 
         it('actuates an accepted refactor suggestion by running the refactor command', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -466,8 +466,8 @@ describe(Next::class, function () {
 
         it('hints the refactor command when not interactive', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -487,8 +487,8 @@ describe(Next::class, function () {
 
         it('actuates an accepted example suggestion through generate', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -529,8 +529,8 @@ describe(Next::class, function () {
 
         it('strips file tokens from the reason it forwards, so routing stays on the spec', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -570,8 +570,8 @@ describe(Next::class, function () {
 
         it('hints the example generate line when not interactive', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -590,10 +590,10 @@ describe(Next::class, function () {
 
         it('displays an info suggestion when well-covered', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
+            allow($fs->exists(any()))->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+            allow($fs->read(any()))->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -617,10 +617,10 @@ describe(Next::class, function () {
 
         it('shows error when response is unusable', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
+            allow($fs->exists(any()))->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+            allow($fs->read(any()))->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -645,11 +645,11 @@ describe(Next::class, function () {
         it('runs the features (--all) and grounds the suggestion in their state when features are present', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $featuresDir = getcwd() . '/features';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
-            allow($fs->scandir())->toReturnUsing(fn(string $d): array => $d === $featuresDir ? ['adding.feature'] : []);
-            allow($fs->mtime())->toReturn(100);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir(any()))->toReturnUsing(fn(string $d): array => $d === $featuresDir ? ['adding.feature'] : []);
+            allow($fs->mtime(any()))->toReturn(100);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -680,8 +680,8 @@ describe(Next::class, function () {
 
         it('does not run the suite when there are no features', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $runner = new NextFakeRunner();
             $cmd = new Next(Configuration::load('.', $fs), $fs, fn(array $aiConfig): array => ['type' => 'info', 'target' => '', 'reason' => 'ok'], $runner);
@@ -695,12 +695,12 @@ describe(Next::class, function () {
         it('suggests through the agent pipeline when the step needs imagination (features green)', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $featuresDir = getcwd() . '/features';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
-            allow($fs->scandir())->toReturn([]);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
-            allow($fs->mkdir())->toReturn(null);
-            allow($fs->write())->toReturn(null);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir(any()))->toReturn([]);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->mkdir(any()))->toReturn(null);
+            allow($fs->write(cetera()))->toReturn(null);
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -733,12 +733,12 @@ describe(Next::class, function () {
         it('refuses when the model does not answer, on the channel its reader reads', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $featuresDir = getcwd() . '/features';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
-            allow($fs->scandir())->toReturn([]);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
-            allow($fs->mkdir())->toReturn(null);
-            allow($fs->write())->toReturn(null);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir(any()))->toReturn([]);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->mkdir(any()))->toReturn(null);
+            allow($fs->write(cetera()))->toReturn(null);
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
                 'green',
@@ -771,20 +771,20 @@ describe(Next::class, function () {
                 $cwd . '/spec/App/TodoList.spec.php' => "<?php\ndescribe('TodoList', function () { it('clears completed tasks', fn() => null); });\n",
                 $cwd . '/src/App/TodoList.php' => "<?php\nclass TodoList { public function tasks(): array { return []; } }\n",
             ];
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir || isset($known[$p]) || in_array($p, [$cwd . '/spec', $cwd . '/src'], true));
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$featuresDir, $featuresDir . '/steps', $cwd . '/spec', $cwd . '/src'], true));
-            allow($fs->scandir())->toReturnUsing(fn(string $d): array => match ($d) {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir || isset($known[$p]) || in_array($p, [$cwd . '/spec', $cwd . '/src'], true));
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$featuresDir, $featuresDir . '/steps', $cwd . '/spec', $cwd . '/src'], true));
+            allow($fs->scandir(any()))->toReturnUsing(fn(string $d): array => match ($d) {
                 $featuresDir => ['steps', 'clearing.feature'],
                 $featuresDir . '/steps' => ['lists.steps.php'],
                 $cwd . '/spec' => ['App/TodoList.spec.php'],
                 $cwd . '/src' => ['App/TodoList.php'],
                 default => [],
             });
-            allow($fs->isFile())->toReturnUsing(fn(string $p): bool => isset($known[$p]));
-            allow($fs->mtime())->toReturn(100);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : ($known[$p] ?? ''));
-            allow($fs->mkdir())->toReturn(null);
-            allow($fs->write())->toReturn(null);
+            allow($fs->isFile(any()))->toReturnUsing(fn(string $p): bool => isset($known[$p]));
+            allow($fs->mtime(any()))->toReturn(100);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : ($known[$p] ?? ''));
+            allow($fs->mkdir(any()))->toReturn(null);
+            allow($fs->write(cetera()))->toReturn(null);
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -818,10 +818,10 @@ describe(Next::class, function () {
         it('suggests the determined step itself, without the model, when the suite determines it', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $featuresDir = getcwd() . '/features';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
-            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
-            allow($fs->scandir())->toReturn([]);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir(any()))->toReturn([]);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
@@ -850,8 +850,8 @@ describe(Next::class, function () {
 
         it('actuates an accepted steps suggestion through generate', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -891,8 +891,8 @@ describe(Next::class, function () {
 
         it('actuates an accepted implement suggestion for a class through generate', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -932,8 +932,8 @@ describe(Next::class, function () {
 
         it('falls back to a run hint when the failing subject is no class', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -953,8 +953,8 @@ describe(Next::class, function () {
 
         it('emits the agent document with the actuating command under --format=agent, never a prompt', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
-            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -980,8 +980,8 @@ describe(Next::class, function () {
             $yamlPath = './phpspec.yaml';
             $cwd = getcwd();
             $srcFile = $cwd . '/src/App/TodoList.php';
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
-            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read(any()))->toReturnUsing(function (string $p) use ($yamlPath): string {
                 if ($p === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -990,7 +990,7 @@ describe(Next::class, function () {
                 }
                 return '';
             });
-            allow($fs->mtime())->toReturn(900);
+            allow($fs->mtime(any()))->toReturn(900);
 
             $configWithAi = Configuration::load('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -1011,10 +1011,10 @@ describe(Next::class, function () {
 
         it('passes AI config to the suggest function', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
+            allow($fs->exists(any()))->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+            allow($fs->read(any()))->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: anthropic\n  api_key: sk-test\n";
                 }

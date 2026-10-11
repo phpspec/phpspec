@@ -25,11 +25,18 @@ interface DoubleSpecStock {
     public function reserve(string $item, int $quantity): bool;
 }
 
+interface DoubleSpecTill {
+    public function pay(int $amount, string $currency = 'EUR'): int;
+    public function find(int $id = 0): string;
+    public function tally(string ...$items): int;
+    public function note(string $text, array $tags = [], ?string $by = null, array $seen = ['a'], bool $loud = false): void;
+}
+
 // Code that is not spec code: a file outside the spec folder calling the double.
 define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
 if (!function_exists('double_spec_outsider_reserves')) {
     register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
-    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\n");
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\n");
     require DOUBLE_SPEC_OUTSIDER;
 }
 
@@ -827,6 +834,98 @@ describe(Double::class, function() {
         $double = Double::getInstance(DoubleSpecVoidReturn::class);
         allow($double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
         expect(fn() => $double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
+    });
+
+    context("a call no object of the real class could take", function () {
+        beforeEach(function () {
+            $this->saved = ArrangingCode::roots();
+            ArrangingCode::under(__DIR__);
+        });
+
+        afterEach(function () {
+            ArrangingCode::under(...$this->saved);
+        });
+
+        it("is refused where the spec writes it with fewer arguments than the method requires, saying what to write", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            $remedy = ' Write the arguments it is called with, any() for one whose value does not matter, or cetera() for the rest.';
+
+            expect(fn() => $stock->reserve())->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with none can never be made.' . $remedy);
+            expect(fn() => $stock->reserve('tea'))->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with 1 can never be made.' . $remedy);
+            expect(fn() => $stock->reserve(noArgs()))->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with none can never be made.' . $remedy);
+            expect(fn() => Double::getInstance(DoubleSpecTill::class)->pay())->toThrow(LogicException::class, "DoubleSpecTill::pay() takes at least 1 argument (int \$amount, string \$currency = 'EUR'), so a call written with none can never be made." . $remedy);
+        });
+
+        it("names the parameters as the method declares them, defaults included", function () {
+            expect(fn() => Double::getInstance(DoubleSpecTill::class)->note())->toThrow(LogicException::class, "DoubleSpecTill::note() takes at least 1 argument (string \$text, array \$tags = [], ?string \$by = null, array \$seen = [...], bool \$loud = false), so a call written with none can never be made. Write the arguments it is called with, any() for one whose value does not matter, or cetera() for the rest.");
+        });
+
+        it("is refused where the spec writes it with more arguments than the method takes", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            expect(fn() => $stock->reserve('tea', 2, 'now'))->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes at most 2 arguments (string $item, int $quantity); the call is written with 3.');
+            expect(fn() => Double::getInstance(DoubleSpecTill::class)->tally('a', 'b', 'c', 'd'))->not()->toThrow();
+        });
+
+        it("takes any() for one argument and cetera() for the rest, the rest being last", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            expect(fn() => $stock->reserve(any(), any()))->not()->toThrow();
+            expect(fn() => $stock->reserve('tea', cetera()))->not()->toThrow();
+            expect(fn() => $stock->reserve(cetera()))->not()->toThrow();
+            expect(fn() => $stock->reserve(cetera(), 2))->toThrow(LogicException::class, 'cetera() stands for the rest of the arguments to DoubleSpecStock::reserve(), so nothing can follow it.');
+            expect(fn() => $stock->reserve(noArgs(), 2))->toThrow(LogicException::class, 'noArgs() stands for a call to DoubleSpecStock::reserve() with no arguments, so nothing can go beside it.');
+        });
+
+        it("fails a call the code under spec makes with too few arguments, as PHP would, however the method was declared", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve(cetera()))->toReturn(true);
+
+            try {
+                double_spec_outsider_reserves_nothing($stock);
+            } catch (ArgumentCountError $e) {
+                expect($e->getMessage())->toBe(sprintf('Too few arguments to function DoubleSpecStock::reserve(), 0 passed in %s on line 3 and exactly 2 expected', str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER))));
+
+                return;
+            }
+
+            expect(false)->toBeTrue();
+        });
+
+        it("takes a call that leaves out an argument with a default as the call with that default", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(10))->toReturn(1);
+            allow($till->pay(20, 'EUR'))->toReturn(2);
+
+            expect(double_spec_outsider_pays($till, 10, 'EUR'))->toBe(1);
+            expect(double_spec_outsider_pays($till, 20))->toBe(2);
+            expect(fn() => double_spec_outsider_pays($till, 10, 'USD'))->toThrow(UnexpectedCallException::class);
+        });
+
+        it("answers no stub to a call written with a matcher, which declares a call and is not one", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(cetera()))->toReturnUsing(fn(int $amount) => $amount * 2);
+            allow($till->pay(any()))->toThrow(new \RuntimeException('Closed'));
+
+            expect(fn() => double_spec_outsider_pays($till, 5))->toThrow(\RuntimeException::class, 'Closed');
+        });
+
+        it("lets an error a stub's callback raises through, where it used to answer with a default", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(cetera()))->toReturnUsing(fn(int $amount) => intdiv($amount, 0));
+
+            expect(fn() => double_spec_outsider_pays($till, 5))->toThrow(\DivisionByZeroError::class);
+            allow($till->pay(cetera()))->toReturnUsing(fn(int $amount, string $currency, string $note) => 1);
+            expect(fn() => double_spec_outsider_pays($till, 5))->toThrow(\ArgumentCountError::class);
+        });
+        it("holds a call written without arguments to a call made with none", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->find())->toReturn('first');
+
+            expect($till->find())->toBe('first');
+            expect($till->find(0))->toBe('first');
+            expect($till->find(5))->toBe('');
+        });
     });
 
 });

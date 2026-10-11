@@ -17,12 +17,12 @@ describe(GitDelta::class, function () {
 
     it('asks git for the working tree against the baseline commit', function (Git $git, Filesystem $fs) use ($diff) {
         $asked = null;
-        allow($git->diff())->toReturnUsing(function (string $commit, array $paths) use (&$asked, $diff) {
+        allow($git->diff(cetera()))->toReturnUsing(function (string $commit, array $paths) use (&$asked, $diff) {
             $asked = ['commit' => $commit, 'paths' => $paths];
 
             return $diff;
         });
-        allow($git->untracked())->toReturn([]);
+        allow($git->untracked(any()))->toReturn([]);
 
         $delta = (new GitDelta($git, $fs, new Scope(['src']), '/app'))
             ->since(['kind' => 'commit', 'commit' => 'abc123']);
@@ -34,10 +34,10 @@ describe(GitDelta::class, function () {
     // A file git has never been told about is new from its first line to its
     // last: there is no earlier version of it to have been reviewed.
     it('counts the whole of a file git has never seen', function (Git $git, Filesystem $fs) {
-        allow($git->diff())->toReturn('');
-        allow($git->untracked())->toReturn(['src/App/Coupon.php']);
-        allow($fs->exists())->toReturn(true);
-        allow($fs->readLines())->toReturn(['<?php', 'class Coupon', '{', '}']);
+        allow($git->diff(cetera()))->toReturn('');
+        allow($git->untracked(any()))->toReturn(['src/App/Coupon.php']);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->readLines(any()))->toReturn(['<?php', 'class Coupon', '{', '}']);
 
         $delta = (new GitDelta($git, $fs, new Scope(['src']), '/app'))
             ->since(['kind' => 'commit', 'commit' => 'abc123']);
@@ -46,13 +46,13 @@ describe(GitDelta::class, function () {
     });
 
     it('drops what guard has no opinion about', function (Git $git, Filesystem $fs) {
-        allow($git->diff())->toReturn(<<<DIFF
+        allow($git->diff(cetera()))->toReturn(<<<DIFF
         --- a/spec/App/Basket.spec.php
         +++ b/spec/App/Basket.spec.php
         @@ -1,0 +2,1 @@
         +    it('totals', function () {});
         DIFF);
-        allow($git->untracked())->toReturn([]);
+        allow($git->untracked(any()))->toReturn([]);
 
         $delta = (new GitDelta($git, $fs, new Scope(['src', 'spec']), '/app'))
             ->since(['kind' => 'commit', 'commit' => 'abc123']);
