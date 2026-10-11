@@ -571,3 +571,20 @@ Feature: Guard
     Then the output should contain "Guard is on but no coverage driver is available"
     And the output should not contain "stands down"
     And the exit code should be 1
+
+  Scenario: For a coding agent, the header says guard is on when a missing coverage driver stops the run
+    Given a PSR-4 project with "spec" and "src" directories
+    And a spec file "spec/App/Thing.spec.php":
+      """
+      <?php
+      describe('Thing', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec guard
+    And I run phpspec run in a fresh process with option "--format=agent"
+    Then the header should state "guard" as "on"
+    And the header should state "coverage" as "false"
+    And the output should contain "Guard is on but no coverage driver is available"
