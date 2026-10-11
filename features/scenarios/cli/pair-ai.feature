@@ -275,3 +275,8 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "/run" answering "1"
     Then the output should contain "function subtract"
     And the output should not contain "+ }"
+
+  Scenario: A single prompt that fails exits 1
+    When I run phpspec command "pair --prompt /nonsense"
+    Then the exit code should be 1
+    And the output should contain "Unknown command: /nonsense"

@@ -91,6 +91,8 @@ final class CommandDispatcher
      */
     private ?string $suggestion = null;
 
+    private bool $failed = false;
+
     /**
      * @param SpecGenerator $specGenerator the spec file generator
      * @param ClassGenerator $classGenerator the class file generator
@@ -299,6 +301,15 @@ final class CommandDispatcher
     }
 
     /**
+     * Whether the line dispatched last failed: a run that went red or left no
+     * report, a command that refused, or a command there is none of.
+     */
+    public function lastFailed(): bool
+    {
+        return $this->failed;
+    }
+
+    /**
      * Dispatches a raw input string to the appropriate handler.
      *
      * @param string $input the raw user input
@@ -307,6 +318,7 @@ final class CommandDispatcher
     public function dispatch(string $input): int
     {
         PairLogger::log('CMD', $input);
+        $this->failed = false;
         $parsed = $this->parser->parse($input);
         $command = $parsed['command'];
 
@@ -578,6 +590,7 @@ final class CommandDispatcher
     {
         $outcome = $this->specRunner->run($argument, $this->output->getOutput());
         $this->lastSituation = $outcome->summary ?? $this->lastSituation;
+        $this->failed = $outcome?->summary === null || $outcome->summary->isRed();
 
         $candidates = $outcome?->candidates;
         if ($candidates !== null && !$candidates->isEmpty()) {
@@ -629,7 +642,7 @@ final class CommandDispatcher
         $consent = new Consent('Run phpspec refactor --no-interaction to %s.', chooser: $this->chooser);
 
         try {
-            ($this->refactor)($consent)->run($this->typed($argument), $this->output->getOutput());
+            $this->failed = ($this->refactor)($consent)->run($this->typed($argument), $this->output->getOutput()) !== 0;
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }
@@ -669,7 +682,7 @@ final class CommandDispatcher
         }
 
         try {
-            $this->application->doRun($this->typed($name . ' ' . $argString), $this->output->getOutput());
+            $this->failed = $this->application->doRun($this->typed($name . ' ' . $argString), $this->output->getOutput()) !== 0;
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }
@@ -914,6 +927,7 @@ final class CommandDispatcher
     private function handleUnknown(string $command): int
     {
         $this->output->error("Unknown command: $command. Type /help for the available commands.");
+        $this->failed = true;
 
         return self::CONTINUE;
     }

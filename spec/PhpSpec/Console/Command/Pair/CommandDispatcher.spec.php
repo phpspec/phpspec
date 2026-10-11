@@ -299,6 +299,26 @@ describe(CommandDispatcher::class, function () {
         expect($this->specRunner->arguments)->toBe(['']);
     });
 
+    it('says whether the line it dispatched failed: a red run, a run that left no report, or an unknown command', function () {
+        $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary('red', ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0], [], []));
+        $this->dispatcher->dispatch('/run');
+        expect($this->dispatcher->lastFailed())->toBeTrue();
+
+        $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary('green', ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0], [], []));
+        $this->dispatcher->dispatch('/run');
+        expect($this->dispatcher->lastFailed())->toBeFalse();
+
+        $this->specRunner->outcome = null;
+        $this->dispatcher->dispatch('/run spec/Nope');
+        expect($this->dispatcher->lastFailed())->toBeTrue();
+
+        $this->dispatcher->dispatch('/nonsense');
+        expect($this->dispatcher->lastFailed())->toBeTrue();
+
+        $this->dispatcher->dispatch('/help');
+        expect($this->dispatcher->lastFailed())->toBeFalse();
+    });
+
     it('runs specs at a specific path with /run', function () {
         $result = $this->dispatcher->dispatch('/run spec/NonExistent');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
@@ -918,6 +938,12 @@ describe(CommandDispatcher::class, function () {
             $this->appDispatcher->dispatch('/refactor App\\Calculator --format=agent');
 
             expect($this->buffer->fetch())->toContain('"action":"refactor"');
+        });
+
+        it('says a delegated command that refused failed', function () {
+            $this->appDispatcher->dispatch('/refactor App\\Calculator');
+
+            expect($this->appDispatcher->lastFailed())->toBeTrue();
         });
 
         it('delegates /refactor with no target, which takes the source modified last', function () {
