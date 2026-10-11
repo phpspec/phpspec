@@ -1013,3 +1013,24 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the output should contain "Needs the rates API"
     And the output should contain "No network on this machine"
+
+  Scenario: A configuration that cannot be taken still answers a coding agent in JSON
+    Given a phpspec.yaml config:
+      """
+      ai: yes
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the exit code should be 1
+    And the output should be valid JSON
+    And the first event should be "run_started"
+    And the output should contain "ai expects a map"
+
+  Scenario: A configuration that cannot be taken answers a receipt command's agent in JSON
+    Given a phpspec.yaml config:
+      """
+      ai: yes
+      """
+    When I run phpspec command "describe App/Basket --agent"
+    Then the exit code should be 1
+    And the output should be valid JSON
+    And the output should contain "ai expects a map"
