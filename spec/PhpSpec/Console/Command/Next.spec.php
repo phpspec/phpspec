@@ -4,10 +4,10 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Next;
-use PhpSpec\Console\Prompt;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
@@ -73,7 +73,20 @@ describe(Next::class, function () {
             expect($exitCode)->toBe(1);
         });
 
-        it('displays a spec suggestion with target and reason', function (Filesystem $fs) {
+        it('names the bootstrap it cannot find, on the channel its reader reads', function (Filesystem $fs) {
+        $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k'], 'bootstrap' => 'nowhere/autoload.php']);
+        $pretty = new CommandTester(new Next($config, $fs));
+        $agent = new CommandTester(new Next($config, $fs));
+
+        $pretty->execute([], ['interactive' => false]);
+        $agent->execute(['--format' => 'agent'], ['interactive' => false]);
+
+        expect($pretty->getStatusCode())->toBe(1);
+        expect($pretty->getDisplay())->toContain('Bootstrap file not found: nowhere/autoload.php');
+        expect(json_decode(trim($agent->getDisplay()), true)['error'] ?? null)->toBe('Bootstrap file not found: nowhere/autoload.php');
+    });
+
+    it('displays a spec suggestion with target and reason', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;

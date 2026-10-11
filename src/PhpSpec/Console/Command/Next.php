@@ -98,24 +98,13 @@ final class Next extends Command
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $problem = (string) $this->config->aiConfigProblem();
-
-            if ($forAgent) {
-                $json = json_encode(['v' => Schema::V, 'action' => 'next', 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
-                $output->write($json . "\n", false, Output::OUTPUT_RAW);
-
-                return 1;
-            }
-
-            $output->writeln('<fg=red>' . $problem . '</>');
-
-            return 1;
+            return $this->refuse($output, $forAgent, (string) $this->config->aiConfigProblem());
         }
 
         // 2. Load bootstrap
-        if (!$this->loadBootstrap()) {
-            $output->writeln('<fg=red>Bootstrap file not found.</>');
-            return 1;
+        $missingBootstrap = $this->loadBootstrap();
+        if ($missingBootstrap !== null) {
+            return $this->refuse($output, $forAgent, sprintf('Bootstrap file not found: %s', $missingBootstrap));
         }
 
         // 3. Scan project and get suggestion
@@ -501,16 +490,38 @@ final class Next extends Command
         );
     }
 
-    private function loadBootstrap(): bool
+    /**
+     * Says why there will be no suggestion, as a receipt for a coding agent,
+     * else in red.
+     */
+    private function refuse(Output $output, bool $forAgent, string $problem): int
+    {
+        if ($forAgent) {
+            $json = json_encode(['v' => Schema::V, 'action' => 'next', 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+            $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+            return 1;
+        }
+
+        $output->writeln('<fg=red>' . $problem . '</>');
+
+        return 1;
+    }
+
+    /**
+     * Loads the project's bootstrap. The file it could not find, or null.
+     */
+    private function loadBootstrap(): ?string
     {
         $bootstrap = $this->config->getBootstrap() ?? (file_exists('vendor/autoload.php') ? 'vendor/autoload.php' : null);
         if ($bootstrap === null) {
-            return true;
+            return null;
         }
         if (!file_exists($bootstrap)) {
-            return false;
+            return $bootstrap;
         }
         require_once $bootstrap;
-        return true;
+
+        return null;
     }
 }
