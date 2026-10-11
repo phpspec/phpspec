@@ -18,6 +18,7 @@ use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;

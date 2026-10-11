@@ -99,6 +99,10 @@ final class Generate extends Command
         $agent = new Agent($this->config, $this->filesystem, $this->provider);
         $outcome = $agent->chat('generate', $instruction);
 
+        if ($outcome->failure !== null && $outcome->proposals === []) {
+            return $this->refuse(sprintf('The model did not answer: %s', $outcome->failure), $forAgent, $output);
+        }
+
         if ($forAgent) {
             return $this->generateForAgent($output, $outcome);
         }

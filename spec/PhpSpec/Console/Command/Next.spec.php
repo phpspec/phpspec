@@ -728,6 +728,37 @@ describe(Next::class, function () {
             expect($replay->requests[0]['messages'][0]->content)->toContain('refactor');    // so did the derived step
         });
 
+        it('refuses when the model does not answer, on the channel its reader reads', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $featuresDir = getcwd() . '/features';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir())->toReturn([]);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->mkdir())->toReturn(null);
+            allow($fs->write())->toReturn(null);
+            $runner = new NextFakeRunner();
+            $runner->outcome = new RunOutcome(null, new SuiteSummary(
+                'green',
+                ['examples' => 3, 'passes' => 3, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 0],
+                [['path' => 'features/adding.feature', 'status' => 'green', 'undefined' => 0]],
+            ));
+            $failing = fn(): Next => new Next(Configuration::load('.', $fs), $fs, null, $runner, new ReplayProvider([new RuntimeException('Google API error (500): boom')]));
+
+            $pretty = new CommandTester($failing());
+            $pretty->execute([], ['interactive' => false]);
+            $agent = new CommandTester($failing());
+            $agent->execute(['--format' => 'agent'], ['interactive' => false]);
+
+            expect($pretty->getStatusCode())->toBe(1);
+            expect($pretty->getDisplay())->toContain('The model did not answer: Google API error (500): boom');
+            expect($agent->getStatusCode())->toBe(1);
+            expect(json_decode(trim($agent->getDisplay()), true))->toBe(['v' => 2, 'action' => 'next', 'error' => 'The model did not answer: Google API error (500): boom']);
+        });
+
         it('shows the model the working story files when a feature is red', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $cwd = getcwd();
@@ -936,7 +967,7 @@ describe(Next::class, function () {
 
             expect($exitCode)->toBe(0);
             $document = json_decode(trim($tester->getDisplay()), true);
-            expect($document['command']['command'])->toBe('next');
+            expect($document['action'])->toBe('next');
             expect($document['suggestion']['type'])->toBe('feature');
             expect($document['suggestion']['run'])->toContain('generate "a feature for deleting_a_task"');
             expect($tester->getDisplay())->not()->toContain('Would you like');

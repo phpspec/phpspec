@@ -137,6 +137,20 @@ describe(Generate::class, function () {
         expect($book['offers'][0]['data']['content'])->toContain('class Calc');
     });
 
+    it('refuses when the model does not answer, on the channel its reader reads', function (Filesystem $fs) use ($withAi) {
+        allow($fs->write());
+        $pretty = new CommandTester(new Generate($withAi(), $fs, new ReplayProvider([new RuntimeException('Google API error (500): boom')])));
+        $agent = new CommandTester(new Generate($withAi(), $fs, new ReplayProvider([new RuntimeException('Google API error (500): boom')])));
+
+        $pretty->execute(['instruction' => ['a', 'Calc', 'class']], ['interactive' => false]);
+        $agent->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
+
+        expect($pretty->getStatusCode())->toBe(1);
+        expect($pretty->getDisplay())->toContain('The model did not answer: Google API error (500): boom');
+        expect($agent->getStatusCode())->toBe(1);
+        expect(json_decode(trim($agent->getDisplay()), true))->toBe(['v' => 2, 'action' => 'generate', 'error' => 'The model did not answer: Google API error (500): boom']);
+    });
+
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {
         allow($fs->write());
         $cmd = new Generate($withAi(), $fs, new ReplayProvider());

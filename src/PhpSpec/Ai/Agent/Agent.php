@@ -413,10 +413,10 @@ final class Agent
     {
         $fallback = $this->registry->featureFallback($step);
         if ($fallback !== null) {
-            return new Outcome($step, [$fallback], $error);
+            return new Outcome($step, [$fallback], $error, failure: $error);
         }
 
-        return new Outcome($step, [], $error);
+        return new Outcome($step, [], $error, failure: $error);
     }
 
     /**

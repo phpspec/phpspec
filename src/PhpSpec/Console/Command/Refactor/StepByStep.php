@@ -17,6 +17,7 @@ namespace PhpSpec\Console\Command\Refactor;
 use Closure;
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Console\Consent;
 use RuntimeException;

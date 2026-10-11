@@ -23,6 +23,7 @@ use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Request;
 use PhpSpec\Ai\Agent\Step;
 use PhpSpec\Ai\Contracts\ProviderInterface;
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\CodeGeneration\StepsHome;
@@ -115,7 +116,11 @@ final class Next extends Command
             $output->writeln('');
         }
 
-        $suggestion = $this->getSuggestion($aiConfig);
+        try {
+            $suggestion = $this->getSuggestion($aiConfig);
+        } catch (ModelFailedException $e) {
+            return $this->refuse($output, $forAgent, $e->getMessage());
+        }
 
         // 4. Validate — if we got no target and no reason, the response was unusable
         if ($suggestion['target'] === '' && $suggestion['reason'] === '') {
@@ -240,6 +245,8 @@ final class Next extends Command
      *
      * @param array{provider: string, model?: string, api_key?: string} $aiConfig
      * @return array{type: string, target: string, reason: string}
+     *
+     * @throws ModelFailedException
      */
     private function getSuggestion(array $aiConfig): array
     {
@@ -262,6 +269,10 @@ final class Next extends Command
 
         $agent = new Agent($this->config, $this->filesystem, $this->provider);
         $outcome = $agent->chat('next', '', $grounding);
+
+        if ($outcome->failure !== null) {
+            throw new ModelFailedException(sprintf('The model did not answer: %s', $outcome->failure));
+        }
 
         $reason = (string) ($outcome->data['reason'] ?? '');
 

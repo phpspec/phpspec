@@ -1,11 +1,11 @@
 <?php
 
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
-use PhpSpec\Console\Command\Refactor\ModelFailedException;
 use PhpSpec\Console\Command\Refactor\PlannedStep;
 use PhpSpec\Console\Command\Refactor\RefactorModel;
 use PhpSpec\Console\Command\Refactor\RefactorPlan;
