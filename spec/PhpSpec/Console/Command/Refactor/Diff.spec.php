@@ -200,6 +200,18 @@ describe(Diff::class, function () {
             expect($output)->not()->toContain('...');
         });
 
+        it('numbers the lines of the file as it will be, a removed line having none', function () {
+            $output = Diff::format(Diff::compute(['<?php', 'use Gone;', '', 'final class Pricer', '{'], ['<?php', 'final class Pricer', '{']));
+
+            expect(explode("\n", $output))->toBe([
+                '  <fg=gray>   1   <?php</>',
+                '  <fg=red>     - use Gone;</>',
+                '  <fg=red>     - </>',
+                '  <fg=gray>   2   final class Pricer</>',
+                '  <fg=gray>   3   {</>',
+            ]);
+        });
+
         it('pads line numbers to 4 characters', function () {
             $diff = [['type' => '+', 'line' => 5, 'text' => 'line']];
             $output = Diff::format($diff);

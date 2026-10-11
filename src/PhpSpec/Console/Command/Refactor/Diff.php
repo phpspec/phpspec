@@ -166,7 +166,8 @@ final class Diff
      * Formats diff entries as a colored string for console output: each change
      * with three unchanged lines around it, and one elision line between
      * stretches too far apart to touch. A file whose every line changed (a new
-     * file) therefore shows in full.
+     * file) therefore shows in full. The numbers are lines of the file as it
+     * will be, so a removed line has none.
      *
      * @param array<array{type: string, line: int, text: string}> $diff
      */
@@ -188,7 +189,7 @@ final class Diff
             }
             $skipped = false;
 
-            $lineNum = str_pad((string) $entry['line'], 4, ' ', STR_PAD_LEFT);
+            $lineNum = str_pad($entry['type'] === '-' ? '' : (string) $entry['line'], 4, ' ', STR_PAD_LEFT);
             if ($entry['type'] === '+') {
                 $lines[] = "  <fg=green>$lineNum + {$entry['text']}</>";
             } elseif ($entry['type'] === '-') {
