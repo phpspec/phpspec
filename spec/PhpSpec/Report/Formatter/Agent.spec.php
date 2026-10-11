@@ -574,6 +574,40 @@ describe(Agent::class, function () {
         expect($doc['result']['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', 'spec/App/Basket.spec.php:20', '--format=agent']);
     });
 
+    it('reruns with the options the run was started with, so the rerun sees the same project', function () use ($stream) {
+        $output = new BufferedOutput();
+        $agent = new Agent($output);
+        $agent->rerunsWith(['--config=conf/qa.yml', '--bootstrap=conf/boot.php']);
+        $agent->format(new SuiteResult([
+            new SpecificationResult('App\\Basket', [
+                new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 12)]),
+            ]),
+        ]));
+        $doc = $stream($output->fetch());
+
+        expect($doc['examples'][0]['rerun'])->toBe('run spec/App/Basket.spec.php:12 --config=conf/qa.yml --bootstrap=conf/boot.php');
+        expect($doc['examples'][0]['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', '--format=agent', '--config=conf/qa.yml', '--bootstrap=conf/boot.php']);
+        expect($doc['result']['rerun'])->toBe('run spec/App/Basket.spec.php:12 --config=conf/qa.yml --bootstrap=conf/boot.php');
+        expect($doc['result']['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', '--format=agent', '--config=conf/qa.yml', '--bootstrap=conf/boot.php']);
+    });
+
+    it('quotes an argument a shell would split or expand in the line to paste, and leaves the arguments as they are', function () use ($stream) {
+        $output = new BufferedOutput();
+        $agent = new Agent($output);
+        $agent->rerunsWith(["--config=my conf/it's.yml"]);
+        $agent->format(new SuiteResult([
+            new SpecificationResult('App\\Basket', [
+                new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/My App/Basket.spec.php', 12)]),
+                new ExampleResult('adds', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 20)]),
+            ]),
+        ]));
+        $doc = $stream($output->fetch());
+
+        expect($doc['examples'][0]['rerun'])->toBe("run 'spec/My App/Basket.spec.php:12' '--config=my conf/it'\\''s.yml'");
+        expect($doc['examples'][0]['rerun_argv'])->toBe(['run', 'spec/My App/Basket.spec.php:12', '--format=agent', "--config=my conf/it's.yml"]);
+        expect($doc['result']['rerun'])->toBe("run 'spec/My App/Basket.spec.php:12' spec/App/Basket.spec.php:20 '--config=my conf/it'\\''s.yml'");
+    });
+
     it('keeps an entry whole when a compared value is a float JSON cannot hold', function () use ($render) {
         $match = MatchResult::failed(INF, 1.0, 'Expected INF to be 1.0', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe');
 

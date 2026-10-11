@@ -207,6 +207,7 @@ final class Run extends Command implements InternalOptions
         $document = $formatter instanceof Agent ? $formatter : null;
         $prose = $document !== null ? new BufferedOutput() : $output;
         $document?->targets($files);
+        $document?->rerunsWith($this->rerunOptions($input));
 
         // PHP prints a fatal to standard output as well as the error stream, and
         // standard output is the document's. Sending its own reports to the error
@@ -655,6 +656,19 @@ final class Run extends Command implements InternalOptions
         require $bootstrap;
 
         return null;
+    }
+
+    /**
+     * The options this run was started with that a rerun needs to run against
+     * the same project: the config it was named, and the bootstrap it was given.
+     *
+     * @return list<string>
+     */
+    private function rerunOptions(Input $input): array
+    {
+        $bootstrap = $input->getOption('bootstrap');
+
+        return [...$this->config->childOptions(), ...(is_string($bootstrap) ? ['--bootstrap=' . $bootstrap] : [])];
     }
 
     private function registerAutoloader(): void

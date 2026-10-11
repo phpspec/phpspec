@@ -449,6 +449,13 @@ describe(Configuration::class, function () {
         expect((new Configuration())->childOptions())->toBe([]);
     });
 
+    it('leaves a file it found by itself to be found again by the phpspec it starts', function (Filesystem $fs) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yml');
+        allow($fs->read(any()))->toReturn("spec_path: altspec\n");
+
+        expect(Configuration::load('/app', $fs)->childOptions())->toBe([]);
+    });
+
     it('names the guard key it does not know, and the one it thinks was meant', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,

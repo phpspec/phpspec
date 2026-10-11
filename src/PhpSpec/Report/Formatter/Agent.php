@@ -54,6 +54,9 @@ final class Agent extends AbstractFormatter
     /** @var list<string> what each reported entry re-runs, for the summary's one command */
     private array $rerunTargets = [];
 
+    /** @var list<string> the options the run was started with that set up the project it ran */
+    private array $rerunOptions = [];
+
     /** @var array<string, int> tally of every unit by state, including passing */
     private array $counts = [];
 
@@ -142,6 +145,18 @@ final class Agent extends AbstractFormatter
     public function randomisedWith(int $seed): void
     {
         $this->seed = $seed;
+    }
+
+    /**
+     * Tells the formatter the options the run was started with that set up
+     * the project it ran (a named config, a bootstrap), so every rerun it
+     * hands over runs against the same one.
+     *
+     * @param list<string> $options
+     */
+    public function rerunsWith(array $options): void
+    {
+        $this->rerunOptions = $options;
     }
 
     /**
@@ -385,8 +400,7 @@ final class Agent extends AbstractFormatter
         // to paste and as the arguments to hand a process.
         $targets = array_values(array_unique($this->rerunTargets));
         if ($targets !== []) {
-            $summary['rerun'] = 'run ' . implode(' ', $targets);
-            $summary['rerun_argv'] = ['run', ...$targets, '--format=agent'];
+            $summary += $this->rerunOf($targets);
         }
 
         if ($this->guard !== null && !$this->guard->held()) {
@@ -511,9 +525,9 @@ final class Agent extends AbstractFormatter
 
         $this->start();
 
-        $rerun = $entry['rerun'] ?? null;
-        if ($needsAttention && is_string($rerun)) {
-            $this->rerunTargets[] = substr($rerun, strlen('run '));
+        $rerun = $entry['rerun_argv'] ?? null;
+        if ($needsAttention && is_array($rerun) && is_string($rerun[1] ?? null)) {
+            $this->rerunTargets[] = $rerun[1];
         }
 
         $this->emit($entry);
@@ -936,9 +950,37 @@ final class Agent extends AbstractFormatter
     {
         if ($spec !== null && $rerun !== null) {
             $entry['spec'] = $spec;
-            $entry['rerun'] = 'run ' . $rerun;
-            $entry['rerun_argv'] = ['run', $rerun, '--format=agent'];
+            $entry += $this->rerunOf([$rerun]);
         }
+    }
+
+    /**
+     * The command that re-runs the targets against the project this run saw:
+     * as a line to paste, each argument a shell would split or expand quoted,
+     * and as the arguments to hand a process, which need no quoting.
+     *
+     * @param list<string> $targets
+     * @return array{rerun: string, rerun_argv: list<string>}
+     */
+    private function rerunOf(array $targets): array
+    {
+        return [
+            'rerun' => implode(' ', array_map($this->shellWord(...), ['run', ...$targets, ...$this->rerunOptions])),
+            'rerun_argv' => ['run', ...$targets, '--format=agent', ...$this->rerunOptions],
+        ];
+    }
+
+    /**
+     * An argument as a POSIX shell reads it back unchanged: bare when it holds
+     * nothing a shell splits or expands, else in single quotes.
+     */
+    private function shellWord(string $argument): string
+    {
+        if (preg_match('~^[A-Za-z0-9_@%+=:,./-]+$~', $argument) === 1) {
+            return $argument;
+        }
+
+        return "'" . str_replace("'", "'\\''", $argument) . "'";
     }
 
     /**

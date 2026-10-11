@@ -1183,3 +1183,145 @@ Feature: Agent output format
     Then the exit code should be 1
     And the output should be valid JSON
     And the output should contain "ai expects a map"
+
+  Scenario: A rerun keeps the config the run was named, and replays the same failure
+    Given a file "configured/custom.json":
+      """
+      {"bootstrap": "configured/bootstrap.php"}
+      """
+    And a file "configured/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "configured/Bootstrapped.spec.php":
+      """
+      <?php
+      describe('Bootstrapped', function () {
+          it('sees the bootstrap', function () {
+              expect(AGENT_PROBE_BOOTSTRAPPED)->toBe('no');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "configured/Bootstrapped.spec.php:3 --format=agent --config configured/custom.json"
+    Then the reported entry should rerun as "run configured/Bootstrapped.spec.php:3 --config=configured/custom.json"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      configured/Bootstrapped.spec.php:3
+      --format=agent
+      --config=configured/custom.json
+      """
+    And the summary should rerun as "run configured/Bootstrapped.spec.php:3 --config=configured/custom.json"
+    And the summary should rerun with the arguments:
+      """
+      run
+      configured/Bootstrapped.spec.php:3
+      --format=agent
+      --config=configured/custom.json
+      """
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported
+
+  Scenario: A rerun keeps the bootstrap the run was given, and replays the same failure
+    Given a file "configured/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "spec/Bootstrapped.spec.php":
+      """
+      <?php
+      describe('Bootstrapped', function () {
+          it('sees the bootstrap', function () {
+              expect(AGENT_PROBE_BOOTSTRAPPED)->toBe('no');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/Bootstrapped.spec.php:3 --format=agent -b configured/bootstrap.php"
+    Then the reported entry should rerun as "run spec/Bootstrapped.spec.php:3 --bootstrap=configured/bootstrap.php"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      spec/Bootstrapped.spec.php:3
+      --format=agent
+      --bootstrap=configured/bootstrap.php
+      """
+    And the summary should rerun as "run spec/Bootstrapped.spec.php:3 --bootstrap=configured/bootstrap.php"
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported
+
+  Scenario: A rerun keeps both the config and the bootstrap the run was given
+    Given a file "configured/custom.json":
+      """
+      {"autoload": {"Probe\\": "configured/lib/Probe"}}
+      """
+    And a class "configured/lib/Probe/Meter.php":
+      """
+      <?php
+      namespace Probe;
+      class Meter
+      {
+          public function reading(): int
+          {
+              return 3;
+          }
+      }
+      """
+    And a file "configured/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_LEVEL', 4);
+      """
+    And a spec file "configured/Meter.spec.php":
+      """
+      <?php
+      describe('Probe\Meter', function () {
+          it('reads the level', function () {
+              expect((new Probe\Meter())->reading())->toBe(AGENT_PROBE_LEVEL);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "configured/Meter.spec.php:3 --format=agent --config configured/custom.json -b configured/bootstrap.php"
+    Then the reported entry should rerun as "run configured/Meter.spec.php:3 --config=configured/custom.json --bootstrap=configured/bootstrap.php"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      configured/Meter.spec.php:3
+      --format=agent
+      --config=configured/custom.json
+      --bootstrap=configured/bootstrap.php
+      """
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported
+
+  Scenario: A rerun quotes a path holding a space in the line to paste, never in the arguments
+    Given a file "my config/custom.json":
+      """
+      {"bootstrap": "my config/bootstrap.php"}
+      """
+    And a file "my config/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "my specs/Bootstrapped.spec.php":
+      """
+      <?php
+      describe('Bootstrapped', function () {
+          it('sees the bootstrap', function () {
+              expect(AGENT_PROBE_BOOTSTRAPPED)->toBe('no');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "'my specs/Bootstrapped.spec.php:3' --format=agent --config 'my config/custom.json'"
+    Then the reported entry should rerun as "run 'my specs/Bootstrapped.spec.php:3' '--config=my config/custom.json'"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      my specs/Bootstrapped.spec.php:3
+      --format=agent
+      --config=my config/custom.json
+      """
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported

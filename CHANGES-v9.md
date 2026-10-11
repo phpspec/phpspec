@@ -71,6 +71,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
+ - An agent `rerun` and `rerun_argv` carry the `--config` the run was named and the `--bootstrap` it was given, where they dropped both and re-ran against another setup; the line to paste single-quotes a path a shell would split
  - `toBeEmpty()` takes a `Countable` by its count, as documented, where an empty `ArrayObject` failed and its negation passed, and a failure on one wants `[]`; a string is empty only with no characters, so `'0'`, which PHP's `empty()` calls empty, is not; an iterator that is not `Countable` is refused rather than advanced
  - `toHaveKey()` takes an integer key in a spec that declares strict types, as documented, where it threw a TypeError
  - Line selectors add up: a line that runs a whole context keeps every example in it, nested contexts included, where another selector inside one of its examples narrowed it to that one; an example at the top of a file runs by its line, where it ran nothing

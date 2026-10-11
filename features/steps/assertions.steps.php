@@ -273,6 +273,38 @@ then('the step {string} should carry the {word} {string} raised at {string}', fu
     expect($steps[0][$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
 });
 
+// What re-runs a report, as the line to paste and as the arguments to hand a
+// process, one argument per line.
+then('the reported entry should rerun as {string}', function (string $line) use ($events, $entries) {
+    expect($entries($events($this->stdout ?? $this->output))[0]['rerun'] ?? null)->toBe($line);
+});
+
+then('the reported entry should rerun with the arguments:', function (string $arguments) use ($events, $entries) {
+    expect($entries($events($this->stdout ?? $this->output))[0]['rerun_argv'] ?? null)->toBe(preg_split('/\R/', $arguments));
+});
+
+then('the summary should rerun as {string}', function (string $line) use ($events) {
+    $stream = $events($this->stdout ?? $this->output);
+
+    expect((end($stream) ?: [])['rerun'] ?? null)->toBe($line);
+});
+
+then('the summary should rerun with the arguments:', function (string $arguments) use ($events) {
+    $stream = $events($this->stdout ?? $this->output);
+
+    expect((end($stream) ?: [])['rerun_argv'] ?? null)->toBe(preg_split('/\R/', $arguments));
+});
+
+// A rerun reproduces a failure when it reports the same example failing the
+// same way, not merely failing.
+then('the replay should report the failure the run reported', function () use ($events, $entries) {
+    $failure = fn(array $entry): array => array_intersect_key($entry, array_flip(['id', 'state', 'message', 'expectation']));
+    $original = $failure($entries($events($this->original))[0] ?? []);
+
+    expect($original['state'] ?? null)->toBe('failing');
+    expect($failure($entries($events($this->stdout))[0] ?? []))->toBe($original);
+});
+
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
 then('the failing entries should have distinct ids', function () use ($events, $entries) {
