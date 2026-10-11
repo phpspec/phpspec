@@ -80,7 +80,7 @@ describe(Refactor::class, function () {
             $before = $this->project->files;
 
             $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction', 'Describe LoyaltyDiscount')], [$this->green], ['n']);
-            $display = $tester->getDisplay();
+            $display = $tester->getDisplay(true);
 
             expect($tester->getStatusCode())->toBe(0);
             expect($display)->toContain('  Checking the specs...');
@@ -116,7 +116,7 @@ describe(Refactor::class, function () {
                 ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\nnamespace App\\Checkout;\n\ninterface DiscountPolicy {}\n"]),
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php\nnamespace App\\Checkout;\n\nfinal class CheckoutService { /* policy */ }\n"]),
             ], [$this->green, $this->green, $this->green], attended: false);
-            $display = $tester->getDisplay();
+            $display = $tester->getDisplay(true);
 
             expect($tester->getStatusCode())->toBe(0);
             expect($display)->not()->toContain('Plan:');
@@ -156,7 +156,7 @@ describe(Refactor::class, function () {
                 ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\nnamespace App\\Checkout;\n\ninterface DiscountPolicy {}\n"]),
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php\nnamespace App\\Checkout;\n\nfinal class CheckoutService { /* policy */ }\n"]),
             ], [$this->green, $this->green, $this->green], ['', '', '']);
-            $display = $tester->getDisplay();
+            $display = $tester->getDisplay(true);
 
             expect($tester->getStatusCode())->toBe(0);
             expect($display)->toMatch('/Doing Introduce a DiscountPolicy abstraction… \(\d+s · ↓ 900 tokens\)\n  ◼ Introduce a DiscountPolicy abstraction\n  ◻ Use it in CheckoutService\n/');
@@ -188,7 +188,7 @@ describe(Refactor::class, function () {
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // first try\n"]),
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // fixed\n"]),
             ], [$this->green, ($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100'), $this->green], ['', '', '']);
-            $display = $tester->getDisplay();
+            $display = $tester->getDisplay(true);
 
             expect($tester->getStatusCode())->toBe(0);
             expect($display)->toContain('  Specs failed ✘, asking for a fix...');
@@ -207,7 +207,7 @@ describe(Refactor::class, function () {
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // one example fewer\n"]),
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // still one fewer\n"]),
             ], [$examples(4), $examples(3), $examples(3)], ['', '', '']);
-            $display = $tester->getDisplay();
+            $display = $tester->getDisplay(true);
 
             expect($tester->getStatusCode())->toBe(1);
             expect($display)->toContain('  Examples lost ✘, asking for a fix...');
