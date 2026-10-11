@@ -296,7 +296,8 @@ tests, it leaves the exit code at `0`.
 
 ### `fatal`: when the run could not finish
 
-A run that never started (a missing bootstrap, an unknown format) or that died
+A run that never started (a missing bootstrap, an unknown format, a config that
+cannot be taken, an option `run` does not take or one missing its value) or that died
 partway (a parse error, a class that fails to compile) still answers. It emits a
 `fatal` line of `{ "message", "at", "remedy"? }`, keeps whatever it managed to
 collect, and counts 1 in `actionable`. `remedy` is present when the way past is
@@ -402,8 +403,11 @@ bin/phpspec describe App/Basket --agent
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":true}
 ```
 
-A name under none of the mapped namespaces, with no `default_namespace` to
-put it under, is refused with the remedy, exit code 1:
+A command line the command cannot read (an option it does not take, an argument
+too many, a command that does not exist) is refused the same way, as
+`{ "v", "action", "error" }` with exit code 1, and nothing else on standard
+output. A name under none of the mapped namespaces, with no `default_namespace`
+to put it under, is refused with the remedy, exit code 1:
 
 ```json
 {"v":2,"action":"describe","error":"Acme\\Thing is under none of the mapped namespaces: Brew\\.","remedy":"Describe Brew\\Acme\\Thing, name a default_namespace in the phpspec config to put every such name under, or answer when asked which one."}

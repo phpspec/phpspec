@@ -1174,6 +1174,47 @@ Feature: Agent output format
     And the first event should be "run_started"
     And the output should contain "ai expects a map"
 
+  Scenario: An option run does not take answers a coding agent in JSON, on standard output alone
+    When I run phpspec run in a fresh process with option "--format=agent --definitely-unknown-option"
+    Then the exit code should be 1
+    And the standard output should be valid JSON
+    And the output should have 3 events
+    And the first event should be "run_started"
+    And the fatal event should say:
+      """
+      The "--definitely-unknown-option" option does not exist.
+      """
+    And the last event should be "summary"
+    And the summary should state "actionable" as "1"
+
+  Scenario Outline: A command line run cannot read answers a coding agent in JSON
+    When I run phpspec command "<command line>" in a fresh process
+    Then the exit code should be 1
+    And the standard output should be valid JSON
+    And the output should have 3 events
+    And the first event should be "run_started"
+    And the fatal event should name "<culprit>"
+    And the summary should state "actionable" as "1"
+
+    Examples:
+      | command line                 | culprit |
+      | run -f agent --seed          | --seed  |
+      | run --format agent --all=yes | --all   |
+      | run -fagent -x               | -x      |
+
+  Scenario Outline: A command line a receipt command cannot read answers its agent in JSON
+    When I run phpspec command "<command line>" in a fresh process
+    Then the exit code should be 1
+    And the standard output should be valid JSON
+    And the only receipt should be an error naming "<culprit>"
+
+    Examples:
+      | command line                                      | culprit                 |
+      | describe App/Basket --agent --no-such-option      | --no-such-option        |
+      | describe App/Basket App/Other --format=agent      | Too many arguments      |
+      | generate --format=agent --no-such-option a spec   | --no-such-option        |
+      | rnu --format=agent                                | is not defined          |
+
   Scenario: A configuration that cannot be taken answers a receipt command's agent in JSON
     Given a phpspec.yaml config:
       """

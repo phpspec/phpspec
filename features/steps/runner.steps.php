@@ -127,6 +127,12 @@ when('I run phpspec run in a fresh process', function () {
     _phpspec_exec_subprocess($this, 'run');
 });
 
+// A command line exactly as a shell hands it over, in a process of its own, so
+// standard output is read apart from the error stream.
+when('I run phpspec command {string} in a fresh process', function (string $command) {
+    _phpspec_exec_subprocess($this, $command);
+});
+
 // The rerun a report hands over, run exactly as handed: its arguments go to a
 // process of their own, started where the run was. The run's own report is
 // kept to compare the replay with.

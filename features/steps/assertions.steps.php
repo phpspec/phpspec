@@ -305,6 +305,32 @@ then('the replay should report the failure the run reported', function () use ($
     expect($failure($entries($events($this->stdout))[0] ?? []))->toBe($original);
 });
 
+// What stopped a run short, as the one fatal event in the stream says it.
+$fatal = static function (array $events): array {
+    $fatals = array_values(array_filter($events, fn(array $event) => ($event['event'] ?? null) === 'fatal'));
+
+    expect($fatals)->toHaveLength(1);
+
+    return $fatals[0];
+};
+
+then('the fatal event should say:', function (string $message) use ($events, $fatal) {
+    expect($fatal($events($this->stdout ?? $this->output))['message'] ?? null)->toBe($message);
+});
+
+then('the fatal event should name {string}', function (string $culprit) use ($events, $fatal) {
+    expect($fatal($events($this->stdout ?? $this->output))['message'] ?? '')->toContain($culprit);
+});
+
+// A command that answers with one receipt says what it could not do in its
+// error, never in prose around it.
+then('the only receipt should be an error naming {string}', function (string $culprit) use ($events) {
+    $receipts = $events($this->stdout ?? $this->output);
+
+    expect($receipts)->toHaveLength(1);
+    expect($receipts[0]['error'] ?? '')->toContain($culprit);
+});
+
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
 then('the failing entries should have distinct ids', function () use ($events, $entries) {

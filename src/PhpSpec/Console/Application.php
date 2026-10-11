@@ -41,6 +41,7 @@ use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Runner;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Exception\ExceptionInterface as ConsoleException;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -87,39 +88,42 @@ final class Application extends BaseApplication
     }
 
     /**
-     * Returns the default commands including the PhpSpec run and describe commands.
-     *
-     * @return array<Command> the list of default console commands
-     */
-    /**
      * A configuration that cannot be taken as written is said in one line,
      * naming the file, where the console would otherwise box the exception
-     * with the source file it was thrown from.
+     * with the source file it was thrown from. A command line the console
+     * cannot read (an option the command does not take, a value missing, a
+     * command that does not exist) is the console's to explain to a person,
+     * and answers a coding agent on its own channel like any other refusal.
      */
     public function doRun(InputInterface $input, OutputInterface $output): int
     {
         try {
             return parent::doRun($input, $output);
         } catch (ConfigurationException $e) {
-            return $this->refuseConfiguration($input, $output, $e->getMessage());
+            return $this->refuse($input, $output, $e->getMessage());
+        } catch (ConsoleException $e) {
+            if (!$this->answersAnAgent($input)) {
+                throw $e;
+            }
+
+            return $this->refuse($input, $output, $e->getMessage());
         }
     }
 
     /**
-     * Says the configuration cannot be taken, on the channel the caller
-     * reads: a coding agent gets a run's fatal and summary, or a command's
-     * error receipt, rather than prose in its JSON.
+     * Says what stops the command before it starts, on the channel the
+     * caller reads: a coding agent gets a run's fatal and summary, or a
+     * command's error receipt, rather than prose in its JSON.
      */
-    private function refuseConfiguration(InputInterface $input, OutputInterface $output, string $problem): int
+    private function refuse(InputInterface $input, OutputInterface $output, string $problem): int
     {
-        $forAgent = $input->getParameterOption(['--format', '-f'], 'pretty', true) === 'agent' || $input->hasParameterOption('--agent', true);
-        $command = $input->getFirstArgument() ?? 'run';
-
-        if (!$forAgent) {
+        if (!$this->answersAnAgent($input)) {
             $output->writeln(sprintf('<fg=red>%s</>', $problem));
 
             return 1;
         }
+
+        $command = $input->getFirstArgument() ?? 'run';
 
         if ($command === 'run') {
             $document = new Agent($output);
@@ -134,6 +138,20 @@ final class Application extends BaseApplication
         return 1;
     }
 
+    /**
+     * Whether the caller reads the agent format, as the raw command line asks
+     * for it: the input may be past reading against any definition.
+     */
+    private function answersAnAgent(InputInterface $input): bool
+    {
+        return $input->getParameterOption(['--format', '-f'], 'pretty', true) === 'agent' || $input->hasParameterOption('--agent', true);
+    }
+
+    /**
+     * Returns the default commands including the PhpSpec run and describe commands.
+     *
+     * @return array<Command> the list of default console commands
+     */
     public function getDefaultCommands(): array
     {
         $config = Configuration::load('.', configFile: Configuration::configPathFromArgv($this->argv));
