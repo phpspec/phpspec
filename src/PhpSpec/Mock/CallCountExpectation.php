@@ -77,16 +77,6 @@ final class CallCountExpectation
     }
 
     /**
-     * Asserts the method was never called.
-     */
-    public function never(): self
-    {
-        $this->constraint = 'exactly';
-        $this->count = 0;
-        return $this;
-    }
-
-    /**
      * Begins an exactly(N)->times() constraint.
      */
     public function exactly(int $n): CallCountIntermediate

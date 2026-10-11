@@ -57,14 +57,6 @@ final readonly class ArgumentMatcher
     }
 
     /**
-     * Creates a matcher that requires no arguments were passed.
-     */
-    public static function noArgs(): self
-    {
-        return new self('noArgs');
-    }
-
-    /**
      * Creates a matcher that matches all remaining arguments in a call.
      * Must be the last matcher in the expected args list.
      */
@@ -136,7 +128,7 @@ final readonly class ArgumentMatcher
     public function matches(mixed $actual): bool
     {
         return match ($this->type) {
-            'any', 'noArgs', 'cetera' => true,
+            'any', 'cetera' => true,
             'type' => get_debug_type($actual) === $this->value || ($actual instanceof $this->value),
             'callback' => ($this->value)($actual),
             'instanceOf' => $actual instanceof $this->value,
@@ -172,27 +164,14 @@ final readonly class ArgumentMatcher
     }
 
     /**
-     * Returns true if this matcher is the noArgs() constraint.
-     */
-    public function isNoArgs(): bool
-    {
-        return $this->type === 'noArgs';
-    }
-
-    /**
-     * Matches an actual argument list against an expected pattern.
-     * Handles noArgs (single-element check for empty actual) and
-     * cetera (return true when reached, matching all remaining args).
+     * Matches an actual argument list against an expected pattern, cetera()
+     * matching all the arguments from where it stands.
      *
      * @param array<int|string, mixed> $actual the arguments that were actually passed
      * @param array<int|string, mixed> $expected the expected argument pattern (may include matchers)
      */
     public static function matchArgs(array $actual, array $expected): bool
     {
-        // noArgs: single-element expected with noArgs matcher
-        if (count($expected) === 1 && $expected[0] instanceof self && $expected[0]->isNoArgs()) {
-            return count($actual) === 0;
-        }
 
         foreach ($expected as $i => $exp) {
             // cetera: matches all remaining args from this position

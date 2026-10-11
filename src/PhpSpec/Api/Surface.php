@@ -57,7 +57,7 @@ final readonly class Surface
 
     private const MOCK_FUNCTIONS = ['mock', 'allow'];
 
-    private const ARGUMENT_MATCHERS = ['any', 'type', 'anInstanceOf', 'arrayIncluding', 'satisfy', 'callback', 'startWith', 'cetera', 'noArgs'];
+    private const ARGUMENT_MATCHERS = ['any', 'type', 'anInstanceOf', 'arrayIncluding', 'satisfy', 'callback', 'startWith', 'cetera'];
 
     private const STORY_STEPS = ['given', 'when', 'then', 'step_and', 'step_but'];
 
@@ -71,7 +71,7 @@ final readonly class Surface
         'Expectations are judged at the end of the example, in the order written; the failure detail shows the first that did not hold.',
         'expect() captures its subject when called: a value the body reassigns afterwards is not seen, an object the body mutates afterwards is.',
         'toThrow() runs its callable where the expectation is written, so what follows sees what it did; only the verdict waits.',
-        'Mock expectations (toBeCalled, toBeCalledTimes) judge the calls made during the whole example.',
+        'Mock expectations (toBeCalled and its counts) judge the calls made during the whole example.',
         'let() values are built afresh before each example and read through $this; a let() closure that throws fails that example alone.',
     ];
 

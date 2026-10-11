@@ -91,7 +91,7 @@ Feature: Mocking
     And a spec with example:
       """
       $counter = mock(App\Counter::class);
-      expect($counter->increment())->toBeCalledTimes(3);
+      expect($counter->increment())->toBeCalled()->exactly(3)->times();
       $counter->increment();
       $counter->increment();
       $counter->increment();

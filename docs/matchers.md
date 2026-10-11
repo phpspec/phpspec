@@ -392,9 +392,9 @@ Declared before the act, judged when the example ends: the method was called at 
 
 Asked after the act, judged at once from the calls recorded so far. The call needs an `allow()` before the act.
 
-### `toBeCalledTimes(int $count)`
+### Counting calls
 
-Verifies the exact number of times a method was called.
+`toBeCalled()->once()`, `->twice()`, `->exactly(3)->times()`, `->atLeast(2)->times()`, `->atMost(2)->times()`; a call that must not happen is `not()->toBeCalled()`.
 
 ### `toReturn(mixed $value)`
 

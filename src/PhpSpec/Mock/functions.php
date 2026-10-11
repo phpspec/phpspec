@@ -88,14 +88,6 @@ function callback(Closure $fn): ArgumentMatcher
 }
 
 /**
- * Creates an argument matcher that requires no arguments were passed.
- */
-function noArgs(): ArgumentMatcher
-{
-    return ArgumentMatcher::noArgs();
-}
-
-/**
  * Creates an argument matcher that matches all remaining arguments.
  */
 function cetera(): ArgumentMatcher

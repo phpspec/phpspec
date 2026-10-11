@@ -69,15 +69,11 @@ describe(Expectation::class, function() {
         $service->store('hello', 1);
     });
 
-    it("has no toBeCalledWith(): the arguments are written in the call", function(ExpectationSpecService $service) {
+    it("has no second way to say what the call and toBeCalled() already say", function(ExpectationSpecService $service) {
         expect(fn() => expect($service->store('a', 1))->toBeCalledWith('a', 1))->toThrow(\BadMethodCallException::class);
-    });
-
-    it("verifies toBeCalledTimes", function(ExpectationSpecService $service) {
-        expect($service->save())->toBeCalledTimes(3);
-        $service->save();
-        $service->save();
-        $service->save();
+        expect(method_exists(Expectation::class, 'toBeCalledTimes'))->toBeFalse();
+        expect(method_exists(\PhpSpec\Mock\CallCountExpectation::class, 'never'))->toBeFalse();
+        expect(function_exists('noArgs'))->toBeFalse();
     });
 
     it("stubs return value with allow", function(ExpectationSpecService $service) {
@@ -131,7 +127,7 @@ describe(Expectation::class, function() {
     });
 
     it("counts only the calls that match the arguments it was written with", function(ExpectationSpecService $service) {
-        expect($service->processWith("expected"))->toBeCalledTimes(1);
+        expect($service->processWith("expected"))->toBeCalled()->once();
 
         $service->processWith("expected");
         $service->processWith("something else");
@@ -205,7 +201,7 @@ describe(Expectation::class, function() {
 
     it("verifies a call stubbed with a callback first", function(ExpectationSpecService $service) {
         allow($service->process())->toReturnUsing(fn() => 'summer');
-        expect($service->process())->toBeCalledTimes(1);
+        expect($service->process())->toBeCalled()->once();
 
         $service->process();
     });
@@ -293,10 +289,6 @@ describe(Expectation::class, function() {
         $service->save();
         $service->save();
         $service->save();
-    });
-
-    it("toBeCalled()->never() passes with zero calls", function(ExpectationSpecService $service) {
-        expect($service->save())->toBeCalled()->never();
     });
 
     it("toBeCalled()->atLeast(2)->times() passes with three calls", function(ExpectationSpecService $service) {

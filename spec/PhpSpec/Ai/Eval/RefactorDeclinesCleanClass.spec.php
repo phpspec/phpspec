@@ -90,7 +90,8 @@ describe('E15 refactor: a clean class is declined, replayed from a live session'
                 });
 
                 it('prices each order line once', function () {
-                    expect($this->menu->priceOf('mocha'))->toBeCalledTimes(1)->toReturn(new Money(300));
+                    allow($this->menu->priceOf('mocha'))->toReturn(new Money(300));
+                    expect($this->menu->priceOf('mocha'))->toBeCalled()->once();
 
                     $this->till->order(3, 'mocha');
                 });

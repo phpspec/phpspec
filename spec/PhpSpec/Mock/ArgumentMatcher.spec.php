@@ -34,23 +34,9 @@ describe(ArgumentMatcher::class, function () {
         });
     });
 
-    describe('noArgs()', function () {
-        it('reports isNoArgs true', function () {
-            expect(ArgumentMatcher::noArgs()->isNoArgs())->toBeTrue();
-        });
-
-        it('is not cetera', function () {
-            expect(ArgumentMatcher::noArgs()->isCetera())->toBeFalse();
-        });
-    });
-
     describe('cetera()', function () {
         it('reports isCetera true', function () {
             expect(ArgumentMatcher::cetera()->isCetera())->toBeTrue();
-        });
-
-        it('is not noArgs', function () {
-            expect(ArgumentMatcher::cetera()->isNoArgs())->toBeFalse();
         });
 
         it('matches() returns true for any value', function () {
@@ -147,14 +133,6 @@ describe(ArgumentMatcher::class, function () {
             expect(ArgumentMatcher::matchArgs([1], [1, 2]))->toBeFalse();
         });
 
-        it('handles noArgs with empty actual', function () {
-            expect(ArgumentMatcher::matchArgs([], [ArgumentMatcher::noArgs()]))->toBeTrue();
-        });
-
-        it('handles noArgs with non-empty actual', function () {
-            expect(ArgumentMatcher::matchArgs([1], [ArgumentMatcher::noArgs()]))->toBeFalse();
-        });
-
         it('handles cetera at end', function () {
             expect(ArgumentMatcher::matchArgs(
                 ['info', 'hello', 'extra'],
@@ -192,7 +170,6 @@ describe(ArgumentMatcher::class, function () {
             expect(ArgumentMatcher::startWith('pre')->describe())->toBe('startWith("pre")');
             expect(ArgumentMatcher::arrayIncluding(['a' => 1])->describe())->toBe('arrayIncluding({"a":1})');
             expect(ArgumentMatcher::callback(fn() => true)->describe())->toBe('callback(...)');
-            expect(ArgumentMatcher::noArgs()->describe())->toBe('noArgs()');
             expect(ArgumentMatcher::cetera()->describe())->toBe('cetera()');
         });
     });

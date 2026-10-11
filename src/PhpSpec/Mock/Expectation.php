@@ -24,7 +24,7 @@ use PhpSpec\Specification\Expectation as BaseExpectation;
 
 /**
  * Mock-specific expectation that extends the standard Expectation with call
- * verification matchers (toBeCalled, toHaveBeenCalled, toBeCalledTimes) and
+ * verification matchers (toBeCalled, toHaveBeenCalled) and
  * stub configuration (toReturn, toThrow).
  */
 final class Expectation extends BaseExpectation
@@ -150,49 +150,6 @@ final class Expectation extends BaseExpectation
         );
     }
 
-
-    /**
-     * Asserts that the mock method was called exactly the specified number of times.
-     *
-     * @param int $times the expected call count
-     * @return $this
-     */
-    public function toBeCalledTimes(int $times): static
-    {
-        $double = $this->getGeneratedDouble();
-        $class = $double->______PhpSpecNameOfClassDoubled();
-        $calls = $double->______PhpSpecGetStubbedCalls();
-        $method = $calls->peek();
-        if ($method === null) {
-            throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalledTimes().');
-        }
-        $methodName = $method->method;
-        $method->unCall();
-        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, $times), MethodMocked::NAME);
-
-        $trace = debug_backtrace()[0];
-        $file = $trace['file'] ?? 'unknown';
-        $line = $trace['line'] ?? 0;
-        $argPattern = $method->arguments;
-
-        return $this->expectation(function () use ($double, $methodName, $argPattern, $times, $class, $file, $line) {
-            $stack = $double->______PhpSpecGetStubbedCalls();
-            $actual = $stack->countCallsToWithArgs($methodName, $argPattern);
-            $comparison = new CallComparison($class, $methodName, $argPattern, "exactly $times", $stack);
-
-            return match (true) {
-                $actual === $times => MatchResult::passed(),
-                default => MatchResult::failed(
-                    $comparison->received(),
-                    $comparison->wanted(),
-                    "Expected $class::$methodName() to be called $times time(s), but was called $actual time(s)",
-                    $file,
-                    $line,
-                    matcher: 'toBeCalledTimes',
-                )
-            };
-        });
-    }
 
 
     /**

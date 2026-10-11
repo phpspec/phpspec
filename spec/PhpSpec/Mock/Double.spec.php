@@ -385,7 +385,7 @@ describe(Double::class, function() {
             allow($stock->reserve('tea', 2));
 
             expect(double_spec_outsider_reserves($stock))->toBeFalse();
-            expect($stock->reserve('tea', 2))->toBeCalledTimes(1);
+            expect($stock->reserve('tea', 2))->toBeCalled()->once();
         });
 
         it("answers a call that expect() declared before the act", function () {
@@ -852,7 +852,6 @@ describe(Double::class, function() {
 
             expect(fn() => $stock->reserve())->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with none can never be made.' . $remedy);
             expect(fn() => $stock->reserve('tea'))->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with 1 can never be made.' . $remedy);
-            expect(fn() => $stock->reserve(noArgs()))->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with none can never be made.' . $remedy);
             expect(fn() => Double::getInstance(DoubleSpecTill::class)->pay())->toThrow(LogicException::class, "DoubleSpecTill::pay() takes at least 1 argument (int \$amount, string \$currency = 'EUR'), so a call written with none can never be made." . $remedy);
         });
 
@@ -874,7 +873,6 @@ describe(Double::class, function() {
             expect(fn() => $stock->reserve('tea', cetera()))->not()->toThrow();
             expect(fn() => $stock->reserve(cetera()))->not()->toThrow();
             expect(fn() => $stock->reserve(cetera(), 2))->toThrow(LogicException::class, 'cetera() stands for the rest of the arguments to DoubleSpecStock::reserve(), so nothing can follow it.');
-            expect(fn() => $stock->reserve(noArgs(), 2))->toThrow(LogicException::class, 'noArgs() stands for a call to DoubleSpecStock::reserve() with no arguments, so nothing can go beside it.');
         });
 
         it("fails a call the code under spec makes with too few arguments, as PHP would, however the method was declared", function () {

@@ -76,17 +76,12 @@ final readonly class Signature
     private function holdWritten(array $arguments): void
     {
         $cetera = $this->positionOf($arguments, static fn(ArgumentMatcher $matcher): bool => $matcher->isCetera());
-        $noArgs = $this->positionOf($arguments, static fn(ArgumentMatcher $matcher): bool => $matcher->isNoArgs());
 
         if ($cetera !== null && $cetera < count($arguments) - 1) {
             throw new LogicException(sprintf('cetera() stands for the rest of the arguments to %s(), so nothing can follow it.', $this->name()));
         }
 
-        if ($noArgs !== null && count($arguments) > 1) {
-            throw new LogicException(sprintf('noArgs() stands for a call to %s() with no arguments, so nothing can go beside it.', $this->name()));
-        }
-
-        $written = $noArgs !== null ? 0 : $cetera ?? count($arguments);
+        $written = $cetera ?? count($arguments);
 
         if ($cetera === null && $written < $this->required) {
             throw new LogicException(sprintf(

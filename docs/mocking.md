@@ -186,17 +186,19 @@ it('saves the user', function (UserRepository $repo) {
 Negated, it asks that the call was not made: `expect($repo->save($other))->not()->toHaveBeenCalled()`.
 
 
-### `toBeCalledTimes(int $count)`
+### Counting calls
 
-Verifies the exact number of times a method was called, counting only calls
-that match the arguments written in the expect call:
+`toBeCalled()` takes how many times, counting the calls that match the
+arguments the call was written with; a call that must not happen is
+`not()->toBeCalled()`:
 
 ```php
-it('calls exactly twice', function (Logger $logger) {
-    expect($logger->log('test'))->toBeCalledTimes(2);
-    $logger->log('test');
-    $logger->log('test');
-});
+expect($logger->log('test'))->toBeCalled()->once();
+expect($logger->log('test'))->toBeCalled()->twice();
+expect($logger->log('test'))->toBeCalled()->exactly(3)->times();
+expect($logger->log('test'))->toBeCalled()->atLeast(2)->times();
+expect($logger->log('test'))->toBeCalled()->atMost(2)->times();
+expect($logger->log('other'))->not()->toBeCalled();
 ```
 
 ## Argument Matchers
@@ -261,14 +263,6 @@ Matches a string argument that starts with the given prefix:
 
 ```php
 expect($logger->log(startWith('ERROR:')))->toBeCalled();
-```
-
-### `noArgs()`
-
-Matches a call made with no arguments at all, as a call written with none does:
-
-```php
-expect($service->flush(noArgs()))->toBeCalled(); // the same as flush()
 ```
 
 ### `cetera()`

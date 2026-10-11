@@ -64,10 +64,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `refactor` works through a plan: the model names the technique, says why and lists baby steps; you approve the plan, then each step as its diffs are shown, and `--no-interaction` carries it out without asking. A new collaborator is described by its own spec first and reached through a double. The whole spec suite runs before the plan and after every step; a step may leave red only the spec it just wrote, and may not leave fewer examples running. A step that breaks anything else gets one fix, then is undone, and however the run stops (a No, Ctrl-C, a model that does not answer) it stops green, undoing the steps since the specs last passed. A class with no spec is refused with the `describe` command that gives it one; when the model declines it says `Nothing to refactor in App\Till:` and why
 ### Removed
  - `toBeCalledWith()`: the arguments are written in the call, matchers included, `expect($logger->log(any()))->toBeCalled()`
+ - `toBeCalledTimes()` and `toBeCalled()->never()`: a count follows `toBeCalled()`, as `->once()`, `->twice()` or `->exactly(3)->times()`, and a call that must not happen is `not()->toBeCalled()`
+ - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
  - A call to a double written with a matcher declares a call and is answered by no stub, where it ran a stub's callback with the matcher; an error a stub's callback raises goes through, where an `ArgumentCountError` was swallowed and the call answered with a default
- - `cetera()` followed by another argument, and `noArgs()` beside one, are refused, where what followed was ignored and `noArgs()` matched any one argument
+ - `cetera()` followed by another argument is refused, where what followed was ignored
  - A stub set through `expect()`, or on the call itself, answers only the call it was written with: `expect($m->pay(1))->toReturn(9)`, its `->toThrow()` and `$m->pay(1)->toReturn(9)` answered `pay(2)` too
  - A JUnit failure or error says, as PHPUnit's does, what failed and where, under its message, where it carried the message alone
  - An AI command without an `ai` section answers a coding agent with the problem as `error` and the section to add as `remedy`, where the example sat inside the error
