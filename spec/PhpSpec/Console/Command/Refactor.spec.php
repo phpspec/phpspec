@@ -143,7 +143,7 @@ describe(Refactor::class, function () {
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('Specs failed ✘, asking for a fix...');
             expect($tester->getDisplay())->not()->toContain('[Y/n]');
-            expect($tester->getDisplay())->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: step 1 is undone.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
         });
     });
@@ -193,7 +193,7 @@ describe(Refactor::class, function () {
             expect($tester->getStatusCode())->toBe(0);
             expect($display)->toContain('  Specs failed ✘, asking for a fix...');
             expect($display)->toContain('spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100');
-            expect($display)->toContain('Apply this fix? [Y/n]');
+            expect($display)->toContain("  Apply this fix?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe("<?php // fixed\n");
             expect(end($this->replay->requests[2]['messages'])->content)->toContain('Expected 90 to be 100');
         });
@@ -212,7 +212,7 @@ describe(Refactor::class, function () {
             expect($tester->getStatusCode())->toBe(1);
             expect($display)->toContain('  Examples lost ✘, asking for a fix...');
             expect($display)->toContain('3 examples ran where 4 did: a refactoring moves or rewrites an example, never drops, skips or leaves one pending.');
-            expect($display)->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect($display)->toContain('Stopped at step 1: step 1 is undone.');
             expect(end($this->replay->requests[2]['messages'])->content)->toContain('3 examples ran where 4 did');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
         });
@@ -255,7 +255,7 @@ describe(Refactor::class, function () {
             ], [$this->green, $this->green, $broken, $broken], ['', '', '', '']);
 
             expect($tester->getStatusCode())->toBe(1);
-            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 2 is undone; step 1 is kept.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
             expect($this->project->files)->not()->toHaveKey($this->cwd . '/src/App/Checkout/LoyaltyDiscount.php');
@@ -272,8 +272,49 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
-            expect($tester->getDisplay())->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: step 1 is undone.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+        });
+
+        it('stops before the first step having written nothing, when that is turned down', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n"]),
+            ], [$this->green], ['', 'n']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('Stopped before step 1: nothing was written.');
+        });
+
+        it('undoes a spec written red first when the step that greens it is turned down, saying so in the No it offers', function () {
+            $before = ($this->code)();
+
+            $tester = ($this->run)([
+                ($this->plan)('Describe LoyaltyDiscount', 'Write LoyaltyDiscount'),
+                ($this->step)(['spec/App/Checkout/LoyaltyDiscount.spec.php' => "<?php // red first\n"], red: true),
+                ($this->step)(['src/App/Checkout/LoyaltyDiscount.php' => "<?php // green\n"]),
+            ], [$this->green, ($this->redIn)('spec/App/Checkout/LoyaltyDiscount.spec.php:3', 'Class not found')], ['', '', '2']);
+            $display = $tester->getDisplay(true);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($display)->toContain("  Apply this step?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
+            expect($display)->toContain('Stopped before step 2: step 1 is undone, back to the last green state.');
+            expect(($this->code)())->toBe($before);
+            expect($this->project->files)->not()->toHaveKey($this->cwd . '/.phpspec/ai/journal.jsonl');
+        });
+
+        it('undoes a spec written red first when the model fails on the step that greens it', function () {
+            $before = ($this->code)();
+
+            $tester = ($this->run)([
+                ($this->plan)('Describe LoyaltyDiscount', 'Write LoyaltyDiscount'),
+                ($this->step)(['spec/App/Checkout/LoyaltyDiscount.spec.php' => "<?php // red first\n"], red: true),
+                $this->outage,
+            ], [$this->green, ($this->redIn)('spec/App/Checkout/LoyaltyDiscount.spec.php:3', 'Class not found')], ['', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 1 is undone, back to the last green state.');
+            expect(($this->code)())->toBe($before);
         });
 
         it('stops before a step the developer turns down, keeping the steps before it', function () {
@@ -284,7 +325,7 @@ describe(Refactor::class, function () {
             ], [$this->green, $this->green], ['', '', 'n']);
 
             expect($tester->getStatusCode())->toBe(0);
-            expect($tester->getDisplay())->toContain('Stopped before step 2: the steps before it are kept.');
+            expect($tester->getDisplay())->toContain('Stopped before step 2: step 1 is kept.');
             expect($this->project->files)->toHaveKey($this->cwd . '/src/App/Checkout/DiscountPolicy.php');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->not()->toContain('not wanted');
         });
@@ -299,6 +340,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src or spec: nothing of it was written.');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: nothing was written.');
             expect(($this->code)())->toBe($before);
         });
     });
@@ -321,7 +363,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The model did not answer: Google API error (400): API key not valid.');
-            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 1 is kept.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
         });
 
@@ -337,7 +379,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('The model did not answer: Google API error (400): API key not valid.');
-            expect($tester->getDisplay())->toContain('Stopped at step 2: the steps before it are kept, this one is undone.');
+            expect($tester->getDisplay())->toContain('Stopped at step 2: step 2 is undone; step 1 is kept.');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
             expect($this->project->files[$this->cwd . '/src/App/Checkout/DiscountPolicy.php'])->toBe("<?php // kept\n");
         });

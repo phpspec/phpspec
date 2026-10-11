@@ -49,6 +49,8 @@ final class Chooser
      */
     private string $note = '';
 
+    private string $noLabel = 'No';
+
     private readonly Closure $reader;
 
     private readonly ?Closure $keys;
@@ -89,10 +91,12 @@ final class Chooser
      * @param string $question the question to display
      * @param string $kind stable identifier grouping questions for "always" memory
      * @param string $action verb phrase completing "always ..." in option 2
+     * @param string $no what a no would do, said next to option 3, when it does more than nothing
      * @return bool true when the user accepted (or accepted always, now or earlier)
      */
-    public function choose(string $question, string $kind, string $action): bool
+    public function choose(string $question, string $kind, string $action, string $no = ''): bool
     {
+        $this->noLabel = $no === '' ? 'No' : sprintf('No (%s)', $no);
         $accepted = $this->ask($question, $kind, $action);
         $this->notes->record($question, $accepted, $this->note);
 
@@ -332,7 +336,7 @@ final class Chooser
         $labels = [
             1 => 'Yes',
             2 => "Yes, and don't ask again — always $action",
-            3 => 'No',
+            3 => $this->noLabel,
         ];
 
         if ($note !== null && $selected !== 2) {

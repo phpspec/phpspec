@@ -226,9 +226,15 @@ describe(Accept::class, function () {
                 'target' => 'App\\Till',
                 'files' => [],
                 'applied' => false,
-                'reason' => 'Stopped at step 1: the steps before it are kept, this one is undone.',
+                'reason' => "Stopped at step 1: step 1 is undone.\nspec/App/Till.spec.php:3  Expected 1 to be 2",
             ]);
             expect($this->world->files['/project/src/App/Till.php'])->toContain('final class Till {}');
+        });
+
+        it('says in the reason what the model said when it did not answer', function () {
+            $tester = ($this->take)([new RuntimeException('Google API error (503): The service is currently unavailable.')], [$this->green]);
+
+            expect(($this->accepted)($tester)['reason'])->toBe("Stopped at step 1: nothing was written.\nThe model did not answer: Google API error (503): The service is currently unavailable.");
         });
 
         it('refuses to start over specs that do not pass', function () {

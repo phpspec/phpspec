@@ -84,7 +84,7 @@ final readonly class PlanOffers
         $carried = $steps->carryOut($plan, $baseline, (string) ($offer->data['subject'] ?? $target->fqcn));
         $written = array_map(static fn(string $file): array => ['file' => $file, 'applied' => true], $carried->files);
 
-        return $carried->exitCode === 0 && $carried->stopped === '' ? $written : [...$written, $this->notApplied($carried->stopped)];
+        return $carried->complete() ? $written : [...$written, $this->notApplied($carried->stopped)];
     }
 
     /**

@@ -31,6 +31,14 @@ describe(Chooser::class, function () {
         expect($text)->toContain('3. No');
     });
 
+    it('says what a no would do, when it would do something', function () {
+        $this->answers = ['3'];
+        $chooser = new Chooser($this->output, true, $this->reader);
+
+        expect($chooser->choose('Apply this step?', 'refactor-step', 'apply the steps', 'this will undo all changes until the last green state'))->toBeFalse();
+        expect($this->buffer->fetch())->toContain('3. No (this will undo all changes until the last green state)');
+    });
+
     it('accepts on 1, empty input and y', function () {
         $chooser = new Chooser($this->output, true, $this->reader);
 

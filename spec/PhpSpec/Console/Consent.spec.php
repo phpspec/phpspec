@@ -36,6 +36,16 @@ describe(Consent::class, function () {
         expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeFalse();
     });
 
+    it('numbers the answers when a no has a consequence to say', function (Prompt $prompt) {
+        $consent = new Consent('Run with --no-interaction to %s.', prompt: ($this->answering)($prompt, '2', '1', ''));
+        $undoes = 'this will undo all changes until the last green state';
+
+        expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeFalse();
+        expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeTrue();
+        expect($consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the steps', $undoes))->toBeTrue();
+        expect($this->output->fetch())->toContain("  Apply this step?\n    1. Yes\n    2. No (this will undo all changes until the last green state)\n");
+    });
+
     it('tells nobody answering apart from a no, for the caller to decide what nobody means', function (Prompt $prompt) {
         $consent = new Consent('Run with --accept-offers to %s.', prompt: ($this->answering)($prompt, 'n'));
 

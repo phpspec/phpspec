@@ -48,10 +48,11 @@ final readonly class Consent
      * @param string $question the question to display, without a "[Y/n]" suffix
      * @param string $kind stable identifier grouping this question for chooser "always" memory
      * @param string $action verb phrase completing "always ..." in the chooser
+     * @param string $no what a no would do, said next to it, when it does more than nothing
      */
-    public function confirm(Output $output, string $question, string $kind, string $action): bool
+    public function confirm(Output $output, string $question, string $kind, string $action, string $no = ''): bool
     {
-        $decided = $this->decide($output, $question, $kind, $action);
+        $decided = $this->decide($output, $question, $kind, $action, $no);
 
         if ($decided === null) {
             $this->nobody($output, $action);
@@ -69,11 +70,12 @@ final readonly class Consent
      * @param string $question the question to display, without a "[Y/n]" suffix
      * @param string $kind stable identifier grouping this question for chooser "always" memory
      * @param string $action verb phrase completing "always ..." in the chooser
+     * @param string $no what a no would do, said next to it, when it does more than nothing
      */
-    public function decide(Output $output, string $question, string $kind, string $action): ?bool
+    public function decide(Output $output, string $question, string $kind, string $action, string $no = ''): ?bool
     {
         if ($this->chooser !== null) {
-            return $this->chooser->choose($question, $kind, $action);
+            return $this->chooser->choose($question, $kind, $action, $no);
         }
 
         if ($this->generation === Generation::Accepts) {
@@ -83,11 +85,16 @@ final readonly class Consent
         $asking = $this->generation === Generation::Asks;
 
         $output->writeln('');
-        $output->writeln($asking ? "$question [Y/n] " : $question);
+        $output->writeln($asking && $no === '' ? "$question [Y/n] " : $question);
+
+        if ($asking && $no !== '') {
+            $output->writeln('    1. Yes');
+            $output->writeln(sprintf('    2. No (%s)', $no));
+        }
 
         $answer = $asking ? $this->answer($output) : null;
 
-        return $answer === null ? null : in_array(strtolower(trim($answer)), ['', 'y', 'yes'], true);
+        return $answer === null ? null : in_array(strtolower(trim($answer)), ['', '1', 'y', 'yes'], true);
     }
 
     /**
