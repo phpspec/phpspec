@@ -326,6 +326,26 @@ describe(Notifier::class, function () {
 });
 ```
 
+## Coming from Prophecy
+
+A call is written as in Prophecy, as the call itself, and read the same
+way: `$repo->find()` is a call with no arguments, never `find(1)`. Where the
+method requires an argument, that call is refused where the spec writes it,
+so a `not()->toBeCalled()` can never pass for a call that could not happen.
+
+| Prophecy | PhpSpec 9 |
+|---|---|
+| `$repo->find(1)->willReturn('Alice')` | `allow($repo->find(1))->toReturn('Alice')` |
+| `$repo->find(1)->willThrow(NotFound::class)` | `allow($repo->find(1))->toThrow(NotFound::class)` |
+| `$repo->find(1)->will(fn ($args) => ...)` | `allow($repo->find(1))->toReturnUsing(fn ($id) => ...)` |
+| `$repo->save($user)->shouldBeCalled()` | `expect($repo->save($user))->toBeCalled()` |
+| `$repo->save($user)->shouldBeCalledTimes(2)` | `expect($repo->save($user))->toBeCalled()->exactly(2)->times()` |
+| `$repo->save(Argument::cetera())->shouldNotBeCalled()` | `expect($repo->save(cetera()))->not()->toBeCalled()` |
+| `$repo->save($user)->shouldHaveBeenCalled()` | `expect($repo->save($user))->toHaveBeenCalled()` |
+| `Argument::any()`, `Argument::cetera()` | `any()`, `cetera()` |
+| `Argument::type('string')` | `type('string')` |
+| `Argument::that(fn ($user) => ...)` | `satisfy(fn ($user) => ...)` |
+
 ## Supported Types
 
 The mock system handles:
