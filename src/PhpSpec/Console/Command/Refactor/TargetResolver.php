@@ -23,10 +23,9 @@ use PhpSpec\Source\Members;
  * @internal
  * Finds what a refactor run works on: the class named in full (with
  * backslashes or slashes), the class by a short name modified last under the
- * source path, the class a spec file
- * describes, or with no target the source modified last under the source
- * path. A target with no spec is refused: nothing would catch a refactoring
- * that broke it.
+ * source path, the class a source file declares or a spec file describes, or
+ * with no target the source modified last under the source path. A target
+ * with no spec is refused: nothing would catch a refactoring that broke it.
  */
 final readonly class TargetResolver
 {

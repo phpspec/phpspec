@@ -78,7 +78,7 @@ final class RefactorModel
      */
     public function plan(RefactorTarget $target, string $journal): RefactorPlan|Declined
     {
-        $ask = $this->begin($target, $journal);
+        $ask = $this->planRequestStartingTheConversation($target, $journal);
 
         $response = $this->ask($ask, [$this->tool('propose_plan', [
             'technique' => ['type' => 'string', 'description' => 'the named refactoring'],
@@ -134,7 +134,7 @@ final class RefactorModel
     {
         $call = new ToolCall('propose_plan', 'propose_plan', $plan->toArray());
 
-        $this->messages[] = Message::user($this->begin($target, $journal));
+        $this->messages[] = Message::user($this->planRequestStartingTheConversation($target, $journal));
         $this->messages[] = Message::assistant('', [$call]);
         $this->messages[] = Message::toolResult($call->id, 'Shown to the developer.');
         $this->rounds[] = ['response' => ['text' => '', 'tool_calls' => [['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments]]]];
@@ -169,10 +169,10 @@ final class RefactorModel
     }
 
     /**
-     * Starts the conversation about the target: the subject, its spec and
-     * the classes it imports under the source path. What to ask for the plan.
+     * Starts the conversation about the target, showing the subject, its
+     * spec and the classes it imports under the source path.
      */
-    private function begin(RefactorTarget $target, string $journal): string
+    private function planRequestStartingTheConversation(RefactorTarget $target, string $journal): string
     {
         $this->messages = [Message::system($this->profile()->body)];
         $this->shown = [];
