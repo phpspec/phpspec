@@ -446,7 +446,7 @@ describe(Refactor::class, function () {
                 'v' => 2,
                 'action' => 'refactor',
                 'error' => 'App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it.',
-                'remedy' => 'Describe it first: phpspec describe App\\Checkout\\CheckoutService',
+                'remedy' => 'Describe it first: phpspec describe App/Checkout/CheckoutService',
             ]);
         });
 
@@ -492,7 +492,7 @@ describe(Refactor::class, function () {
             $tester = ($this->run)([], []);
 
             expect($tester->getStatusCode())->toBe(1);
-            expect($tester->getDisplay())->toContain('App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\\Checkout\\CheckoutService');
+            expect($tester->getDisplay())->toContain('App\\Checkout\\CheckoutService has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Checkout/CheckoutService');
         });
 
         it('takes the source modified last when given no target, without announcing it', function () {

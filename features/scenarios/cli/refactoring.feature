@@ -256,7 +256,7 @@ Feature: AI-powered refactoring
     And "src/App/Till.php" was modified last
     When I run phpspec command "refactor"
     Then the exit code should be 1
-    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
+    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till"
     And the output should not contain "Basket"
 
   Scenario: Refactoring waits for the whole suite to be green, not only the class's spec
@@ -354,7 +354,7 @@ Feature: AI-powered refactoring
     And "src/App/Legacy/Till.php" was modified last
     When I run phpspec command "refactor Till"
     Then the exit code should be 1
-    And the output should contain "App\Legacy\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Legacy\Till"
+    And the output should contain "App\Legacy\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Legacy/Till"
 
   Scenario: A short name that names no class under src_path is refused
     Given a phpspec.yaml config:
@@ -437,7 +437,25 @@ Feature: AI-powered refactoring
       """
     When I run phpspec command "refactor App/Till"
     Then the exit code should be 1
-    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
+    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till"
+
+  Scenario: A source file names the class it declares
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec command "refactor ./src/App/Till.php"
+    Then the exit code should be 1
+    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till"
 
   Scenario: Pair's /refactor resolves a class as the command does, its backslashes kept
     Given a phpspec.yaml config:
@@ -454,4 +472,4 @@ Feature: AI-powered refactoring
       class Till {}
       """
     When I run phpspec pair with input "/refactor App\Till"
-    Then the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
+    Then the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till"

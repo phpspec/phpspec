@@ -82,7 +82,7 @@ final class Refactor extends Command
         $this
             ->setName('refactor')
             ->setDescription('AI-powered behaviour-preserving refactoring')
-            ->addArgument('target', Argument::OPTIONAL, 'Class FQCN, FQCN::method, or spec file path; the source modified last when left out')
+            ->addArgument('target', Argument::OPTIONAL, 'A class (App/Till), a short name (Till), Class::method, a source file or a spec file; the source modified last when left out')
             ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty');
     }
 
