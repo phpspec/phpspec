@@ -24,6 +24,7 @@ use PhpSpec\Console\Command\Run\CoverageReporter;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
+use PhpSpec\Console\Command\Run\OptionValues;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Console\InternalOptions;
@@ -128,8 +129,8 @@ final class Run extends Command implements InternalOptions
             ->addOption('paths-from', null, Option::VALUE_REQUIRED, 'Read spec/feature paths to run from a file, one per line')
             ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html, agent (JSON Lines for coding agents); repeatable, pair each with -o', [])
             ->addOption('out', 'o', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Report destination for the corresponding --format; "std" is the console', [])
-            ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order (default, random)', 'default')
-            ->addOption('seed', null, Option::VALUE_REQUIRED, 'Seed for random order')
+            ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order: default, or random')
+            ->addOption('seed', null, Option::VALUE_REQUIRED, 'Shuffle the run by this seed, as a random run prints it')
             ->addOption('profile', null, Option::VALUE_OPTIONAL, 'Show N slowest examples', false)
             ->addOption('bootstrap', 'b', Option::VALUE_REQUIRED, 'PHP file to require before running specs')
             ->addOption('all', null, Option::VALUE_NONE, 'Run all suites (specs and features)')
@@ -240,6 +241,12 @@ final class Run extends Command implements InternalOptions
      */
     private function perform(Input $input, Output $prose, Formatter $formatter, string $files, array $given): int
     {
+        $refused = (new OptionValues($input))->problem();
+
+        if ($refused !== null) {
+            return $this->stopped($prose, $formatter, $refused);
+        }
+
         $missingBootstrap = $this->loadBootstrap($input);
 
         if ($missingBootstrap !== null) {
@@ -925,7 +932,7 @@ final class Run extends Command implements InternalOptions
         $stop = $this->stopConditions($input);
 
         $seed = null;
-        if ($input->getOption('order') === 'random') {
+        if ((new OptionValues($input))->shuffles()) {
             $seed = $input->getOption('seed') !== null ? (int) $input->getOption('seed') : random_int(0, 999999);
             $prose->writeln("<fg=yellow>Randomised with seed $seed</>");
 

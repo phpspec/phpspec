@@ -320,7 +320,7 @@ rejected with an error rather than silently falling back.
 | `--all` | Run all suites -- both specs and features |
 | `--story` | Run only features (Story BDD) |
 | `--order=ORDER` | Run order: `default` or `random` |
-| `--seed=SEED` | Seed for random ordering (for reproducibility) |
+| `--seed=SEED` | Shuffle by this whole number, as a random run prints it, to reproduce that order; implies `--order random` |
 
 **Stopping early.** By default a run continues to the end. These flags halt it at
 the first result of a given kind: nothing after that example or scenario runs,
@@ -350,6 +350,12 @@ vendor/bin/phpspec run --stop-on-failure                 # Stop on first failing
 vendor/bin/phpspec run --order random                    # Randomize spec order
 vendor/bin/phpspec run --order random --seed 42          # Reproducible random order
 ```
+
+A value an option cannot take stops the run before anything runs, naming the
+option and what it takes: an `--order` other than `default` or `random`, a
+`--seed` that is not a whole number or that comes with `--order default`, a
+`--profile` or `--parallel` count below 1, a `--coverage-min` outside 0 to 100,
+and an empty `--filter`, `--out` or coverage path.
 
 Matching is a case-insensitive substring test, not a pattern. When a spec file's
 path matches, every example in it runs; otherwise only the examples whose title
