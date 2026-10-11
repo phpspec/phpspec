@@ -107,7 +107,7 @@ describe(Accept::class, function () {
         $tester->execute(['offer' => [$offer->id]], ['interactive' => false]);
 
         expect($tester->getStatusCode())->toBe(1);
-        expect($tester->getDisplay())->toContain('changed since');
+        expect($tester->getDisplay())->toContain('changed since the offer was made. Run the command that made it again to get a fresh one.');
         expect($this->written)->toBe([]);
     });
 
@@ -155,6 +155,39 @@ describe(Accept::class, function () {
         expect($document['accepted'][0]['reason'])->toContain('Source file not found');
         expect($document['accepted'][0]['files'])->toBe([]);
         expect($this->written)->toBe([]);
+    });
+
+    it('tells a person why an offer was not applied', function () {
+        $offer = Offer::generate('create_method', 'App\\Calc::add', [
+            'undefinedClassMethods' => [['className' => 'App\\Calc', 'methodName' => 'add', 'file' => '/project/spec/App/Calc.spec.php', 'line' => 3]],
+        ]);
+        $this->book->record($offer);
+
+        $tester = ($this->tester)();
+        $tester->execute(['offer' => [$offer->id]], ['interactive' => false]);
+
+        expect($tester->getStatusCode())->toBe(1);
+        expect($tester->getDisplay())->toContain(sprintf('Offer %s was not applied: Source file not found', $offer->id));
+    });
+
+    it('refuses an offer it already took, saying so', function () {
+        $offer = Offer::write('src/App/Basket.php', '<?php', true, '');
+        $this->book->record($offer);
+        ($this->tester)()->execute(['offer' => [$offer->id]], ['interactive' => false]);
+
+        $again = ($this->tester)();
+        $again->execute(['offer' => [$offer->id]], ['interactive' => false]);
+
+        expect($again->getStatusCode())->toBe(1);
+        expect($again->getDisplay())->toContain(sprintf('Offer "%s" was already accepted.', $offer->id));
+    });
+
+    it('asks for an offer when given none, on the channel its reader reads', function () {
+        $tester = ($this->tester)();
+        $tester->execute(['--format' => 'agent'], ['interactive' => false]);
+
+        expect($tester->getStatusCode())->toBe(1);
+        expect(json_decode(trim($tester->getDisplay()), true)['error'] ?? null)->toBe('Name the offer to accept: phpspec accept <id>.');
     });
 
     it('tells an agent why it refused, on the same channel', function () {
@@ -251,7 +284,7 @@ describe(Accept::class, function () {
             $tester = ($this->take)([], []);
 
             expect($tester->getStatusCode())->toBe(1);
-            expect(json_decode(trim($tester->getDisplay()), true)['error'])->toBe(sprintf('Offer "%s" no longer fits spec/App/Till.spec.php, which changed since the offer was made.', $this->offer->id));
+            expect(json_decode(trim($tester->getDisplay()), true)['error'])->toBe(sprintf('Offer "%s" no longer fits spec/App/Till.spec.php, which changed since the offer was made. Run the command that made it again to get a fresh one.', $this->offer->id));
         });
     });
 });

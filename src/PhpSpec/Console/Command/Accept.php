@@ -29,6 +29,7 @@ use PhpSpec\Offers\OfferBook;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
@@ -78,7 +79,7 @@ final class Accept extends Command
             ->setName('accept')
             ->setDescription('Apply an offer PhpSpec made, by its id')
             ->setDefinition([
-                new Argument('offer', Argument::REQUIRED | Argument::IS_ARRAY, 'The id of an offer to apply'),
+                new Argument('offer', Argument::IS_ARRAY, 'The id of an offer to apply'),
             ])
             ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty');
     }
@@ -91,26 +92,22 @@ final class Accept extends Command
 
         $taking = [];
 
+        if ($ids === []) {
+            return $this->refuse('Name the offer to accept: phpspec accept <id>.', $forAgent, $output);
+        }
+
         foreach ($ids as $id) {
             $offer = $this->book->find($id);
 
             if ($offer === null) {
-                $age = $this->book->ageOf($id);
-
-                return $this->refuse(
-                    $age === null
-                        ? sprintf('No offer "%s" is on the table. Offers are made by the command that proposes the change; run it again to get a fresh one.', $id)
-                        : sprintf('Offer "%s" has expired: it was made %s ago and an offer stays for %d minutes. Run the command that made it again to get a fresh one.', $id, self::spelled($age), intdiv(OfferBook::SHELF_LIFE, 60)),
-                    $forAgent,
-                    $output,
-                );
+                return $this->refuse($this->offMissing($id), $forAgent, $output);
             }
 
             $changed = $offer->changedFile($this->contentOf(...));
 
             if ($changed !== null) {
                 return $this->refuse(
-                    sprintf('Offer "%s" no longer fits %s, which changed since the offer was made.', $id, $changed),
+                    sprintf('Offer "%s" no longer fits %s, which changed since the offer was made. Run the command that made it again to get a fresh one.', $id, $changed),
                     $forAgent,
                     $output,
                 );
@@ -120,6 +117,23 @@ final class Accept extends Command
         }
 
         return $this->take($taking, $forAgent, $output);
+    }
+
+    /**
+     * Why there is no offer under this id: it was taken already, it expired,
+     * or the table never held it.
+     */
+    private function offMissing(string $id): string
+    {
+        if ($this->book->wasTaken($id)) {
+            return sprintf('Offer "%s" was already accepted.', $id);
+        }
+
+        $age = $this->book->ageOf($id);
+
+        return $age === null
+            ? sprintf('No offer "%s" is on the table. Offers are made by the command that proposes the change; run it again to get a fresh one.', $id)
+            : sprintf('Offer "%s" has expired: it was made %s ago and an offer stays for %d minutes. Run the command that made it again to get a fresh one.', $id, self::spelled($age), intdiv(OfferBook::SHELF_LIFE, 60));
     }
 
     /**
@@ -157,6 +171,12 @@ final class Accept extends Command
                 $receipt['reason'] = implode(' ', $reasons);
             } elseif ($written === []) {
                 $receipt['reason'] = 'Nothing was left to apply.';
+            }
+
+            if ($receipt['applied']) {
+                $this->book->taken($offer);
+            } else {
+                $notes->writeln(sprintf('  <fg=red>Offer %s was not applied: %s</>', $offer->id, OutputFormatter::escape($receipt['reason'] ?? '')));
             }
 
             $receipts[] = $receipt;

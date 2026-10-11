@@ -65,14 +65,37 @@ final class OfferBook
         }
 
         $book = $this->all();
+        $taken = $this->takenRecently();
         $now = ($this->now)();
 
         foreach ($offers as $offer) {
-            unset($book[$offer->id]);
+            unset($book[$offer->id], $taken[$offer->id]);
             $book[$offer->id] = $offer->madeAt($now);
         }
 
-        $this->store(array_slice($book, -self::KEPT, null, true));
+        $this->store(array_slice($book, -self::KEPT, null, true), $taken);
+    }
+
+    /**
+     * Takes the offer off the table, remembering it was taken, so a second
+     * acceptance is told so rather than that the code has moved on.
+     */
+    public function taken(Offer $offer): void
+    {
+        $book = $this->all();
+        $taken = $this->takenRecently();
+        unset($book[$offer->id]);
+        $taken[$offer->id] = ($this->now)();
+
+        $this->store($book, $taken);
+    }
+
+    /**
+     * Whether the offer with this id was taken within the shelf life.
+     */
+    public function wasTaken(string $id): bool
+    {
+        return isset($this->takenRecently()[$id]);
     }
 
     /**
@@ -111,11 +134,24 @@ final class OfferBook
     }
 
     /**
-     * Every offer the book holds on disk, expired or not, keyed by id.
+     * When each offer taken within the shelf life was taken, by id.
      *
-     * @return array<string, Offer>
+     * @return array<string, int>
      */
-    private function stored(): array
+    private function takenRecently(): array
+    {
+        $since = ($this->now)() - self::SHELF_LIFE;
+        $taken = $this->document()['taken'] ?? [];
+
+        return array_filter(is_array($taken) ? $taken : [], static fn(mixed $at): bool => is_int($at) && $at > $since);
+    }
+
+    /**
+     * The book as it is on disk, empty when there is none or it is damaged.
+     *
+     * @return array<string, mixed>
+     */
+    private function document(): array
     {
         $path = $this->file();
 
@@ -125,7 +161,19 @@ final class OfferBook
 
         $stored = json_decode($this->filesystem->read($path), true);
 
-        if (!is_array($stored) || !is_array($stored['offers'] ?? null)) {
+        return is_array($stored) ? $stored : [];
+    }
+
+    /**
+     * Every offer the book holds on disk, expired or not, keyed by id.
+     *
+     * @return array<string, Offer>
+     */
+    private function stored(): array
+    {
+        $stored = $this->document();
+
+        if (!is_array($stored['offers'] ?? null)) {
             return [];
         }
 
@@ -143,8 +191,9 @@ final class OfferBook
 
     /**
      * @param array<string, Offer> $offers
+     * @param array<string, int> $taken
      */
-    private function store(array $offers): void
+    private function store(array $offers, array $taken = []): void
     {
         $path = $this->file();
         $dir = dirname($path);
@@ -156,7 +205,7 @@ final class OfferBook
         $document = [
             'v' => 1,
             'offers' => array_values(array_map(static fn(Offer $offer): array => $offer->toArray(), $offers)),
-        ];
+        ] + ($taken === [] ? [] : ['taken' => $taken]);
 
         $this->filesystem->write($path, (string) json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
     }
