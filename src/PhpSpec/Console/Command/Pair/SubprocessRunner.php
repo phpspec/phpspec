@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Parallel\ParallelRunner;
@@ -34,9 +35,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class SubprocessRunner implements SpecRunner
 {
     /**
-     * @param bool $guarded whether the project has guard on, which judges a run by its coverage
+     * @param Configuration $config the configuration the session reads, which the run reads too, and whose guard judges a run by its coverage
      */
-    public function __construct(private readonly bool $guarded = false) {}
+    public function __construct(private readonly Configuration $config) {}
 
     public function run(string $argument, OutputInterface $output): ?RunOutcome
     {
@@ -46,9 +47,10 @@ final class SubprocessRunner implements SpecRunner
         try {
             $command = [
                 PHP_BINARY,
-                '-d', 'xdebug.mode=' . ($this->guarded || preg_match('/(^|\s)--coverage/', $argument) === 1 ? 'coverage' : 'off'),
+                '-d', 'xdebug.mode=' . ($this->config->guardIsOn() || preg_match('/(^|\s)--coverage/', $argument) === 1 ? 'coverage' : 'off'),
                 ParallelRunner::findPhpspecBin(),
                 'run',
+                ...$this->config->childOptions(),
             ];
             // The argument is a command-line fragment ("spec/App --stop-on-failure"),
             // so each token must become its own argv element for the child.

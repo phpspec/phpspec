@@ -71,6 +71,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
+ - `--parallel` workers load the `--bootstrap` the run was given, where they ran without it
+ - A `run` in a `pair` session started with `--config` reads that config, as do `next` when it checks the suite and the pair's own spec runs, where they read the one found in the working directory
  - Under `--format=agent` (or `--agent`), a command line PhpSpec cannot read, such as an option the command does not take, an option missing its value or a command that does not exist, answers in JSON: a run's `fatal` and `summary` with `actionable: 1`, or a command's error receipt, where it printed prose to the error stream and nothing to standard output
  - An agent `rerun` and `rerun_argv` carry the `--config` the run was named and the `--bootstrap` it was given, where they dropped both and re-ran against another setup; the line to paste single-quotes a path a shell would split
  - `toBeEmpty()` takes a `Countable` by its count, as documented, where an empty `ArrayObject` failed and its negation passed, and a failure on one wants `[]`; a string is empty only with no characters, so `'0'`, which PHP's `empty()` calls empty, is not; an iterator that is not `Countable` is refused rather than advanced

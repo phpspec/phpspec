@@ -207,7 +207,7 @@ final class Run extends Command implements InternalOptions
         $document = $formatter instanceof Agent ? $formatter : null;
         $prose = $document !== null ? new BufferedOutput() : $output;
         $document?->targets($files);
-        $document?->rerunsWith($this->rerunOptions($input));
+        $document?->rerunsWith($this->childOptions($input));
 
         // PHP prints a fatal to standard output as well as the error stream, and
         // standard output is the document's. Sending its own reports to the error
@@ -659,12 +659,13 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
-     * The options this run was started with that a rerun needs to run against
-     * the same project: the config it was named, and the bootstrap it was given.
+     * The options a phpspec started from this run (a worker, a rerun) needs
+     * to run against the same project: the config it was named, and the
+     * bootstrap it was given.
      *
      * @return list<string>
      */
-    private function rerunOptions(Input $input): array
+    private function childOptions(Input $input): array
     {
         $bootstrap = $input->getOption('bootstrap');
 
@@ -926,16 +927,12 @@ final class Run extends Command implements InternalOptions
                 ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
                 : null;
 
-            // --config is defined at the application level, absent when the
-            // command runs standalone (e.g. under CommandTester)
-            $configPath = $input->hasOption('config') ? $input->getOption('config') : null;
-
             $parallelRunner = new ParallelRunner(
                 $paths,
                 $workers,
                 $stop,
                 coveragePartialDir: $coveragePartialDir,
-                configPath: $configPath,
+                childOptions: $this->childOptions($input),
                 filter: is_string($filter) ? $filter : null,
                 tags: is_string($tags) ? $tags : null,
             );

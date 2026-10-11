@@ -125,7 +125,7 @@ final class CommandDispatcher
         $this->prompts = new PromptLibrary($this->filesystem);
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->notes = $this->chooser->notes();
-        $this->specRunner = $specRunner ?? new SubprocessRunner($config->guardIsOn());
+        $this->specRunner = $specRunner ?? new SubprocessRunner($config);
         $this->roleState = $roleState ?? new RoleState();
         $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
         $this->refactor = $refactor ?? fn(Consent $consent): Refactor => new Refactor($this->config, $this->filesystem, consent: $consent);

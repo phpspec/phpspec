@@ -112,11 +112,11 @@ describe(WorkerProcess::class, function () {
             expect($command)->toContain('--coverage-partial=/tmp/partial-0.json');
         });
 
-        it('forwards the explicit config path to the worker', function () {
-            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', configPath: 'custom/my-config.json');
-            $command = $worker->buildCommand();
+        it('forwards the options that set up the project, a named config and a bootstrap, so a worker runs against the same one', function () {
+            $command = (new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', childOptions: ['--config=custom/my-config.json', '--bootstrap=custom/boot.php']))->buildCommand();
 
             expect($command)->toContain('--config=custom/my-config.json');
+            expect($command)->toContain('--bootstrap=custom/boot.php');
         });
 
         it('forwards the title filter and the tag expression, so a worker selects as the parent did', function () {

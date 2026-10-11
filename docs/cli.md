@@ -421,8 +421,10 @@ bin/phpspec run --config custom/phpspec.ci.yaml
 By default PhpSpec looks for `phpspec.yaml`, `phpspec.yml`, `phpspec.json` or
 `phpspec.php` in the working directory. With `--config` exactly the given file
 is loaded instead (its format is resolved from the extension), and the command
-fails if the file does not exist. The option is available on every command and
-is forwarded to worker processes in `--parallel` runs.
+fails if the file does not exist. The option is available on every command, and
+every phpspec a command starts reads the same file: the workers of a
+`--parallel` run, a `run` in a `pair` session, and the `rerun` an agent is handed.
+So does `--bootstrap`, for the workers and the `rerun`.
 
 ### Parallel Execution
 

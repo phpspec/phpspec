@@ -41,6 +41,58 @@ Feature: Parallel execution
     When I run phpspec run with option "--parallel=2"
     Then all examples should pass
 
+  Scenario: Workers load the bootstrap the run was given
+    Given a file "bootstrap/probe.php":
+      """
+      <?php
+      define('PARALLEL_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "spec/App/First.spec.php":
+      """
+      <?php
+      describe('First', function () {
+          it('sees the bootstrap', fn () => expect(PARALLEL_PROBE_BOOTSTRAPPED)->toBe('yes'));
+      });
+      """
+    And a spec file "spec/App/Second.spec.php":
+      """
+      <?php
+      describe('Second', function () {
+          it('sees the bootstrap', fn () => expect(PARALLEL_PROBE_BOOTSTRAPPED)->toBe('yes'));
+      });
+      """
+    When I run phpspec run in a fresh process with option "--parallel=2 -b bootstrap/probe.php"
+    Then all examples should pass
+    And the output should contain "2 examples (2 passed)"
+
+  Scenario: Workers read the config the run was named
+    Given a file "configured/custom.json":
+      """
+      {"bootstrap": "bootstrap/probe.php"}
+      """
+    And a file "bootstrap/probe.php":
+      """
+      <?php
+      define('PARALLEL_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "spec/App/First.spec.php":
+      """
+      <?php
+      describe('First', function () {
+          it('sees the bootstrap', fn () => expect(PARALLEL_PROBE_BOOTSTRAPPED)->toBe('yes'));
+      });
+      """
+    And a spec file "spec/App/Second.spec.php":
+      """
+      <?php
+      describe('Second', function () {
+          it('sees the bootstrap', fn () => expect(PARALLEL_PROBE_BOOTSTRAPPED)->toBe('yes'));
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec --parallel=2 --config configured/custom.json"
+    Then all examples should pass
+    And the output should contain "2 examples (2 passed)"
+
   Scenario: A path given after --parallel is still the path to run
     Given a spec file "spec/App/Swallowed.spec.php":
       """

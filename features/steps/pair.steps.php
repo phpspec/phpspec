@@ -10,11 +10,11 @@ if (!function_exists('_pair_exec')) {
      * Runs the pair shim: dispatches each ";"-separated input in one session,
      * optionally interactive with the given answers piped to stdin.
      */
-    function _pair_exec(object $world, string $input, ?string $answers = null, bool $greet = false): void
+    function _pair_exec(object $world, string $input, ?string $answers = null, bool $greet = false, ?string $configFile = null): void
     {
         $interactive = $answers !== null ? 'true' : 'false';
 
-        $shim = _pair_shim_source($interactive, $greet);
+        $shim = _pair_shim_source($interactive, $greet, $configFile);
         file_put_contents($world->projectDir . '/_pair_shim.php', $shim);
 
         $cmd = [
@@ -46,9 +46,10 @@ if (!function_exists('_pair_exec')) {
     }
 
     /**
-     * Builds the shim source with the given interactivity flag.
+     * Builds the shim source with the given interactivity flag, reading the
+     * config file named as `pair --config` would, or the one found under the root.
      */
-    function _pair_shim_source(string $interactive, bool $greet = false): string
+    function _pair_shim_source(string $interactive, bool $greet = false, ?string $configFile = null): string
     {
         $shim = <<<'PHP'
     <?php
@@ -62,7 +63,7 @@ if (!function_exists('_pair_exec')) {
     use PhpSpec\Console\Command\Pair\PairOutput;
     use Symfony\Component\Console\Output\StreamOutput;
 
-    $config = Configuration::load(__DIR__);
+    $config = Configuration::load(__DIR__, configFile: %CONFIG%);
     $specSuffix = $config->getSpecSuffix();
     $output = new StreamOutput(fopen('php://stdout', 'w'));
     $pairOutput = new PairOutput($output);
@@ -87,8 +88,8 @@ if (!function_exists('_pair_exec')) {
     PHP;
 
         return str_replace(
-            ['%INTERACTIVE%', '%GREET%'],
-            [$interactive, $greet ? '$dispatcher->greet();' : ''],
+            ['%INTERACTIVE%', '%GREET%', '%CONFIG%'],
+            [$interactive, $greet ? '$dispatcher->greet();' : '', var_export($configFile, true)],
             $shim,
         );
     }
@@ -96,6 +97,10 @@ if (!function_exists('_pair_exec')) {
 
 when('I run phpspec pair with input {string}', function (string $input) {
     _pair_exec($this, $input);
+});
+
+when('I run phpspec pair with config {string} and input {string}', function (string $configFile, string $input) {
+    _pair_exec($this, $input, configFile: $configFile);
 });
 
 when('I run phpspec pair with input {string} answering {string}', function (string $input, string $answers) {

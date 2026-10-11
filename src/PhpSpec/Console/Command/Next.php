@@ -81,7 +81,7 @@ final class Next extends Command
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->suggestFn = $suggestFn;
-        $this->specRunner = $specRunner ?? new SubprocessRunner($config->guardIsOn());
+        $this->specRunner = $specRunner ?? new SubprocessRunner($config);
         parent::__construct();
     }
 
