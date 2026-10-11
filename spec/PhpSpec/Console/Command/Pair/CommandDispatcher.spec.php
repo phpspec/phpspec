@@ -914,6 +914,12 @@ describe(CommandDispatcher::class, function () {
             expect($output)->toContain('AI configuration required');
         });
 
+        it('reads the options typed after /refactor as options, as every slash command does', function () {
+            $this->appDispatcher->dispatch('/refactor App\\Calculator --format=agent');
+
+            expect($this->buffer->fetch())->toContain('"action":"refactor"');
+        });
+
         it('delegates /refactor with no target, which takes the source modified last', function () {
             $result = $this->appDispatcher->dispatch('/refactor');
             $output = $this->buffer->fetch();

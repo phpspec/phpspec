@@ -39,7 +39,6 @@ use PhpSpec\RealFilesystem;
 use RuntimeException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -332,7 +331,7 @@ final class CommandDispatcher
             '/run' => $this->handleRun($this->runArgument($parsed['tail'])),
             '/next' => $this->handleNext(),
             '/generate' => $this->handleGenerate($parsed['argument']),
-            '/refactor' => $this->handleRefactor($parsed['argument']),
+            '/refactor' => $this->handleRefactor($parsed['tail']),
             '/clear' => $this->handleClear(),
             '/swap' => $this->handleSwap(),
             '/help' => $this->handleHelp(),
@@ -608,6 +607,19 @@ final class CommandDispatcher
     }
 
     /**
+     * A line typed at the prompt as a command's input. What was typed is
+     * literal, with no shell in front of it: a backslash is part of a class
+     * name, not an escape to resolve.
+     */
+    private function typed(string $line): StringInput
+    {
+        $input = new StringInput(trim(str_replace('\\', '\\\\', $line)));
+        $input->setInteractive($this->interactive);
+
+        return $input;
+    }
+
+    /**
      * Refactors as `phpspec refactor` does: in a session the plan and each
      * step are asked through the pair chooser, and a single --prompt carries
      * the plan out unattended.
@@ -615,11 +627,9 @@ final class CommandDispatcher
     private function handleRefactor(string $argument): int
     {
         $consent = new Consent('Run phpspec refactor --no-interaction to %s.', chooser: $this->chooser);
-        $input = new ArrayInput(trim($argument) === '' ? [] : ['target' => trim($argument)]);
-        $input->setInteractive($this->interactive);
 
         try {
-            ($this->refactor)($consent)->run($input, $this->output->getOutput());
+            ($this->refactor)($consent)->run($this->typed($argument), $this->output->getOutput());
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }
@@ -658,13 +668,8 @@ final class CommandDispatcher
             return self::CONTINUE;
         }
 
-        // What was typed at the prompt is literal, with no shell in front of
-        // it: a backslash is part of a class name, not an escape to resolve.
-        $input = new StringInput(trim($name . ' ' . str_replace('\\', '\\\\', $argString)));
-        $input->setInteractive($this->interactive);
-
         try {
-            $this->application->doRun($input, $this->output->getOutput());
+            $this->application->doRun($this->typed($name . ' ' . $argString), $this->output->getOutput());
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }
