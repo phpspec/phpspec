@@ -296,6 +296,10 @@ final class Run extends Command implements InternalOptions
         $guard = $worker ? null : Inspection::of($this->config, new RealFilesystem());
         $coverageReporter = $this->startCoverage($input, forced: $guard !== null);
 
+        if ($formatter instanceof Agent) {
+            $formatter->runningWith($coverageReporter !== null && !is_string($coverageReporter), $guard !== null ? 'on' : 'off');
+        }
+
         if (is_string($coverageReporter)) {
             if ($guard === null || $this->wantsCoverage($input)) {
                 return $this->stopped($prose, $formatter, $coverageReporter, self::coverageRemedy());
@@ -309,10 +313,6 @@ final class Run extends Command implements InternalOptions
                 'Guard is on but no coverage driver is available, so this run cannot be judged: ' . lcfirst($coverageReporter) . '.',
                 self::coverageRemedy(),
             );
-        }
-
-        if ($formatter instanceof Agent) {
-            $formatter->runningWith($coverageReporter !== null, $guard !== null ? 'on' : 'off');
         }
 
         try {

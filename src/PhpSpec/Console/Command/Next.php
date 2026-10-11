@@ -32,6 +32,7 @@ use PhpSpec\Console\Command\Pair\SubprocessRunner;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
+use PhpSpec\Guard\Inspection;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\StoryBDD\StepVocabulary;
@@ -77,7 +78,7 @@ final class Next extends Command
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->suggestFn = $suggestFn;
-        $this->specRunner = $specRunner ?? new SubprocessRunner();
+        $this->specRunner = $specRunner ?? new SubprocessRunner(Inspection::of($config, $this->filesystem) !== null);
         parent::__construct();
     }
 

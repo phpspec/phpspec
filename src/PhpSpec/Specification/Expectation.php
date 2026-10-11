@@ -16,6 +16,7 @@ namespace PhpSpec\Specification;
 
 use BadMethodCallException;
 use Closure;
+use InvalidArgumentException;
 use PhpSpec\Browser\Response;
 use PhpSpec\ObjectName;
 use Psr\Http\Message\ResponseInterface;
@@ -771,13 +772,22 @@ class Expectation
 
     /**
      * Asserts that invoking the subject callable throws the specified exception.
+     * An exception given stands for its class and its message.
      *
-     * @param string $exceptionClass expected exception class
-     * @param string|null $message expected exception message (exact match)
+     * @param string|\Throwable $exceptionClass expected exception class, or an exception standing for its class and message
+     * @param string|null $message expected exception message (exact match), after a class name
      * @return static
      */
-    public function toThrow(string $exceptionClass = '', ?string $message = null): static
+    public function toThrow(string|\Throwable $exceptionClass = '', ?string $message = null): static
     {
+        if ($exceptionClass instanceof \Throwable) {
+            if ($message !== null) {
+                throw new InvalidArgumentException('toThrow() takes the message inside the exception it is given, or after a class name, not both.');
+            }
+
+            return $this->toThrow($exceptionClass::class, $exceptionClass->getMessage());
+        }
+
         // The subject is the operation under test, so it runs here, where the
         // expectation is written, and what follows in the example sees what it
         // did. Only the verdict waits for the end of the example. The reader

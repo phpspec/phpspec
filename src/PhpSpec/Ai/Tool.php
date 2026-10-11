@@ -99,6 +99,10 @@ final class Tool implements ToolInterface
                 $prop['enum'] = $definition['enum'];
             }
 
+            if (isset($definition['items'])) {
+                $prop['items'] = $definition['items'];
+            }
+
             $properties[$paramName] = $prop;
 
             if (!isset($definition['default'])) {

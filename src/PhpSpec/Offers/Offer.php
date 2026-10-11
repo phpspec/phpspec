@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Offers;
 
+use Closure;
+
 /**
  * @internal
  * Something PhpSpec will do if you say yes, kept where you can say yes to it
@@ -25,13 +27,15 @@ namespace PhpSpec\Offers;
  * invented, so an offer still on the table keeps its id from one run to the
  * next and two commands can name the same offer without agreeing in advance.
  *
- * Two kinds, one shape: a change to write, whose content travels with it, and a
- * piece of code to generate, whose recipe does.
+ * Three kinds, one shape: a change to write, whose content travels with it, a
+ * piece of code to generate, whose recipe does, and a refactoring plan to
+ * carry out, whose steps do.
  */
 final readonly class Offer
 {
     public const WRITE = 'write';
     public const GENERATE = 'generate';
+    public const REFACTOR = 'refactor';
 
     /**
      * @param string $id how to refer to this offer
@@ -99,6 +103,26 @@ final readonly class Offer
     }
 
     /**
+     * An offer to carry out a refactoring plan, made reading these files: a
+     * plan about code that has since changed is about something else.
+     *
+     * @param string $target the class refactored, with the method when it named one
+     * @param array<string, mixed> $plan the serialised plan
+     * @param array<string, string> $read each file the plan was made reading, project-relative, with a sha1 of its content
+     * @param string $subject what the journal keeps the steps kept under
+     */
+    public static function refactor(string $target, array $plan, array $read, string $subject): self
+    {
+        return new self(
+            self::identify(self::REFACTOR, $target, (string) json_encode($plan)),
+            self::REFACTOR,
+            'refactor',
+            $target,
+            ['plan' => $plan, 'read' => $read, 'subject' => $subject],
+        );
+    }
+
+    /**
      * The complete content a write offer would put in the file.
      */
     public function content(): string
@@ -115,23 +139,43 @@ final readonly class Offer
     }
 
     /**
-     * Whether the code has moved on since a write offer was made, in which case
-     * accepting it would apply a decision taken about something else. Only a
-     * write can go stale: the generators never overwrite.
+     * The file that has moved on since the offer was made, in which case
+     * accepting it would apply a decision taken about something else; null
+     * when none has. Generated code never goes stale: the generators never
+     * overwrite.
      *
-     * @param string|null $current the file's content now, or null when it is not there
+     * @param Closure(string): (string|null) $contentOf a project-relative file's content now, null when it is not there
      */
-    public function staleAgainst(?string $current): bool
+    public function changedFile(Closure $contentOf): ?string
     {
-        if ($this->kind !== self::WRITE) {
-            return false;
+        return match ($this->kind) {
+            self::WRITE => $this->changedTarget($contentOf($this->target)),
+            self::REFACTOR => $this->changedRead($contentOf),
+            default => null,
+        };
+    }
+
+    private function changedTarget(?string $current): ?string
+    {
+        $stale = $this->action === 'create' ? $current !== null : $current === null || $current !== $this->was();
+
+        return $stale ? $this->target : null;
+    }
+
+    /**
+     * @param Closure(string): (string|null) $contentOf
+     */
+    private function changedRead(Closure $contentOf): ?string
+    {
+        foreach (is_array($this->data['read'] ?? null) ? $this->data['read'] : [] as $path => $hash) {
+            $current = $contentOf((string) $path);
+
+            if ($current === null || sha1($current) !== $hash) {
+                return (string) $path;
+            }
         }
 
-        if ($this->action === 'create') {
-            return $current !== null;
-        }
-
-        return $current === null || $current !== $this->was();
+        return null;
     }
 
     /**

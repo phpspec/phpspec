@@ -8,3 +8,9 @@
 when('I run phpspec refactor {string}', function (string $target) {
     _phpspec_exec($this, 'refactor ' . $target);
 });
+
+given('Xdebug is available', function () {
+    if (!extension_loaded('xdebug')) {
+        skip('Xdebug is not available');
+    }
+});

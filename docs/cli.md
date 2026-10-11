@@ -48,11 +48,16 @@ See [Pair Programming & AI](pair.md#the-next-command) for full documentation.
 
 ### `refactor`
 
-AI-powered, behaviour-preserving refactoring.
+AI-powered, behaviour-preserving refactoring: a plan, then baby steps you
+approve one at a time, the whole spec suite checked after each.
 
 ```bash
+bin/phpspec refactor                       # the source file modified last under src_path
+bin/phpspec refactor Calculator            # the Calculator modified last under src_path
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
+bin/phpspec refactor Calculator --no-interaction       # carry the plan out without asking
+bin/phpspec refactor App/Calculator --format=agent   # the plan as one JSON receipt, nothing written
 ```
 
 See [Pair Programming & AI](pair.md#the-refactor-command) for full documentation.

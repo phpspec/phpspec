@@ -20,8 +20,8 @@ use PhpSpec\RealFilesystem;
 /**
  * @internal
  * The single write gate of the agent pipeline: tools only propose, the
- * presenter confirms, and this applies. Nothing else in the pipeline touches
- * disk.
+ * presenter confirms, and this applies, or undoes what it applied. Nothing
+ * else in the pipeline touches disk.
  */
 final class Writer
 {
@@ -41,12 +41,34 @@ final class Writer
      */
     public function apply(Proposal $proposal): void
     {
-        $file = ($this->baseDir ?? (getcwd() ?: '.')) . '/' . $proposal->path;
+        $file = $this->fileFor($proposal);
         $dir = dirname($file);
         if (!$this->filesystem->exists($dir)) {
             $this->filesystem->mkdir($dir);
         }
 
         $this->filesystem->write($file, $proposal->new);
+    }
+
+    /**
+     * Undoes an applied proposal: a changed file gets back what it held, a
+     * new one is deleted.
+     */
+    public function revert(Proposal $proposal): void
+    {
+        $file = $this->fileFor($proposal);
+
+        if ($proposal->isNew) {
+            $this->filesystem->delete($file);
+
+            return;
+        }
+
+        $this->filesystem->write($file, $proposal->old);
+    }
+
+    private function fileFor(Proposal $proposal): string
+    {
+        return ($this->baseDir ?? (getcwd() ?: '.')) . '/' . $proposal->path;
     }
 }

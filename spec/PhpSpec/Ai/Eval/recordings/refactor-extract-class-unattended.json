@@ -1,0 +1,185 @@
+{
+    "command": "refactor",
+    "target": "Brew\\DrinkPricer",
+    "provider": "google",
+    "model": "gemini-3.1-pro-preview",
+    "turns": [
+        {
+            "rounds": [
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_plan",
+                                "name": "propose_plan",
+                                "arguments": {
+                                    "technique": "Extract Class",
+                                    "rationale": "The `DrinkPricer` currently suffers from primitive obsession, handling the pricing logic for sizes, milk types, and shots all in one place. By extracting these concepts into their own value objects (`Size`, `Milk`, and `Shots`), we move the behavior to the objects that hold the data (Tell, Don't Ask). This gives each class a single reason to change, making the design more modular and easier to extend.",
+                                    "steps": [
+                                        {
+                                            "title": "Describe Size",
+                                            "doing": "Describing Size"
+                                        },
+                                        {
+                                            "title": "Extract Size",
+                                            "doing": "Extracting Size"
+                                        },
+                                        {
+                                            "title": "Describe Milk",
+                                            "doing": "Describing Milk"
+                                        },
+                                        {
+                                            "doing": "Extracting Milk",
+                                            "title": "Extract Milk"
+                                        },
+                                        {
+                                            "title": "Describe Shots",
+                                            "doing": "Describing Shots"
+                                        },
+                                        {
+                                            "doing": "Extracting Shots",
+                                            "title": "Extract Shots"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "red": true,
+                                    "files": [
+                                        {
+                                            "path": "spec/Brew/Size.spec.php",
+                                            "content": "<?php\n\nuse Brew\\Size;\n\ndescribe(Size::class, function () {\n    it('has a base price for small', function () {\n        expect((new Size('small'))->basePrice())->toBe(250);\n    });\n\n    it('has a base price for medium', function () {\n        expect((new Size('medium'))->basePrice())->toBe(300);\n    });\n\n    it('has a base price for large', function () {\n        expect((new Size('large'))->basePrice())->toBe(350);\n    });\n\n    it('refuses an unknown size', function () {\n        expect(fn () => new Size('huge'))->toThrow(new InvalidArgumentException('Unknown size \"huge\".'));\n    });\n});\n"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "content": "<?php\n\nnamespace Brew;\n\nfinal class DrinkPricer\n{\n    public function priceOf(string $size, string $milk, int $shots): Money\n    {\n        $pence = (new Size($size))->basePrice();\n\n        if ($milk === 'oat') {\n            $pence += 40;\n        } elseif ($milk === 'almond') {\n            $pence += 50;\n        } elseif ($milk === 'soy') {\n            $pence += 30;\n        }\n\n        if ($shots > 1) {\n            $pence += ($shots - 1) * 60;\n        }\n\n        return new Money($pence);\n    }\n}\n",
+                                            "path": "src/Brew/DrinkPricer.php"
+                                        },
+                                        {
+                                            "content": "<?php\n\nnamespace Brew;\n\nuse InvalidArgumentException;\n\nfinal class Size\n{\n    private int $basePrice;\n\n    public function __construct(string $size)\n    {\n        $this->basePrice = match ($size) {\n            'small' => 250,\n            'medium' => 300,\n            'large' => 350,\n            default => throw new InvalidArgumentException(sprintf('Unknown size \"%s\".', $size)),\n        };\n    }\n\n    public function basePrice(): int\n    {\n        return $this->basePrice;\n    }\n}\n",
+                                            "path": "src/Brew/Size.php"
+                                        }
+                                    ],
+                                    "red": false
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "content": "<?php\n\nuse Brew\\Milk;\n\ndescribe(Milk::class, function () {\n    it('has no surcharge for dairy', function () {\n        expect((new Milk('dairy'))->surcharge())->toBe(0);\n    });\n\n    it('has a surcharge for oat', function () {\n        expect((new Milk('oat'))->surcharge())->toBe(40);\n    });\n\n    it('has a surcharge for almond', function () {\n        expect((new Milk('almond'))->surcharge())->toBe(50);\n    });\n\n    it('has a surcharge for soy', function () {\n        expect((new Milk('soy'))->surcharge())->toBe(30);\n    });\n});\n",
+                                            "path": "spec/Brew/Milk.spec.php"
+                                        }
+                                    ],
+                                    "red": true
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "path": "src/Brew/DrinkPricer.php",
+                                            "content": "<?php\n\nnamespace Brew;\n\nfinal class DrinkPricer\n{\n    public function priceOf(string $size, string $milk, int $shots): Money\n    {\n        $pence = (new Size($size))->basePrice();\n        $pence += (new Milk($milk))->surcharge();\n\n        if ($shots > 1) {\n            $pence += ($shots - 1) * 60;\n        }\n\n        return new Money($pence);\n    }\n}\n"
+                                        },
+                                        {
+                                            "content": "<?php\n\nnamespace Brew;\n\nfinal class Milk\n{\n    private int $surcharge;\n\n    public function __construct(string $milk)\n    {\n        $this->surcharge = match ($milk) {\n            'oat' => 40,\n            'almond' => 50,\n            'soy' => 30,\n            default => 0,\n        };\n    }\n\n    public function surcharge(): int\n    {\n        return $this->surcharge;\n    }\n}\n",
+                                            "path": "src/Brew/Milk.php"
+                                        }
+                                    ],
+                                    "red": false
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "red": true,
+                                    "files": [
+                                        {
+                                            "content": "<?php\n\nuse Brew\\Shots;\n\ndescribe(Shots::class, function () {\n    it('has no surcharge for a single shot', function () {\n        expect((new Shots(1))->surcharge())->toBe(0);\n    });\n\n    it('has a surcharge for every shot after the first', function () {\n        expect((new Shots(3))->surcharge())->toBe(120);\n    });\n});\n",
+                                            "path": "spec/Brew/Shots.spec.php"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "response": {
+                        "text": "",
+                        "tool_calls": [
+                            {
+                                "id": "propose_step",
+                                "name": "propose_step",
+                                "arguments": {
+                                    "files": [
+                                        {
+                                            "content": "<?php\n\nnamespace Brew;\n\nfinal class DrinkPricer\n{\n    public function priceOf(string $size, string $milk, int $shots): Money\n    {\n        $pence = (new Size($size))->basePrice();\n        $pence += (new Milk($milk))->surcharge();\n        $pence += (new Shots($shots))->surcharge();\n\n        return new Money($pence);\n    }\n}\n",
+                                            "path": "src/Brew/DrinkPricer.php"
+                                        },
+                                        {
+                                            "content": "<?php\n\nnamespace Brew;\n\nfinal class Shots\n{\n    private int $surcharge;\n\n    public function __construct(int $count)\n    {\n        $this->surcharge = $count > 1 ? ($count - 1) * 60 : 0;\n    }\n\n    public function surcharge(): int\n    {\n        return $this->surcharge;\n    }\n}\n",
+                                            "path": "src/Brew/Shots.php"
+                                        }
+                                    ],
+                                    "red": false
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

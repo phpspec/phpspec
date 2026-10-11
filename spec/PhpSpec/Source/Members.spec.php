@@ -25,6 +25,26 @@ describe(Members::class, function () {
             PHP;
     });
 
+    it('names the classes the file declares, a "::class" constant not among them, nor a class with no method left out', function () {
+        $source = <<<'PHP'
+            <?php
+
+            namespace Acme\Ledger;
+
+            final class Entry {}
+
+            interface Posting
+            {
+                public function post(): string;
+            }
+
+            $type = Entry::class;
+            PHP;
+
+        expect(Members::in($source)->classes())->toBe(['Acme\\Ledger\\Entry', 'Acme\\Ledger\\Posting']);
+        expect(Members::in("<?php\nfunction helper(): void {}\n")->classes())->toBe([]);
+    });
+
     it('names the member a line sits in', function () {
         $members = Members::in($this->basket);
 

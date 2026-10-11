@@ -106,6 +106,6 @@ final class PapiProvider implements ProviderInterface
             $response->toolCalls,
         );
 
-        return new Response($response->text, $toolCalls);
+        return new Response($response->text, $toolCalls, (int) ($response->usage['output_tokens'] ?? 0));
     }
 }

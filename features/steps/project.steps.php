@@ -205,6 +205,12 @@ given('a phpspec.json config:', function (string $json) {
     file_put_contents($this->projectDir . '/phpspec.json', $json);
 });
 
+// Recency is read from modification times, and files written in the same
+// second tie: the one a scenario means is pushed ahead of the rest.
+given('{string} was modified last', function (string $path) {
+    touch($this->projectDir . '/' . $path, time() + 10);
+});
+
 given('a phpspec.yaml config:', function (string $yaml) {
     file_put_contents($this->projectDir . '/phpspec.yaml', $yaml);
 });

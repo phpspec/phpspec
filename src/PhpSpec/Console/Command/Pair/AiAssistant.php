@@ -23,6 +23,7 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
+use PhpSpec\Guard\Inspection;
 use PhpSpec\RealFilesystem;
 use Throwable;
 
@@ -83,7 +84,7 @@ final class AiAssistant
             $output,
             $chooser,
             $this->roleState,
-            $specRunner ?? new SubprocessRunner(),
+            $specRunner ?? new SubprocessRunner(Inspection::of($config, $filesystem) !== null),
             $prompts,
             $extensionLoader,
         );

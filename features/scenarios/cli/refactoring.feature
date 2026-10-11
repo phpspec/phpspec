@@ -61,6 +61,69 @@ Feature: AI-powered refactoring
     Then the output should not contain "Could not open input file"
     And the output should not contain "Specs must pass"
 
+  Scenario: An example the run skips does not stop a refactoring
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Solid.spec.php":
+      """
+      <?php
+      use App\Solid;
+
+      describe(Solid::class, function () {
+          it('works', function () {
+              expect(new Solid())->toBeAnInstanceOf(Solid::class);
+          });
+
+          it('works on PHP 9 too', function () {
+              skip('PHP 9 is not out yet');
+          });
+      });
+      """
+    And a class "src/App/Solid.php":
+      """
+      <?php
+      namespace App;
+
+      class Solid {}
+      """
+    When I run phpspec refactor "App\Solid"
+    Then the output should not contain "Specs must pass"
+
+  Scenario: With guard on, the specs are checked under coverage so guard can judge them
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Solid.spec.php":
+      """
+      <?php
+      use App\Solid;
+
+      describe(Solid::class, function () {
+          it('works', function () {
+              expect(new Solid())->toBeAnInstanceOf(Solid::class);
+          });
+      });
+      """
+    And a class "src/App/Solid.php":
+      """
+      <?php
+      namespace App;
+
+      class Solid {}
+      """
+    And Xdebug is available
+    And I run phpspec guard
+    When I run phpspec refactor "App\Solid"
+    Then the output should not contain "Specs must pass"
+    And the output should not contain "no coverage driver"
+
   Scenario: Require AI configuration
     Given no phpspec.json config
     And a phpspec.yaml config:
@@ -116,3 +179,238 @@ Feature: AI-powered refactoring
     When I run phpspec refactor "spec/App/Calc.spec.php"
     Then the exit code should not be 0
     And the output should contain "AI configuration required"
+
+  Scenario: With no argument, refactor takes the source modified last, and refuses one with no spec
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      use App\Basket;
+
+      describe(Basket::class, function () {
+          it('works', function () {
+              expect(new Basket())->toBeAnInstanceOf(Basket::class);
+          });
+      });
+      """
+    And a class "src/App/Basket.php":
+      """
+      <?php
+      namespace App;
+
+      class Basket {}
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    And "src/App/Till.php" was modified last
+    When I run phpspec command "refactor"
+    Then the exit code should be 1
+    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
+    And the output should not contain "Basket"
+
+  Scenario: Refactoring waits for the whole suite to be green, not only the class's spec
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      use App\Basket;
+
+      describe(Basket::class, function () {
+          it('works', function () {
+              expect(new Basket())->toBeAnInstanceOf(Basket::class);
+          });
+      });
+      """
+    And a class "src/App/Basket.php":
+      """
+      <?php
+      namespace App;
+
+      class Basket {}
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      use App\Till;
+
+      describe(Till::class, function () {
+          it('rings up', function () {
+              expect(true)->toBeFalse();
+          });
+      });
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec command "refactor Basket"
+    Then the exit code should be 1
+    And the output should contain "Checking the specs..."
+    And the output should contain "Specs must pass before refactoring"
+    And the output should contain "spec/App/Till.spec.php:6  Till > rings up: Expected true to be false"
+
+  Scenario: With no argument and no source, refactor says there is none
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    When I run phpspec command "refactor"
+    Then the exit code should be 1
+    And the output should contain "No source to refactor under src."
+
+  Scenario: A short name takes the class by that name modified last under src_path
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      use App\Till;
+
+      describe(Till::class, function () {
+          it('works', function () {
+              expect(new Till())->toBeAnInstanceOf(Till::class);
+          });
+      });
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    And a class "src/App/Legacy/Till.php":
+      """
+      <?php
+      namespace App\Legacy;
+
+      class Till {}
+      """
+    And "src/App/Legacy/Till.php" was modified last
+    When I run phpspec command "refactor Till"
+    Then the exit code should be 1
+    And the output should contain "App\Legacy\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Legacy\Till"
+
+  Scenario: A short name that names no class under src_path is refused
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    When I run phpspec command "refactor Nope"
+    Then the exit code should be 1
+    And the output should contain "No class named Nope under src. Describe it first: phpspec describe Nope"
+
+  Scenario: For a coding agent, a refusal is one JSON receipt
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    When I run phpspec command "refactor Nope --format=agent"
+    Then the exit code should not be 0
+    And the output should be valid JSON
+    And the output should contain:
+      """
+      "error":"No class named Nope under src."
+      """
+    And the output should contain:
+      """
+      "remedy":"Describe it first: phpspec describe Nope"
+      """
+
+  Scenario: For a coding agent, failing specs are named in the refusal
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Broken.spec.php":
+      """
+      <?php
+      use App\Broken;
+
+      describe(Broken::class, function () {
+          it('fails', function () {
+              expect(true)->toBeFalse();
+          });
+      });
+      """
+    And a class "src/App/Broken.php":
+      """
+      <?php
+      namespace App;
+
+      class Broken {}
+      """
+    When I run phpspec command "refactor App/Broken --format=agent"
+    Then the exit code should not be 0
+    And the output should be valid JSON
+    And the output should contain:
+      """
+      "error":"Specs must pass before refactoring."
+      """
+    And the output should contain "spec/App/Broken.spec.php:6  Broken > fails: Expected true to be false"
+    And the output should not contain "Checking the specs"
+
+  Scenario: A class named with slashes resolves as with backslashes
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec command "refactor App/Till"
+    Then the exit code should be 1
+    And the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"
+
+  Scenario: Pair's /refactor resolves a class as the command does, its backslashes kept
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a class "src/App/Till.php":
+      """
+      <?php
+      namespace App;
+
+      class Till {}
+      """
+    When I run phpspec pair with input "/refactor App\Till"
+    Then the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App\Till"

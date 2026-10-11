@@ -24,8 +24,8 @@ use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\Chooser;
-use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Console\Command\Refactor\Diff;
+use PhpSpec\Console\Consent;
 use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
@@ -49,6 +49,7 @@ final readonly class CodeGenerator
     private ResultScanner $scanner;
     private SourceAnalyser $analyser;
     private Filesystem $filesystem;
+    private Consent $consent;
 
     /**
      * @param SourceLayout $layout where a class's file lives
@@ -69,6 +70,7 @@ final readonly class CodeGenerator
         private StepsHome $steps = new StepsHome(new Configuration()),
         private Prompt $prompt = new Prompt(),
     ) {
+        $this->consent = new Consent('Run with --accept-offers to %s.', $generation, $chooser, $prompt);
         $this->analyser = new SourceAnalyser();
         $this->scanner = new ResultScanner($this->analyser);
         $this->filesystem = new RealFilesystem();
@@ -171,7 +173,7 @@ final readonly class CodeGenerator
         $files = $this->steps->files();
 
         if ($files === [] || $this->chooser !== null || $this->generation !== Generation::Asks) {
-            return $this->confirm($output, $question, 'generate-steps', $action) ? $default : null;
+            return $this->consent->confirm($output, $question, 'generate-steps', $action) ? $default : null;
         }
 
         return $this->picked($output, $question, $files, $action);
@@ -193,7 +195,7 @@ final readonly class CodeGenerator
         }
         $output->writeln(sprintf('  [%d] New file...', $newFile));
 
-        while (($answer = $this->answer($output)) !== null) {
+        while (($answer = $this->consent->answer($output)) !== null) {
             $choice = trim($answer) === '' ? '1' : trim($answer);
             $index = ctype_digit($choice) ? (int) $choice : -1;
 
@@ -212,14 +214,16 @@ final readonly class CodeGenerator
             $output->writeln(sprintf('  <fg=yellow>Answer with a number from 0 to %d.</>', $newFile));
         }
 
-        return $this->nobody($output, $action);
+        $this->consent->nobody($output, $action);
+
+        return null;
     }
 
     private function newStepsFile(Output $output, string $action): ?string
     {
         $output->writeln('  Name the new steps file (for example web):');
 
-        while (($answer = $this->answer($output)) !== null) {
+        while (($answer = $this->consent->answer($output)) !== null) {
             $file = $this->steps->file($answer);
             if ($file !== null) {
                 return $file;
@@ -228,7 +232,9 @@ final readonly class CodeGenerator
             $output->writeln('  <fg=yellow>A steps file is named, not placed: for example web.</>');
         }
 
-        return $this->nobody($output, $action);
+        $this->consent->nobody($output, $action);
+
+        return null;
     }
 
     /**
@@ -276,7 +282,7 @@ final readonly class CodeGenerator
                 continue;
             }
 
-            if (!$this->confirm($output, '  <fg=gray>Would you like me to generate that class for you?</>', 'create-class', 'create classes')) {
+            if (!$this->consent->confirm($output, '  <fg=gray>Would you like me to generate that class for you?</>', 'create-class', 'create classes')) {
                 continue;
             }
 
@@ -331,7 +337,7 @@ final readonly class CodeGenerator
         $specName = str_replace('\\', '/', $fqcn);
 
         if (!$this->filesystem->exists($specGenerator->filePath($specName))) {
-            if (!$this->confirm($output, '  <fg=gray>Do you want me to create a spec for it?</>', 'create-spec', 'create specs')) {
+            if (!$this->consent->confirm($output, '  <fg=gray>Do you want me to create a spec for it?</>', 'create-spec', 'create specs')) {
                 return [];
             }
 
@@ -351,7 +357,7 @@ final readonly class CodeGenerator
             ProjectRoot::here()->relative($location->filePath()),
         );
 
-        if (!$this->confirm($output, $question, 'create-class', 'create classes')) {
+        if (!$this->consent->confirm($output, $question, 'create-class', 'create classes')) {
             return $applied;
         }
 
@@ -386,7 +392,7 @@ final readonly class CodeGenerator
                 ProjectRoot::here()->relative($location->filePath()),
             );
 
-            if (!$this->confirm($output, $question, 'create-interface', 'create interfaces')) {
+            if (!$this->consent->confirm($output, $question, 'create-interface', 'create interfaces')) {
                 continue;
             }
 
@@ -419,7 +425,7 @@ final readonly class CodeGenerator
                 $error['className'],
             );
 
-            if (!$this->confirm($output, $question, 'add-interface-method', 'add interface methods')) {
+            if (!$this->consent->confirm($output, $question, 'add-interface-method', 'add interface methods')) {
                 continue;
             }
 
@@ -454,10 +460,10 @@ final readonly class CodeGenerator
 
             if ($returnExpr !== null) {
                 $question = sprintf('  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>', $error['methodName'], $returnExpr);
-                $confirmed = $this->confirm($output, $question, 'confirm-fake-return', 'set fake return values');
+                $confirmed = $this->consent->confirm($output, $question, 'confirm-fake-return', 'set fake return values');
             } else {
                 $question = sprintf('  <fg=yellow>Do you want me to create <fg=white>%s::%s()</> for you?</>', $error['className'], $error['methodName']);
-                $confirmed = $this->confirm($output, $question, 'create-method', 'create methods');
+                $confirmed = $this->consent->confirm($output, $question, 'create-method', 'create methods');
             }
 
             if (!$confirmed) {
@@ -497,7 +503,7 @@ final readonly class CodeGenerator
                 $candidate['fakeExpression'],
             );
 
-            if (!$this->confirm($output, $question, 'confirm-fake-return', 'set fake return values')) {
+            if (!$this->consent->confirm($output, $question, 'confirm-fake-return', 'set fake return values')) {
                 continue;
             }
 
@@ -588,81 +594,6 @@ final readonly class CodeGenerator
     }
 
     /**
-     * Asks a yes/no question, through the pair-mode chooser when one is
-     * available, falling back to a plain [Y/n] prompt otherwise.
-     *
-     * @param Output $output the console output for displaying the question
-     * @param string $question the question to display, without a "[Y/n]" suffix
-     * @param string $kind stable identifier grouping this question for chooser "always" memory
-     * @param string $action verb phrase completing "always ..." in the chooser
-     * @return bool true when the user accepted
-     */
-    private function confirm(Output $output, string $question, string $kind, string $action): bool
-    {
-        if ($this->chooser !== null) {
-            return $this->chooser->choose($question, $kind, $action);
-        }
-
-        if ($this->generation === Generation::Accepts) {
-            return true;
-        }
-
-        $asking = $this->generation === Generation::Asks;
-
-        $output->writeln('');
-        $output->writeln($asking ? "$question [Y/n] " : $question);
-
-        $answer = $asking ? $this->answer($output) : null;
-
-        // Nobody answered: --no-interaction, or a standard input with nothing
-        // on it. An unanswered question is not a yes, whatever the default
-        // would have been, because reading it as one puts files in a source
-        // tree that nobody agreed to. Said out loud, with the way to accept
-        // it, because a person reading a log still wants to know what was
-        // offered.
-        if ($answer === null) {
-            $this->nobody($output, $action);
-
-            return false;
-        }
-
-        return $answer === '' || strtolower($answer) === 'y';
-    }
-
-    /**
-     * Says that nothing was written because nobody was there to answer, and
-     * how to take the offer anyway.
-     */
-    private function nobody(Output $output, string $action): null
-    {
-        $output->writeln(sprintf(
-            '  <fg=yellow>Nothing was written: there is nobody to answer. Run with --accept-offers to %s.</>',
-            $action,
-        ));
-
-        return null;
-    }
-
-    /**
-     * What the person answered, or nothing when there was nobody there.
-     */
-    private function answer(Output $output): ?string
-    {
-        if ($output instanceof ScrollRegionOutput) {
-            $output->prepareForInput();
-        }
-
-        $answer = $this->prompt->ask('  > ');
-
-        if ($output instanceof ScrollRegionOutput && $answer !== null) {
-            $output->returnToContent();
-            $output->echoInput($answer ?: 'Y');
-        }
-
-        return $answer;
-    }
-
-    /**
      * Displays a file with diff markers: new lines get green `+`, existing lines show plain.
      * When there is no previous content, all lines are shown as new.
      *
@@ -686,11 +617,4 @@ final readonly class CodeGenerator
         $output->writeln(Diff::format(Diff::compute($oldLines ?? [], $newLines)));
         $output->writeln('');
     }
-
-    /**
-     * Reads user input via readline (TTY) or fgets (pipe).
-     *
-     * @param string $prompt the prompt string to display
-     * @return string the user's input, or empty string if no input
-     */
 }

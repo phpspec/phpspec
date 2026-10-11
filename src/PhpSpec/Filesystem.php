@@ -64,6 +64,13 @@ interface Filesystem
     public function write(string $path, string $content): void;
 
     /**
+     * Deletes a file; a path with nothing there is left alone.
+     *
+     * @param string $path file to delete
+     */
+    public function delete(string $path): void;
+
+    /**
      * Lists entries in a directory.
      *
      * @param string $path directory to scan

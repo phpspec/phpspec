@@ -39,4 +39,17 @@ describe(Writer::class, function () {
         expect($this->written['/proj/src/Calc.php'])->toBe('<?php // new');
     });
 
+    it('reverts a change by writing back what the file held, and a new file by deleting it', function (Filesystem $fs) {
+        $deleted = [];
+        allow($fs->delete())->toReturnUsing(function (string $path) use (&$deleted) {
+            $deleted[] = $path;
+        });
+        $writer = new Writer($fs, '/proj');
+
+        $writer->revert(new Proposal('src/Calc.php', '<?php // old', '<?php // new', false));
+        $writer->revert(new Proposal('src/Adder.php', '', '<?php // new', true));
+
+        expect($this->written)->toBe(['/proj/src/Calc.php' => '<?php // old']);
+        expect($deleted)->toBe(['/proj/src/Adder.php']);
+    });
 });

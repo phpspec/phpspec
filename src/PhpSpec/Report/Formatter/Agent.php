@@ -104,7 +104,7 @@ final class Agent extends AbstractFormatter
     /** Whether this run collects coverage, so a reader knows a verdict will follow. */
     private bool $collectingCoverage = false;
 
-    /** Guard's standing in this run: on, off, or stood down for lack of a coverage driver. */
+    /** Whether guard judges this run: on or off. */
     private string $guardStanding = 'off';
 
     /**

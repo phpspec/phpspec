@@ -1,10 +1,21 @@
 <?php
 
+use PhpSpec\Ai\Response;
+use PhpSpec\Ai\ToolCall;
+use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Accept;
+use PhpSpec\Console\Command\Refactor\PlannedStep;
+use PhpSpec\Console\Command\Refactor\PlanOffers;
+use PhpSpec\Console\Command\Refactor\RefactorPlan;
+use PhpSpec\Console\Command\Refactor\SpecSuite;
+use PhpSpec\Console\Command\Refactor\SuiteCheck;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use Symfony\Component\Console\Tester\CommandTester;
+
+require_once __DIR__ . '/../../Ai/ReplayProvider.php';
+require_once __DIR__ . '/Refactor/RefactorWorld.php';
 
 describe(Accept::class, function () {
 
@@ -152,5 +163,89 @@ describe(Accept::class, function () {
 
         $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         expect($document['error'])->toContain('o_nothing');
+    });
+
+    context('a refactoring plan', function () {
+
+        beforeEach(function () {
+            $this->world = new RefactorWorldFilesystem();
+            $this->world->write('/project/src/App/Till.php', "<?php\nnamespace App;\n\nfinal class Till {}\n");
+            $this->world->write('/project/spec/App/Till.spec.php', "<?php\ndescribe(App\\Till::class, function () {});\n");
+            $plan = new RefactorPlan('Extract Class', 'Till prints its own receipt.', [new PlannedStep('Introduce a Printer', 'Introducing Printer')]);
+            $this->offer = Offer::refactor('App\\Till', $plan->toArray(), [
+                'src/App/Till.php' => sha1($this->world->files['/project/src/App/Till.php']),
+                'spec/App/Till.spec.php' => sha1($this->world->files['/project/spec/App/Till.spec.php']),
+            ], 'App\\Till');
+            $this->planBook = new OfferBook($this->world, '/project');
+            $this->planBook->record($this->offer);
+            $this->green = SuiteCheck::fromStream('{"event":"summary","examples":1,"actionable":0}');
+            $this->red = SuiteCheck::fromStream(json_encode(['event' => 'example', 'state' => 'failing', 'spec' => 'spec/App/Till.spec.php:3', 'message' => 'Expected 1 to be 2']) . "\n" . '{"event":"summary","examples":1,"actionable":1}');
+            $this->step = fn(string $path, string $content): Response => new Response('', [new ToolCall('s', 'propose_step', ['files' => [['path' => $path, 'content' => $content]], 'red' => false])]);
+            $this->take = function (array $responses, array $checks): CommandTester {
+                $suite = new class ($checks) implements SpecSuite {
+                    public function __construct(private array $checks) {}
+
+                    public function check(): SuiteCheck
+                    {
+                        return array_shift($this->checks);
+                    }
+                };
+                $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]);
+                $tester = new CommandTester(new Accept($this->world, $this->planBook, '/project', $config, new PlanOffers($config, $this->world, '/project', $suite, new ReplayProvider($responses))));
+                $tester->execute(['offer' => [$this->offer->id], '--format' => 'agent'], ['interactive' => false]);
+
+                return $tester;
+            };
+            $this->accepted = fn(CommandTester $tester): array => json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR)['accepted'][0] ?? [];
+        });
+
+        it('carries the plan out with nobody asked, naming the files its steps wrote', function () {
+            $tester = ($this->take)([($this->step)('src/App/Printer.php', "<?php\nnamespace App;\n\nfinal class Printer {}\n")], [$this->green, $this->green]);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect(($this->accepted)($tester))->toBe([
+                'id' => $this->offer->id,
+                'action' => 'refactor',
+                'target' => 'App\\Till',
+                'files' => ['src/App/Printer.php'],
+                'applied' => true,
+            ]);
+            expect($this->world->files['/project/src/App/Printer.php'] ?? '')->toContain('final class Printer');
+        });
+
+        it('reports a plan that stopped short as not applied, saying where it stopped', function () {
+            $tester = ($this->take)([
+                ($this->step)('src/App/Till.php', "<?php // broken\n"),
+                ($this->step)('src/App/Till.php', "<?php // still broken\n"),
+            ], [$this->green, $this->red, $this->red]);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect(($this->accepted)($tester))->toBe([
+                'id' => $this->offer->id,
+                'action' => 'refactor',
+                'target' => 'App\\Till',
+                'files' => [],
+                'applied' => false,
+                'reason' => 'Stopped at step 1: the steps before it are kept, this one is undone.',
+            ]);
+            expect($this->world->files['/project/src/App/Till.php'])->toContain('final class Till {}');
+        });
+
+        it('refuses to start over specs that do not pass', function () {
+            $tester = ($this->take)([], [$this->red]);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect(($this->accepted)($tester)['applied'])->toBeFalse();
+            expect(($this->accepted)($tester)['reason'])->toBe('Specs must pass before refactoring. spec/App/Till.spec.php:3  Expected 1 to be 2');
+        });
+
+        it('refuses a plan made reading a file that has changed since', function () {
+            $this->world->write('/project/spec/App/Till.spec.php', "<?php // edited\n");
+
+            $tester = ($this->take)([], []);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect(json_decode(trim($tester->getDisplay()), true)['error'])->toBe(sprintf('Offer "%s" no longer fits spec/App/Till.spec.php, which changed since the offer was made.', $this->offer->id));
+        });
     });
 });

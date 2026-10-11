@@ -76,4 +76,22 @@ describe(RecencyScanner::class, function () {
         expect($scanner->mostRecentSource('src'))->toBe('src/App/Basket.php');
     });
 
+    it('returns the most recently modified file of a given name under a directory, wherever it sits', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, ['src', 'src/App', 'src/App/Legacy'], true));
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            'src' => ['App'],
+            'src/App' => ['Till.php', 'Basket.php', 'Legacy'],
+            'src/App/Legacy' => ['Till.php'],
+            default => [],
+        });
+        allow($fs->mtime())->toReturnUsing(fn(string $p): int => match ($p) {
+            'src/App/Legacy/Till.php' => 300,
+            'src/App/Basket.php' => 400,
+            default => 100,
+        });
+
+        expect((new RecencyScanner($fs))->mostRecentNamed('src', 'Till.php'))->toBe('src/App/Legacy/Till.php');
+        expect((new RecencyScanner($fs))->mostRecentNamed('src', 'Nope.php'))->toBeNull();
+    });
 });

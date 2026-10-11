@@ -145,3 +145,15 @@ Feature: JSON coverage report
     And the file "coverage.json" should contain "spec/App/Greeter.spec.php::Greeter > greets by name"
     And the file "coverage.json" should contain "src/App/Calculator.php"
     And the file "coverage.json" should contain "src/App/Greeter.php"
+
+  Scenario: Pair's /run collects coverage when asked for it
+    Given Xdebug is available
+    When I run phpspec pair with input "/run --coverage-json=coverage.json"
+    Then a file "coverage.json" should be generated
+
+  Scenario: With guard on, pair's /run is judged by guard
+    Given Xdebug is available
+    And I run phpspec guard
+    When I run phpspec pair with input "/run"
+    Then the output should not contain "no coverage driver"
+    And the output should contain "1 passed"

@@ -18,7 +18,7 @@ final class ReplayProvider implements ProviderInterface
     private int $turn = 0;
 
     /**
-     * @param list<Response> $responses one response per expected chat call; the last repeats
+     * @param list<Response|Throwable> $responses one response per expected chat call, or the failure it meets
      */
     public function __construct(private readonly array $responses = []) {}
 
@@ -62,12 +62,18 @@ final class ReplayProvider implements ProviderInterface
 
     /**
      * Records the request and replays the next scripted response (an empty
-     * prose response once the script runs out).
+     * prose response once the script runs out), or throws the failure
+     * scripted in its place.
      */
     public function chat(array $messages, array $options = []): Response
     {
         $this->requests[] = ['messages' => $messages, 'options' => $options];
+        $next = $this->responses[$this->turn++] ?? new Response('');
 
-        return $this->responses[$this->turn++] ?? new Response('');
+        if ($next instanceof Throwable) {
+            throw $next;
+        }
+
+        return $next;
     }
 }

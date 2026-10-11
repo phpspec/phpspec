@@ -41,7 +41,7 @@ final class RecencyScanner
      */
     public function mostRecentFeature(string $featuresDir): ?string
     {
-        return $this->mostRecentByExtension($featuresDir, '.feature');
+        return $this->mostRecentWhere($featuresDir, static fn(string $entry): bool => str_ends_with($entry, '.feature'));
     }
 
     /**
@@ -50,10 +50,22 @@ final class RecencyScanner
      */
     public function mostRecentSource(string $srcDir): ?string
     {
-        return $this->mostRecentByExtension($srcDir, '.php');
+        return $this->mostRecentWhere($srcDir, static fn(string $entry): bool => str_ends_with($entry, '.php'));
     }
 
-    private function mostRecentByExtension(string $dir, string $extension): ?string
+    /**
+     * The path of the most recently modified file of the given name anywhere
+     * under the directory, or null when there is none.
+     */
+    public function mostRecentNamed(string $dir, string $fileName): ?string
+    {
+        return $this->mostRecentWhere($dir, static fn(string $entry): bool => $entry === $fileName);
+    }
+
+    /**
+     * @param \Closure(string): bool $matches whether a file of this name counts
+     */
+    private function mostRecentWhere(string $dir, \Closure $matches): ?string
     {
         if (!$this->filesystem->exists($dir) || !$this->filesystem->isDir($dir)) {
             return null;
@@ -62,7 +74,7 @@ final class RecencyScanner
         $mostRecent = null;
         $mostRecentMtime = -1;
 
-        foreach ($this->filesInTree($dir, $extension) as $file) {
+        foreach ($this->filesInTree($dir, $matches) as $file) {
             $mtime = $this->filesystem->mtime($file);
             if ($mtime > $mostRecentMtime) {
                 $mostRecentMtime = $mtime;
@@ -74,11 +86,12 @@ final class RecencyScanner
     }
 
     /**
-     * Every file under a directory (recursively) whose name ends in $extension.
+     * Every file under a directory (recursively) whose name matches.
      *
+     * @param \Closure(string): bool $matches
      * @return list<string>
      */
-    private function filesInTree(string $dir, string $extension): array
+    private function filesInTree(string $dir, \Closure $matches): array
     {
         $files = [];
 
@@ -89,12 +102,12 @@ final class RecencyScanner
 
             $path = $dir . '/' . $entry;
             if ($this->filesystem->isDir($path)) {
-                $files = array_merge($files, $this->filesInTree($path, $extension));
+                $files = array_merge($files, $this->filesInTree($path, $matches));
 
                 continue;
             }
 
-            if (str_ends_with($entry, $extension)) {
+            if ($matches($entry)) {
                 $files[] = $path;
             }
         }

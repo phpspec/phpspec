@@ -178,11 +178,11 @@ describe(PairOutput::class, function () {
             expect($output)->toContain('+ changed');
         });
 
-        it('includes line numbers in diff output', function () {
+        it('numbers the lines of the file as it will be in diff output, a removed line having none', function () {
             $this->pairOutput->fileDiff('/tmp/f.php', "a\nb", "a\nc");
             $output = $this->buffer->fetch();
-            expect($output)->toMatch('/\d+ \+ c/');
-            expect($output)->toMatch('/\d+ - b/');
+            expect($output)->toMatch('/ 2 \+ c/');
+            expect($output)->toMatch('/\n {7}- b/');
         });
 
         it('handles empty old content with all adds', function () {
