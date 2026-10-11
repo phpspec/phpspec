@@ -16,21 +16,25 @@ namespace PhpSpec\Console\Command\Refactor;
 
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
+use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Console\Consent;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
  * @internal
- * Carries out a refactoring plan with the developer, one step at a time: the
- * model writes the step, the developer sees it and says yes, it is written
- * and the whole suite checked. A step that breaks more than it meant to, or
- * leaves fewer examples than it found, gets one fix; still wrong, or not
- * fixed at all, it is undone and the run stops there, the steps before it
- * kept.
+ * Carries out a refactoring plan one step at a time: the model writes the
+ * step, it is written once the developer says yes (or straight away when
+ * nobody attends the run) and the whole suite checked. A step that breaks
+ * more than it meant to, or leaves fewer examples than it found, gets one
+ * fix; still wrong, or not fixed at all, it is undone and the run stops
+ * there, the steps before it kept and noted in the journal.
  */
 final readonly class StepByStep
 {
+    /**
+     * @param bool $attended whether somebody answers: they see the plan's checklist and each diff before saying yes, where a run nobody attends names the files it writes
+     */
     public function __construct(
         private Output $output,
         private RefactorModel $model,
@@ -38,15 +42,30 @@ final readonly class StepByStep
         private Consent $consent,
         private Progress $progress,
         private Writer $writer,
+        private RefactorJournal $journal,
+        private bool $attended = true,
     ) {}
 
     /**
      * @param SuiteCheck $baseline the suite before the first step
-     * @param list<string> $kept the titles of the steps kept, filled in as they are
+     * @param string $subject what the journal keeps the steps kept under
      */
-    public function carryOut(RefactorPlan $plan, SuiteCheck $baseline, array &$kept): int
+    public function carryOut(RefactorPlan $plan, SuiteCheck $baseline, string $subject): Carried
+    {
+        $carried = $this->stepThrough($plan, $baseline);
+
+        if ($carried->kept !== []) {
+            $this->journal->record($subject, $plan->technique, implode('; ', $carried->kept));
+        }
+
+        return $carried;
+    }
+
+    private function stepThrough(RefactorPlan $plan, SuiteCheck $baseline): Carried
     {
         $examples = $baseline->examples();
+        $kept = [];
+        $files = [];
 
         foreach ($plan->steps as $index => $planned) {
             $number = $index + 1;
@@ -56,45 +75,57 @@ final readonly class StepByStep
                 $step = $this->progress->during($planned->doing, fn(): RefactorStep => $this->model->step($plan, $index));
             } catch (RefusedStepException|ModelFailedException $e) {
                 $this->output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
-                $this->output->writeln(sprintf('  Stopped at step %d: the steps before it are kept.', $number));
 
-                return 1;
+                return $this->stopped(1, $kept, $files, sprintf('Stopped at step %d: the steps before it are kept.', $number));
             }
 
-            $this->progress->checklist($plan, $index);
+            if ($this->attended) {
+                $this->progress->checklist($plan, $index);
+            }
+
             $this->showFiles($step);
 
             if (!$this->consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the remaining refactoring steps')) {
-                $this->output->writeln(sprintf('  Stopped before step %d: the steps before it are kept.', $number));
-
-                return 0;
+                return $this->stopped(0, $kept, $files, sprintf('Stopped before step %d: the steps before it are kept.', $number));
             }
 
             $standing = $this->standing($step, $number === count($plan->steps), $examples);
 
             if ($standing === null) {
-                $this->output->writeln(sprintf('  Stopped at step %d: the steps before it are kept, this one is undone.', $number));
-
-                return 1;
+                return $this->stopped(1, $kept, $files, sprintf('Stopped at step %d: the steps before it are kept, this one is undone.', $number));
             }
 
-            $examples = $standing->examples();
+            $examples = $standing['check']->examples();
             $kept[] = $planned->title;
+            $files = array_values(array_unique([...$files, ...$standing['files']]));
         }
 
         $this->output->writeln('');
         $this->output->writeln(sprintf('  <fg=green>Refactoring done: %s ✓</>', OutputFormatter::escape($plan->technique)));
 
-        return 0;
+        return new Carried(0, $kept, $files);
+    }
+
+    /**
+     * @param list<string> $kept
+     * @param list<string> $files
+     */
+    private function stopped(int $exitCode, array $kept, array $files, string $why): Carried
+    {
+        $this->output->writeln('  ' . $why);
+
+        return new Carried($exitCode, $kept, $files, $why);
     }
 
     /**
      * Writes the step and checks the suite, fixing it once when it does not
-     * stand. The suite it stands on, or nothing when it was undone.
+     * stand. The suite it stands on and the files written, or nothing when
+     * it was undone.
      *
      * @param int $examples how many examples there were before the step
+     * @return array{check: SuiteCheck, files: list<string>}|null
      */
-    private function standing(RefactorStep $step, bool $last, int $examples): ?SuiteCheck
+    private function standing(RefactorStep $step, bool $last, int $examples): ?array
     {
         $applied = $this->apply($step);
         $check = $this->suite->check();
@@ -130,7 +161,7 @@ final readonly class StepByStep
             ? '  <fg=green>Specs still pass ✓</>'
             : '  <fg=yellow>Red, as this step meant:</> ' . implode(', ', array_map(static fn(Proposal $file): string => $file->path, $step->files)));
 
-        return $check;
+        return ['check' => $check, 'files' => array_values(array_unique(array_map(static fn(Proposal $file): string => $file->path, array_reverse($applied))))];
     }
 
     /**
@@ -197,9 +228,15 @@ final readonly class StepByStep
     private function showFiles(RefactorStep $step): void
     {
         foreach ($step->files as $file) {
-            $this->output->writeln('');
+            if ($this->attended) {
+                $this->output->writeln('');
+            }
+
             $this->output->writeln(sprintf('  <fg=white>%s</>%s', $file->path, $file->isNew ? ' (new)' : ''));
-            $this->output->writeln(Diff::format(Diff::compute($file->isNew ? [] : explode("\n", $file->old), explode("\n", $file->new))));
+
+            if ($this->attended) {
+                $this->output->writeln(Diff::format(Diff::compute($file->isNew ? [] : explode("\n", $file->old), explode("\n", $file->new))));
+            }
         }
     }
 

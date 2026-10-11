@@ -126,18 +126,20 @@ final class Refactor extends Command
         try {
             return $forAgent
                 ? $this->planForAgent($output, $target, $model->plan($target, $journal->rendered()))
-                : $this->refactorWithTheDeveloper($input, $output, $target, $model, $suite, $baseline, $journal);
+                : $this->refactorStepByStep($input, $output, $target, $model, $suite, $baseline, $journal);
         } catch (ModelFailedException $e) {
             return $this->refuse($output, $forAgent, $e->getMessage());
         }
     }
 
     /**
-     * Shows the plan, asks to go ahead, and carries it out step by step,
-     * keeping in the journal the steps that were kept.
+     * Asks for the plan and carries it out step by step. Somebody attending
+     * the run sees the plan and is asked to go ahead, and then before each
+     * step; with --no-interaction nobody is asked and the plan goes unshown.
      */
-    private function refactorWithTheDeveloper(Input $input, Output $output, RefactorTarget $target, RefactorModel $model, SpecSuite $suite, SuiteCheck $baseline, RefactorJournal $journal): int
+    private function refactorStepByStep(Input $input, Output $output, RefactorTarget $target, RefactorModel $model, SpecSuite $suite, SuiteCheck $baseline, RefactorJournal $journal): int
     {
+        $attended = $input->isInteractive();
         $progress = new Progress($output);
 
         $output->writeln('');
@@ -150,25 +152,21 @@ final class Refactor extends Command
             return 0;
         }
 
-        $this->showPlan($output, $plan, $progress);
-        $consent = $this->consent ?? new Consent('Run phpspec refactor in a terminal to %s.', $input->isInteractive() ? Generation::Asks : Generation::Declines);
+        $consent = $attended ? $this->consent ?? new Consent('Run with --no-interaction to %s.') : new Consent('', Generation::Accepts);
 
-        if (!$consent->confirm($output, '  Would you like to proceed?', 'refactor-plan', 'carry out the plan')) {
-            if ($input->isInteractive()) {
+        if ($attended) {
+            $this->showPlan($output, $plan, $progress);
+
+            if (!$consent->confirm($output, '  Would you like to proceed?', 'refactor-plan', 'carry out the plan')) {
                 $output->writeln('  Left unchanged.');
+
+                return 0;
             }
-
-            return 0;
         }
 
-        $kept = [];
-        $exitCode = (new StepByStep($output, $model, $suite, $consent, $progress, new Writer($this->filesystem, getcwd() ?: '.')))->carryOut($plan, $baseline, $kept);
+        $steps = new StepByStep($output, $model, $suite, $consent, $progress, new Writer($this->filesystem, getcwd() ?: '.'), $journal, $attended);
 
-        if ($kept !== []) {
-            $journal->record($this->relativeClass($target), $plan->technique, implode('; ', $kept));
-        }
-
-        return $exitCode;
+        return $steps->carryOut($plan, $baseline, $this->relativeClass($target))->exitCode;
     }
 
     /**

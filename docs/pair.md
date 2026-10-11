@@ -343,8 +343,33 @@ When nothing is worth changing, it says so in its own words: `Nothing to refacto
 
 On the command line each question is a `[Y/n]` line. In pair mode it is the
 chooser, where *Yes, and don't ask again* on a step applies the remaining
-steps without asking. With nobody to answer (`--no-interaction`, or input
-that ends), the plan is printed and nothing is written.
+steps without asking.
+
+`--no-interaction` refactors without asking anything: the plan and the
+diffs go unshown, each step names the files it writes and the verdict of
+the suite, and the rules above hold as they do for a person (one fix, then
+the step is undone). A single `pair --prompt "/refactor ..."` runs the same
+way. Input that ends before a question is answered writes nothing of what
+was asked, and says to run with `--no-interaction`.
+
+```
+$ bin/phpspec refactor CheckoutService --no-interaction
+  Checking the specs...
+
+Planning the refactoring… (14s · ↓ 1.2k tokens)
+
+Introducing DiscountPolicy… (5s · ↓ 310 tokens)
+  src/App/Checkout/DiscountPolicy.php (new)
+  Specs still pass ✓
+
+Describing LoyaltyDiscount… (6s · ↓ 420 tokens)
+  spec/App/Checkout/LoyaltyDiscount.spec.php (new)
+  Red, as this step meant: spec/App/Checkout/LoyaltyDiscount.spec.php
+
+...
+
+  Refactoring done: Replace Conditional with Polymorphism ✓
+```
 
 A coding agent asks with `--format=agent` and gets the plan, or the model's
 reason to decline, as one JSON receipt; nothing is written (see

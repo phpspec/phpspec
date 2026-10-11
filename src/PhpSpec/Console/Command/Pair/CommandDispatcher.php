@@ -609,12 +609,13 @@ final class CommandDispatcher
     }
 
     /**
-     * Refactors as `phpspec refactor` does, with the plan and each step asked
-     * through the pair chooser.
+     * Refactors as `phpspec refactor` does: in a session the plan and each
+     * step are asked through the pair chooser, and a single --prompt carries
+     * the plan out unattended.
      */
     private function handleRefactor(string $argument): int
     {
-        $consent = new Consent('Run phpspec refactor in a terminal to %s.', $this->interactive ? Generation::Asks : Generation::Declines, $this->chooser);
+        $consent = new Consent('Run phpspec refactor --no-interaction to %s.', chooser: $this->chooser);
         $input = new ArrayInput(trim($argument) === '' ? [] : ['target' => trim($argument)]);
         $input->setInteractive($this->interactive);
 

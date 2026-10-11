@@ -42,7 +42,7 @@ describe(Refactor::class, function () {
         'red' => $red,
     ])], 900));
     let('outage', fn() => new RuntimeException('Google API error (400): API key not valid.'));
-    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = []): CommandTester {
+    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = [], bool $attended = true): CommandTester {
         $this->replay = new ReplayProvider($responses);
         $suite = new class ($checks) implements SpecSuite {
             public function __construct(private array $checks) {}
@@ -60,14 +60,14 @@ describe(Refactor::class, function () {
                 return array_shift($this->answers);
             }
         };
-        $consent = new Consent('Run phpspec refactor in a terminal to %s.', $interactive ? Generation::Asks : Generation::Declines, prompt: $prompt);
+        $consent = new Consent('Run with --no-interaction to %s.', $interactive ? Generation::Asks : Generation::Declines, prompt: $prompt);
         $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]), $this->project, $suite, $this->replay, $consent);
         $app = new Application('phpspec-test', '1.0');
         $app->setAutoExit(false);
         $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($command);
 
         $tester = new CommandTester($command);
-        $tester->execute(($target === '' ? [] : ['target' => $target]) + $options);
+        $tester->execute(($target === '' ? [] : ['target' => $target]) + $options, ['interactive' => $attended]);
 
         return $tester;
     });
@@ -91,11 +91,11 @@ describe(Refactor::class, function () {
             expect($this->replay->requests)->toHaveCount(1);
         });
 
-        it('prints the plan and writes nothing with nobody to answer', function () {
+        it('prints the plan and writes nothing when nobody answers, saying how to have it carried out unattended', function () {
             $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction')], [$this->green], interactive: false);
 
             expect($tester->getStatusCode())->toBe(0);
-            expect($tester->getDisplay())->toContain('Nothing was written: there is nobody to answer. Run phpspec refactor in a terminal to carry out the plan.');
+            expect($tester->getDisplay())->toContain('Nothing was written: there is nobody to answer. Run with --no-interaction to carry out the plan.');
             expect($this->replay->requests)->toHaveCount(1);
         });
 
@@ -104,6 +104,46 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(0);
             expect($tester->getDisplay())->toContain('  Nothing to refactor in App\\Checkout\\CheckoutService: It does one thing.');
+        });
+    });
+
+    context('with --no-interaction', function () {
+
+        it('carries the plan out asking nothing, naming the files each step writes, the plan and the diffs unshown', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\nnamespace App\\Checkout;\n\ninterface DiscountPolicy {}\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php\nnamespace App\\Checkout;\n\nfinal class CheckoutService { /* policy */ }\n"]),
+            ], [$this->green, $this->green, $this->green], attended: false);
+            $display = $tester->getDisplay();
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($display)->not()->toContain('Plan:');
+            expect($display)->not()->toContain('◻');
+            expect($display)->not()->toContain('[Y/n]');
+            expect($display)->not()->toContain('interface DiscountPolicy');
+            expect($display)->toMatch('/Doing Introduce a DiscountPolicy abstraction… \(\d+s · ↓ 900 tokens\)\n  src\/App\/Checkout\/DiscountPolicy\.php \(new\)\n  Specs still pass ✓\n/');
+            expect($display)->toMatch('/Doing Use it in CheckoutService… \(\d+s · ↓ 900 tokens\)\n  src\/App\/Checkout\/CheckoutService\.php\n  Specs still pass ✓\n/');
+            expect($display)->toContain('  Refactoring done: Replace Conditional with Polymorphism ✓');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toContain('/* policy */');
+            expect($this->project->files[$this->cwd . '/.phpspec/ai/journal.jsonl'] ?? '')->toContain('Introduce a DiscountPolicy abstraction; Use it in CheckoutService');
+        });
+
+        it('fixes a step once and undoes it when the fix does not hold, asking nothing', function () {
+            $original = $this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'];
+            $broken = ($this->redIn)('spec/App/Checkout/CheckoutService.spec.php:7', 'Expected 90 to be 100');
+
+            $tester = ($this->run)([
+                ($this->plan)('Use a DiscountPolicy in CheckoutService'),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // broken\n"]),
+                ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // still broken\n"]),
+            ], [$this->green, $broken, $broken], attended: false);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('Specs failed ✘, asking for a fix...');
+            expect($tester->getDisplay())->not()->toContain('[Y/n]');
+            expect($tester->getDisplay())->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
+            expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
         });
     });
 

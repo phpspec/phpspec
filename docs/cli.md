@@ -56,6 +56,7 @@ bin/phpspec refactor                       # the source file modified last under
 bin/phpspec refactor Calculator            # the Calculator modified last under src_path
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
+bin/phpspec refactor Calculator --no-interaction       # carry the plan out without asking
 bin/phpspec refactor App/Calculator --format=agent   # the plan as one JSON receipt, nothing written
 ```
 
