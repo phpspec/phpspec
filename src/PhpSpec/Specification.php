@@ -150,7 +150,7 @@ class Specification implements ExampleRegistry, SpecBlock
 
         return array_values(array_filter(
             $this->specBlocks,
-            fn(SpecBlock $block) => $block instanceof Specification\Context
+            fn(SpecBlock $block) => ($block instanceof Specification\Context || $block instanceof Specification\Example)
                 && array_filter($lines, $block->containsLine(...)) !== [],
         ));
     }

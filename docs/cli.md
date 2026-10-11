@@ -375,8 +375,9 @@ bin/phpspec run spec/App/Calculator.spec.php:14   # The example at line 14
 bin/phpspec run features/checkout.feature:12      # The scenario at line 12
 ```
 
-Any line inside an example (or scenario) body selects it; a line inside a
-`describe` but outside its examples runs that whole context. For Gherkin,
+Any line inside an example (or scenario) body selects it, an example at the top
+of a file included; a line inside a `describe` but outside its examples runs
+that whole context. For Gherkin,
 targeting a `Scenario Outline:` line runs every row of its examples table,
 while targeting a single examples row runs just that expansion. A line that
 reaches no example at all stops the run with `No example at <path:LINE>` and
@@ -392,7 +393,10 @@ pasted back as it is:
 bin/phpspec run spec/App/Calculator.spec.php:14 spec/App/Calculator.spec.php:22
 ```
 
-A path given whole alongside one of its lines runs whole.
+Each selector selects, and the run takes them all together: a line that runs
+a whole context keeps every example in it, nested contexts included, even when
+another selector points inside one of them. A path given whole alongside one
+of its lines runs whole.
 
 ### Bootstrap
 

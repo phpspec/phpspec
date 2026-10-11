@@ -262,6 +262,58 @@ Feature: CLI options
     And the output should contain "second example" exactly 1 times
     And the output should contain "2 examples"
 
+  Scenario: A line in a describe but in none of its examples keeps the whole describe, whatever other lines are asked for
+    Given a spec file "spec/App/Selection.spec.php":
+      """
+      <?php
+      describe('Selection', function () {
+
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+          context('nested', function () {
+              it('third example', fn () => expect(true)->toBeTrue());
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Selection.spec.php:3 spec/App/Selection.spec.php:5"
+    Then all examples should pass
+    And the output should contain "3 examples"
+    When I run phpspec run "spec/App/Selection.spec.php:3 spec/App/Selection.spec.php:11"
+    Then all examples should pass
+    And the output should contain "3 examples"
+
+  Scenario: A describe kept whole keeps its nested contexts whole
+    Given a spec file "spec/App/Deep.spec.php":
+      """
+      <?php
+      describe('Deep', function () {
+
+          context('nested', function () {
+              it('third example', fn () => expect(true)->toBeTrue());
+              it('fourth example', fn () => expect(true)->toBeTrue());
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Deep.spec.php:3 spec/App/Deep.spec.php:5"
+    Then all examples should pass
+    And the output should contain "2 examples"
+
+  Scenario: An example at the top of a file runs by its line
+    Given a spec file "spec/App/Alone.spec.php":
+      """
+      <?php
+
+      it('stands alone', fn () => expect(true)->toBeTrue());
+      """
+    When I run phpspec run "spec/App/Alone.spec.php:3"
+    Then all examples should pass
+    And the output should contain "stands alone"
+    And the output should contain "1 example"
+
   Scenario: Run several scenarios of one feature by their line numbers
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/trio.feature":

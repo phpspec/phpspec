@@ -760,4 +760,47 @@ describe(Context::class, function() {
         expect($ran)->toBe(['first', 'second']);
     });
 
+    it("runs the whole context when one targeted line asks for it whole, whatever another targets inside an example", function () {
+        $ran = [];
+        $blockLine = __LINE__ + 1;
+        $block = function () use (&$ran) {
+            it("first", function () use (&$ran) { $ran[] = 'first'; });
+            it("second", function () use (&$ran) { $ran[] = 'second'; });
+        };
+        LineTargetRegistry::add('ctx.spec.php', $blockLine, $blockLine + 1);
+        LineTargetRegistry::beginSpec('ctx.spec.php');
+
+        try {
+            $ctx = new Context("WholeContext", $block);
+            $ctx->setWorld(new Subject());
+            $ctx->run();
+        } finally {
+            LineTargetRegistry::reset();
+        }
+
+        expect($ran)->toBe(['first', 'second']);
+    });
+
+    it("keeps a nested context whole when the context around it was asked for whole", function () {
+        $ran = [];
+        $blockLine = __LINE__ + 1;
+        $block = function () use (&$ran) {
+            context("nested", function () use (&$ran) {
+                it("third", function () use (&$ran) { $ran[] = 'third'; });
+                it("fourth", function () use (&$ran) { $ran[] = 'fourth'; });
+            });
+        };
+        LineTargetRegistry::add('ctx.spec.php', $blockLine, $blockLine + 2);
+        LineTargetRegistry::beginSpec('ctx.spec.php');
+
+        try {
+            $ctx = new Context("Deep", $block);
+            $ctx->setWorld(new Subject());
+            $ctx->run();
+        } finally {
+            LineTargetRegistry::reset();
+        }
+
+        expect($ran)->toBe(['third', 'fourth']);
+    });
 });
