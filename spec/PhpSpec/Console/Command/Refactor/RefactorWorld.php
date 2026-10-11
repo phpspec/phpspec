@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\Console\Command\Refactor\SpecSuite;
+use PhpSpec\Console\Command\Refactor\SuiteCheck;
 use PhpSpec\Filesystem;
 
 /**
@@ -79,5 +81,42 @@ final class RefactorWorldFilesystem implements Filesystem
     public function mtime(string $path): int
     {
         return $this->times[$path] ?? 0;
+    }
+}
+
+/**
+ * The suite as the world's files stand: every it() an example, and a spec
+ * whose class does not exist yet in error, as a run would report it.
+ */
+final class RefactorWorldSuite implements SpecSuite
+{
+    /** @var list<int> how many examples each check found, in order */
+    public array $examples = [];
+
+    public function __construct(private RefactorWorldFilesystem $world, private string $root) {}
+
+    public function check(): SuiteCheck
+    {
+        $events = [];
+        $examples = 0;
+
+        foreach ($this->world->files as $path => $content) {
+            if (!str_ends_with($path, '.spec.php')) {
+                continue;
+            }
+
+            $examples += preg_match_all('/\bit\(/', $content);
+            $spec = substr($path, strlen($this->root) + 1);
+            $source = $this->root . '/src/' . substr($spec, strlen('spec/'), -strlen('.spec.php')) . '.php';
+
+            if (!isset($this->world->files[$source])) {
+                $events[] = json_encode(['event' => 'example', 'state' => 'error', 'spec' => $spec . ':5', 'message' => 'Class not found']);
+            }
+        }
+
+        $this->examples[] = $examples;
+        $events[] = json_encode(['event' => 'summary', 'examples' => $examples, 'actionable' => count($events)]);
+
+        return SuiteCheck::fromStream(implode("\n", $events));
     }
 }
