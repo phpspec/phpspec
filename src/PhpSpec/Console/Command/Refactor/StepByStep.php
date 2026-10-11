@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Refactor;
 
+use Closure;
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\RefactorJournal;
@@ -56,7 +57,13 @@ final readonly class StepByStep
      */
     public function carryOut(RefactorPlan $plan, SuiteCheck $baseline, string $class): Carried
     {
-        $carried = $this->stepThrough($plan, $baseline);
+        $restore = $this->interruptible();
+
+        try {
+            $carried = $this->stepThrough($plan, $baseline);
+        } finally {
+            $restore();
+        }
 
         if ($carried->kept !== []) {
             $this->journal->record($class, $plan->technique, implode('; ', $carried->kept));
@@ -73,37 +80,17 @@ final readonly class StepByStep
 
         foreach ($plan->steps as $index => $planned) {
             $number = $index + 1;
-            $this->output->writeln('');
 
             try {
-                $step = $this->progress->during($planned->doing, fn(): RefactorStep => $this->model->step($plan, $index));
-            } catch (RefusedStepException|ModelFailedException $e) {
-                $this->output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
+                $standing = $this->stepped($plan, $index, $kept, $examples);
+            } catch (InterruptedException $e) {
+                $this->output->writeln('');
 
-                return $this->stopped(1, sprintf('at step %d', $number), $kept, $e->getMessage());
+                return $this->stopped(130, sprintf('by an interrupt at step %d', $number), $kept, '', $e->stepUndone ? $number : null);
             }
 
-            if ($this->attended) {
-                $this->progress->checklist($plan, $index);
-            }
-
-            $this->showFiles($step);
-            $redSoFar = $this->sinceGreen($kept) !== [];
-
-            if (!$this->consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the remaining refactoring steps', $redSoFar ? self::UNDOES : '')) {
-                return $this->stopped(0, sprintf('before step %d', $number), $kept);
-            }
-
-            try {
-                $standing = $this->standing($step, $number === count($plan->steps), $examples);
-            } catch (RefusedStepException $e) {
-                $this->output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
-
-                return $this->stopped(1, sprintf('at step %d', $number), $kept, $e->getMessage());
-            }
-
-            if ($standing['check'] === null) {
-                return $this->stopped(1, sprintf('at step %d', $number), $kept, $standing['cause'], $number);
+            if ($standing instanceof Carried) {
+                return $standing;
             }
 
             $examples = $standing['check']->ran();
@@ -114,6 +101,76 @@ final readonly class StepByStep
         $this->output->writeln(sprintf('  <fg=green>Refactoring done: %s ✓</>', OutputFormatter::escape($plan->technique)));
 
         return $this->carried(0, $kept);
+    }
+
+    /**
+     * One step: asked of the model, shown, agreed to, written and checked.
+     * The step as it stands, or how the run stopped there.
+     *
+     * @param list<array{title: string, applied: list<Proposal>, green: bool}> $kept
+     * @return array{check: SuiteCheck, applied: list<Proposal>, cause: string}|Carried
+     */
+    private function stepped(RefactorPlan $plan, int $index, array $kept, int $examples): array|Carried
+    {
+        $number = $index + 1;
+        $this->output->writeln('');
+
+        try {
+            $step = $this->progress->during($plan->steps[$index]->doing, fn(): RefactorStep => $this->model->step($plan, $index));
+        } catch (RefusedStepException|ModelFailedException $e) {
+            $this->output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
+
+            return $this->stopped(1, sprintf('at step %d', $number), $kept, $e->getMessage());
+        }
+
+        if ($this->attended) {
+            $this->progress->checklist($plan, $index);
+        }
+
+        $this->showFiles($step);
+        $redSoFar = $this->sinceGreen($kept) !== [];
+
+        if (!$this->consent->confirm($this->output, '  Apply this step?', 'refactor-step', 'apply the remaining refactoring steps', $redSoFar ? self::UNDOES : '')) {
+            return $this->stopped(0, sprintf('before step %d', $number), $kept);
+        }
+
+        try {
+            $standing = $this->standing($step, $number === count($plan->steps), $examples);
+        } catch (RefusedStepException $e) {
+            $this->output->writeln('  <fg=red>' . OutputFormatter::escape($e->getMessage()) . '</>');
+
+            return $this->stopped(1, sprintf('at step %d', $number), $kept, $e->getMessage());
+        }
+
+        if ($standing['check'] === null) {
+            return $this->stopped(1, sprintf('at step %d', $number), $kept, $standing['cause'], $number);
+        }
+
+        return $standing;
+    }
+
+    /**
+     * Turns Ctrl-C into an interrupt the run stops green on, where signals
+     * are handled. What puts back the handling there was before.
+     *
+     * @return Closure(): void
+     */
+    private function interruptible(): Closure
+    {
+        if (!function_exists('pcntl_signal')) {
+            return static function (): void {};
+        }
+
+        $previous = pcntl_signal_get_handler(SIGINT);
+        $wasAsync = pcntl_async_signals(true);
+        pcntl_signal(SIGINT, static function (): never {
+            throw new InterruptedException();
+        });
+
+        return static function () use ($previous, $wasAsync): void {
+            pcntl_signal(SIGINT, $previous);
+            pcntl_async_signals($wasAsync);
+        };
     }
 
     /**
@@ -215,9 +272,26 @@ final readonly class StepByStep
      * undone, why.
      *
      * @param int $examples how many examples ran before the step
-     * @return array{check: SuiteCheck, applied: list<Proposal>, cause: ''}|array{check: null, applied: list<Proposal>, cause: string}
+     * @return array{check: SuiteCheck|null, applied: list<Proposal>, cause: string}
      */
     private function standing(RefactorStep $step, bool $last, int $examples): array
+    {
+        $applied = [];
+
+        try {
+            return $this->writtenAndChecked($step, $last, $examples, $applied);
+        } catch (InterruptedException) {
+            array_map($this->writer->revert(...), $applied);
+
+            throw new InterruptedException(stepUndone: true);
+        }
+    }
+
+    /**
+     * @param list<Proposal> $applied what was written so far, to undo in this order, filled in as it is
+     * @return array{check: SuiteCheck|null, applied: list<Proposal>, cause: string}
+     */
+    private function writtenAndChecked(RefactorStep $step, bool $last, int $examples, array &$applied): array
     {
         $applied = $this->apply($step);
         $check = $this->suite->check();
@@ -318,6 +392,10 @@ final readonly class StepByStep
         foreach ($step->files as $file) {
             try {
                 $this->writer->apply($file);
+            } catch (InterruptedException $e) {
+                array_map($this->writer->revert(...), [$file, ...$applied]);
+
+                throw $e;
             } catch (RuntimeException $e) {
                 array_map($this->writer->revert(...), $applied);
 
@@ -332,7 +410,7 @@ final readonly class StepByStep
 
     /**
      * @param list<Proposal> $applied
-     * @return array{check: null, applied: list<Proposal>, cause: string}
+     * @return array{check: SuiteCheck|null, applied: list<Proposal>, cause: string}
      */
     private function undone(array $applied, string $cause): array
     {

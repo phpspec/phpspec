@@ -117,6 +117,43 @@ describe(Refactor::class, function () {
         });
     });
 
+    context('an interrupt', function () {
+
+        it('undoes the step under way and stops green, when Ctrl-C comes while its specs run', function () {
+            if (!function_exists('pcntl_signal') || !function_exists('posix_kill')) {
+                skip('Signals are not handled on this platform.');
+            }
+            $before = ($this->code)();
+            $interrupting = new class implements SpecSuite {
+                private int $checks = 0;
+
+                public function check(): SuiteCheck
+                {
+                    if (++$this->checks === 2) {
+                        posix_kill(posix_getpid(), SIGINT);
+                    }
+
+                    return SuiteCheck::fromStream('{"event":"summary","actionable":0}');
+                }
+            };
+            $previous = pcntl_signal_get_handler(SIGINT);
+            pcntl_signal(SIGINT, static fn() => null);
+            $replay = new ReplayProvider([($this->plan)('Introduce a DiscountPolicy abstraction'), ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\n"])]);
+            $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]), $this->project, $interrupting, $replay, new Consent('%s', Generation::Accepts));
+
+            try {
+                $tester = new CommandTester($command);
+                $tester->execute(['target' => 'App\\Checkout\\CheckoutService']);
+            } finally {
+                pcntl_signal(SIGINT, $previous);
+            }
+
+            expect($tester->getStatusCode())->toBe(130);
+            expect($tester->getDisplay())->toContain('Stopped by an interrupt at step 1: step 1 is undone.');
+            expect(($this->code)())->toBe($before);
+        });
+    });
+
     context('with --no-interaction', function () {
 
         it('carries the plan out asking nothing, naming the files each step writes, the plan and the diffs unshown', function () {

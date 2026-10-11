@@ -217,6 +217,8 @@ final class RefactorModel
 
         try {
             $response = $this->provider->chat($this->messages, $this->options($tools, $choice));
+        } catch (InterruptedException $e) {
+            throw $e;
         } catch (Throwable $e) {
             throw new ModelFailedException(sprintf('The model did not answer: %s', $e->getMessage()), 0, $e);
         }
