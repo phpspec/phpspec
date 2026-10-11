@@ -97,6 +97,7 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(0);
             expect($tester->getDisplay())->toContain('Nothing was written: there is nobody to answer. Run with --no-interaction to carry out the plan.');
+            expect($tester->getDisplay())->not()->toContain('Left unchanged.');
             expect($this->replay->requests)->toHaveCount(1);
         });
 

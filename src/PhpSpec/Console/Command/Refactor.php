@@ -154,7 +154,15 @@ final class Refactor extends Command
         if ($attended) {
             $this->showPlan($output, $plan, $progress);
 
-            if (!$consent->confirm($output, '  Would you like to proceed?', 'refactor-plan', 'carry out the plan')) {
+            $decided = $consent->decide($output, '  Would you like to proceed?', 'refactor-plan', 'carry out the plan');
+
+            if ($decided === null) {
+                $consent->nobody($output, 'carry out the plan');
+
+                return 0;
+            }
+
+            if (!$decided) {
                 $output->writeln('  Left unchanged.');
 
                 return 0;
