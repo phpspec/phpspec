@@ -932,6 +932,10 @@ final class Configuration
             if (!is_string($ai['api_key'])) {
                 return 'The ai section\'s api_key must be a string. Quote it in your phpspec config.';
             }
+
+            if (trim($ai['api_key']) === '') {
+                return 'The ai section\'s api_key is empty. Put your key in your phpspec config.';
+            }
         }
 
         if (isset($ai['model']) && !is_string($ai['model'])) {

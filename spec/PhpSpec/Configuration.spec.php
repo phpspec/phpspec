@@ -566,6 +566,11 @@ describe(Configuration::class, function () {
         expect($config->aiConfigProblem())->toBe('The ai section is missing api_key. Add it to your phpspec config.');
     });
 
+    it('takes an empty api_key for a missing one', function () {
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '']]))->aiConfigProblem())->toBe('The ai section\'s api_key is empty. Put your key in your phpspec config.');
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '  ']]))->getAiConfig())->toBeNull();
+    });
+
     it('requires provider, and names the installed papi package as the answer', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
