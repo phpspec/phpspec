@@ -7,9 +7,9 @@ describe(StepGenerator::class, function () {
 
     let('written', fn() => new ArrayObject());
     let('filesystem', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {
             $this->written['content'] = $content;
         });
 
@@ -152,7 +152,7 @@ describe(StepGenerator::class, function () {
     });
 
     it('writes the steps file it is given, making its directory first', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         expect($fs->mkdir('/proj/acceptance'))->toBeCalled();
         expect($fs->write('/proj/acceptance/steps.php', any()))->toBeCalled();
 
@@ -162,10 +162,10 @@ describe(StepGenerator::class, function () {
     });
 
     it('appends to the steps file it is given, skipping a title another steps file defines', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\n\ngiven(\"I visit {string}\", function (string \$arg1) {\n    pending();\n});\n");
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n\ngiven(\"I visit {string}\", function (string \$arg1) {\n    pending();\n});\n");
         $content = '';
-        allow($fs->write())->toReturnUsing(function (string $path, string $written) use (&$content) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $written) use (&$content) {
             $content = $written;
         });
 

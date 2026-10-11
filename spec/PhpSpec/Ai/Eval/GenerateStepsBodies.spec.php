@@ -25,18 +25,18 @@ describe('E13 generate: step bodies come from the model when the scaffold is com
             "$cwd/features/steps/completing_a_task.steps.php" => $pendingSteps,
         ];
 
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => in_array($p, $dirs, true) || isset($files[$p]));
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, $dirs, true));
-        allow($fs->isFile())->toReturnUsing(fn(string $p): bool => isset($files[$p]));
-        allow($fs->mtime());
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $files[$p] ?? '');
-        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match (true) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => in_array($p, $dirs, true) || isset($files[$p]));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, $dirs, true));
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p): bool => isset($files[$p]));
+        allow($fs->mtime(any()));
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $files[$p] ?? '');
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match (true) {
             str_ends_with($p, '/features') => ['completing_a_task.feature', 'steps'],
             str_ends_with($p, '/features/steps') => ['completing_a_task.steps.php'],
             default => [],
         });
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()));
 
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-steps-bodies.json'), true);
         $replay = ReplayProvider::fromRecording($rec);

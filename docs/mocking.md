@@ -65,6 +65,18 @@ it('returns user data', function (UserRepository $repo) {
 });
 ```
 
+The value has to be one the real method could return, held strictly: a method
+returning `int` is not given `'42'`, and one returning `void` is not given
+anything, its call is declared with `allow()` alone. A value it could never
+return is refused where the spec sets it:
+
+```
+App\Counter::count() returns int, so it cannot return string "three".
+```
+
+What a `toReturnUsing()` callback answers is held the same way when the call
+is made.
+
 ### `allow()` + `toThrow()`
 
 Stub a method to throw an exception:
@@ -80,12 +92,32 @@ it('handles errors', function (UserRepository $repo) {
 Give it the very instance to throw, as above, or a class name and a message
 and it builds one at the call: `toThrow(\RuntimeException::class, 'Not found')`.
 
+### Stubs answer in the order they were declared
+
+Each call the code under spec makes is answered by the first stub that matches
+it and has not answered yet; once every matching stub has answered, the last
+one answers on. Two stubs of the same call answer one call after the other:
+
+```php
+allow($repo->find(1))->toThrow(new \RuntimeException('Busy'));
+allow($repo->find(1))->toReturn('Alice'); // the second find(1), and every one after
+```
+
+Stubs that overlap are used in order too: a `find(42)` declared after a
+`find(any())` answers only once `find(any())` has. A stub every example needs
+belongs in `beforeEach`; one an example would replace belongs in that example.
+
+The spec's own calls use no stub up and have its exception withheld, so the
+second `allow($repo->find(1))` above declares the call rather than throwing.
+They see the value the next stub would give, and `toThrow()` sees the
+exception it would throw: `expect(fn () => $repo->find(1))->toThrow(...)`.
+
 ### What an unstubbed call returns
 
 A method nobody stubbed returns a default for its return type: `''`, `0`,
 `false`, `[]`, `null` where allowed, a double of a class or interface it
-returns, an empty `iterable`, a `Closure`, an empty `Generator`, the double
-itself for `static`. A method returning a final class hands the spec an
+returns, an empty `iterable`, a `Closure`, an empty `Generator`, `true` or
+`false` for those types, the double itself for `static`, `self` and `parent`. A method returning a final class hands the spec an
 instance of it built without its constructor, for `allow()` to replace; a
 `dummy()` has nobody about to replace it and says so instead.
 
@@ -102,14 +134,33 @@ App\Stock::reserve("tea", 2) was called but not expected, at src/App/Checkout.ph
 Declare the call with allow() or expect(), or make the double a dummy() if its calls do not matter.
 ```
 
-A call is declared by the arguments it was written with; written bare, the
-declaration covers any arguments. `allow()` declares on its own, a stub is
+A call is declared by the arguments it was written with, read as PHP reads
+the call: `any()` stands for one argument whose value does not matter,
+`cetera()` for the rest, and a call that leaves out an argument with a default
+is the call with that default. `allow()` declares on its own, a stub is
 optional:
 
 ```php
-allow($stock->reserve('tea', 2));                // reserve('tea', 2) may be called, returns false
+allow($stock->reserve('tea', 2));                 // reserve('tea', 2) may be called, returns false
 allow($stock->reserve('tea', 2))->toReturn(true); // and returns true
-expect($stock->reserve())->toBeCalled();         // any reserve() may be called, and must be
+expect($stock->reserve(cetera()))->toBeCalled();  // any reserve() may be called, and must be
+```
+
+`reserve()` is a call with no arguments, which no object taking two could be
+given, so it is refused where the spec writes it:
+
+```
+App\Stock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with none can never be made.
+Write the arguments it is called with, any() for one whose value does not matter, or cetera() for the rest.
+```
+
+An argument of a type the method does not take is refused the same way. The
+code under spec calling a double with too few arguments, or with an argument
+of the wrong type, fails as it would on the real object, its argument coerced
+or held strictly as the file it calls from declares:
+
+```
+App\Stock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in src/App/Checkout.php on line 11
 ```
 
 The spec file itself is free to call anything: that is how `allow()` and
@@ -120,8 +171,8 @@ matter is a `dummy()`. A double that was injected by type hint, which
 
 ```php
 beforeEach(function (Filesystem $fs) {
-    allow($fs->exists())->toReturn(false);
-    allow($fs->isDir())->toReturn(false)->ignoreOthers();
+    allow($fs->exists(any()))->toReturn(false);
+    allow($fs->isDir(any()))->toReturn(false)->ignoreOthers();
 });
 ```
 
@@ -136,8 +187,8 @@ matchers.
 Declared before the act, judged when the example ends: the method must be
 called at least once by then. Arguments written in the expect call are part
 of the promise: `save($user)` is not satisfied by a `save()` of something
-else. Written without arguments, it means called at all. The declaration also
-makes the call expected, so the code under spec may make it:
+else, `save(any())` by a `save()` of anything. The declaration also makes the
+call expected, so the code under spec may make it:
 
 ```php
 it('calls save', function (UserRepository $repo) {
@@ -147,7 +198,7 @@ it('calls save', function (UserRepository $repo) {
 });
 
 it('saves something', function (UserRepository $repo) {
-    expect($repo->save())->toBeCalled();
+    expect($repo->save(any()))->toBeCalled();
 
     (new Registration($repo))->register($anyUser);
 });
@@ -171,29 +222,20 @@ it('saves the user', function (UserRepository $repo) {
 
 Negated, it asks that the call was not made: `expect($repo->save($other))->not()->toHaveBeenCalled()`.
 
-### `toBeCalledWith(...$args)`
 
-Verifies the method was called with specific arguments:
+### Counting calls
 
-```php
-it('saves with correct data', function (Logger $logger) {
-    expect($logger->log('hello', 'info'))->toBeCalledWith('hello', 'info');
-    $logger->log('hello', 'info');
-});
-```
-
-### `toBeCalledTimes(int $count)`
-
-Verifies the exact number of times a method was called, counting only calls
-that match the arguments written in the expect call (all calls when written
-bare):
+`toBeCalled()` takes how many times, counting the calls that match the
+arguments the call was written with; a call that must not happen is
+`not()->toBeCalled()`:
 
 ```php
-it('calls exactly twice', function (Logger $logger) {
-    expect($logger->log('test'))->toBeCalledTimes(2);
-    $logger->log('test');
-    $logger->log('test');
-});
+expect($logger->log('test'))->toBeCalled()->once();
+expect($logger->log('test'))->toBeCalled()->twice();
+expect($logger->log('test'))->toBeCalled()->exactly(3)->times();
+expect($logger->log('test'))->toBeCalled()->atLeast(2)->times();
+expect($logger->log('test'))->toBeCalled()->atMost(2)->times();
+expect($logger->log('other'))->not()->toBeCalled();
 ```
 
 ## Argument Matchers
@@ -201,17 +243,14 @@ it('calls exactly twice', function (Logger $logger) {
 An argument written as a value matches by value: a scalar strictly, an object
 when it equals the one written (`new Money(900)` matches any `Money(900)`,
 whichever instance carries it), an array element by element on the same rule.
-For anything looser, use a matcher:
-
-Use argument matchers, in the expect call or in `toBeCalledWith()`, for
-flexible argument matching:
+For anything looser, write a matcher in the call:
 
 ### `any()`
 
 Matches any single argument:
 
 ```php
-expect($logger->log('hello'))->toBeCalledWith(any());
+expect($logger->log(any()))->toBeCalled();
 ```
 
 ### `type(string $type)`
@@ -219,7 +258,7 @@ expect($logger->log('hello'))->toBeCalledWith(any());
 Matches an argument of a specific type:
 
 ```php
-expect($repo->save($user))->toBeCalledWith(type('object'));
+expect($repo->save(type('object')))->toBeCalled();
 ```
 
 ### `callback(Closure $fn)`
@@ -227,16 +266,16 @@ expect($repo->save($user))->toBeCalledWith(type('object'));
 Matches using a custom callback:
 
 ```php
-expect($repo->save($user))->toBeCalledWith(callback(fn ($arg) => $arg->name === 'Alice'));
+expect($repo->save(callback(fn ($arg) => $arg->name === 'Alice')))->toBeCalled();
 ```
 
 ### `satisfy(Closure $fn)`
 
-Matches a single argument against a predicate — like `callback()`, reads well
-alongside the others:
+Matches a single argument against a predicate, as `callback()` does, and reads
+well alongside the others:
 
 ```php
-expect($repo->save($user))->toBeCalledWith(satisfy(fn ($u) => $u->isActive()));
+expect($repo->save(satisfy(fn ($u) => $u->isActive())))->toBeCalled();
 ```
 
 ### `anInstanceOf(string $class)`
@@ -244,7 +283,7 @@ expect($repo->save($user))->toBeCalledWith(satisfy(fn ($u) => $u->isActive()));
 Matches an argument that is an instance of the given class or interface:
 
 ```php
-expect($bus->dispatch($cmd))->toBeCalledWith(anInstanceOf(Command::class));
+expect($bus->dispatch(anInstanceOf(Command::class)))->toBeCalled();
 ```
 
 ### `arrayIncluding(array $subset)`
@@ -252,7 +291,7 @@ expect($bus->dispatch($cmd))->toBeCalledWith(anInstanceOf(Command::class));
 Matches an array argument that contains (at least) the given key/value subset:
 
 ```php
-expect($api->send($payload))->toBeCalledWith(arrayIncluding(['type' => 'order']));
+expect($api->send(arrayIncluding(['type' => 'order'])))->toBeCalled();
 ```
 
 ### `startWith(string $prefix)`
@@ -260,24 +299,16 @@ expect($api->send($payload))->toBeCalledWith(arrayIncluding(['type' => 'order'])
 Matches a string argument that starts with the given prefix:
 
 ```php
-expect($logger->log($line))->toBeCalledWith(startWith('ERROR:'));
-```
-
-### `noArgs()`
-
-Matches a call made with no arguments at all:
-
-```php
-expect($service->flush())->toBeCalledWith(noArgs());
+expect($logger->log(startWith('ERROR:')))->toBeCalled();
 ```
 
 ### `cetera()`
 
-Matches all remaining arguments (zero or more) — the "and so on" wildcard. Must
-be the last matcher in the expected list:
+Matches the remaining arguments, none or more: the "and so on" wildcard. Nothing
+can follow it:
 
 ```php
-expect($logger->log('hello', 'x', 'y'))->toBeCalledWith('hello', cetera());
+expect($logger->log('hello', cetera()))->toBeCalled();
 ```
 
 ## Negation
@@ -286,7 +317,7 @@ All mock matchers support negation via `not()`:
 
 ```php
 expect($repo->delete(1))->not()->toBeCalled();
-expect($logger->log('test'))->not()->toBeCalledWith('other');
+expect($logger->log('other'))->not()->toBeCalled();
 ```
 
 ## Using Mocks with `let()`
@@ -314,6 +345,26 @@ describe(Notifier::class, function () {
     });
 });
 ```
+
+## Coming from Prophecy
+
+A call is written as in Prophecy, as the call itself, and read the same
+way: `$repo->find()` is a call with no arguments, never `find(1)`. Where the
+method requires an argument, that call is refused where the spec writes it,
+so a `not()->toBeCalled()` can never pass for a call that could not happen.
+
+| Prophecy | PhpSpec 9 |
+|---|---|
+| `$repo->find(1)->willReturn('Alice')` | `allow($repo->find(1))->toReturn('Alice')` |
+| `$repo->find(1)->willThrow(NotFound::class)` | `allow($repo->find(1))->toThrow(NotFound::class)` |
+| `$repo->find(1)->will(fn ($args) => ...)` | `allow($repo->find(1))->toReturnUsing(fn ($id) => ...)` |
+| `$repo->save($user)->shouldBeCalled()` | `expect($repo->save($user))->toBeCalled()` |
+| `$repo->save($user)->shouldBeCalledTimes(2)` | `expect($repo->save($user))->toBeCalled()->exactly(2)->times()` |
+| `$repo->save(Argument::cetera())->shouldNotBeCalled()` | `expect($repo->save(cetera()))->not()->toBeCalled()` |
+| `$repo->save($user)->shouldHaveBeenCalled()` | `expect($repo->save($user))->toHaveBeenCalled()` |
+| `Argument::any()`, `Argument::cetera()` | `any()`, `cetera()` |
+| `Argument::type('string')` | `type('string')` |
+| `Argument::that(fn ($user) => ...)` | `satisfy(fn ($user) => ...)` |
 
 ## Supported Types
 

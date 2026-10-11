@@ -35,8 +35,8 @@ describe(Report::class, function () {
     // The answer to "what did I fail to specify" is the code itself, so the
     // report shows it rather than describing where to look.
     it('shows the offending lines in what surrounds them', function (Filesystem $fs) use ($source) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->readLines())->toReturn(explode("\n", $source));
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->readLines(any()))->toReturn(explode("\n", $source));
         $verdict = Verdict::of([Violation::untestedLogic('src/Basket.php', [7, 8], 'Basket::applyCoupon')]);
 
         $output = new BufferedOutput();
@@ -53,7 +53,7 @@ describe(Report::class, function () {
     });
 
     it('still says what went wrong when the file it named has gone', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
         $verdict = Verdict::of([Violation::untestedLogic('src/Basket.php', [7], 'Basket::applyCoupon')]);
 
         $output = new BufferedOutput();

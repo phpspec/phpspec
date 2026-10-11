@@ -8,6 +8,7 @@ interface ExpectationSpecService {
     public function save();
     public function store(string $key, int $value);
     public function count(): int;
+    public function price(string $item): int;
 }
 
 class ExpectationSpecConsumer {
@@ -44,43 +45,35 @@ describe(Expectation::class, function() {
         expect($service->save())->toHaveBeenCalled();
     });
 
-    it("holds toHaveBeenCalled to the arguments it was written with, and bare to the method", function(ExpectationSpecService $service) {
+    it("holds toHaveBeenCalled to the arguments it was written with, cetera() standing for any", function(ExpectationSpecService $service) {
         $service->store('a', 1);
 
         expect($service->store('a', 1))->toHaveBeenCalled();
         expect($service->store('b', 2))->not()->toHaveBeenCalled();
-        expect($service->store())->toHaveBeenCalled();
+        expect($service->store(cetera()))->toHaveBeenCalled();
         expect($service->save())->not()->toHaveBeenCalled();
     });
 
-    it("verifies with toBeCalledWith using exact args", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith('foo', 42);
-        $service->store('foo', 42);
-    });
-
-    it("verifies with toBeCalledWith using any() matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith(any(), 42);
+    it("verifies a call written with an any() matcher", function(ExpectationSpecService $service) {
+        expect($service->store(any(), 42))->toBeCalled();
         $service->store('bar', 42);
     });
 
-    it("verifies with toBeCalledWith using type() matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith(type('string'), type('int'));
+    it("verifies a call written with type() matchers", function(ExpectationSpecService $service) {
+        expect($service->store(type('string'), type('int')))->toBeCalled();
         $service->store('hello', 99);
     });
 
-    it("verifies with toBeCalledWith using callback() matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith(
-            callback(fn($v) => strlen($v) > 2),
-            any()
-        );
+    it("verifies a call written with a callback() matcher", function(ExpectationSpecService $service) {
+        expect($service->store(callback(fn($v) => strlen($v) > 2), any()))->toBeCalled();
         $service->store('hello', 1);
     });
 
-    it("verifies toBeCalledTimes", function(ExpectationSpecService $service) {
-        expect($service->save())->toBeCalledTimes(3);
-        $service->save();
-        $service->save();
-        $service->save();
+    it("has no second way to say what the call and toBeCalled() already say", function(ExpectationSpecService $service) {
+        expect(fn() => expect($service->store('a', 1))->toBeCalledWith('a', 1))->toThrow(\BadMethodCallException::class);
+        expect(method_exists(Expectation::class, 'toBeCalledTimes'))->toBeFalse();
+        expect(method_exists(\PhpSpec\Mock\CallCountExpectation::class, 'never'))->toBeFalse();
+        expect(function_exists('noArgs'))->toBeFalse();
     });
 
     it("stubs return value with allow", function(ExpectationSpecService $service) {
@@ -88,6 +81,38 @@ describe(Expectation::class, function() {
         expect($service->process())->toBe("hello");
     });
 
+    it("holds a value set through expect() to the arguments it was written with", function(ExpectationSpecService $service) {
+        expect($service->price('tea'))->toReturn(9);
+        expect($service->store('a', 1))->toReturn('stored');
+
+        expect($service->price('tea'))->toBe(9);
+        expect($service->price('coffee'))->toBe(0);
+        expect($service->store('a', 1))->toBe('stored');
+        expect($service->store('b', 2))->not()->toBe('stored');
+    });
+
+    it("holds a throw set through expect() to the arguments it was written with", function(ExpectationSpecService $service) {
+        expect($service->price('gold'))->toThrow(new \RuntimeException('Not for sale'));
+        expect($service->store('locked', 0))->toThrow(new \RuntimeException('Locked'));
+
+        expect(fn() => $service->price('gold'))->toThrow(\RuntimeException::class, 'Not for sale');
+        expect($service->price('tea'))->toBe(0);
+        expect(fn() => $service->store('locked', 0))->toThrow(\RuntimeException::class, 'Locked');
+        expect(fn() => $service->store('open', 0))->not()->toThrow();
+    });
+
+    it("holds a stub set on the call itself to the arguments it was written with", function(ExpectationSpecService $service) {
+        $service->store('a', 1)->toReturn('stored');
+        $service->store('twice', 5)->toReturnUsing(fn(string $key, int $value) => $value * 2);
+        $service->store('locked', 0)->toThrow(\RuntimeException::class, 'Locked');
+
+        expect($service->store('a', 1))->toBe('stored');
+        expect($service->store('b', 2))->not()->toBe('stored');
+        expect($service->store('twice', 5))->toBe(10);
+        expect($service->store('once', 5))->not()->toBe(10);
+        expect(fn() => $service->store('locked', 0))->toThrow(\RuntimeException::class, 'Locked');
+        expect(fn() => $service->store('open', 0))->not()->toThrow();
+    });
     it("stubs exception with allow", function(ExpectationSpecService $service) {
         allow($service->save())->toThrow(\RuntimeException::class, "boom");
         expect(fn() => $service->save())->toThrow(\RuntimeException::class, "boom");
@@ -102,14 +127,16 @@ describe(Expectation::class, function() {
     });
 
     it("counts only the calls that match the arguments it was written with", function(ExpectationSpecService $service) {
-        expect($service->processWith("expected"))->toBeCalledTimes(1);
+        expect($service->processWith("expected"))->toBeCalled()->once();
 
         $service->processWith("expected");
         $service->processWith("something else");
     });
 
-    it("still means called-at-all when written without arguments", function(ExpectationSpecService $service) {
-        expect($service->processWith())->toBeCalled();
+    it("holds a call written without arguments to the call made with none, its defaults filled in", function(ExpectationSpecService $service) {
+        expect($service->processWith())->not()->toBeCalled();
+        expect($service->processWith(""))->not()->toBeCalled();
+        expect($service->processWith(cetera()))->toBeCalled();
 
         $service->processWith("anything");
     });
@@ -155,14 +182,14 @@ describe(Expectation::class, function() {
         expect($lcd->______PhpSpecGetMethod())->toBe('process');
     });
 
-    it("holds toBeCalledWith to a call made before the expectation was written", function(ExpectationSpecService $service) {
+    it("holds toBeCalled to a call made before the expectation was written", function(ExpectationSpecService $service) {
         $service->store('foo', 42);
-        expect($service->store('foo', 42))->toBeCalledWith('foo', 42);
+        expect($service->store('foo', 42))->toBeCalled();
     });
 
-    it("negated toBeCalledWith passes when the earlier call had other arguments", function(ExpectationSpecService $service) {
+    it("negated toBeCalled passes when the earlier call had other arguments", function(ExpectationSpecService $service) {
         $service->store('other', 50);
-        expect($service->store('foo', 42))->not()->toBeCalledWith('foo', 42);
+        expect($service->store('foo', 42))->not()->toBeCalled();
     });
 
     it("verifies a call that was stubbed first", function(ExpectationSpecService $service) {
@@ -174,7 +201,7 @@ describe(Expectation::class, function() {
 
     it("verifies a call stubbed with a callback first", function(ExpectationSpecService $service) {
         allow($service->process())->toReturnUsing(fn() => 'summer');
-        expect($service->process())->toBeCalledTimes(1);
+        expect($service->process())->toBeCalled()->once();
 
         $service->process();
     });
@@ -185,18 +212,13 @@ describe(Expectation::class, function() {
         expect($service->process())->toBe('winter');
     });
 
-    it("negated toBeCalledWith with wrong arg count", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->not()->toBeCalledWith('bar');
-        $service->store('baz', 100);
-    });
-
-    it("negated toBeCalledWith with different values", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->not()->toBeCalledWith('wrong', 99);
+    it("negated toBeCalled with different values", function(ExpectationSpecService $service) {
+        expect($service->store('wrong', 99))->not()->toBeCalled();
         $service->store('other', 50);
     });
 
-    it("negated toBeCalledWith with failing type matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->not()->toBeCalledWith(type('int'), any());
+    it("negated toBeCalled with a type matcher the call fails", function(ExpectationSpecService $service) {
+        expect($service->store(type('int'), any()))->not()->toBeCalled();
         $service->store('hello', 1);
     });
 
@@ -267,10 +289,6 @@ describe(Expectation::class, function() {
         $service->save();
         $service->save();
         $service->save();
-    });
-
-    it("toBeCalled()->never() passes with zero calls", function(ExpectationSpecService $service) {
-        expect($service->save())->toBeCalled()->never();
     });
 
     it("toBeCalled()->atLeast(2)->times() passes with three calls", function(ExpectationSpecService $service) {

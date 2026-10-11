@@ -70,11 +70,6 @@ describe("Mock global functions", function () {
         expect($thrown)->toBeTrue();
     });
 
-    it("noArgs returns an ArgumentMatcher", function () {
-        $m = noArgs();
-        expect($m)->toBeAnInstanceOf(ArgumentMatcher::class);
-    });
-
     it("cetera returns an ArgumentMatcher", function () {
         $m = cetera();
         expect($m)->toBeAnInstanceOf(ArgumentMatcher::class);

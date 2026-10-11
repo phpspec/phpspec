@@ -53,7 +53,7 @@ Feature: Mocking
     And a spec with example:
       """
       $logger = mock(App\Logger::class);
-      expect($logger->log('hello'))->toBeCalledWith('hello');
+      expect($logger->log('hello'))->toBeCalled();
       $logger->log('hello');
       """
     When I run the spec
@@ -73,7 +73,7 @@ Feature: Mocking
       """
       $logger = mock(App\Logger::class);
       $logger->log('paid');
-      expect($logger->log('paid'))->toBeCalledWith('paid');
+      expect($logger->log('paid'))->toBeCalled();
       """
     When I run the spec
     Then all examples should pass
@@ -91,7 +91,7 @@ Feature: Mocking
     And a spec with example:
       """
       $counter = mock(App\Counter::class);
-      expect($counter->increment())->toBeCalledTimes(3);
+      expect($counter->increment())->toBeCalled()->exactly(3)->times();
       $counter->increment();
       $counter->increment();
       $counter->increment();
@@ -291,7 +291,7 @@ Feature: Mocking
     And a spec with example:
       """
       $logger = mock(App\Logger::class);
-      expect($logger->log('msg'))->toBeCalledWith(any());
+      expect($logger->log(any()))->toBeCalled();
       $logger->log('hello world');
       """
     When I run the spec
@@ -346,7 +346,7 @@ Feature: Mocking
     And a spec with example:
       """
       $bus = mock(App\EventBus::class);
-      expect($bus->dispatch(new App\Event('test')))->toBeCalledWith(anInstanceOf(App\Event::class));
+      expect($bus->dispatch(anInstanceOf(App\Event::class)))->toBeCalled();
       $bus->dispatch(new App\Event('created'));
       """
     When I run the spec
@@ -365,7 +365,7 @@ Feature: Mocking
     And a spec with example:
       """
       $logger = mock(App\Logger::class);
-      expect($logger->log('info', 'msg'))->toBeCalledWith('info', cetera());
+      expect($logger->log('info', cetera()))->toBeCalled();
       $logger->log('info', 'hello world', 'extra');
       """
     When I run the spec
@@ -392,7 +392,7 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
-  Scenario: Catch-all stub with specific override
+  Scenario: A stub set through expect() answers only the call it was written with
     Given an interface "src/App/UserRepository.php":
       """
       <?php
@@ -405,14 +405,232 @@ Feature: Mocking
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
-      allow($repo->find())->toReturn('default');
-      allow($repo->find(42))->toReturn('special');
-      expect($repo->find(42))->toBe('special');
-      expect($repo->find(99))->toBe('default');
+      expect($repo->find(1))->toReturn('Alice');
+      expect($repo->find(999))->toThrow(new \RuntimeException('Not found'));
+      expect($repo->find(1))->toBe('Alice');
+      expect($repo->find(2))->toBeNull();
+      expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class, 'Not found');
       """
     When I run the spec
     Then all examples should pass
 
+  Scenario: Stubs answer in the order they were declared, whatever arguments they overlap on
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a class "src/App/Directory.php":
+      """
+      <?php
+      namespace App;
+
+      class Directory {
+          public function __construct(private UserRepository $repo) {}
+
+          public function nameOf(int $id): ?string
+          {
+              return $this->repo->find($id);
+          }
+
+          public function nameOfRetried(int $id): ?string
+          {
+              try {
+                  return $this->repo->find($id);
+              } catch (\RuntimeException) {
+                  return $this->repo->find($id);
+              }
+          }
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      allow($repo->find(42))->toReturn('special');
+      allow($repo->find(any()))->toReturn('default');
+      $directory = new App\Directory($repo);
+      expect($directory->nameOf(42))->toBe('special');
+      expect($directory->nameOf(99))->toBe('default');
+      expect($directory->nameOf(42))->toBe('default');
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: Stubs of the same call answer one call after the other, the last one answering on
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a class "src/App/Directory.php":
+      """
+      <?php
+      namespace App;
+
+      class Directory {
+          public function __construct(private UserRepository $repo) {}
+
+          public function nameOf(int $id): ?string
+          {
+              return $this->repo->find($id);
+          }
+
+          public function nameOfRetried(int $id): ?string
+          {
+              try {
+                  return $this->repo->find($id);
+              } catch (\RuntimeException) {
+                  return $this->repo->find($id);
+              }
+          }
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      allow($repo->find(1))->toThrow(new \RuntimeException('Busy'));
+      allow($repo->find(1))->toReturn('Alice');
+      $directory = new App\Directory($repo);
+      expect($directory->nameOfRetried(1))->toBe('Alice');
+      expect($directory->nameOf(1))->toBe('Alice');
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: A call written without the arguments the method requires is refused, saying what to write
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      allow($repo->find())->toReturn('Alice');
+      """
+    When I run the spec
+    Then the exit code should be 1
+    And the output should contain "App\UserRepository::find() takes 1 argument (int $id), so a call written with none can never be made."
+    And the output should contain "any() for one whose value does not matter, or cetera() for the rest"
+
+  Scenario: The code under spec calling a double with too few arguments fails as it would on the real object
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders tea', function (Stock $stock) {
+              allow($stock->reserve(cetera()))->toReturn(true);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "Too few arguments to function App\Stock::reserve(), 1 passed in src/App/Checkout.php on line 8 and exactly 2 expected"
+
+  Scenario: The code under spec calling a double with an argument of the wrong type fails as it would on the real object
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+
+      declare(strict_types=1);
+
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, '2');
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders tea', function (Stock $stock) {
+              allow($stock->reserve('tea', 2))->toReturn(true);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "App\Stock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in src/App/Checkout.php on line 11"
+
+  Scenario: A stub given what the method cannot return is refused, naming the method
+    Given an interface "src/App/Counter.php":
+      """
+      <?php
+      namespace App;
+
+      interface Counter {
+          public function count(): int;
+      }
+      """
+    And a spec with example:
+      """
+      $counter = mock(App\Counter::class);
+      allow($counter->count())->toReturn('three');
+      """
+    When I run the spec
+    Then the exit code should be 1
+    And the output should contain:
+      """
+      App\Counter::count() returns int, so it cannot return string "three".
+      """
   Scenario: Fluent call count with once
     Given an interface "src/App/Counter.php":
       """
@@ -465,8 +683,8 @@ Feature: Mocking
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
-      allow($repo->find(any()))->toReturn('fallback');
       allow($repo->find(42))->toReturn('special');
+      allow($repo->find(any()))->toReturn('fallback');
       expect($repo->find(42))->toBe('special');
       expect($repo->find(99))->toBe('fallback');
       """
@@ -639,7 +857,7 @@ Feature: Mocking
 
       describe('Checkout', function () {
           it('orders coffee', function (Stock $stock) {
-              allow($stock->reserve());
+              allow($stock->reserve(cetera()));
 
               (new Checkout($stock))->order('tea');
 
@@ -686,7 +904,7 @@ Feature: Mocking
 
       describe('Checkout', function () {
           beforeEach(function (Stock $stock) {
-              allow($stock->reserve())->toReturn(true)->ignoreOthers();
+              allow($stock->reserve(cetera()))->toReturn(true)->ignoreOthers();
           });
 
           it('orders two of everything', function (Stock $stock) {

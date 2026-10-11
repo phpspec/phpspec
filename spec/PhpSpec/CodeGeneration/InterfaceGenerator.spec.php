@@ -13,8 +13,8 @@ describe(InterfaceGenerator::class, function () {
     });
 
     it("generates interface file with namespace", function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        expect($fs->mkdir())->toBeCalled();
+        allow($fs->exists(any()))->toReturn(false);
+        expect($fs->mkdir(any()))->toBeCalled();
         expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'namespace Acme\\Math;'))))->toBeCalled();
 
         $result = $this->generator->generate('Acme\\Math\\Calculator');
@@ -24,9 +24,9 @@ describe(InterfaceGenerator::class, function () {
 
     it("leaves no empty line inside an empty body", function (Filesystem $fs) {
         $written = '';
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -37,9 +37,9 @@ describe(InterfaceGenerator::class, function () {
 
     it("ends every line with a line feed alone, whatever line ending its own source was checked out with", function (Filesystem $fs) {
         $written = '';
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -50,8 +50,8 @@ describe(InterfaceGenerator::class, function () {
     });
 
     it("generates interface file without namespace", function (Filesystem $fs) {
-        allow($fs->mkdir());
-        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->exists(any()))->toReturn(false);
         expect($fs->write(any(), satisfy(fn (string $content) => !str_contains($content, 'namespace'))))->toBeCalled();
 
         $result = $this->generator->generate('Calculator');
@@ -60,36 +60,36 @@ describe(InterfaceGenerator::class, function () {
     });
 
     it("ends the file with a newline", function (Filesystem $fs) {
-        allow($fs->mkdir());
-        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->exists(any()))->toReturn(false);
         expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
 
         $this->generator->generate('Calculator');
     });
 
     it("creates directory if missing", function (Filesystem $fs) {
-        allow($fs->write());
-        allow($fs->exists())->toReturn(false);
-        expect($fs->mkdir())->toBeCalled();
+        allow($fs->write(cetera()));
+        allow($fs->exists(any()))->toReturn(false);
+        expect($fs->mkdir(any()))->toBeCalled();
 
         $this->generator->generate('App\\Services\\Mailer');
     });
 
     it("throws when interface file already exists", function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists(any()))->toReturn(true);
 
         expect(fn() => $this->generator->generate('Existing'))->toThrow(\RuntimeException::class);
     });
 
     it("skips mkdir when directory already exists", function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(function (string $path) {
+        allow($fs->exists(any()))->toReturnUsing(function (string $path) {
             return str_ends_with($path, '.php') ? false : true;
         });
-        expect($fs->write())->toBeCalled();
+        expect($fs->write(cetera()))->toBeCalled();
 
         $this->generator->generate('Bar');
 
-        expect($fs->mkdir())->not()->toBeCalled();
+        expect($fs->mkdir(any()))->not()->toBeCalled();
     });
 
 });

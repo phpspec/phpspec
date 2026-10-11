@@ -8,9 +8,9 @@ describe(ClassGenerator::class, function () {
 
     it('leaves no empty line inside an empty body', function (Filesystem $fs) {
         $written = '';
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -21,9 +21,9 @@ describe(ClassGenerator::class, function () {
 
     it('ends every line with a line feed alone, whatever line ending its own source was checked out with', function (Filesystem $fs) {
         $written = '';
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -35,9 +35,9 @@ describe(ClassGenerator::class, function () {
 
     it('makes a class named like an exception extend Exception, imported, so it can be thrown', function (Filesystem $fs) {
         $written = '';
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -48,9 +48,9 @@ describe(ClassGenerator::class, function () {
 
     it('extends Exception without importing it for an exception in the global namespace', function (Filesystem $fs) {
         $written = '';
-        allow($fs->exists())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -67,8 +67,8 @@ describe(ClassGenerator::class, function () {
 
     it("writes class file when it does not exist", function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        expect($fs->mkdir())->toBeCalled();
-        expect($fs->write())->toBeCalled();
+        expect($fs->mkdir(any()))->toBeCalled();
+        expect($fs->write(cetera()))->toBeCalled();
 
         $result = $this->generator->generate('Acme\\Foo');
 
@@ -76,7 +76,7 @@ describe(ClassGenerator::class, function () {
     });
 
     it("ends the file with a newline", function (Filesystem $fs) {
-        allow($fs->mkdir());
+        allow($fs->mkdir(any()));
         allow($fs->exists(any()))->toReturn(false);
         expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
 
@@ -94,15 +94,15 @@ describe(ClassGenerator::class, function () {
             // File doesn't exist, but directory does
             return str_ends_with($path, '.php') ? false : true;
         });
-        expect($fs->write())->toBeCalled();
+        expect($fs->write(cetera()))->toBeCalled();
 
         $this->generator->generate('Bar');
 
-        expect($fs->mkdir())->not()->toBeCalled();
+        expect($fs->mkdir(any()))->not()->toBeCalled();
     });
 
     it("handles namespaced classes with nested directories", function (Filesystem $fs) {
-        allow($fs->mkdir());
+        allow($fs->mkdir(any()));
         $nested = implode(DIRECTORY_SEPARATOR, ['App', 'Models', 'User.php']);
         allow($fs->exists(any()))->toReturn(false);
         expect($fs->write(satisfy(fn (string $path) => str_ends_with($path, $nested)), any()))->toBeCalled();

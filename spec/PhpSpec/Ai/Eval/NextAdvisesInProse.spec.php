@@ -16,14 +16,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 // would see, so the graders assert on the real rendered output.
 function evalNextOutput(Filesystem $fs, string $case): string
 {
-    allow($fs->exists())->toReturn(false);
-    allow($fs->read())->toReturn('');
-    allow($fs->isDir())->toReturn(false);
-    allow($fs->isFile())->toReturn(false);
-    allow($fs->mtime());
-    allow($fs->scandir())->toReturn([]);
-    allow($fs->mkdir());
-    allow($fs->write());
+    allow($fs->exists(any()))->toReturn(false);
+    allow($fs->read(any()))->toReturn('');
+    allow($fs->isDir(any()))->toReturn(false);
+    allow($fs->isFile(any()))->toReturn(false);
+    allow($fs->mtime(any()));
+    allow($fs->scandir(any()))->toReturn([]);
+    allow($fs->mkdir(any()));
+    allow($fs->write(cetera()));
 
     $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/' . $case . '.json'), true);
 

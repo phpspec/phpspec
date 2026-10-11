@@ -33,11 +33,11 @@ describe('E11 next: discovers features under the configured features_path', func
 
     it('detects a custom features_path and grounds the suggestion in the feature state', function (Filesystem $fs) {
         $featuresDir = getcwd() . '/acceptance';
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
-        allow($fs->read())->toReturn('');
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
+        allow($fs->read(any()))->toReturn('');
 
         $runner = new NextFeaturesPathRunner();
         $runner->outcome = new RunOutcome(null, new SuiteSummary(

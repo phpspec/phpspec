@@ -140,7 +140,7 @@ describe(Pretty::class, function() {
         $silent = new ExampleResult("verifies nothing", [MatchResult::failed(
             ['method' => 'ArrayAccess::offsetGet', 'calls' => []],
             ['method' => 'ArrayAccess::offsetGet', 'times' => 'exactly 2'],
-            $message, __FILE__, __LINE__, null, 'toBeCalledTimes', false,
+            $message, __FILE__, __LINE__, null, 'toBeCalled', false,
         )]);
         (new Pretty($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$example, $silent])]));
 

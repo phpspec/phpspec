@@ -88,14 +88,6 @@ function callback(Closure $fn): ArgumentMatcher
 }
 
 /**
- * Creates an argument matcher that requires no arguments were passed.
- */
-function noArgs(): ArgumentMatcher
-{
-    return ArgumentMatcher::noArgs();
-}
-
-/**
  * Creates an argument matcher that matches all remaining arguments.
  */
 function cetera(): ArgumentMatcher
@@ -200,8 +192,9 @@ function allow(mixed $returnValue = null): LastCallDouble
  */
 function declared(GeneratedDouble $double, string $method): LastCallDouble
 {
-    $arranging = $double->______PhpSpecGetStubbedCalls()->peek();
-    $args = $arranging !== null && $arranging->method === $method && $arranging->arguments !== [] ? $arranging->arguments : null;
+    $calls = $double->______PhpSpecGetStubbedCalls();
+    $args = $calls->writtenFor($method);
+    $arranging = $calls->peek();
 
     if ($arranging !== null && $arranging->method === $method) {
         $arranging->unCall();

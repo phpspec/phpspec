@@ -31,8 +31,8 @@ describe(Guard::class, function () {
     PHP;
 
     $file = function (Filesystem $fs, string $source): void {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->readLines())->toReturn(explode("\n", $source));
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->readLines(any()))->toReturn(explode("\n", $source));
     };
 
     // Changed and covered is fine: that is a refactor, and it needs no mode of

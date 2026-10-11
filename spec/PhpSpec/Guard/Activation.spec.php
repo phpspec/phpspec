@@ -9,9 +9,9 @@ describe(Activation::class, function () {
     // give it back with their comments and their ordering intact.
     it('appends a guard block, leaving what was written alone', function (Filesystem $fs) {
         $written = null;
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yml');
-        allow($fs->read())->toReturn("# the paths this project uses\nspec_path: spec\n");
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yml');
+        allow($fs->read(any()))->toReturn("# the paths this project uses\nspec_path: spec\n");
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -21,9 +21,9 @@ describe(Activation::class, function () {
 
     it('turns an existing guard block on rather than adding a second one', function (Filesystem $fs) {
         $written = null;
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yml');
-        allow($fs->read())->toReturn("guard:\n  status: off\n  scope: story\nspec_path: spec\n");
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yml');
+        allow($fs->read(any()))->toReturn("guard:\n  status: off\n  scope: story\nspec_path: spec\n");
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -34,9 +34,9 @@ describe(Activation::class, function () {
 
     it('adds the status to a guard block that has none', function (Filesystem $fs) {
         $written = null;
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yml');
-        allow($fs->read())->toReturn("guard:\n  scope: story\n");
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yml');
+        allow($fs->read(any()))->toReturn("guard:\n  scope: story\n");
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -47,8 +47,8 @@ describe(Activation::class, function () {
 
     it('writes a config when the project keeps none', function (Filesystem $fs) {
         $written = null;
-        allow($fs->exists())->toReturn(false);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -58,9 +58,9 @@ describe(Activation::class, function () {
 
     it('sets the status in a JSON config, which has no comments to lose', function (Filesystem $fs) {
         $written = null;
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json');
-        allow($fs->read())->toReturn('{"spec_path": "spec"}');
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json');
+        allow($fs->read(any()))->toReturn('{"spec_path": "spec"}');
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written = $content;
         });
 
@@ -70,7 +70,7 @@ describe(Activation::class, function () {
     });
 
     it('refuses to rewrite a config that is code', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.php');
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.php');
 
         expect((new Activation($fs, '/app'))->turnOn())->toBeNull();
     });

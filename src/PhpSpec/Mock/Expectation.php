@@ -24,7 +24,7 @@ use PhpSpec\Specification\Expectation as BaseExpectation;
 
 /**
  * Mock-specific expectation that extends the standard Expectation with call
- * verification matchers (toBeCalled, toBeCalledWith, toBeCalledTimes) and
+ * verification matchers (toBeCalled, toHaveBeenCalled) and
  * stub configuration (toReturn, toThrow).
  */
 final class Expectation extends BaseExpectation
@@ -38,12 +38,18 @@ final class Expectation extends BaseExpectation
     /** @var LastCallDouble|null Preserved across stub checks so allow() can reconfigure stubs */
     public static ?LastCallDouble $lastCallForAllow = null;
 
+    /** @var \Throwable|null The exception a stub withheld from a call the spec made itself, for toThrow() to see */
+    public static ?\Throwable $withheld = null;
+
     /** @var MatchableDouble The mock subject being verified */
     private MatchableDouble $mockSubject;
 
+    /** @var MatchableDouble The call a stub is set on, held to the arguments it was written with */
+    private MatchableDouble $stubbed;
+
     /**
      * Creates a mock expectation on a doubled method call: the call matchers
-     * (toBeCalled, toBeCalledWith) judge the double, the ordinary matchers
+     * (toBeCalled, toHaveBeenCalled) judge the double, the ordinary matchers
      * judge what the call returned, so a stubbed call compares its value and
      * verifies itself alike.
      *
@@ -56,7 +62,7 @@ final class Expectation extends BaseExpectation
     {
         $this->mockSubject = $double;
         parent::__construct($returned === [] ? $double : $returned[0], $file, $line);
-        $this->declare();
+        $this->stubbed = $this->declared();
 
     }
 
@@ -68,7 +74,7 @@ final class Expectation extends BaseExpectation
      */
     public function toReturn(mixed $value): static
     {
-        $this->mockSubject->toReturn($value);
+        $this->stubbed->toReturn($value);
         return $this;
     }
 
@@ -82,7 +88,7 @@ final class Expectation extends BaseExpectation
      */
     public function toThrow(string|\Throwable $exception = '', ?string $message = null): static
     {
-        $this->mockSubject->toThrow($exception, $message ?? '');
+        $this->stubbed->toThrow($exception, $message ?? '');
         return $this;
     }
 
@@ -113,19 +119,15 @@ final class Expectation extends BaseExpectation
             $trace['file'] ?? 'unknown',
             $trace['line'] ?? 0,
             $this->negated,
-            // Arguments written in the expect call are a promise: deposit(101)
-            // is not satisfied by deposit(100). Written bare, it means called
-            // at all.
-            $method->arguments === [] ? null : $method->arguments,
+            $method->arguments,
         );
     }
 
     /**
      * Judges now, from the calls recorded so far, that the call expect() was
      * handed has been made: the past tense, for after the act. The arguments
-     * it was written with are part of the question; written bare, it asks
-     * whether the method was called at all. toBeCalled() is the future tense,
-     * declared before the act and judged when the example ends.
+     * it was written with are part of the question. toBeCalled() is the
+     * future tense, declared before the act and judged when the example ends.
      */
     public function toHaveBeenCalled(): static
     {
@@ -140,7 +142,7 @@ final class Expectation extends BaseExpectation
 
         $methodName = $method->method;
         $method->unCall();
-        $argPattern = $method->arguments === [] ? null : $method->arguments;
+        $argPattern = $method->arguments;
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
         return $this->should(
@@ -151,76 +153,6 @@ final class Expectation extends BaseExpectation
         );
     }
 
-    /**
-     * Asserts that the mock method was called with the specified arguments.
-     * Supports ArgumentMatcher instances for flexible matching.
-     *
-     * @param mixed $expectedArgs the expected arguments, may include ArgumentMatcher instances
-     * @return $this
-     */
-    public function toBeCalledWith(...$expectedArgs): static
-    {
-        $double = $this->getGeneratedDouble();
-        $class = $double->______PhpSpecNameOfClassDoubled();
-        $calls = $double->______PhpSpecGetStubbedCalls();
-        $method = $calls->peek();
-        if ($method === null) {
-            throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalledWith().');
-        }
-        $methodName = $method->method;
-        $method->unCall();
-        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
-
-        return $this->should(
-            fn(): bool => $calls->countCallsToWithArgs($methodName, array_values($expectedArgs)) >= 1,
-            "Expected $class::$methodName() to be called with specific arguments",
-            new CallComparison($class, $methodName, $expectedArgs, 'at least 1', $calls),
-            'toBeCalledWith',
-        );
-    }
-
-    /**
-     * Asserts that the mock method was called exactly the specified number of times.
-     *
-     * @param int $times the expected call count
-     * @return $this
-     */
-    public function toBeCalledTimes(int $times): static
-    {
-        $double = $this->getGeneratedDouble();
-        $class = $double->______PhpSpecNameOfClassDoubled();
-        $calls = $double->______PhpSpecGetStubbedCalls();
-        $method = $calls->peek();
-        if ($method === null) {
-            throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalledTimes().');
-        }
-        $methodName = $method->method;
-        $method->unCall();
-        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, $times), MethodMocked::NAME);
-
-        $trace = debug_backtrace()[0];
-        $file = $trace['file'] ?? 'unknown';
-        $line = $trace['line'] ?? 0;
-        $argPattern = $method->arguments === [] ? null : $method->arguments;
-
-        return $this->expectation(function () use ($double, $methodName, $argPattern, $times, $class, $file, $line) {
-            $stack = $double->______PhpSpecGetStubbedCalls();
-            $actual = $stack->countCallsToWithArgs($methodName, $argPattern);
-            $comparison = new CallComparison($class, $methodName, $argPattern, "exactly $times", $stack);
-
-            return match (true) {
-                $actual === $times => MatchResult::passed(),
-                default => MatchResult::failed(
-                    $comparison->received(),
-                    $comparison->wanted(),
-                    "Expected $class::$methodName() to be called $times time(s), but was called $actual time(s)",
-                    $file,
-                    $line,
-                    matcher: 'toBeCalledTimes',
-                )
-            };
-        });
-    }
 
 
     /**
@@ -276,27 +208,28 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Retrieves the GeneratedDouble from the mock subject.
-     */
-    /**
      * The call expect() was handed is expected: made from the code under
-     * spec, it is no longer a call nothing declared.
+     * spec, it is no longer a call nothing declared. Returned held to the
+     * arguments it was written with, for a stub to answer that call alone.
      */
-    private function declare(): void
+    private function declared(): MatchableDouble
     {
         $double = $this->mockSubject->______PhpSpecGetDouble();
 
         if (!$double instanceof GeneratedDouble) {
-            return;
+            return $this->mockSubject;
         }
 
         $method = $this->mockSubject->______PhpSpecGetMethod();
-        $arranging = $double->______PhpSpecGetStubbedCalls()->peek();
-        $args = $arranging !== null && $arranging->method === $method && $arranging->arguments !== [] ? $arranging->arguments : null;
-
+        $args = $double->______PhpSpecGetStubbedCalls()->writtenFor($method);
         $double->______PhpSpecDeclare($method, $args);
+
+        return new LastCallDouble($double, $method, $args);
     }
 
+    /**
+     * Retrieves the GeneratedDouble from the mock subject.
+     */
     private function getGeneratedDouble(): GeneratedDouble
     {
         $double = $this->mockSubject->______PhpSpecGetDouble();

@@ -23,10 +23,10 @@ describe(RefactorModel::class, function () {
         '/proj/src/App/Pricing/Rates.php' => "<?php\nnamespace App\\Pricing;\n\nfinal class Rates {}\n",
     ]));
     let('filesystem', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
-        allow($fs->read())->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
+        allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {
             $this->files[$path] = $content;
         });
 

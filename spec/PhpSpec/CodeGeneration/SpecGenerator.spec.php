@@ -17,26 +17,26 @@ describe(SpecGenerator::class, function () {
     });
 
     it("writes spec file when it does not exist", function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => match (true) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match (true) {
             str_ends_with($path, '.spec.php') => false,
             default => true,
         });
-        expect($fs->write())->toBeCalled();
+        expect($fs->write(cetera()))->toBeCalled();
 
         $this->generator->generate('Calculator');
     });
 
     it("creates directory when it does not exist", function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        expect($fs->mkdir())->toBeCalled();
-        expect($fs->write())->toBeCalled();
+        allow($fs->exists(any()))->toReturn(false);
+        expect($fs->mkdir(any()))->toBeCalled();
+        expect($fs->write(cetera()))->toBeCalled();
 
         $this->generator->generate('App/Service');
     });
 
     it("ends the spec file with a newline", function (Filesystem $fs) {
-        allow($fs->mkdir());
-        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir(any()));
+        allow($fs->exists(any()))->toReturn(false);
         expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
 
         $this->generator->generate('Calculator');
@@ -57,15 +57,15 @@ describe(SpecGenerator::class, function () {
     });
 
     it("returns true when it creates the spec file", function (Filesystem $fs) {
-        allow($fs->write());
-        allow($fs->mkdir());
-        allow($fs->exists())->toReturn(false);
+        allow($fs->write(cetera()));
+        allow($fs->mkdir(any()));
+        allow($fs->exists(any()))->toReturn(false);
 
         expect($this->generator->generate('Calculator'))->toBe(true);
     });
 
     it("returns false when the spec file already exists", function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists(any()))->toReturn(true);
 
         expect($this->generator->generate('Existing'))->toBe(false);
     });
@@ -101,7 +101,7 @@ describe(SpecGenerator::class, function () {
         });
         PHP);
 
-        allow($fs->write())->toReturnUsing(function () use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function () use (&$written) {
             $written = func_get_args()[1] ?? null;
         });
 
@@ -112,7 +112,7 @@ describe(SpecGenerator::class, function () {
     });
 
     it("returns true when an example is added", function (Filesystem $fs) {
-        allow($fs->write());
+        allow($fs->write(cetera()));
         $specPath = getcwd() . DIRECTORY_SEPARATOR . 'spec' . DIRECTORY_SEPARATOR . 'Calculator.spec.php';
 
         allow($fs->exists($specPath))->toReturn(true);
@@ -148,7 +148,7 @@ describe(SpecGenerator::class, function () {
     });
 
     it("does not add example when spec file does not exist", function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         expect($this->generator->addExample('Missing', 'foo'))->toBe(false);
 

@@ -7,9 +7,9 @@ use PhpSpec\Guard\SnapshotDelta;
 describe(SnapshotDelta::class, function () {
 
     $tree = function (Filesystem $fs, array $files): void {
-        allow($fs->isDir())->toReturnUsing(fn(string $path) => $path === '/app/src');
-        allow($fs->scandir())->toReturn(['.', '..', ...array_keys($files)]);
-        allow($fs->read())->toReturnUsing(fn(string $path) => $files[basename($path)] ?? '');
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $path) => $path === '/app/src');
+        allow($fs->scandir(any()))->toReturn(['.', '..', ...array_keys($files)]);
+        allow($fs->read(any()))->toReturnUsing(fn(string $path) => $files[basename($path)] ?? '');
     };
 
     it('reports only the lines an edit added', function (Filesystem $fs) use ($tree) {

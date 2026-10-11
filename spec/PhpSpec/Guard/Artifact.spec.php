@@ -18,14 +18,14 @@ describe(Artifact::class, function () {
     });
 
     it('says so when the report is not there', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         expect((new Artifact($fs))->read('cov.json'))->toBe('Coverage file not found: cov.json.');
     });
 
     it('says so when the file is not a coverage report', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn('{"hello":"world"}');
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn('{"hello":"world"}');
 
         expect((new Artifact($fs))->read('cov.json'))
             ->toBe('cov.json is not a PhpSpec coverage report: run --coverage-json to make one.');
@@ -35,8 +35,8 @@ describe(Artifact::class, function () {
     // the second, a line nothing reached and a line that was never code look
     // the same, and guard would call a closing brace untested logic.
     it('reads what ran and what there was to run', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturnUsing(($this->onDisk)([
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturnUsing(($this->onDisk)([
             'src/Basket.php' => [
                 'checksum' => md5($this->source),
                 'lines' => [9 => ['Basket::totals']],
@@ -57,8 +57,8 @@ describe(Artifact::class, function () {
     // Reports made before guard existed have no "executable" list; what ran is
     // the most that can be known from them.
     it('falls back to what ran when the report predates the executable list', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturnUsing(($this->onDisk)([
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturnUsing(($this->onDisk)([
             'src/Basket.php' => ['checksum' => md5($this->source), 'lines' => [9 => ['Basket::totals']]],
         ]));
 
@@ -72,8 +72,8 @@ describe(Artifact::class, function () {
     // on, it says lines are covered that nothing has ever run, and CI passes a
     // change nobody tested. The checksum in the report is there to stop that.
     it('refuses a report the code has moved on from', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturnUsing(($this->onDisk)([
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturnUsing(($this->onDisk)([
             'src/Basket.php' => ['checksum' => md5('what it held then'), 'lines' => [9 => ['Basket::totals']]],
         ]));
 
@@ -85,8 +85,8 @@ describe(Artifact::class, function () {
     // The change being judged may be the deletion itself, so a file that is no
     // longer there says nothing about whether the report is stale.
     it('accepts a report describing a file that has since been deleted', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'cov.json');
-        allow($fs->read())->toReturnUsing(($this->onDisk)([
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === 'cov.json');
+        allow($fs->read(any()))->toReturnUsing(($this->onDisk)([
             'src/Gone.php' => ['checksum' => md5('what it held then'), 'lines' => [3 => ['Gone::go']]],
         ]));
 

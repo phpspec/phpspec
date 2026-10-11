@@ -31,11 +31,11 @@ describe(TargetResolver::class, function () {
 
             return array_keys($entries);
         };
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => isset($files()[$p]) || $children($p) !== []);
-        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $children($p) !== []);
-        allow($fs->scandir())->toReturnUsing($children);
-        allow($fs->read())->toReturnUsing(fn(string $p): string => $files()[$p][0] ?? '');
-        allow($fs->mtime())->toReturnUsing(fn(string $p): int => $files()[$p][1] ?? 0);
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => isset($files()[$p]) || $children($p) !== []);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $children($p) !== []);
+        allow($fs->scandir(any()))->toReturnUsing($children);
+        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $files()[$p][0] ?? '');
+        allow($fs->mtime(any()))->toReturnUsing(fn(string $p): int => $files()[$p][1] ?? 0);
 
         return new TargetResolver(new Configuration(['autoload' => ['App\\' => 'src/App', 'Acme\\' => 'lib/Acme']]), $fs, '/proj');
     });

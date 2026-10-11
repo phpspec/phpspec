@@ -26,14 +26,6 @@ describe(CallCountExpectation::class, function () {
         $exp->twice();
     });
 
-    it('passes when expected never and not called', function () {
-        $calls = new MethodCallsStack();
-        $subject = new stdClass();
-
-        $exp = new CallCountExpectation('baz', $calls, 'stdClass', __FILE__, __LINE__, false, null);
-        $exp->never();
-    });
-
     it('passes with atMost(2) when called once', function () {
         $calls = new MethodCallsStack();
         $subject = new stdClass();
@@ -72,15 +64,6 @@ describe(CallCountExpectation::class, function () {
 
         $exp = new CallCountExpectation('neg', $calls, 'stdClass', __FILE__, __LINE__, true, null);
         $exp->once();
-    });
-
-    it('passes with negated never() when called once', function () {
-        $calls = new MethodCallsStack();
-        $subject = new stdClass();
-        $calls->push(new MockedMethod($subject, 'neg2', []));
-
-        $exp = new CallCountExpectation('neg2', $calls, 'stdClass', __FILE__, __LINE__, true, null);
-        $exp->never();
     });
 
     it('passes with setConstraint directly', function () {

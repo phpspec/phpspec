@@ -18,7 +18,9 @@ use LogicException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionIntersectionType;
+use ReflectionMethod;
 use ReflectionNamedType;
+use ReflectionParameter;
 use ReflectionType;
 use ReflectionUnionType;
 use Throwable;
@@ -124,11 +126,12 @@ namespace $mockNamespace;
 
 class $mockShortName $extends $prefixedClass $implementsGenerated {
     private \$______phpspec_stack;
-    private \$______phpspec_stubbedReturns = [];
-    private \$______phpspec_stubbedThrows = [];
-    private \$______phpspec_stubbedReturnCallbacks = [];
+    private ?\PhpSpec\Mock\Stubs \$______phpspec_stubs = null;
     private \$______phpspec_lenient = false;
-    private \$______phpspec_declared = [];
+    private ?\PhpSpec\Mock\Declarations \$______phpspec_declared = null;
+    private \$______phpspec_signatures = [];
+    private \$______phpspec_returnTypes = [];
+    private \$______phpspec_strictFiles = [];
 
     $methods
     $undefinedMethodGuard
@@ -156,17 +159,21 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
         return '$prefixedClass';
     }
 
+    private function ______PhpSpecStrictIn(string \$file): bool {
+        return \$this->______phpspec_strictFiles[\$file] ??= (new \PhpSpec\Mock\CallingFile(\$file))->declaresStrictTypes();
+    }
+
     public function ______PhpSpecBeLenient(): void {
         \$this->______phpspec_lenient = true;
     }
 
     public function ______PhpSpecDeclare(string \$method, ?array \$args): void {
-        \$this->______phpspec_declared[\$method][] = \$args;
+        (\$this->______phpspec_declared ??= new \PhpSpec\Mock\Declarations())->add(\$method, \$args);
     }
 
     private function ______PhpSpecUnexpectedUnlessArranging(string \$method, array \$args, array \$frame): void {
         if (\$this->______phpspec_lenient
-            || \PhpSpec\Mock\StubRegistry::isDeclared(\$method, \$args, \$this->______phpspec_declared)
+            || (\$this->______phpspec_declared?->cover(\$method, \$args) ?? false)
             || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')) {
             return;
         }
@@ -174,20 +181,20 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
         throw \PhpSpec\Mock\UnexpectedCallException::to('$prefixedClass', \$method, \$args, \$frame['file'] ?? '', \$frame['line'] ?? 0);
     }
 
+    private function ______PhpSpecStubs(): \PhpSpec\Mock\Stubs {
+        return \$this->______phpspec_stubs ??= new \PhpSpec\Mock\Stubs();
+    }
+
     public function ______PhpSpecStubReturn(string \$method, mixed \$value, ?array \$args = null): void {
-        if (!isset(\$this->______phpspec_stubbedReturns[\$method])) { \$this->______phpspec_stubbedReturns[\$method] = []; }
-        array_unshift(\$this->______phpspec_stubbedReturns[\$method], [\$args, \$value]);
+        \$this->______PhpSpecStubs()->add(\$method, \$args, 'value', \$value);
     }
 
     public function ______PhpSpecStubReturnUsing(string \$method, callable \$callback, ?array \$args = null): void {
-        if (!isset(\$this->______phpspec_stubbedReturnCallbacks[\$method])) { \$this->______phpspec_stubbedReturnCallbacks[\$method] = []; }
-        array_unshift(\$this->______phpspec_stubbedReturnCallbacks[\$method], [\$args, \$callback]);
+        \$this->______PhpSpecStubs()->add(\$method, \$args, 'callback', \$callback);
     }
 
     public function ______PhpSpecStubThrow(string \$method, string|\Throwable \$exception, string \$message = '', ?array \$args = null): void {
-        if (!isset(\$this->______phpspec_stubbedThrows[\$method])) { \$this->______phpspec_stubbedThrows[\$method] = []; }
-        \$stub = \$exception instanceof \Throwable ? ['throwable' => \$exception] : ['class' => \$exception, 'message' => \$message];
-        array_unshift(\$this->______phpspec_stubbedThrows[\$method], [\$args, \$stub]);
+        \$this->______PhpSpecStubs()->add(\$method, \$args, 'throw', \$exception instanceof \Throwable ? ['throwable' => \$exception] : ['class' => \$exception, 'message' => \$message]);
     }
 }
 PHP;
@@ -421,6 +428,121 @@ PHP;
     }
 
     /**
+     * The code that holds a call to what the real method takes, before the
+     * double answers it.
+     */
+    private static function holdCode(string $class, ReflectionMethod $method): string
+    {
+        return sprintf(
+            "\$__frame = \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []; \$__made = !\\PhpSpec\\Mock\\ArrangingCode::includes(\$__frame['file'] ?? ''); \$__given = (\$this->______phpspec_signatures[%2\$s] ??= new \\PhpSpec\\Mock\\Signature(%1\$s, %2\$s, %3\$d, %4\$s, %5\$s, %6\$s))->hold(\\func_get_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
+            var_export($class, true),
+            var_export($method->getName(), true),
+            $method->getNumberOfRequiredParameters(),
+            $method->isVariadic() ? 'null' : (string) $method->getNumberOfParameters(),
+            var_export(self::parameterList($method), true),
+            self::typedCode($method),
+        );
+    }
+
+    /**
+     * The code for each parameter's name, its type as declared, and a closure
+     * taking that type alone, through which an argument is held to it as PHP
+     * holds it; no closure for a parameter that takes anything.
+     */
+    private static function typedCode(ReflectionMethod $method): string
+    {
+        $typed = [];
+
+        foreach ($method->getParameters() as $parameter) {
+            $type = $parameter->getType();
+            $taking = $type === null || ($type instanceof ReflectionNamedType && $type->getName() === 'mixed')
+                ? 'null'
+                : sprintf('static fn(%s $value) => $value', self::typeIn($type, $method));
+            $typed[] = sprintf('[%s, %s, %s]', var_export($parameter->getName(), true), var_export((string) $type, true), $taking);
+        }
+
+        return '[' . implode(', ', $typed) . ']';
+    }
+
+    /**
+     * A type as code outside the class that declares it: self and parent
+     * named for the classes they stand for.
+     */
+    private static function typeIn(ReflectionType $type, ReflectionMethod $method): string
+    {
+        $declaring = $method->getDeclaringClass();
+        $parent = $declaring->getParentClass();
+
+        return (string) preg_replace_callback(
+            '/(?<![\\\\\w])(self|parent)(?![\\\\\w])/',
+            static fn(array $word): string => '\\' . ($word[1] === 'self' || $parent === false ? $declaring->getName() : $parent->getName()),
+            self::formatTypeSyntax($type),
+        );
+    }
+
+    /**
+     * The code for a call's arguments with the defaults it left out filled
+     * in, so a call is matched as the call it is however it was written.
+     *
+     * @param list<ReflectionParameter> $parameters
+     */
+    private static function argumentsCode(array $parameters, bool $held): string
+    {
+        $named = [];
+
+        foreach ($parameters as $parameter) {
+            if ($parameter->isVariadic() || ($parameter->isOptional() && !$parameter->isDefaultValueAvailable())) {
+                break;
+            }
+
+            $named[] = '$' . $parameter->getName();
+        }
+
+        if ($held) {
+            return $named === [] ? '$__given' : sprintf('\\array_merge($__given, \\array_slice([%s], \\count($__given)))', implode(', ', $named));
+        }
+
+        if ($named === []) {
+            return '\\func_get_args()';
+        }
+
+        return sprintf('\\array_merge([%s], \\array_slice(\\func_get_args(), %d))', implode(', ', $named), count($named));
+    }
+
+    /**
+     * The parameter list as the method declares it, for a message.
+     */
+    private static function parameterList(ReflectionMethod $method): string
+    {
+        $listed = [];
+
+        foreach ($method->getParameters() as $parameter) {
+            $type = $parameter->getType();
+            $listed[] = ltrim(sprintf(
+                '%s %s%s$%s%s',
+                $type === null ? '' : (string) $type,
+                $parameter->isPassedByReference() ? '&' : '',
+                $parameter->isVariadic() ? '...' : '',
+                $parameter->getName(),
+                $parameter->isDefaultValueAvailable() ? ' = ' . self::shownDefault($parameter->getDefaultValue()) : '',
+            ));
+        }
+
+        return implode(', ', $listed);
+    }
+
+    private static function shownDefault(mixed $value): string
+    {
+        return match (true) {
+            $value === null => 'null',
+            $value === [] => '[]',
+            is_array($value) => '[...]',
+            is_object($value) => 'new ' . $value::class . '()',
+            default => var_export($value, true),
+        };
+    }
+
+    /**
      * Extracts the type name from a named type, returning null for compound types.
      *
      * @param ?ReflectionType $type the reflection type to inspect
@@ -453,8 +575,10 @@ PHP;
             'int' => $returning('0'),
             'float' => $returning('0.0'),
             'bool' => $returning('false'),
+            'true' => $returning('true'),
+            'false' => $returning('false'),
             // No double can stand in for these, so a usable value does.
-            'static', 'self' => $returning('$this'),
+            'static', 'self', 'parent' => $returning('$this'),
             'object' => $returning('new \\stdClass()'),
             'callable', 'Closure' => $returning('static fn() => null'),
             'Generator' => $returning('(static fn() => yield from [])()'),
@@ -606,7 +730,7 @@ PHP;
             $isCompoundType = $returnedType instanceof ReflectionUnionType || $returnedType instanceof ReflectionIntersectionType;
 
             if ($returnedType !== null) {
-                $returnedTypeSyntax = ': ' . self::formatTypeSyntax($returnedType);
+                $returnedTypeSyntax = ': ' . self::typeIn($returnedType, $method);
             }
 
             // get method parameters
@@ -627,6 +751,9 @@ PHP;
                 $paramStrings[] = $paramStr;
             }
             $paramString = implode(', ', $paramStrings);
+            $arguments = self::argumentsCode($parameters, $depth === 0);
+            $hold = $depth === 0 ? self::holdCode($reflectionClass->getName(), $method) : '';
+            $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s, self::class))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
 
             // Unique suffix for MockedMethodFor classes, includes parent class hash to avoid collisions
             $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($reflectionClass->getName() . '::' . $methodName), 0, 8) . '_' . uniqid();
@@ -778,28 +905,31 @@ PHP;
 
             $guard = '';
             if ($depth === 0 && $simpleReturnName !== 'never') {
-                $guard = "if (\$__match === null) { \$this->______PhpSpecUnexpectedUnlessArranging('$methodName', func_get_args(), debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []); }";
+                $guard = "if (\$__match === null) { \$this->______PhpSpecUnexpectedUnlessArranging('$methodName', \$__args, \$__frame); }";
             }
 
-            // stub check — uses StubRegistry to find matching stub by method + args
             $stubCheck = '';
             $throwCheck = '';
             if ($simpleReturnName === 'void') {
-                $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
+                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
+                    . " if (\$__match !== null && \$__match['type'] === 'withheld') { \\PhpSpec\\Mock\\Expectation::\$withheld = \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); \$__match = null; }"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { try { (\$__match['data'])(...func_get_args()); } catch (\\ArgumentCountError) {} }"
+                    . " if (\$__match['type'] === 'callback') { (\$__match['data'])(...\$__args); }"
                     . ' \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
             } elseif ($simpleReturnName !== 'never') {
-                $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
+                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
+                    . " if (\$__match !== null && \$__match['type'] === 'withheld') { \\PhpSpec\\Mock\\Expectation::\$withheld = \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); \$__match = null; }"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { try { \$__ret = (\$__match['data'])(...func_get_args()); \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } catch (\\ArgumentCountError) {} }"
+                    . " if (\$__match['type'] === 'callback') { \$__ret = (\$__match['data'])(...\$__args); $holdAnswer \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
                     . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 
             // put it all together
             $mockMethods[] = <<<PHP
     public function $methodName($paramString)$returnedTypeSyntax {
-        \$this->______PhpSpecWasCalledWith('$methodName', func_get_args());
+        $hold
+        \$__args = $arguments;
+        \$this->______PhpSpecWasCalledWith('$methodName', \$__args);
         $stubCheck
         $guard
         $return

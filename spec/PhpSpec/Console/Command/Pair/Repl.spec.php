@@ -25,10 +25,10 @@ class ReplFakeRunner implements SpecRunner
 describe(Repl::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
     });
 
     let('buffer', fn() => new BufferedOutput());

@@ -8,14 +8,12 @@ describe(OfferBook::class, function () {
 
     beforeEach(function (Filesystem $fs) {
         $this->stored = null;
-        allow($fs->exists())->toReturn(false);
-        allow($fs->read())->toReturnUsing(fn(): string => $this->stored ?? '');
-        allow($fs->mkdir())->toReturn(null);
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) {
+        allow($fs->exists(any()))->toReturnUsing(fn(): bool => $this->stored !== null);
+        allow($fs->read(any()))->toReturnUsing(fn(): string => $this->stored ?? '');
+        allow($fs->mkdir(any()));
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) {
             $this->stored = $content;
-            allow($this->fs->exists())->toReturn(true);
         });
-        $this->fs = $fs;
     });
 
     it('hands back an offer it recorded', function (Filesystem $fs) {
@@ -110,8 +108,7 @@ describe(OfferBook::class, function () {
     });
 
     it('survives a book that was damaged on disk', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn('not json at all');
+        $this->stored = 'not json at all';
 
         expect((new OfferBook($fs))->find('o_anything'))->toBeNull();
     });

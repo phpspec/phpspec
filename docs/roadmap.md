@@ -17,7 +17,7 @@ PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.2+. It su
 
 #### Mocking
 - Test doubles via `mock()` with auto-generated classes
-- Mock verification: `toBeCalled()`, `toBeCalledWith()`, `toBeCalledTimes()`, `toHaveBeenCalled()`
+- Mock verification: `toBeCalled()` with its counts, `toHaveBeenCalled()`
 - Stubbing: `allow($mock->method())->toReturn(value)`
 - Argument matchers: `any()`, `type()`, `callback()`
 - Support for nullable, union, intersection types, and enums

@@ -16,7 +16,7 @@ describe(SymbolInspector::class, function () {
     });
 
     it('reports a symbol that does not exist yet cleanly, not "File not found"', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
+        allow($fs->exists(any()))->toReturn(false);
 
         $report = (new SymbolInspector(SourceLayout::under('src', 'App'), $fs))->describe('App\\NotBuiltYet');
 
@@ -25,7 +25,7 @@ describe(SymbolInspector::class, function () {
     });
 
     it('distinguishes a PSR-4 autoload mismatch from a missing class', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
+        allow($fs->exists(any()))->toReturn(true);
 
         $report = (new SymbolInspector(SourceLayout::under('src'), $fs))->describe('App\\OnDiskButUnmapped');
 

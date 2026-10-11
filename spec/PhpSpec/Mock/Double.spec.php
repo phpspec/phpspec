@@ -25,13 +25,57 @@ interface DoubleSpecStock {
     public function reserve(string $item, int $quantity): bool;
 }
 
+interface DoubleSpecTill {
+    public function pay(int $amount, string $currency = 'EUR'): int;
+    public function find(int $id = 0): string;
+    public function tally(string ...$items): int;
+    public function note(string $text, array $tags = [], ?string $by = null, array $seen = ['a'], bool $loud = false): void;
+}
+
 // Code that is not spec code: a file outside the spec folder calling the double.
 define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
 if (!function_exists('double_spec_outsider_reserves')) {
     register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
-    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\n");
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\nfunction double_spec_outsider_greets(object \$double) { return \$double->greet(); }\n");
     require DOUBLE_SPEC_OUTSIDER;
 }
+
+// The same, in a file that declares strict types.
+define('DOUBLE_SPEC_STRICT_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_strict_outsider_' . getmypid() . '.php');
+if (!function_exists('double_spec_strict_outsider_reserves_with')) {
+    register_shutdown_function(static fn() => is_file(DOUBLE_SPEC_STRICT_OUTSIDER) && unlink(DOUBLE_SPEC_STRICT_OUTSIDER));
+    file_put_contents(DOUBLE_SPEC_STRICT_OUTSIDER, "<?php\n\ndeclare(strict_types=1);\n\nfunction double_spec_strict_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\n");
+    require DOUBLE_SPEC_STRICT_OUTSIDER;
+}
+
+interface DoubleSpecLedger {
+    public function balance(): int;
+    public function rate(): float;
+    public function owner(): ?DoubleSpecContract;
+    public function either(): int|string;
+    public function record(string $line): void;
+    public function same(): static;
+}
+
+interface DoubleSpecKinds {
+    public function flag(): bool;
+    public function list(): array;
+    public function many(): iterable;
+    public function action(): callable;
+    public function thing(): object;
+    public function me(): self;
+    public function both(): DoubleSpecIntersectA&DoubleSpecIntersectB;
+    public function yes(): true;
+    public function no(): false;
+}
+
+class DoubleSpecBase {}
+
+class DoubleSpecChild extends DoubleSpecBase {
+    public function up(): parent { return new DoubleSpecBase(); }
+}
+
+class DoubleSpecBoth implements DoubleSpecIntersectA, DoubleSpecIntersectB {}
 
 interface DoubleSpecMachine {
     public function each(): iterable;
@@ -293,7 +337,7 @@ describe(Double::class, function() {
         allow($double->greet())->toThrow($notFound);
 
         try {
-            $double->greet();
+            double_spec_outsider_greets($double);
         } catch (\RuntimeException $thrown) {
             expect($thrown)->toBe($notFound);
 
@@ -378,7 +422,7 @@ describe(Double::class, function() {
             allow($stock->reserve('tea', 2));
 
             expect(double_spec_outsider_reserves($stock))->toBeFalse();
-            expect($stock->reserve('tea', 2))->toBeCalledTimes(1);
+            expect($stock->reserve('tea', 2))->toBeCalled()->once();
         });
 
         it("answers a call that expect() declared before the act", function () {
@@ -827,6 +871,227 @@ describe(Double::class, function() {
         $double = Double::getInstance(DoubleSpecVoidReturn::class);
         allow($double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
         expect(fn() => $double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
+    });
+
+    context("a call no object of the real class could take", function () {
+        beforeEach(function () {
+            $this->saved = ArrangingCode::roots();
+            ArrangingCode::under(__DIR__);
+        });
+
+        afterEach(function () {
+            ArrangingCode::under(...$this->saved);
+        });
+
+        it("is refused where the spec writes it with fewer arguments than the method requires, saying what to write", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            $remedy = ' Write the arguments it is called with, any() for one whose value does not matter, or cetera() for the rest.';
+
+            expect(fn() => $stock->reserve())->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with none can never be made.' . $remedy);
+            expect(fn() => $stock->reserve('tea'))->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes 2 arguments (string $item, int $quantity), so a call written with 1 can never be made.' . $remedy);
+            expect(fn() => Double::getInstance(DoubleSpecTill::class)->pay())->toThrow(LogicException::class, "DoubleSpecTill::pay() takes at least 1 argument (int \$amount, string \$currency = 'EUR'), so a call written with none can never be made." . $remedy);
+        });
+
+        it("names the parameters as the method declares them, defaults included", function () {
+            expect(fn() => Double::getInstance(DoubleSpecTill::class)->note())->toThrow(LogicException::class, "DoubleSpecTill::note() takes at least 1 argument (string \$text, array \$tags = [], ?string \$by = null, array \$seen = [...], bool \$loud = false), so a call written with none can never be made. Write the arguments it is called with, any() for one whose value does not matter, or cetera() for the rest.");
+        });
+
+        it("is refused where the spec writes it with more arguments than the method takes", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            expect(fn() => $stock->reserve('tea', 2, 'now'))->toThrow(LogicException::class, 'DoubleSpecStock::reserve() takes at most 2 arguments (string $item, int $quantity); the call is written with 3.');
+            expect(fn() => Double::getInstance(DoubleSpecTill::class)->tally('a', 'b', 'c', 'd'))->not()->toThrow();
+        });
+
+        it("takes any() for one argument and cetera() for the rest, the rest being last", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            expect(fn() => $stock->reserve(any(), any()))->not()->toThrow();
+            expect(fn() => $stock->reserve('tea', cetera()))->not()->toThrow();
+            expect(fn() => $stock->reserve(cetera()))->not()->toThrow();
+            expect(fn() => $stock->reserve(cetera(), 2))->toThrow(LogicException::class, 'cetera() stands for the rest of the arguments to DoubleSpecStock::reserve(), so nothing can follow it.');
+        });
+
+        it("fails a call the code under spec makes with too few arguments, as PHP would, however the method was declared", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve(cetera()))->toReturn(true);
+
+            try {
+                double_spec_outsider_reserves_nothing($stock);
+            } catch (ArgumentCountError $e) {
+                expect($e->getMessage())->toBe(sprintf('Too few arguments to function DoubleSpecStock::reserve(), 0 passed in %s on line 3 and exactly 2 expected', str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER))));
+
+                return;
+            }
+
+            expect(false)->toBeTrue();
+        });
+
+        it("fails a call the code under spec makes with an argument of the wrong type, as PHP would", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve(cetera()))->toReturn(true);
+
+            expect(fn() => double_spec_outsider_reserves_with($stock, 'tea', 'two'))->toThrow(TypeError::class, sprintf('DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in %s on line 5', str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER))));
+            expect(fn() => double_spec_strict_outsider_reserves_with($stock, 'tea', '2'))->toThrow(TypeError::class, sprintf('DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in %s on line 5', str_replace('\\', '/', realpath(DOUBLE_SPEC_STRICT_OUTSIDER))));
+        });
+
+        it("takes an argument the way the code under spec hands it to the real object, coerced where its file allows", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve('tea', 2))->toReturn(true);
+
+            expect(double_spec_outsider_reserves_with($stock, 'tea', '2'))->toBeTrue();
+        });
+
+        it("is refused where the spec writes it with an argument the method could never take", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            expect(fn() => $stock->reserve('tea', 'two'))->toThrow(LogicException::class, 'DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, string given, so a call written with it can never be made.');
+            expect(fn() => $stock->reserve(any(), [2]))->toThrow(LogicException::class, 'DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, array given, so a call written with it can never be made.');
+            expect(fn() => $stock->reserve('tea', any()))->not()->toThrow();
+        });
+
+        it("takes a call that leaves out an argument with a default as the call with that default", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(10))->toReturn(1);
+            allow($till->pay(20, 'EUR'))->toReturn(2);
+
+            expect(double_spec_outsider_pays($till, 10, 'EUR'))->toBe(1);
+            expect(double_spec_outsider_pays($till, 20))->toBe(2);
+            expect(fn() => double_spec_outsider_pays($till, 10, 'USD'))->toThrow(UnexpectedCallException::class);
+        });
+
+        it("answers no stub to a call written with a matcher, which declares a call and is not one", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(cetera()))->toReturnUsing(fn(int $amount) => $amount * 2);
+            allow($till->pay(any()))->toThrow(new \RuntimeException('Closed'));
+
+            expect(double_spec_outsider_pays($till, 5))->toBe(10);
+            expect(fn() => double_spec_outsider_pays($till, 5))->toThrow(\RuntimeException::class, 'Closed');
+        });
+
+        it("lets an error a stub's callback raises through, where it used to answer with a default", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(cetera()))->toReturnUsing(fn(int $amount) => intdiv($amount, 0));
+
+            expect(fn() => double_spec_outsider_pays($till, 5))->toThrow(\DivisionByZeroError::class);
+            allow($till->pay(cetera()))->toReturnUsing(fn(int $amount, string $currency, string $note) => 1);
+            expect(fn() => double_spec_outsider_pays($till, 5))->toThrow(\ArgumentCountError::class);
+        });
+        it("holds a call written without arguments to a call made with none", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->find())->toReturn('first');
+
+            expect($till->find())->toBe('first');
+            expect($till->find(0))->toBe('first');
+            expect($till->find(5))->toBe('');
+        });
+    });
+
+    context("a stub given what the method cannot return", function () {
+        it("is refused where the value is not of the type the method returns, held strictly", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+
+            expect(fn() => allow($ledger->balance())->toReturn('42'))->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so it cannot return string "42".');
+            expect(fn() => expect($ledger->balance())->toReturn('42'))->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so it cannot return string "42".');
+            expect(fn() => allow($ledger->owner())->toReturn(new stdClass()))->toThrow(LogicException::class, 'DoubleSpecLedger::owner() returns ?DoubleSpecContract, so it cannot return stdClass.');
+            expect(fn() => allow($ledger->either())->toReturn(1.5))->toThrow(LogicException::class, 'DoubleSpecLedger::either() returns string|int, so it cannot return float 1.5.');
+            expect(fn() => allow($ledger->same())->toReturn(new stdClass()))->toThrow(LogicException::class, 'DoubleSpecLedger::same() returns static, so it cannot return stdClass.');
+        });
+
+        it("takes what the method could return", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+            allow($ledger->rate())->toReturn(3);
+            allow($ledger->owner())->toReturn(null);
+            allow($ledger->either())->toReturn('many');
+            allow($ledger->same())->toReturn($ledger);
+
+            expect($ledger->rate())->toBe(3.0);
+            expect($ledger->either())->toBe('many');
+        });
+
+        it("answers a method returning true or false, unstubbed, with that value", function () {
+            $kinds = Double::getInstance(DoubleSpecKinds::class);
+
+            expect($kinds->yes())->toBeTrue();
+            expect($kinds->no())->toBeFalse();
+        });
+
+        it("holds each kind of type as PHP holds a return under strict types", function () {
+            $kinds = Double::getInstance(DoubleSpecKinds::class);
+            $child = Double::getInstance(DoubleSpecChild::class);
+            $holds = [
+                [fn() => allow($kinds->flag()), false, 1],
+                [fn() => allow($kinds->list()), [], 'x'],
+                [fn() => allow($kinds->many()), new ArrayIterator([]), 'x'],
+                [fn() => allow($kinds->action()), fn() => 1, 'not_a_function_anywhere'],
+                [fn() => allow($kinds->thing()), new stdClass(), 'x'],
+                [fn() => allow($kinds->me()), $kinds, new stdClass()],
+                [fn() => allow($kinds->both()), new DoubleSpecBoth(), new stdClass()],
+                [fn() => allow($kinds->yes()), true, false],
+                [fn() => allow($child->up()), new DoubleSpecBase(), new stdClass()],
+            ];
+
+            foreach ($holds as [$stub, $could, $never]) {
+                expect(fn() => $stub()->toReturn($could))->not()->toThrow();
+                expect(fn() => $stub()->toReturn($never))->toThrow(LogicException::class);
+            }
+        });
+
+        it("is refused on a method that returns void, which has nothing to return", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+
+            expect(fn() => allow($ledger->record('sale'))->toReturn(true))->toThrow(LogicException::class, 'DoubleSpecLedger::record() returns void, so toReturn() has nothing to give it: declare the call with allow() alone.');
+        });
+
+        it("holds what a callback answers to the type the method returns", function () {
+            $ledger = Double::getInstance(DoubleSpecLedger::class);
+            allow($ledger->balance())->toReturnUsing(fn() => 'lots');
+
+            expect(fn() => $ledger->balance())->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so its toReturnUsing() callback cannot answer string "lots".');
+        });
+    });
+
+    context("stubs answering in the order they were declared", function () {
+        beforeEach(function () {
+            $this->saved = ArrangingCode::roots();
+            ArrangingCode::under(__DIR__);
+        });
+
+        afterEach(function () {
+            ArrangingCode::under(...$this->saved);
+        });
+
+        it("answer the code under spec one after the other, the last one answering on", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(1))->toThrow(new \RuntimeException('Declined'));
+            allow($till->pay(1))->toReturn(5);
+
+            expect(fn() => double_spec_outsider_pays($till, 1))->toThrow(\RuntimeException::class, 'Declined');
+            expect(double_spec_outsider_pays($till, 1))->toBe(5);
+            expect(double_spec_outsider_pays($till, 1))->toBe(5);
+        });
+
+        it("are used in order whatever arguments they overlap on", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->find(any()))->toReturn('default');
+            allow($till->find(42))->toReturn('special');
+
+            expect(double_spec_outsider_finds($till, 42))->toBe('default');
+            expect(double_spec_outsider_finds($till, 42))->toBe('special');
+            expect(double_spec_outsider_finds($till, 99))->toBe('default');
+        });
+
+        it("are read by the spec without being used up, an exception showing only to toThrow()", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(2))->toReturn(7);
+            allow($till->pay(3))->toThrow(new \RuntimeException('No'));
+
+            expect($till->pay(2))->toBe(7);
+            expect($till->pay(3))->toBe(0);
+            expect(fn() => $till->pay(3))->toThrow(\RuntimeException::class, 'No');
+            expect(double_spec_outsider_pays($till, 2))->toBe(7);
+            expect(fn() => double_spec_outsider_pays($till, 3))->toThrow(\RuntimeException::class, 'No');
+        });
     });
 
 });

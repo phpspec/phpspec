@@ -17,9 +17,8 @@ namespace PhpSpec\Mock;
 use Closure;
 
 /**
- * Flexible argument matcher for use with toBeCalledWith() assertions.
- * Provides factory methods for common matching strategies: any value,
- * type checking, custom callback predicates, and more.
+ * An argument a call to a double is written with, standing for the values it
+ * matches: any value, a type, a predicate, and more.
  */
 final readonly class ArgumentMatcher
 {
@@ -55,14 +54,6 @@ final readonly class ArgumentMatcher
     public static function callback(Closure $callback): self
     {
         return new self('callback', $callback);
-    }
-
-    /**
-     * Creates a matcher that requires no arguments were passed.
-     */
-    public static function noArgs(): self
-    {
-        return new self('noArgs');
     }
 
     /**
@@ -137,7 +128,7 @@ final readonly class ArgumentMatcher
     public function matches(mixed $actual): bool
     {
         return match ($this->type) {
-            'any', 'noArgs', 'cetera' => true,
+            'any', 'cetera' => true,
             'type' => get_debug_type($actual) === $this->value || ($actual instanceof $this->value),
             'callback' => ($this->value)($actual),
             'instanceOf' => $actual instanceof $this->value,
@@ -145,6 +136,23 @@ final readonly class ArgumentMatcher
             'startWith' => is_string($actual) && str_starts_with($actual, $this->value),
             default => false,
         };
+    }
+
+    /**
+     * Whether a call carries a matcher: a call a spec writes to declare what
+     * will be called, never a call made.
+     *
+     * @param array<int|string, mixed> $arguments
+     */
+    public static function among(array $arguments): bool
+    {
+        foreach ($arguments as $argument) {
+            if ($argument instanceof self) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -156,27 +164,14 @@ final readonly class ArgumentMatcher
     }
 
     /**
-     * Returns true if this matcher is the noArgs() constraint.
-     */
-    public function isNoArgs(): bool
-    {
-        return $this->type === 'noArgs';
-    }
-
-    /**
-     * Matches an actual argument list against an expected pattern.
-     * Handles noArgs (single-element check for empty actual) and
-     * cetera (return true when reached, matching all remaining args).
+     * Matches an actual argument list against an expected pattern, cetera()
+     * matching all the arguments from where it stands.
      *
      * @param array<int|string, mixed> $actual the arguments that were actually passed
      * @param array<int|string, mixed> $expected the expected argument pattern (may include matchers)
      */
     public static function matchArgs(array $actual, array $expected): bool
     {
-        // noArgs: single-element expected with noArgs matcher
-        if (count($expected) === 1 && $expected[0] instanceof self && $expected[0]->isNoArgs()) {
-            return count($actual) === 0;
-        }
 
         foreach ($expected as $i => $exp) {
             // cetera: matches all remaining args from this position

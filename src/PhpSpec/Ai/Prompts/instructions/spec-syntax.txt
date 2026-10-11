@@ -45,12 +45,17 @@ toStartWith, toEndWith, toHaveProperty, toBeCallable, toBeOfType, toThrow
 ### Mocks
 Type-hinted parameters in it() closures are auto-mocked:
 ```php
-it('uses a collaborator', function (Logger $logger) {
-    allow($logger->log())->toReturn(true);
-    // ... use $logger
-    expect($logger->log())->toBeCalled();
+it('welcomes the user it finds', function (UserRepository $repo, Mailer $mailer) {
+    allow($repo->find(any()))->toReturn(new User('Alice'));
+    // ... use $repo and $mailer
+    expect($mailer->send('Welcome, Alice'))->toBeCalled()->once();
 });
 ```
+A double's call is written with the arguments it is made with, as PHP reads it:
+`any()` for one argument whose value does not matter, `cetera()` for the rest;
+`find()` is a call with no arguments. `toReturn()` takes only what the method
+returns; a void method is declared with `allow()` alone. A call that must not
+happen: `expect($mailer->send(cetera()))->not()->toBeCalled()`.
 
 ### Pending/Focused/Skipped
 - `xit()`, `xdescribe()`, `xcontext()`: pending (skipped)

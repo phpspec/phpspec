@@ -20,15 +20,15 @@ describe('E12 pair: navigator offer, replayed from a live session', function () 
 
     beforeEach(function (Filesystem $fs) {
         $source = "<?php\nnamespace App;\nclass TodoList {\n    public function completedTasks(): array\n    {\n        return array_keys(array_filter(\$this->tasks, fn(bool \$isComplete) => \$isComplete));\n    }\n}\n";
-        allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'src/App/TodoList.php'));
-        allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, 'src/App/TodoList.php') ? $source : '');
-        allow($fs->isFile())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->scandir())->toReturn([]);
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'src/App/TodoList.php'));
+        allow($fs->read(any()))->toReturnUsing(fn(string $path): string => str_ends_with($path, 'src/App/TodoList.php') ? $source : '');
+        allow($fs->isFile(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->scandir(any()))->toReturn([]);
+        allow($fs->mkdir(any()));
         $this->written = [];
         $written = &$this->written;
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
         $this->artifacts = fn() => array_values(array_filter(array_keys($this->written), fn(string $path) => !str_contains($path, '.phpspec/ai/')));

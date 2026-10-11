@@ -7,14 +7,14 @@ use PhpSpec\Filesystem;
 describe(RefactorJournal::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(false);
-        allow($fs->isDir())->toReturn(false);
-        allow($fs->mkdir())->toReturn(null);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->mkdir(any()));
     });
 
     it('records an applied refactoring as one JSON line with a timestamp', function (Filesystem $fs) {
+        allow($fs->exists(any()))->toReturn(false);
         $written = [];
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
 
@@ -29,10 +29,10 @@ describe(RefactorJournal::class, function () {
     });
 
     it('appends to an existing journal instead of overwriting it', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl'));
-        allow($fs->read())->toReturn('{"at":100,"command":"refactor","target":"App\\\\Old","technique":"Rename","description":"x"}' . "\n");
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl'));
+        allow($fs->read(any()))->toReturn('{"at":100,"command":"refactor","target":"App\\\\Old","technique":"Rename","description":"x"}' . "\n");
         $written = [];
-        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
 
@@ -46,54 +46,54 @@ describe(RefactorJournal::class, function () {
     context('unchangedTargets', function () {
 
         it('lists a journalled class whose source has not changed since its refactoring', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/App/TodoList.php');
-            allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
-            allow($fs->mtime())->toReturn(900);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/App/TodoList.php');
+            allow($fs->read(any()))->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
+            allow($fs->mtime(any()))->toReturn(900);
 
             expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toBe(['App\\TodoList']);
         });
 
         it('finds a class by its name where the project maps its namespace', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/Brew/DrinkPricer.php');
-            allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"Brew\\\\DrinkPricer","technique":"Extract Class","description":"x"}' . "\n");
-            allow($fs->mtime())->toReturn(900);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/Brew/DrinkPricer.php');
+            allow($fs->read(any()))->toReturn('{"at":1000,"command":"refactor","target":"Brew\\\\DrinkPricer","technique":"Extract Class","description":"x"}' . "\n");
+            allow($fs->mtime(any()))->toReturn(900);
 
             expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src/Brew', ['Brew' => 'src/Brew'])))->toBe(['Brew\\DrinkPricer']);
         });
 
         it('omits a class modified after its refactoring', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/App/TodoList.php');
-            allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
-            allow($fs->mtime())->toReturn(1100);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/App/TodoList.php');
+            allow($fs->read(any()))->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
+            allow($fs->mtime(any()))->toReturn(1100);
 
             expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toHaveLength(0);
         });
 
         it('omits a class whose source file no longer exists', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl'));
-            allow($fs->read())->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl'));
+            allow($fs->read(any()))->toReturn('{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n");
 
             expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toHaveLength(0);
         });
 
         it('judges each class by its own refactoring, not by the latest overall', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || str_starts_with($p, '/project/src/App/'));
-            allow($fs->read())->toReturn(
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || str_starts_with($p, '/project/src/App/'));
+            allow($fs->read(any()))->toReturn(
                 '{"at":1000,"command":"refactor","target":"App\\\\Changed","technique":"Rename","description":"x"}' . "\n"
                 . '{"at":2000,"command":"refactor","target":"App\\\\Polished","technique":"Extract Method","description":"y"}' . "\n",
             );
-            allow($fs->mtime())->toReturn(1500);
+            allow($fs->mtime(any()))->toReturn(1500);
 
             expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toBe(['App\\Polished']);
         });
 
         it('uses the latest entry when a class was refactored more than once', function (Filesystem $fs) {
-            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/App/TodoList.php');
-            allow($fs->read())->toReturn(
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl') || $p === '/project/src/App/TodoList.php');
+            allow($fs->read(any()))->toReturn(
                 '{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"x"}' . "\n"
                 . '{"at":2000,"command":"refactor","target":"App\\\\TodoList","technique":"Inline Method","description":"y"}' . "\n",
             );
-            allow($fs->mtime())->toReturn(1500);
+            allow($fs->mtime(any()))->toReturn(1500);
 
             expect((new RefactorJournal($fs))->unchangedTargets('/project', new SourceLayout('src')))->toBe(['App\\TodoList']);
         });
@@ -101,8 +101,8 @@ describe(RefactorJournal::class, function () {
     });
 
     it('renders the recent entries for a prompt', function (Filesystem $fs) {
-        allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl'));
-        allow($fs->read())->toReturn('{"at":100,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"Pulled hasTask out"}' . "\n");
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => str_contains($p, 'journal.jsonl'));
+        allow($fs->read(any()))->toReturn('{"at":100,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"Pulled hasTask out"}' . "\n");
 
         $rendered = (new RefactorJournal($fs))->rendered();
 
