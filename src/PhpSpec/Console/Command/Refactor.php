@@ -38,6 +38,8 @@ use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
 use PhpSpec\Guard\Inspection;
+use PhpSpec\Offers\Offer;
+use PhpSpec\Offers\OfferBook;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use RuntimeException;
@@ -170,23 +172,31 @@ final class Refactor extends Command
     }
 
     /**
-     * The plan, or the model's reason to decline, as one receipt: a coding
-     * agent cannot answer the questions a plan is carried out by, so nothing
-     * is written.
+     * The plan, or the model's reason to decline, as one receipt. A coding
+     * agent cannot answer the questions the plan is carried out by, so the
+     * plan is offered once, whole: accepting it carries it out unattended.
      */
     private function planForAgent(Output $output, RefactorTarget $target, RefactorPlan|Declined $plan): int
     {
-        $named = $target->fqcn . ($target->method === null ? '' : '::' . $target->method);
         $about = ['class' => $target->fqcn]
             + ($target->method === null ? [] : ['method' => $target->method])
             + ['source' => $this->relative($target->sourceFile), 'spec' => $this->relative($target->specFile)];
 
-        $this->receipt($output, $about + ($plan instanceof Declined ? ['declined' => $plan->reason] : [
+        if ($plan instanceof Declined) {
+            $this->receipt($output, $about + ['declined' => $plan->reason]);
+
+            return 0;
+        }
+
+        $offer = Offer::refactor($target->fqcn . ($target->method === null ? '' : '::' . $target->method), $plan->toArray(), $plan->read, $this->relativeClass($target));
+        (new OfferBook($this->filesystem))->record($offer);
+
+        $this->receipt($output, $about + [
             'technique' => $plan->technique,
             'rationale' => $plan->rationale,
             'steps' => array_map(static fn(PlannedStep $step): string => $step->title, $plan->steps),
-            'remedy' => sprintf('Run phpspec refactor %s in a terminal to carry out the plan.', str_replace('\\', '/', $named)),
-        ]));
+            'offer' => ['id' => $offer->id, 'action' => $offer->action, 'target' => $offer->target],
+        ]);
 
         return 0;
     }

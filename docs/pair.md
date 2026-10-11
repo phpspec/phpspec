@@ -353,27 +353,45 @@ way. Input that ends before a question is answered writes nothing of what
 was asked, and says to run with `--no-interaction`.
 
 ```
-$ bin/phpspec refactor CheckoutService --no-interaction
+$ bin/phpspec refactor DrinkPricer --no-interaction
   Checking the specs...
 
-Planning the refactoring… (14s · ↓ 1.2k tokens)
+Planning the refactoring… (41s · ↓ 207 tokens)
 
-Introducing DiscountPolicy… (5s · ↓ 310 tokens)
-  src/App/Checkout/DiscountPolicy.php (new)
+Describing Size… (5s · ↓ 205 tokens)
+  spec/Brew/Size.spec.php (new)
+  Red, as this step meant: spec/Brew/Size.spec.php
+
+Extracting Size… (6s · ↓ 353 tokens)
+  src/Brew/DrinkPricer.php
+  src/Brew/Size.php (new)
   Specs still pass ✓
 
-Describing LoyaltyDiscount… (6s · ↓ 420 tokens)
-  spec/App/Checkout/LoyaltyDiscount.spec.php (new)
-  Red, as this step meant: spec/App/Checkout/LoyaltyDiscount.spec.php
+Describing Milk… (5s · ↓ 191 tokens)
+  spec/Brew/Milk.spec.php (new)
+  Red, as this step meant: spec/Brew/Milk.spec.php
 
-...
+Extracting Milk… (5s · ↓ 281 tokens)
+  src/Brew/DrinkPricer.php
+  src/Brew/Milk.php (new)
+  Specs still pass ✓
 
-  Refactoring done: Replace Conditional with Polymorphism ✓
+Describing Shots… (3s · ↓ 133 tokens)
+  spec/Brew/Shots.spec.php (new)
+  Red, as this step meant: spec/Brew/Shots.spec.php
+
+Extracting Shots… (6s · ↓ 240 tokens)
+  src/Brew/DrinkPricer.php
+  src/Brew/Shots.php (new)
+  Specs still pass ✓
+
+  Refactoring done: Extract Class ✓
 ```
 
-A coding agent asks with `--format=agent` and gets the plan, or the model's
-reason to decline, as one JSON receipt; nothing is written (see
-[Coding Agents](agent.md#refactoring)).
+A coding agent asks with `--format=agent` and gets the plan, offered once
+and whole, or the model's reason to decline, as one JSON receipt; nothing
+is written until it runs `accept` with the offer's id, which carries the
+plan out as `--no-interaction` does (see [Coding Agents](agent.md#refactoring)).
 
 ### Example Output
 

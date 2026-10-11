@@ -10,6 +10,7 @@ use PhpSpec\Console\Command\Refactor\SuiteCheck;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
 use PhpSpec\Console\Prompt;
+use PhpSpec\Offers\OfferBook;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -331,14 +332,16 @@ describe(Refactor::class, function () {
 
     context('for a coding agent', function () {
 
-        it('answers with the plan as one JSON receipt, asking nothing and writing nothing', function () {
+        it('answers with the plan and one offer to carry it out, asking nothing and writing nothing', function () {
             $before = ($this->code)();
 
             $tester = ($this->run)([($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService')], [$this->green], options: ['--format' => 'agent']);
+            $receipt = ($this->receipt)($tester);
+            $offer = (new OfferBook($this->project, $this->cwd))->find($receipt['offer']['id'] ?? '');
 
             expect($tester->getStatusCode())->toBe(0);
             expect(substr_count($tester->getDisplay(), "\n"))->toBe(1);
-            expect(($this->receipt)($tester))->toBe([
+            expect(array_diff_key($receipt, ['offer' => true]))->toBe([
                 'v' => 2,
                 'action' => 'refactor',
                 'class' => 'App\\Checkout\\CheckoutService',
@@ -347,8 +350,9 @@ describe(Refactor::class, function () {
                 'technique' => 'Replace Conditional with Polymorphism',
                 'rationale' => "CheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule:\n  - loyalty customers\n  - seasonal campaigns",
                 'steps' => ['Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'],
-                'remedy' => 'Run phpspec refactor App/Checkout/CheckoutService in a terminal to carry out the plan.',
             ]);
+            expect($receipt['offer'])->toBe(['id' => $offer?->id, 'action' => 'refactor', 'target' => 'App\\Checkout\\CheckoutService']);
+            expect($offer?->data['plan']['steps'][1]['title'])->toBe('Use it in CheckoutService');
             expect(($this->code)())->toBe($before);
             expect($this->replay->requests)->toHaveCount(1);
         });

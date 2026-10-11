@@ -47,29 +47,65 @@ describe(Offer::class, function () {
     });
 
     context('staleness', function () {
+        let('content', fn() => fn(array $files): Closure => fn(string $path): ?string => $files[$path] ?? null);
+
         it('stands while the file is as it was when offered', function () {
             $offer = Offer::write('src/App/Basket.php', '<?php new', false, 'the old content');
 
-            expect($offer->staleAgainst('the old content'))->toBeFalse();
+            expect($offer->changedFile(($this->content)(['src/App/Basket.php' => 'the old content'])))->toBeNull();
         });
 
-        it('is stale once the file has moved on', function () {
+        it('names the file once it has moved on', function () {
             $offer = Offer::write('src/App/Basket.php', '<?php new', false, 'the old content');
 
-            expect($offer->staleAgainst('someone edited it'))->toBeTrue();
+            expect($offer->changedFile(($this->content)(['src/App/Basket.php' => 'someone edited it'])))->toBe('src/App/Basket.php');
         });
 
-        it('is stale when what it would create is already there', function () {
+        it('names the file when what it would create is already there', function () {
             $offer = Offer::write('src/App/Basket.php', '<?php new', true, '');
 
-            expect($offer->staleAgainst('something exists now'))->toBeTrue();
-            expect($offer->staleAgainst(null))->toBeFalse();
+            expect($offer->changedFile(($this->content)(['src/App/Basket.php' => 'something exists now'])))->toBe('src/App/Basket.php');
+            expect($offer->changedFile(($this->content)([])))->toBeNull();
         });
 
-        it('is stale when what it would update has gone', function () {
+        it('names the file when what it would update has gone', function () {
             $offer = Offer::write('src/App/Basket.php', '<?php new', false, 'the old content');
 
-            expect($offer->staleAgainst(null))->toBeTrue();
+            expect($offer->changedFile(($this->content)([])))->toBe('src/App/Basket.php');
+        });
+
+        it('never goes stale when it generates code, the generators never overwriting', function () {
+            expect(Offer::generate('create_class', 'App\\Basket', [])->changedFile(($this->content)([])))->toBeNull();
+        });
+    });
+
+    context('a refactoring plan', function () {
+        let('plan', fn() => ['technique' => 'Extract Class', 'rationale' => 'Till prints its own receipt.', 'steps' => [['title' => 'Describe Printer', 'doing' => 'Describing Printer']]]);
+        let('read', fn() => ['src/App/Till.php' => sha1('<?php till'), 'spec/App/Till.spec.php' => sha1('<?php spec')]);
+        let('offer', fn() => Offer::refactor('App\\Till', $this->plan, $this->read, 'App\\Till'));
+
+        it('is offered under its target, identified by the plan', function () {
+            $other = Offer::refactor('App\\Till', ['technique' => 'Inline Class'] + $this->plan, $this->read, 'App\\Till');
+
+            expect($this->offer->kind)->toBe(Offer::REFACTOR);
+            expect($this->offer->action)->toBe('refactor');
+            expect($this->offer->target)->toBe('App\\Till');
+            expect($this->offer->id)->toStartWith('o_');
+            expect($this->offer->id)->not()->toBe($other->id);
+            expect(Offer::fromArray($this->offer->toArray())->toArray())->toBe($this->offer->toArray());
+        });
+
+        it('stands while every file it was made reading is as it was, and names the first that changed or went', function () {
+            $as = fn(array $files): Closure => fn(string $path): ?string => $files[$path] ?? null;
+
+            expect($this->offer->changedFile($as(['src/App/Till.php' => '<?php till', 'spec/App/Till.spec.php' => '<?php spec'])))->toBeNull();
+            expect($this->offer->changedFile($as(['src/App/Till.php' => '<?php till', 'spec/App/Till.spec.php' => '<?php edited'])))->toBe('spec/App/Till.spec.php');
+            expect($this->offer->changedFile($as(['spec/App/Till.spec.php' => '<?php spec'])))->toBe('src/App/Till.php');
+        });
+
+        it('carries the plan and what the journal keeps it under', function () {
+            expect($this->offer->data['plan'])->toBe($this->plan);
+            expect($this->offer->data['subject'])->toBe('App\\Till');
         });
     });
 });

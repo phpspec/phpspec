@@ -128,6 +128,35 @@ describe(RefactorModel::class, function () {
         expect(end($this->replay->requests[2]['messages'])->content)->toContain('spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100');
     });
 
+    it('says which files the plan was made reading, each by a hash of its content', function () {
+        $plan = ($this->model)($this->plan)->plan($this->target, '');
+
+        expect($plan->read)->toBe([
+            'src/App/Checkout/CheckoutService.php' => sha1($this->files['/proj/src/App/Checkout/CheckoutService.php']),
+            'spec/App/Checkout/CheckoutService.spec.php' => sha1($this->files['/proj/spec/App/Checkout/CheckoutService.spec.php']),
+            'src/App/Pricing/Rates.php' => sha1($this->files['/proj/src/App/Pricing/Rates.php']),
+        ]);
+    });
+
+    it('takes up a plan agreed earlier, asking for its steps as though it had just proposed it', function () {
+        $model = ($this->model)(new Response('', [new ToolCall('s1', 'propose_step', ['files' => [['path' => 'src/App/Checkout/DiscountPolicy.php', 'content' => "<?php // policy\n"]], 'red' => false])]));
+        $plan = new RefactorPlan('Replace Conditional with Polymorphism', 'Discounts vary.', [new PlannedStep('Introduce a DiscountPolicy abstraction', 'Introducing DiscountPolicy')]);
+
+        $model->adopt($this->target, $plan, '');
+        $step = $model->step($plan, 0);
+
+        $messages = $this->replay->requests[0]['messages'];
+        expect($step->files[0]->path)->toBe('src/App/Checkout/DiscountPolicy.php');
+        expect($messages[1]->content)->toContain("# src/App/Checkout/CheckoutService.php\n");
+        expect($messages[2]->toolCalls[0]->name)->toBe('propose_plan');
+        expect($messages[2]->toolCalls[0]->arguments)->toBe($plan->toArray());
+        expect(end($messages)->content)->toStartWith('Step 1 of 1: Introduce a DiscountPolicy abstraction');
+
+        $replayed = ReplayProvider::fromConversation(json_decode($this->files['/proj/.phpspec/ai/last-refactor.json'] ?? '', true));
+        expect($replayed->chat([])->toolCalls[0]->name)->toBe('propose_plan');
+        expect($replayed->chat([])->toolCalls[0]->name)->toBe('propose_step');
+    });
+
     it('keeps the conversation as a recording that replays it, answer by answer', function () {
         $step = new Response('', [new ToolCall('s1', 'propose_step', ['files' => [['path' => 'src/App/Checkout/DiscountPolicy.php', 'content' => "<?php // policy\n"]], 'red' => false])]);
         $model = ($this->model)($this->plan, $step);

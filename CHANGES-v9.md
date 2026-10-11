@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `refactor` with no target takes the source file modified last under `src_path`, and the spec of the class it declares
  - `refactor Calculator` takes the class by that short name modified last under `src_path`; a name no class there answers to is refused with the `describe` command
  - `refactor App/Calculator` reads as `App\Calculator`
- - `refactor --format=agent` answers with one JSON receipt: the plan (technique, rationale, steps) or the model's reason to decline, nothing written; a refusal carries `error`, `remedy` and, over failing specs, `failures`
+ - `refactor --format=agent` answers with one JSON receipt: the plan (technique, rationale, steps) offered once and whole, or the model's reason to decline; `accept` with the offer's id carries the plan out with nobody asked and names the files written, or where it stopped; a plan made reading a file that changed since is refused. A refusal carries `error`, `remedy` and, over failing specs, `failures`
 ### Changed
  - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
  - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it

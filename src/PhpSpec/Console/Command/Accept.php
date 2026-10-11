@@ -18,6 +18,7 @@ use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\CodeGeneration\StepsHome;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Refactor\PlanOffers;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
@@ -50,15 +51,22 @@ final class Accept extends Command
 
     private readonly Configuration $config;
 
+    private readonly PlanOffers $plans;
+
+    /**
+     * @param PlanOffers|null $plans carries out an accepted refactoring plan
+     */
     public function __construct(
         ?Filesystem $filesystem = null,
         ?OfferBook $book = null,
         private readonly ?string $baseDir = null,
         ?Configuration $config = null,
+        ?PlanOffers $plans = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->book = $book ?? new OfferBook($this->filesystem, $baseDir);
         $this->config = $config ?? Configuration::load($baseDir ?? '.', $this->filesystem);
+        $this->plans = $plans ?? new PlanOffers($this->config, $this->filesystem, $baseDir ?? (getcwd() ?: '.'));
 
         parent::__construct();
     }
@@ -97,9 +105,11 @@ final class Accept extends Command
                 );
             }
 
-            if ($offer->kind === Offer::WRITE && $offer->staleAgainst($this->contentOf($offer->target))) {
+            $changed = $offer->changedFile($this->contentOf(...));
+
+            if ($changed !== null) {
                 return $this->refuse(
-                    sprintf('Offer "%s" no longer fits %s, which changed since the offer was made.', $id, $offer->target),
+                    sprintf('Offer "%s" no longer fits %s, which changed since the offer was made.', $id, $changed),
                     $forAgent,
                     $output,
                 );
@@ -124,6 +134,7 @@ final class Accept extends Command
         foreach ($offers as $offer) {
             $outcomes = match ($offer->kind) {
                 Offer::GENERATE => $this->generate($offer, $notes),
+                Offer::REFACTOR => $this->plans->take($offer, $notes),
                 default => $this->write($offer, $notes),
             };
 

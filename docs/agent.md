@@ -355,12 +355,12 @@ With `--format=agent`, `accept` answers with one receipt:
 {"v":2,"action":"accept","accepted":[{"id":"o_7f3a1c2d","action":"create_class","target":"App\\Coupon","files":["src/App/Coupon.php"],"applied":true}]}
 ```
 
-`target` is what the offer named, a class, a method, a feature file, or the
-path of a proposed write; `files` are the files it wrote, from the project
-root. An offer that could not be applied, because the method was written by
-hand in the meantime or the class file is not where the layout says, comes
-back with `applied: false`, a `reason` and no `files`, and the command exits
-`1`. Generated classes land where the project's layout says their namespace
+`target` is what the offer named, a class, a method, a feature file, the
+path of a proposed write, or the class a plan refactors; `files` are the
+files it wrote, from the project root. An offer that could not be applied,
+because the method was written by hand in the meantime or the class file is
+not where the layout says, comes back with `applied: false`, a `reason` and
+no `files`, and the command exits `1`. Generated classes land where the project's layout says their namespace
 lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
 
 For the common case of taking everything a run found, the bulk shortcut remains:
@@ -430,27 +430,41 @@ bin/phpspec exemplify App/Basket checkout --agent
 ## Refactoring
 
 `refactor --format=agent` asks the model for a refactoring plan and answers
-with one receipt. A plan is carried out one asked step at a time, and an
-agent cannot answer those questions, so nothing is written: the receipt is
-the plan, for you to carry out, or for a person to run `refactor` in a
-terminal.
+with one receipt: the plan, offered once and whole. Nothing is written until
+you accept it. Accepting carries every step out with nobody asked, as
+`refactor --no-interaction` does: the whole suite runs after each step, a
+step that breaks more than it meant to, or loses an example, gets one fix
+from the model and is otherwise undone, and the run stops there.
 
 ```bash
-bin/phpspec refactor App/Checkout/CheckoutService --format=agent
+bin/phpspec refactor Brew/DrinkPricer --format=agent
 ```
 ```json
-{"v":2,"action":"refactor","class":"App\\Checkout\\CheckoutService","source":"src/App/Checkout/CheckoutService.php","spec":"spec/App/Checkout/CheckoutService.spec.php","technique":"Replace Conditional with Polymorphism","rationale":"CheckoutService decides itself how a loyal customer's discount is worked out...","steps":["Introduce a DiscountPolicy abstraction","Describe LoyaltyDiscount","Move the loyalty rule into LoyaltyDiscount","Let CheckoutService ask its DiscountPolicy"],"remedy":"Run phpspec refactor App/Checkout/CheckoutService in a terminal to carry out the plan."}
+{"v":2,"action":"refactor","class":"Brew\\DrinkPricer","source":"src/Brew/DrinkPricer.php","spec":"spec/Brew/DrinkPricer.spec.php","technique":"Introduce Parameter Object","rationale":"The `priceOf` method takes three primitive parameters (`size`, `milk`, `shots`) that naturally belong together as a single concept. Introducing a `Drink` parameter object groups this data, making the signature clearer and providing a place to encapsulate drink-specific rules later.","steps":["Describe Drink","Implement Drink","Add price method to DrinkPricer","Update DrinkPricer specs to use price","Remove priceOf method"],"offer":{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer"}}
+```
+```bash
+bin/phpspec accept o_4e6db6b4 --format=agent
+```
+```json
+{"v":2,"action":"accept","accepted":[{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer","files":["spec/Brew/Drink.spec.php","src/Brew/Drink.php","src/Brew/DrinkPricer.php","spec/Brew/DrinkPricer.spec.php"],"applied":true}]}
 ```
 
 `class`, `source` and `spec` say what was resolved, which matters when no
 target was given and the source modified last was taken; `method` is there
 when the target named one. When the model finds nothing worth changing, the
-receipt carries its reason as `declined` instead of a plan. Both exit `0`.
+receipt carries its reason as `declined` and no offer. Both exit `0`.
 
-A refusal carries `error` and, when the way past is known, `remedy`, and
-exits `1`: no spec for the class, no class by that name, no model to ask or
-one that did not answer, and specs that are not green, each failure listed
-in `failures`:
+`files` in the `accept` receipt are what the kept steps wrote. A plan that
+stopped short (a step the model could not fix, a model that did not answer)
+comes back `applied: false` with the `reason`, the steps before it kept and
+their files listed, and `accept` exits `1`. A plan made reading a file that
+has changed since is refused like any stale offer, and one whose specs no
+longer pass is not started.
+
+A refusal of `refactor` itself carries `error` and, when the way past is
+known, `remedy`, and exits `1`: no spec for the class, no class by that
+name, no model to ask or one that did not answer, and specs that are not
+green, each failure listed in `failures`:
 
 ```json
 {"v":2,"action":"refactor","error":"Specs must pass before refactoring.","remedy":"Fix failing specs first.","failures":["spec/App/Broken.spec.php:6  Broken > fails: Expected true to be false"]}

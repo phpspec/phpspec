@@ -77,18 +77,7 @@ final class RefactorModel
      */
     public function plan(RefactorTarget $target, string $journal): RefactorPlan|Declined
     {
-        $this->messages = [Message::system($this->profile()->body)];
-        $this->shown = [];
-        $this->rounds = [];
-        $this->subject = $target->fqcn;
-
-        foreach ([$target->sourceFile, $target->specFile, ...$this->importedSources($target->sourceFile)] as $file) {
-            $this->shown[$this->relative($file)] = true;
-        }
-
-        $ask = sprintf('Plan a refactoring of %s%s.', $target->fqcn, $target->method === null ? '' : sprintf(', focused on its %s() method', $target->method))
-            . "\n\n" . $this->currentFiles()
-            . ($journal === '' ? '' : "\n\n# Recent refactorings\n" . $journal);
+        $ask = $this->begin($target, $journal);
 
         $response = $this->ask($ask, [$this->tool('propose_plan', [
             'technique' => ['type' => 'string', 'description' => 'the named refactoring'],
@@ -112,6 +101,7 @@ final class RefactorModel
                     (string) ($call->arguments['rationale'] ?? ''),
                     array_values(array_map($this->plannedStep(...), $call->arguments['steps'])),
                     $response->outputTokens,
+                    $this->read(),
                 );
             }
 
@@ -121,6 +111,22 @@ final class RefactorModel
         }
 
         return new Declined(trim($response->text) !== '' ? (string) preg_replace('/\s+/', ' ', trim($response->text)) : 'The model proposed no plan.', $response->outputTokens);
+    }
+
+    /**
+     * Takes up a plan agreed earlier, in another run, as though the model had
+     * just proposed it, so its steps are asked for as they would have been.
+     *
+     * @param string $journal the recent refactorings, one per line
+     */
+    public function adopt(RefactorTarget $target, RefactorPlan $plan, string $journal): void
+    {
+        $call = new ToolCall('propose_plan', 'propose_plan', $plan->toArray());
+
+        $this->messages[] = Message::user($this->begin($target, $journal));
+        $this->messages[] = Message::assistant('', [$call]);
+        $this->messages[] = Message::toolResult($call->id, 'Shown to the developer.');
+        $this->rounds[] = ['response' => ['text' => '', 'tool_calls' => [['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments]]]];
     }
 
     /**
@@ -149,6 +155,46 @@ final class RefactorModel
         $ask = "The specs after this step say:\n\n" . $failures . "\n\nPropose the step again, fixed.\n\n" . $this->currentFiles();
 
         return $this->stepFrom($step->title, $this->ask($ask, [$this->stepTool()], ['name' => 'propose_step']));
+    }
+
+    /**
+     * Starts the conversation about the target: the subject, its spec and
+     * the classes it imports under the source path. What to ask for the plan.
+     */
+    private function begin(RefactorTarget $target, string $journal): string
+    {
+        $this->messages = [Message::system($this->profile()->body)];
+        $this->shown = [];
+        $this->rounds = [];
+        $this->subject = $target->fqcn;
+
+        foreach ([$target->sourceFile, $target->specFile, ...$this->importedSources($target->sourceFile)] as $file) {
+            $this->shown[$this->relative($file)] = true;
+        }
+
+        return sprintf('Plan a refactoring of %s%s.', $target->fqcn, $target->method === null ? '' : sprintf(', focused on its %s() method', $target->method))
+            . "\n\n" . $this->currentFiles()
+            . ($journal === '' ? '' : "\n\n# Recent refactorings\n" . $journal);
+    }
+
+    /**
+     * Each file shown so far, with a sha1 of its content.
+     *
+     * @return array<string, string>
+     */
+    private function read(): array
+    {
+        $read = [];
+
+        foreach (array_keys($this->shown) as $path) {
+            $file = $this->root . '/' . $path;
+
+            if ($this->filesystem->exists($file)) {
+                $read[$path] = sha1($this->filesystem->read($file));
+            }
+        }
+
+        return $read;
     }
 
     /**
