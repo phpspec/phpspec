@@ -95,10 +95,6 @@ final class Refactor extends Command
             return $this->refuse($output, $forAgent, (string) $this->config->aiConfigProblem());
         }
 
-        if (!$this->loadBootstrap()) {
-            return $this->refuse($output, $forAgent, 'Bootstrap file not found.');
-        }
-
         $root = getcwd() ?: '.';
         $argument = $input->getArgument('target');
 
@@ -270,18 +266,5 @@ final class Refactor extends Command
     private function relative(string $file): string
     {
         return ltrim(substr($file, strlen(getcwd() ?: '.')), '/\\');
-    }
-
-    private function loadBootstrap(): bool
-    {
-        $bootstrap = $this->config->getBootstrap() ?? (file_exists('vendor/autoload.php') ? 'vendor/autoload.php' : null);
-        if ($bootstrap === null) {
-            return true;
-        }
-        if (!file_exists($bootstrap)) {
-            return false;
-        }
-        require_once $bootstrap;
-        return true;
     }
 }

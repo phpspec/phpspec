@@ -502,6 +502,13 @@ describe(Refactor::class, function () {
             expect($tester->getDisplay())->not()->toContain('Refactoring App');
         });
 
+        it('never loads the project\'s bootstrap, which nothing in its own process needs', function () {
+            $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => 'Clean.'])])], [$this->green], settings: ['bootstrap' => 'nowhere/autoload.php']);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('Nothing to refactor in App\\Checkout\\CheckoutService: Clean.');
+        });
+
         it('asks for AI configuration when there is none', function () {
             $tester = new CommandTester(new Refactor(new Configuration(), $this->project));
             $tester->execute(['target' => 'App\\Checkout\\CheckoutService']);
