@@ -38,7 +38,7 @@ describe(SubprocessSuite::class, function () {
 
         expect($check->green())->toBeFalse();
         expect($check->confinedTo(['spec/Red.spec.php']))->toBeTrue();
-        expect($check->report())->toContain('spec/Red.spec.php:3');
+        expect($check->failures()[0])->toContain('spec/Red.spec.php:3');
     });
 
     it('runs every example, whatever the configuration stops on', function () {
@@ -49,7 +49,7 @@ describe(SubprocessSuite::class, function () {
         $check = (new SubprocessSuite($this->project, Configuration::load($this->project)))->check();
 
         expect($check->green())->toBeFalse();
-        expect($check->report())->toContain('spec/Red.spec.php:3');
+        expect($check->failures()[0])->toContain('spec/Red.spec.php:3');
     });
 
     it('keeps none of the offers the run could make: nobody will accept them', function () {
@@ -68,7 +68,7 @@ describe(SubprocessSuite::class, function () {
 
         $check = (new SubprocessSuite($this->project, Configuration::load($this->project, configFile: $this->project . '/conf/qa.yml')))->check();
 
-        expect($check->report())->toContain('altspec/Red.spec.php:3');
+        expect($check->failures()[0])->toContain('altspec/Red.spec.php:3');
     });
 
     it('collects coverage in a project that has guard on, so guard can judge the run', function () {
@@ -77,7 +77,7 @@ describe(SubprocessSuite::class, function () {
         }
         file_put_contents($this->project . '/spec/Green.spec.php', "<?php\ndescribe('Green', function () {\n    it('runs under coverage', fn() => expect(ini_get('xdebug.mode'))->toBe('coverage'));\n});\n");
 
-        expect((new SubprocessSuite($this->project, new Configuration(['guard' => ['status' => 'active']])))->check()->report())->toBe('');
-        expect((new SubprocessSuite($this->project, new Configuration()))->check()->report())->toContain('Green > runs under coverage');
+        expect((new SubprocessSuite($this->project, new Configuration(['guard' => ['status' => 'active']])))->check()->failures())->toBe([]);
+        expect((new SubprocessSuite($this->project, new Configuration()))->check()->failures()[0])->toContain('Green > runs under coverage');
     });
 });

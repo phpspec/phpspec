@@ -107,14 +107,6 @@ final readonly class SuiteCheck
     }
 
     /**
-     * Each failure on a line of its own.
-     */
-    public function report(): string
-    {
-        return implode("\n", $this->failures());
-    }
-
-    /**
      * What the summary still asks for beyond its entries: logic guard found
      * no example reaching, and a coverage gate missed.
      *
