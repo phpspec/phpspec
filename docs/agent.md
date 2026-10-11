@@ -135,7 +135,7 @@ callable you handed it:
 
 `toThrow()` with no argument means "throw something".
 
-A mock expectation (`toBeCalled`, `toBeCalledWith`, `toBeCalledTimes`) compares
+A mock expectation (`toBeCalled`, `toHaveBeenCalled`, `toBeCalledTimes`) compares
 the call the spec wanted with the calls the double received, arguments included:
 
 ```json

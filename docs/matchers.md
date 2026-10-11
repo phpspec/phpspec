@@ -386,15 +386,11 @@ When `expect()` receives a mock method call, it returns a `Mock\Expectation` wit
 
 ### `toBeCalled()`
 
-Declared before the act, judged when the example ends: the method was called at least once by then.
+Declared before the act, judged when the example ends: the method was called at least once by then, with the arguments the call was written with. Argument matchers go in the call: `expect($logger->log(any()))->toBeCalled()`.
 
 ### `toHaveBeenCalled()`
 
 Asked after the act, judged at once from the calls recorded so far. The call needs an `allow()` before the act.
-
-### `toBeCalledWith(...$args)`
-
-Verifies the method was called with specific arguments. Supports argument matchers: `any()`, `type('string')`, `callback(fn)`.
 
 ### `toBeCalledTimes(int $count)`
 

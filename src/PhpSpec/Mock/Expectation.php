@@ -24,7 +24,7 @@ use PhpSpec\Specification\Expectation as BaseExpectation;
 
 /**
  * Mock-specific expectation that extends the standard Expectation with call
- * verification matchers (toBeCalled, toBeCalledWith, toBeCalledTimes) and
+ * verification matchers (toBeCalled, toHaveBeenCalled, toBeCalledTimes) and
  * stub configuration (toReturn, toThrow).
  */
 final class Expectation extends BaseExpectation
@@ -46,7 +46,7 @@ final class Expectation extends BaseExpectation
 
     /**
      * Creates a mock expectation on a doubled method call: the call matchers
-     * (toBeCalled, toBeCalledWith) judge the double, the ordinary matchers
+     * (toBeCalled, toHaveBeenCalled) judge the double, the ordinary matchers
      * judge what the call returned, so a stubbed call compares its value and
      * verifies itself alike.
      *
@@ -150,33 +150,6 @@ final class Expectation extends BaseExpectation
         );
     }
 
-    /**
-     * Asserts that the mock method was called with the specified arguments.
-     * Supports ArgumentMatcher instances for flexible matching.
-     *
-     * @param mixed $expectedArgs the expected arguments, may include ArgumentMatcher instances
-     * @return $this
-     */
-    public function toBeCalledWith(...$expectedArgs): static
-    {
-        $double = $this->getGeneratedDouble();
-        $class = $double->______PhpSpecNameOfClassDoubled();
-        $calls = $double->______PhpSpecGetStubbedCalls();
-        $method = $calls->peek();
-        if ($method === null) {
-            throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalledWith().');
-        }
-        $methodName = $method->method;
-        $method->unCall();
-        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
-
-        return $this->should(
-            fn(): bool => $calls->countCallsToWithArgs($methodName, array_values($expectedArgs)) >= 1,
-            "Expected $class::$methodName() to be called with specific arguments",
-            new CallComparison($class, $methodName, $expectedArgs, 'at least 1', $calls),
-            'toBeCalledWith',
-        );
-    }
 
     /**
      * Asserts that the mock method was called exactly the specified number of times.

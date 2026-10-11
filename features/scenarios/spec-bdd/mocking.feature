@@ -53,7 +53,7 @@ Feature: Mocking
     And a spec with example:
       """
       $logger = mock(App\Logger::class);
-      expect($logger->log('hello'))->toBeCalledWith('hello');
+      expect($logger->log('hello'))->toBeCalled();
       $logger->log('hello');
       """
     When I run the spec
@@ -73,7 +73,7 @@ Feature: Mocking
       """
       $logger = mock(App\Logger::class);
       $logger->log('paid');
-      expect($logger->log('paid'))->toBeCalledWith('paid');
+      expect($logger->log('paid'))->toBeCalled();
       """
     When I run the spec
     Then all examples should pass
@@ -291,7 +291,7 @@ Feature: Mocking
     And a spec with example:
       """
       $logger = mock(App\Logger::class);
-      expect($logger->log('msg'))->toBeCalledWith(any());
+      expect($logger->log(any()))->toBeCalled();
       $logger->log('hello world');
       """
     When I run the spec
@@ -346,7 +346,7 @@ Feature: Mocking
     And a spec with example:
       """
       $bus = mock(App\EventBus::class);
-      expect($bus->dispatch(new App\Event('test')))->toBeCalledWith(anInstanceOf(App\Event::class));
+      expect($bus->dispatch(anInstanceOf(App\Event::class)))->toBeCalled();
       $bus->dispatch(new App\Event('created'));
       """
     When I run the spec
@@ -365,7 +365,7 @@ Feature: Mocking
     And a spec with example:
       """
       $logger = mock(App\Logger::class);
-      expect($logger->log('info', 'msg'))->toBeCalledWith('info', cetera());
+      expect($logger->log('info', cetera()))->toBeCalled();
       $logger->log('info', 'hello world', 'extra');
       """
     When I run the spec

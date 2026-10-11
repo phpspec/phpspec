@@ -17,9 +17,8 @@ namespace PhpSpec\Mock;
 use Closure;
 
 /**
- * Flexible argument matcher for use with toBeCalledWith() assertions.
- * Provides factory methods for common matching strategies: any value,
- * type checking, custom callback predicates, and more.
+ * An argument a call to a double is written with, standing for the values it
+ * matches: any value, a type, a predicate, and more.
  */
 final readonly class ArgumentMatcher
 {

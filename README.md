@@ -68,7 +68,7 @@ Finished in 0.0042 seconds
 - **Negation**: `expect($x)->not()->toBe($y)`
 - **Custom matchers**: `addMatcher('toBePrime', fn ($n) => isPrime($n), 'Expected %s to be prime')`
 - **Built-in mocking**: `mock()` with no external dependencies, automatic type-based double generation
-- **Mock verification**: `toBeCalled()`, `toBeCalledWith()`, `toBeCalledTimes()`
+- **Mock verification**: `toBeCalled()`, `toHaveBeenCalled()`, `toBeCalledTimes()`
 - **Stubbing**: `allow($mock->method())->toReturn($value)`
 - **Argument matchers**: `any()`, `type('string')`, `callback(fn ($x) => $x > 0)`
 - **Type-hinted mock injection**: `it('test', function (Logger $logger) { ... })`

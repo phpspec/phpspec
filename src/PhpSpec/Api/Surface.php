@@ -71,7 +71,7 @@ final readonly class Surface
         'Expectations are judged at the end of the example, in the order written; the failure detail shows the first that did not hold.',
         'expect() captures its subject when called: a value the body reassigns afterwards is not seen, an object the body mutates afterwards is.',
         'toThrow() runs its callable where the expectation is written, so what follows sees what it did; only the verdict waits.',
-        'Mock expectations (toBeCalled, toBeCalledTimes, toBeCalledWith) judge the calls made during the whole example.',
+        'Mock expectations (toBeCalled, toBeCalledTimes) judge the calls made during the whole example.',
         'let() values are built afresh before each example and read through $this; a let() closure that throws fails that example alone.',
     ];
 

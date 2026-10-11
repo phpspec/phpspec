@@ -185,16 +185,6 @@ it('saves the user', function (UserRepository $repo) {
 
 Negated, it asks that the call was not made: `expect($repo->save($other))->not()->toHaveBeenCalled()`.
 
-### `toBeCalledWith(...$args)`
-
-Verifies the method was called with specific arguments:
-
-```php
-it('saves with correct data', function (Logger $logger) {
-    expect($logger->log('hello', 'info'))->toBeCalledWith('hello', 'info');
-    $logger->log('hello', 'info');
-});
-```
 
 ### `toBeCalledTimes(int $count)`
 
@@ -214,17 +204,14 @@ it('calls exactly twice', function (Logger $logger) {
 An argument written as a value matches by value: a scalar strictly, an object
 when it equals the one written (`new Money(900)` matches any `Money(900)`,
 whichever instance carries it), an array element by element on the same rule.
-For anything looser, use a matcher:
-
-Use argument matchers, in the expect call or in `toBeCalledWith()`, for
-flexible argument matching:
+For anything looser, write a matcher in the call:
 
 ### `any()`
 
 Matches any single argument:
 
 ```php
-expect($logger->log('hello'))->toBeCalledWith(any());
+expect($logger->log(any()))->toBeCalled();
 ```
 
 ### `type(string $type)`
@@ -232,7 +219,7 @@ expect($logger->log('hello'))->toBeCalledWith(any());
 Matches an argument of a specific type:
 
 ```php
-expect($repo->save($user))->toBeCalledWith(type('object'));
+expect($repo->save(type('object')))->toBeCalled();
 ```
 
 ### `callback(Closure $fn)`
@@ -240,16 +227,16 @@ expect($repo->save($user))->toBeCalledWith(type('object'));
 Matches using a custom callback:
 
 ```php
-expect($repo->save($user))->toBeCalledWith(callback(fn ($arg) => $arg->name === 'Alice'));
+expect($repo->save(callback(fn ($arg) => $arg->name === 'Alice')))->toBeCalled();
 ```
 
 ### `satisfy(Closure $fn)`
 
-Matches a single argument against a predicate — like `callback()`, reads well
-alongside the others:
+Matches a single argument against a predicate, as `callback()` does, and reads
+well alongside the others:
 
 ```php
-expect($repo->save($user))->toBeCalledWith(satisfy(fn ($u) => $u->isActive()));
+expect($repo->save(satisfy(fn ($u) => $u->isActive())))->toBeCalled();
 ```
 
 ### `anInstanceOf(string $class)`
@@ -257,7 +244,7 @@ expect($repo->save($user))->toBeCalledWith(satisfy(fn ($u) => $u->isActive()));
 Matches an argument that is an instance of the given class or interface:
 
 ```php
-expect($bus->dispatch($cmd))->toBeCalledWith(anInstanceOf(Command::class));
+expect($bus->dispatch(anInstanceOf(Command::class)))->toBeCalled();
 ```
 
 ### `arrayIncluding(array $subset)`
@@ -265,7 +252,7 @@ expect($bus->dispatch($cmd))->toBeCalledWith(anInstanceOf(Command::class));
 Matches an array argument that contains (at least) the given key/value subset:
 
 ```php
-expect($api->send($payload))->toBeCalledWith(arrayIncluding(['type' => 'order']));
+expect($api->send(arrayIncluding(['type' => 'order'])))->toBeCalled();
 ```
 
 ### `startWith(string $prefix)`
@@ -273,24 +260,24 @@ expect($api->send($payload))->toBeCalledWith(arrayIncluding(['type' => 'order'])
 Matches a string argument that starts with the given prefix:
 
 ```php
-expect($logger->log($line))->toBeCalledWith(startWith('ERROR:'));
+expect($logger->log(startWith('ERROR:')))->toBeCalled();
 ```
 
 ### `noArgs()`
 
-Matches a call made with no arguments at all:
+Matches a call made with no arguments at all, as a call written with none does:
 
 ```php
-expect($service->flush())->toBeCalledWith(noArgs());
+expect($service->flush(noArgs()))->toBeCalled(); // the same as flush()
 ```
 
 ### `cetera()`
 
-Matches all remaining arguments (zero or more) — the "and so on" wildcard. Must
-be the last matcher in the expected list:
+Matches the remaining arguments, none or more: the "and so on" wildcard. Nothing
+can follow it:
 
 ```php
-expect($logger->log('hello', 'x', 'y'))->toBeCalledWith('hello', cetera());
+expect($logger->log('hello', cetera()))->toBeCalled();
 ```
 
 ## Negation
@@ -299,7 +286,7 @@ All mock matchers support negation via `not()`:
 
 ```php
 expect($repo->delete(1))->not()->toBeCalled();
-expect($logger->log('test'))->not()->toBeCalledWith('other');
+expect($logger->log('other'))->not()->toBeCalled();
 ```
 
 ## Using Mocks with `let()`

@@ -860,14 +860,14 @@ Feature: Agent output format
           it('records the sale it was asked to', function () {
               $ledger = mock(App\Ledger::class);
               $ledger->record('refund');
-              expect($ledger->record('sale'))->toBeCalledWith('sale');
+              expect($ledger->record('sale'))->toHaveBeenCalled();
           });
       });
       """
     When I run phpspec run with option "--format=agent"
     Then the output should be valid JSON
-    And the output should contain "toBeCalled" exactly 2 times
-    And the output should contain "toBeCalledWith"
+    And the output should contain "toBeCalled" exactly 1 times
+    And the output should contain "toHaveBeenCalled"
     And the output should contain "refund"
     And the output should not contain "LastCallDouble"
 

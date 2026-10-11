@@ -54,27 +54,23 @@ describe(Expectation::class, function() {
         expect($service->save())->not()->toHaveBeenCalled();
     });
 
-    it("verifies with toBeCalledWith using exact args", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith('foo', 42);
-        $service->store('foo', 42);
-    });
-
-    it("verifies with toBeCalledWith using any() matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith(any(), 42);
+    it("verifies a call written with an any() matcher", function(ExpectationSpecService $service) {
+        expect($service->store(any(), 42))->toBeCalled();
         $service->store('bar', 42);
     });
 
-    it("verifies with toBeCalledWith using type() matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith(type('string'), type('int'));
+    it("verifies a call written with type() matchers", function(ExpectationSpecService $service) {
+        expect($service->store(type('string'), type('int')))->toBeCalled();
         $service->store('hello', 99);
     });
 
-    it("verifies with toBeCalledWith using callback() matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->toBeCalledWith(
-            callback(fn($v) => strlen($v) > 2),
-            any()
-        );
+    it("verifies a call written with a callback() matcher", function(ExpectationSpecService $service) {
+        expect($service->store(callback(fn($v) => strlen($v) > 2), any()))->toBeCalled();
         $service->store('hello', 1);
+    });
+
+    it("has no toBeCalledWith(): the arguments are written in the call", function(ExpectationSpecService $service) {
+        expect(fn() => expect($service->store('a', 1))->toBeCalledWith('a', 1))->toThrow(\BadMethodCallException::class);
     });
 
     it("verifies toBeCalledTimes", function(ExpectationSpecService $service) {
@@ -190,14 +186,14 @@ describe(Expectation::class, function() {
         expect($lcd->______PhpSpecGetMethod())->toBe('process');
     });
 
-    it("holds toBeCalledWith to a call made before the expectation was written", function(ExpectationSpecService $service) {
+    it("holds toBeCalled to a call made before the expectation was written", function(ExpectationSpecService $service) {
         $service->store('foo', 42);
-        expect($service->store('foo', 42))->toBeCalledWith('foo', 42);
+        expect($service->store('foo', 42))->toBeCalled();
     });
 
-    it("negated toBeCalledWith passes when the earlier call had other arguments", function(ExpectationSpecService $service) {
+    it("negated toBeCalled passes when the earlier call had other arguments", function(ExpectationSpecService $service) {
         $service->store('other', 50);
-        expect($service->store('foo', 42))->not()->toBeCalledWith('foo', 42);
+        expect($service->store('foo', 42))->not()->toBeCalled();
     });
 
     it("verifies a call that was stubbed first", function(ExpectationSpecService $service) {
@@ -220,18 +216,13 @@ describe(Expectation::class, function() {
         expect($service->process())->toBe('winter');
     });
 
-    it("negated toBeCalledWith with wrong arg count", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->not()->toBeCalledWith('bar');
-        $service->store('baz', 100);
-    });
-
-    it("negated toBeCalledWith with different values", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->not()->toBeCalledWith('wrong', 99);
+    it("negated toBeCalled with different values", function(ExpectationSpecService $service) {
+        expect($service->store('wrong', 99))->not()->toBeCalled();
         $service->store('other', 50);
     });
 
-    it("negated toBeCalledWith with failing type matcher", function(ExpectationSpecService $service) {
-        expect($service->store('foo', 42))->not()->toBeCalledWith(type('int'), any());
+    it("negated toBeCalled with a type matcher the call fails", function(ExpectationSpecService $service) {
+        expect($service->store(type('int'), any()))->not()->toBeCalled();
         $service->store('hello', 1);
     });
 
