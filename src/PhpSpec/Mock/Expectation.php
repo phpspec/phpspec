@@ -41,6 +41,9 @@ final class Expectation extends BaseExpectation
     /** @var MatchableDouble The mock subject being verified */
     private MatchableDouble $mockSubject;
 
+    /** @var MatchableDouble The call a stub is set on, held to the arguments it was written with */
+    private MatchableDouble $stubbed;
+
     /**
      * Creates a mock expectation on a doubled method call: the call matchers
      * (toBeCalled, toBeCalledWith) judge the double, the ordinary matchers
@@ -56,7 +59,7 @@ final class Expectation extends BaseExpectation
     {
         $this->mockSubject = $double;
         parent::__construct($returned === [] ? $double : $returned[0], $file, $line);
-        $this->declare();
+        $this->stubbed = $this->declared();
 
     }
 
@@ -68,7 +71,7 @@ final class Expectation extends BaseExpectation
      */
     public function toReturn(mixed $value): static
     {
-        $this->mockSubject->toReturn($value);
+        $this->stubbed->toReturn($value);
         return $this;
     }
 
@@ -82,7 +85,7 @@ final class Expectation extends BaseExpectation
      */
     public function toThrow(string|\Throwable $exception = '', ?string $message = null): static
     {
-        $this->mockSubject->toThrow($exception, $message ?? '');
+        $this->stubbed->toThrow($exception, $message ?? '');
         return $this;
     }
 
@@ -276,27 +279,28 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Retrieves the GeneratedDouble from the mock subject.
-     */
-    /**
      * The call expect() was handed is expected: made from the code under
-     * spec, it is no longer a call nothing declared.
+     * spec, it is no longer a call nothing declared. Returned held to the
+     * arguments it was written with, for a stub to answer that call alone.
      */
-    private function declare(): void
+    private function declared(): MatchableDouble
     {
         $double = $this->mockSubject->______PhpSpecGetDouble();
 
         if (!$double instanceof GeneratedDouble) {
-            return;
+            return $this->mockSubject;
         }
 
         $method = $this->mockSubject->______PhpSpecGetMethod();
-        $arranging = $double->______PhpSpecGetStubbedCalls()->peek();
-        $args = $arranging !== null && $arranging->method === $method && $arranging->arguments !== [] ? $arranging->arguments : null;
-
+        $args = $double->______PhpSpecGetStubbedCalls()->writtenFor($method);
         $double->______PhpSpecDeclare($method, $args);
+
+        return new LastCallDouble($double, $method, $args);
     }
 
+    /**
+     * Retrieves the GeneratedDouble from the mock subject.
+     */
     private function getGeneratedDouble(): GeneratedDouble
     {
         $double = $this->mockSubject->______PhpSpecGetDouble();

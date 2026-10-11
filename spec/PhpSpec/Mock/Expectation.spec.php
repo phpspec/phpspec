@@ -8,6 +8,7 @@ interface ExpectationSpecService {
     public function save();
     public function store(string $key, int $value);
     public function count(): int;
+    public function price(string $item): int;
 }
 
 class ExpectationSpecConsumer {
@@ -88,6 +89,38 @@ describe(Expectation::class, function() {
         expect($service->process())->toBe("hello");
     });
 
+    it("holds a value set through expect() to the arguments it was written with", function(ExpectationSpecService $service) {
+        expect($service->price('tea'))->toReturn(9);
+        expect($service->store('a', 1))->toReturn('stored');
+
+        expect($service->price('tea'))->toBe(9);
+        expect($service->price('coffee'))->toBe(0);
+        expect($service->store('a', 1))->toBe('stored');
+        expect($service->store('b', 2))->not()->toBe('stored');
+    });
+
+    it("holds a throw set through expect() to the arguments it was written with", function(ExpectationSpecService $service) {
+        expect($service->price('gold'))->toThrow(new \RuntimeException('Not for sale'));
+        expect($service->store('locked', 0))->toThrow(new \RuntimeException('Locked'));
+
+        expect(fn() => $service->price('gold'))->toThrow(\RuntimeException::class, 'Not for sale');
+        expect($service->price('tea'))->toBe(0);
+        expect(fn() => $service->store('locked', 0))->toThrow(\RuntimeException::class, 'Locked');
+        expect(fn() => $service->store('open', 0))->not()->toThrow();
+    });
+
+    it("holds a stub set on the call itself to the arguments it was written with", function(ExpectationSpecService $service) {
+        $service->store('a', 1)->toReturn('stored');
+        $service->store('twice', 5)->toReturnUsing(fn(string $key, int $value) => $value * 2);
+        $service->store('locked', 0)->toThrow(\RuntimeException::class, 'Locked');
+
+        expect($service->store('a', 1))->toBe('stored');
+        expect($service->store('b', 2))->not()->toBe('stored');
+        expect($service->store('twice', 5))->toBe(10);
+        expect($service->store('once', 5))->not()->toBe(10);
+        expect(fn() => $service->store('locked', 0))->toThrow(\RuntimeException::class, 'Locked');
+        expect(fn() => $service->store('open', 0))->not()->toThrow();
+    });
     it("stubs exception with allow", function(ExpectationSpecService $service) {
         allow($service->save())->toThrow(\RuntimeException::class, "boom");
         expect(fn() => $service->save())->toThrow(\RuntimeException::class, "boom");

@@ -52,6 +52,20 @@ final class MethodCallsStack
     }
 
     /**
+     * The arguments the last call was written with, when it was a call to
+     * $method: the call a declaration or a stub made next is about. Null, for
+     * any arguments, when the last call was another or had none.
+     *
+     * @return array<int, mixed>|null
+     */
+    public function writtenFor(string $method): ?array
+    {
+        $last = $this->peek();
+
+        return $last !== null && $last->method === $method && $last->arguments !== [] ? $last->arguments : null;
+    }
+
+    /**
      * Checks whether a call with the given method name and arguments exists in the stack.
      *
      * @param string $method the method name to search for

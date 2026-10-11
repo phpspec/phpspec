@@ -392,6 +392,28 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A stub set through expect() answers only the call it was written with
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      expect($repo->find(1))->toReturn('Alice');
+      expect($repo->find(999))->toThrow(new \RuntimeException('Not found'));
+      expect($repo->find(1))->toBe('Alice');
+      expect($repo->find(2))->toBeNull();
+      expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class, 'Not found');
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Catch-all stub with specific override
     Given an interface "src/App/UserRepository.php":
       """

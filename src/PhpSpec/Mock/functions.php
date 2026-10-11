@@ -200,8 +200,9 @@ function allow(mixed $returnValue = null): LastCallDouble
  */
 function declared(GeneratedDouble $double, string $method): LastCallDouble
 {
-    $arranging = $double->______PhpSpecGetStubbedCalls()->peek();
-    $args = $arranging !== null && $arranging->method === $method && $arranging->arguments !== [] ? $arranging->arguments : null;
+    $calls = $double->______PhpSpecGetStubbedCalls();
+    $args = $calls->writtenFor($method);
+    $arranging = $calls->peek();
 
     if ($arranging !== null && $arranging->method === $method) {
         $arranging->unCall();

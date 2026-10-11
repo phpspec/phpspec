@@ -44,25 +44,29 @@ trait MatchableDoubleBehaviour
 
     public function toReturn(mixed $value): static
     {
-        $this->______phpspec_mockedObject->______PhpSpecStubReturn($this->______phpspec_methodName, $value);
-        $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
+        $this->______PhpSpecAsWritten()->toReturn($value);
 
         return $this;
     }
 
     public function toReturnUsing(callable $callback): static
     {
-        $this->______phpspec_mockedObject->______PhpSpecStubReturnUsing($this->______phpspec_methodName, $callback);
-        $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
+        $this->______PhpSpecAsWritten()->toReturnUsing($callback);
 
         return $this;
     }
 
     public function toThrow(string|\Throwable $exception, string $message = ''): static
     {
-        $this->______phpspec_mockedObject->______PhpSpecStubThrow($this->______phpspec_methodName, $exception, $message);
-        $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
+        $this->______PhpSpecAsWritten()->toThrow($exception, $message);
 
         return $this;
+    }
+
+    private function ______PhpSpecAsWritten(): LastCallDouble
+    {
+        $method = $this->______phpspec_methodName;
+
+        return new LastCallDouble($this->______phpspec_mockedObject, $method, $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->writtenFor($method));
     }
 }
