@@ -34,6 +34,15 @@ describe(Junit::class, function() {
         expect($text)->toContain('name="passes"');
     });
 
+    it("writes in a failure what failed and where, as PHPUnit does", function() {
+        $output = new BufferedOutput();
+        $match = MatchResult::failed("a", "b", "Expected a to be b", __FILE__, 42);
+
+        (new Junit($output))->format(new SuiteResult([new SpecificationResult("MySpec", [new ExampleResult("fails", [$match])])]));
+
+        expect($output->fetch())->toContain("<failure message=\"Expected a to be b\">Expected a to be b\n\nspec/PhpSpec/Report/Formatter/Junit.spec.php:42</failure>");
+    });
+
     it("formats failing results with failure element", function() {
         $output = new BufferedOutput();
         $formatter = new Junit($output);
