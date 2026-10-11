@@ -126,6 +126,7 @@ Feature: CLI options
       No example or scenario matches --filter "zzz".
       """
     And the output should not contain "run with --story"
+    And the exit code should be 1
 
   Scenario: Filter scenarios by title
     Given a PSR-4 project with "spec", "src", and "features" directories
@@ -1017,6 +1018,17 @@ Feature: CLI options
   Scenario: --story on a project without features says so
     When I run phpspec run with option "--story"
     Then the output should contain "No features found under features/."
+    And the exit code should be 0
+
+  Scenario: A plain run of a project with nothing to run yet passes, saying so
+    When I run phpspec run
+    Then the output should contain "No specs found."
+    And the exit code should be 0
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the summary should state "examples" as "0"
+    And the summary should state "actionable" as "0"
+    And the exit code should be 0
 
   Scenario: Run only features with --story flag
     Given a PSR-4 project with "spec", "src", and "features" directories

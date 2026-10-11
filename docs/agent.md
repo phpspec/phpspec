@@ -297,13 +297,15 @@ tests, it leaves the exit code at `0`.
 ### `fatal`: when the run could not finish
 
 A run that never started (a missing bootstrap, an unknown format, a config that
-cannot be taken, an option `run` does not take or one missing its value) or that died
+cannot be taken, an option `run` does not take or one missing its value), that
+was narrowed by `--filter`, `--tags` or paths to nothing at all, or that died
 partway (a parse error, a class that fails to compile) still answers. It emits a
 `fatal` line of `{ "message", "at", "remedy"? }`, keeps whatever it managed to
 collect, and counts 1 in `actionable`. `remedy` is present when the way past is
 known: a run that wanted coverage and found no Xdebug gets the same command
 under `XDEBUG_MODE=coverage`, a missing bootstrap or path gets what to point
-where, and a `file:LINE` selector that reaches no example is told to point
+where, a `--filter` that matches nothing is told it is not a pattern, and a
+`file:LINE` selector that reaches no example is told to point
 inside an `it()` or a `Scenario`:
 
 ```json

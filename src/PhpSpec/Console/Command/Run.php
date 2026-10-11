@@ -253,6 +253,10 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, "Paths file not found: $pathsFrom", 'Point --paths-from at a file that exists.');
         }
 
+        if ($pathsFrom !== null && $given === []) {
+            return $this->stopped($prose, $formatter, "Paths file lists no path: $pathsFrom", 'List the spec and feature paths to run in it, one per line.');
+        }
+
         $missing = self::missingPath($given);
 
         if ($missing !== null) {
@@ -333,15 +337,12 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, $e->getMessage(), $e instanceof FileLoadException ? $e->remedy() : null);
         }
 
-        if ($this->selectedNothing($given, $results)) {
-            $status = $this->stopped(
-                $prose,
-                $formatter,
-                'No example at ' . implode(', ', $given),
-                'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.',
-            );
+        $emptied = $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given);
 
-            if ($formatter instanceof Pretty || $formatter instanceof Dot) {
+        if ($emptied !== null) {
+            $status = $this->stopped($prose, $formatter, ...$emptied);
+
+            if ($this->onlyLines($given) && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
                 $this->showCodeAround($prose, $given);
             }
 
@@ -504,19 +505,48 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
-     * Whether every path given was a "file:LINE" selector and none of them
-     * reached an example or a scenario: an explicit line is a precise ask, and
-     * a run that answers it with nothing has not answered it.
+     * Why a run the caller narrowed selected nothing, and the way past it:
+     * its tags, its filter, its lines or its paths, the first of them that
+     * was given. Null for a run nobody narrowed, which may hold nothing yet;
+     * a narrowed one that answers with nothing has not answered, and must not
+     * pass for green.
+     *
+     * @param list<string> $given the paths as given on the command line
+     * @return array{0: string, 1: string}|null the message and the remedy
+     */
+    private function narrowedToNothingBy(Input $input, array $given): ?array
+    {
+        $tags = $input->getOption('tags');
+
+        if (is_string($tags)) {
+            return [sprintf('No scenario matches --tags "%s".', $tags), 'Check the tags the scenarios carry: a tag on a feature counts for every scenario in it.'];
+        }
+
+        $filter = $input->getOption('filter');
+
+        if (is_string($filter)) {
+            return [sprintf('No example or scenario matches --filter "%s".', $filter), '--filter keeps what holds its text as written, in a file path or a path of titles: it is not a pattern.'];
+        }
+
+        if ($given === []) {
+            return null;
+        }
+
+        if ($this->onlyLines($given)) {
+            return ['No example at ' . implode(', ', $given), 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.'];
+        }
+
+        return [sprintf('No example or scenario in %s.', implode(', ', $given)), 'Name a spec, a feature or a directory holding them, or give none to run the configured suite.'];
+    }
+
+    /**
+     * Whether every path given is a "file:LINE" selector.
      *
      * @param list<string> $given the paths as given on the command line
      */
-    private function selectedNothing(array $given, SuiteResult $results): bool
+    private function onlyLines(array $given): bool
     {
-        if ($given === [] || array_filter($given, static fn(string $path): bool => preg_match('/:\d+$/', $path) !== 1) !== []) {
-            return false;
-        }
-
-        return !$this->ranAnything($results);
+        return $given !== [] && array_filter($given, static fn(string $path): bool => preg_match('/:\d+$/', $path) !== 1) === [];
     }
 
     private function ranAnything(Results $results): bool
@@ -1063,28 +1093,18 @@ final class Run extends Command implements InternalOptions
 
     /**
      * What a run that found nothing to run ends with: which suite it looked
-     * for, and where the other one is when it exists.
+     * for, and where the other one is when it exists. Nothing for a run the
+     * caller narrowed, which stops saying what selected nothing.
      *
      * @param list<string> $given the paths the caller named outright
      */
-    private function nothingFoundLine(Input $input, array $given): string
+    private function nothingFoundLine(Input $input, array $given): ?string
     {
+        if ($given !== [] || $input->getOption('tags') !== null || $input->getOption('filter') !== null || $input->getOption('paths-from') !== null) {
+            return null;
+        }
+
         $featuresPath = rtrim($this->config->getFeaturesPath(), '/') . '/';
-        $tags = $input->getOption('tags');
-
-        if (is_string($tags)) {
-            return sprintf('No scenario matches --tags "%s".', $tags);
-        }
-
-        $filter = $input->getOption('filter');
-
-        if (is_string($filter)) {
-            return sprintf('No example or scenario matches --filter "%s".', $filter);
-        }
-
-        if ($given !== []) {
-            return 'No specs found.';
-        }
 
         if ($input->getOption('story')) {
             return sprintf('No features found under %s.', $featuresPath);
@@ -1106,7 +1126,7 @@ final class Run extends Command implements InternalOptions
         return ['coverage-partial', 'suite-check'];
     }
 
-    private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
+    private function createFormatter(string $format, Output $output, ?string $nothingFound = 'No specs found.'): Formatter
     {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
             return new FormatterBridge($this->extensionLoader->getFormatter($format), $output);

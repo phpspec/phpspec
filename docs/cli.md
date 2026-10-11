@@ -351,9 +351,15 @@ bin/phpspec run --order random                    # Randomize spec order
 bin/phpspec run --order random --seed 42          # Reproducible random order
 ```
 
-Matching is a case-insensitive substring test. When a spec file's path matches,
-every example in it runs; otherwise only the examples whose title matches run.
-Feature files behave the same with scenario titles.
+Matching is a case-insensitive substring test, not a pattern. When a spec file's
+path matches, every example in it runs; otherwise only the examples whose title
+matches run. Feature files behave the same with scenario titles.
+
+A run you narrow, with `--filter`, `--tags`, paths or `--paths-from`, fails
+(exit code 1) when the whole of it selects nothing, saying what selected nothing,
+so an empty selection never passes for green. Paths add up: one that holds
+nothing is fine while another holds something. A plain `run` of a project with
+nothing to run yet still passes, saying `No specs found.`
 
 `--tags` selects scenarios by their tags with a Cucumber tag expression: `and`,
 `or`, `not` and parentheses, `not` binding tightest and `and` before `or`. A tag

@@ -76,7 +76,7 @@ final class Pretty extends AbstractFormatter
     public function end(SuiteResult $results): void
     {
         if (!$this->hasResults) {
-            if (!$this->blocked) {
+            if (!$this->blocked && $this->nothingFound !== null) {
                 $this->output->writeln($this->nothingFound);
             }
 

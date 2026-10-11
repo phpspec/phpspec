@@ -383,6 +383,14 @@ describe(Dot::class, function() {
         expect($text)->toContain("2 examples");
     });
 
+    it("says nothing of an empty suite when the run says why itself", function() {
+        $output = new BufferedOutput();
+
+        (new Dot($output, null))->format(new SuiteResult([]));
+
+        expect($output->fetch())->toBe('');
+    });
+
     it("prints nothing for a spec blocked on a class that does not exist yet, which the run offers instead", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);
