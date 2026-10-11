@@ -46,7 +46,7 @@ Feature scenario (failing)
 Historically PHP developers needed two separate tools to run this cycle:
 phpspec for specs and Behat for features. PhpSpec 9.0 unifies both in a
 single framework: write `.feature` files with Gherkin syntax, define steps
-with `given()` / `when()` / `then()`, and run everything with `bin/phpspec run`.
+with `given()` / `when()` / `then()`, and run everything with `vendor/bin/phpspec run`.
 No context switching, no duplicate configuration, one feedback loop.
 
 ## PhpSpec 9.0: Evolving for the AI Era

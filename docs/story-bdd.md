@@ -231,7 +231,7 @@ Select scenarios by tag with `--tags` and a Cucumber tag expression; a tag on
 the feature counts for every scenario in it:
 
 ```bash
-bin/phpspec run --tags "@smoke and not @wip"
+vendor/bin/phpspec run --tags "@smoke and not @wip"
 ```
 
 ## Hooks
@@ -297,8 +297,8 @@ with its reason; a step skipped behind a failure is not, the failure is.
 ## Running Features
 
 ```bash
-bin/phpspec run features/               # Run all features
-bin/phpspec run features/greeting.feature  # Run a specific feature
+vendor/bin/phpspec run features/               # Run all features
+vendor/bin/phpspec run features/greeting.feature  # Run a specific feature
 ```
 
 ## Step Generation
@@ -348,7 +348,7 @@ given("a user named {string}", function (string $arg1) {
 Story BDD and Spec BDD form a full development cycle:
 
 1. Write a `.feature` file describing desired behavior
-2. Run `bin/phpspec run features/` -- steps are undefined
+2. Run `vendor/bin/phpspec run features/` -- steps are undefined
 3. Generate step definitions, implement them
 4. Steps reference classes that don't exist -- PhpSpec offers to generate specs and classes
 5. Switch to Spec BDD: write specs, generate classes, implement

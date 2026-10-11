@@ -21,7 +21,7 @@ extensions:
 3. Use it:
 
 ```bash
-bin/phpspec run --format nyan
+vendor/bin/phpspec run --format nyan
 ```
 
 That's it. Composer handles autoloading, PhpSpec handles instantiation.
@@ -188,7 +188,7 @@ class LintCommand extends CommandExtension
 Run with:
 
 ```bash
-bin/phpspec lint
+vendor/bin/phpspec lint
 ```
 
 ### Listeners
@@ -365,7 +365,7 @@ Publish to Packagist, and users get it with:
 
 ```bash
 composer require --dev acme/phpspec-nyan-formatter
-bin/phpspec run --format nyan
+vendor/bin/phpspec run --format nyan
 ```
 
 ## Extension Interfaces

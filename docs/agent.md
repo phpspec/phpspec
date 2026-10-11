@@ -19,7 +19,7 @@ output and never hand-editing what PhpSpec can generate.
 ## Running
 
 ```bash
-bin/phpspec run --format=agent
+vendor/bin/phpspec run --format=agent
 ```
 
 Standard output carries one JSON object per line, with no ANSI and no prose.
@@ -346,8 +346,8 @@ offer carries an `id` and waits under it, so you accept what you have actually
 read, in a second command:
 
 ```bash
-bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
-bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
+vendor/bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
+vendor/bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
 ```
 
 An id is derived from what the offer would do, so the same offer keeps it
@@ -373,8 +373,8 @@ lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
 For the common case of taking everything a run found, the bulk shortcut remains:
 
 ```bash
-bin/phpspec run --accept-offers            # create missing classes/interfaces/methods/steps
-bin/phpspec run --accept-offers --fake     # ...and fill empty methods with their spec'd return values
+vendor/bin/phpspec run --accept-offers            # create missing classes/interfaces/methods/steps
+vendor/bin/phpspec run --accept-offers --fake     # ...and fill empty methods with their spec'd return values
 ```
 
 `--accept-offers` runs the suite, applies all of that run's offers (no prompts),
@@ -399,7 +399,7 @@ one-line JSON receipt, so an agent can scaffold without parsing English. No file
 content is returned; the agent reads the file itself.
 
 ```bash
-bin/phpspec describe App/Basket --agent
+vendor/bin/phpspec describe App/Basket --agent
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":true}
@@ -419,7 +419,7 @@ to put it under, is refused with the remedy, exit code 1:
 idempotent). Combine `describe --agent` with `-e` to also add a method example:
 
 ```bash
-bin/phpspec describe App/Basket --agent -e checkout
+vendor/bin/phpspec describe App/Basket --agent -e checkout
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":false,"example":{"method":"checkout","added":true}}
@@ -429,7 +429,7 @@ bin/phpspec describe App/Basket --agent -e checkout
 first if needed):
 
 ```bash
-bin/phpspec exemplify App/Basket checkout --agent
+vendor/bin/phpspec exemplify App/Basket checkout --agent
 ```
 ```json
 {"v":2,"action":"exemplify","class":"App\\Basket","method":"checkout","spec":"spec/App/Basket.spec.php","added":true}
@@ -444,13 +444,13 @@ and whole. Nothing is written until you `accept` it, which carries every step
 out as `refactor --no-interaction` does (see [How it works](pair.md#how-it-works)).
 
 ```bash
-bin/phpspec refactor Brew/DrinkPricer --format=agent
+vendor/bin/phpspec refactor Brew/DrinkPricer --format=agent
 ```
 ```json
 {"v":2,"action":"refactor","class":"Brew\\DrinkPricer","source":"src/Brew/DrinkPricer.php","spec":"spec/Brew/DrinkPricer.spec.php","technique":"Introduce Parameter Object","rationale":"priceOf takes size, milk and shots, which always travel together; a Drink holds them.","steps":["Describe Drink","Implement Drink","Add price method to DrinkPricer","Update DrinkPricer specs to use price","Remove priceOf method"],"offer":{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer"}}
 ```
 ```bash
-bin/phpspec accept o_4e6db6b4 --format=agent
+vendor/bin/phpspec accept o_4e6db6b4 --format=agent
 ```
 ```json
 {"v":2,"action":"accept","accepted":[{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer","files":["spec/Brew/Drink.spec.php","src/Brew/Drink.php","src/Brew/DrinkPricer.php","spec/Brew/DrinkPricer.spec.php"],"applied":true}]}
@@ -498,7 +498,7 @@ agent-instruction file) so the agent uses PhpSpec effectively:
 
 Always run PhpSpec with the machine-readable formatter and parse the JSON:
 
-    bin/phpspec run --format=agent
+    vendor/bin/phpspec run --format=agent
 
 It prints JSON Lines: one JSON object per line. Decode each line and branch on
 its `event`:
@@ -536,7 +536,7 @@ its `event`:
   name: a log, a captured stdout, an HTTP response body. Read it before you go
   looking at files yourself.
 - To verify a single fix, re-run just that example: take its `rerun` value and
-  prepend the binary, e.g. `bin/phpspec run spec/App/Basket.spec.php:6`. Don't
+  prepend the binary, e.g. `vendor/bin/phpspec run spec/App/Basket.spec.php:6`. Don't
   re-run the whole suite to check one change. The `summary`'s `rerun` does the
   same for every failure at once.
 - Track a specific failure across runs by its `id` (stable across edits that
@@ -548,7 +548,7 @@ its `event`:
 Before writing specs, read the surface off the code once instead of guessing
 or reflecting on the source:
 
-    bin/phpspec api --format=agent
+    vendor/bin/phpspec api --format=agent
 
 One JSON object: every DSL function and matcher with its signature and
 summary, the mock and story functions, and the `timing` rules. Read `timing`
@@ -576,12 +576,12 @@ helper is the only thing that knows why it gave up.
 
 Prefer letting PhpSpec generate boilerplate over writing it by hand:
 
-- Scaffold a spec: `bin/phpspec describe App/Basket --agent`
-- Add a method example: `bin/phpspec exemplify App/Basket checkout --agent`
+- Scaffold a spec: `vendor/bin/phpspec describe App/Basket --agent`
+- Add a method example: `vendor/bin/phpspec exemplify App/Basket checkout --agent`
 - Apply all pending offers (missing classes/interfaces/methods/steps):
-  `bin/phpspec run --accept-offers`
+  `vendor/bin/phpspec run --accept-offers`
 - Also fill empty methods with their spec'd return values (fast first green):
-  `bin/phpspec run --accept-offers --fake`
+  `vendor/bin/phpspec run --accept-offers --fake`
 - The summary of an `--accept-offers` run carries `applied`: what was written,
   by file. Its counts describe the run before the writing, so run again to
   verify; exit code 0 means applied, not green.

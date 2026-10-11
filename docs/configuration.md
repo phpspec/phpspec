@@ -15,7 +15,7 @@ Alternatively, pass an explicit path with `--config` (or `-c`) to load exactly
 that file and skip the working directory lookup entirely:
 
 ```bash
-bin/phpspec run --config custom/phpspec.ci.yml
+vendor/bin/phpspec run --config custom/phpspec.ci.yml
 ```
 
 The format is resolved from the file extension, and the command fails if the

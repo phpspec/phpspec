@@ -16,7 +16,7 @@ composer require phpspec/phpspec --dev
 Generate a spec for a class:
 
 ```bash
-bin/phpspec describe App/Calculator
+vendor/bin/phpspec describe App/Calculator
 ```
 
 This creates `spec/App/Calculator.spec.php`:
@@ -37,19 +37,19 @@ describe(Calculator::class, function() {
 Run all specs (from the `spec/` directory by default):
 
 ```bash
-bin/phpspec run
+vendor/bin/phpspec run
 ```
 
 Run a specific spec file:
 
 ```bash
-bin/phpspec run spec/App/Calculator.spec.php
+vendor/bin/phpspec run spec/App/Calculator.spec.php
 ```
 
 Run specs from a specific directory:
 
 ```bash
-bin/phpspec run spec/App/Console
+vendor/bin/phpspec run spec/App/Console
 ```
 
 ## The Spec File Convention
@@ -84,7 +84,7 @@ Feature: Calculator
 Define steps in `features/steps/steps.php` (or any `*.steps.php` there) and run with:
 
 ```bash
-bin/phpspec run features/
+vendor/bin/phpspec run features/
 ```
 
 See [Story BDD](story-bdd.md) for full details.
@@ -94,13 +94,13 @@ See [Story BDD](story-bdd.md) for full details.
 Generate a coverage report:
 
 ```bash
-bin/phpspec run --coverage
+vendor/bin/phpspec run --coverage
 ```
 
 Or an HTML report:
 
 ```bash
-bin/phpspec run --coverage-html coverage/
+vendor/bin/phpspec run --coverage-html coverage/
 ```
 
 Requires the xdebug extension with `xdebug.mode=coverage`.

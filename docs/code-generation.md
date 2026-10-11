@@ -7,7 +7,7 @@ PhpSpec generates specs, classes, interfaces, method stubs, and step definitions
 Generate a spec for a class:
 
 ```bash
-bin/phpspec describe App/Calculator
+vendor/bin/phpspec describe App/Calculator
 ```
 
 Creates `spec/App/Calculator.spec.php` with a template:
@@ -26,7 +26,7 @@ describe(Calculator::class, function() {
 ### With a Method Example
 
 ```bash
-bin/phpspec describe App/Calculator -e add
+vendor/bin/phpspec describe App/Calculator -e add
 ```
 
 Generates a spec that includes an example for the `add` method.
@@ -42,7 +42,7 @@ under none of them, `describe` asks which mapped namespace to put it under,
 or to keep it as written:
 
 ```
-$ bin/phpspec describe Acme/Thing
+$ vendor/bin/phpspec describe Acme/Thing
 
 Acme\Thing is under none of the mapped namespaces: Brew\, Another\. Describe:
   [1] Brew\Acme\Thing
@@ -80,7 +80,7 @@ Add an example for a single method to a spec (creating the spec first if it
 doesn't exist):
 
 ```bash
-bin/phpspec exemplify App/Calculator add
+vendor/bin/phpspec exemplify App/Calculator add
 ```
 
 Both `describe -e` and `exemplify` are idempotent -- an example for a method that
@@ -93,7 +93,7 @@ with a one-line JSON receipt, so a coding agent can scaffold without parsing
 English:
 
 ```bash
-bin/phpspec describe App/Calculator --agent
+vendor/bin/phpspec describe App/Calculator --agent
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Calculator","spec":"spec/App/Calculator.spec.php","created":true}
@@ -182,7 +182,7 @@ public function add()
 With the `--fake` flag, PhpSpec goes beyond empty stubs and generates method bodies with hardcoded return values based on your spec expectations:
 
 ```bash
-bin/phpspec run --fake
+vendor/bin/phpspec run --fake
 ```
 
 Given the spec:
@@ -239,8 +239,8 @@ offer (missing classes, interfaces, methods, and feature steps) in one
 non-interactive pass, then exits `0`:
 
 ```bash
-bin/phpspec run --accept-offers            # generate all missing code, no prompts
-bin/phpspec run --accept-offers --fake     # ...and fill empty methods with spec'd returns
+vendor/bin/phpspec run --accept-offers            # generate all missing code, no prompts
+vendor/bin/phpspec run --accept-offers --fake     # ...and fill empty methods with spec'd returns
 ```
 
 This is the scripted counterpart to the prompts -- built for
@@ -257,9 +257,9 @@ natural-language instruction into one file edit — a spec example or a piece of
 implementation code — authored by the AI, shown as a diff, and written after you confirm:
 
 ```bash
-bin/phpspec generate an example for App/Calculator add where it sums two numbers
-bin/phpspec generate implement Calculator::add to return the sum of its arguments
-bin/phpspec generate a scenario in features/user_adds_tasks.feature
+vendor/bin/phpspec generate an example for App/Calculator add where it sums two numbers
+vendor/bin/phpspec generate implement Calculator::add to return the sum of its arguments
+vendor/bin/phpspec generate a scenario in features/user_adds_tasks.feature
 ```
 
 It requires an AI provider. A spec edit is checked so it never drops an existing example
@@ -304,14 +304,14 @@ See [Story BDD](story-bdd.md) for more on step definitions.
 
 PhpSpec's code generation creates a natural BDD workflow:
 
-1. **Write a spec** -- `bin/phpspec describe App/Calculator`
+1. **Write a spec** -- `vendor/bin/phpspec describe App/Calculator`
 2. **Run specs** -- PhpSpec prompts to generate the missing class
 3. **Add examples** -- write `expect($calc->add(2, 3))->toBe(5)`
 4. **Run again** -- PhpSpec offers to generate the `add()` method
 5. **Implement** -- fill in the real logic (or use `--fake` for a quick pass)
 6. **Repeat** -- add more examples, drive the design through specs
 
-The autoloader is registered in `bin/phpspec`:
+The autoloader is registered in `vendor/bin/phpspec`:
 
 ```php
 spl_autoload_register([\PhpSpec\CodeGeneration\Autoloader::class, 'autoload']);

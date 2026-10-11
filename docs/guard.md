@@ -14,7 +14,7 @@ covered code, it stayed covered, nothing to answer for.
 ## Turning it on
 
 ```bash
-bin/phpspec guard
+vendor/bin/phpspec guard
 ```
 
 ```
@@ -30,10 +30,10 @@ is judged against, so add `.phpspec/` to your `.gitignore`.
 
 Guard reads coverage, so **Xdebug has to be in coverage mode**. Either set
 `xdebug.mode=coverage` in your `php.ini`, or run with
-`XDEBUG_MODE=coverage bin/phpspec run`. Xdebug's default mode is `develop`,
+`XDEBUG_MODE=coverage vendor/bin/phpspec run`. Xdebug's default mode is `develop`,
 which collects nothing, and guard will tell you it cannot judge.
 
-Running `bin/phpspec guard` again re-records the baseline. In `mtime` mode that
+Running `vendor/bin/phpspec guard` again re-records the baseline. In `mtime` mode that
 moves it to your files as they now stand, which forgives everything you have not
 committed. In git mode it records the current commit, so uncommitted work stays
 in the judgement: commit it, or `allow` it, if you mean guard to let it pass.
@@ -45,17 +45,17 @@ the committed config and nothing to judge against. Guard says so on the first
 run and does not fail it:
 
 ```
-Guard is on but no baseline is recorded in this checkout: run "bin/phpspec guard" to judge from here.
+Guard is on but no baseline is recorded in this checkout: run "vendor/bin/phpspec guard" to judge from here.
 ```
 
-Everyone runs `bin/phpspec guard` once after cloning. CI does not need a
+Everyone runs `vendor/bin/phpspec guard` once after cloning. CI does not need a
 baseline at all: it asks with `--check --hash`, which names the point of
 comparison outright. See [Continuous integration](#continuous-integration).
 
 ## What a violation looks like
 
 ```
-$ bin/phpspec run
+$ vendor/bin/phpspec run
 
 Guard Violation: the last change violates the TDD cycle.
 
@@ -149,15 +149,15 @@ run left behind. This works whether or not the project keeps guard on day to
 day:
 
 ```bash
-bin/phpspec run --coverage-json=cov.json
-bin/phpspec guard --check --hash="$BASE" --coverage=cov.json
+vendor/bin/phpspec run --coverage-json=cov.json
+vendor/bin/phpspec guard --check --hash="$BASE" --coverage=cov.json
 ```
 
 ```yaml
 - run: |
     BASE=$(git merge-base origin/${{ github.base_ref }} HEAD)
-    bin/phpspec run --coverage-json=cov.json
-    bin/phpspec guard --check --hash="$BASE" --coverage=cov.json
+    vendor/bin/phpspec run --coverage-json=cov.json
+    vendor/bin/phpspec guard --check --hash="$BASE" --coverage=cov.json
 ```
 
 `merge-base` against the protected branch is the robust default: it counts only
@@ -187,7 +187,7 @@ stops guarding leaves everybody believing they still have one.
 
 Whether that stops you depends on which command asked and why:
 
-| Guard cannot judge because | `bin/phpspec run` | `guard --check` |
+| Guard cannot judge because | `vendor/bin/phpspec run` | `guard --check` |
 |---|---|---|
 | the `guard:` section cannot be read | refuses, exit `1` | refuses, exit `1` |
 | no baseline is recorded in this checkout | says so, exit `0` | refuses, exit `1` |
@@ -224,7 +224,7 @@ pass:
 
 ```json
 {"v":2,"event":"summary","actionable":0,"guard":{"held":true,"judged":false,"violations":[],
-  "reason":"Guard is on but no baseline is recorded in this checkout: run \"bin/phpspec guard\" to judge from here."}}
+  "reason":"Guard is on but no baseline is recorded in this checkout: run \"vendor/bin/phpspec guard\" to judge from here."}}
 ```
 
 ## Things worth knowing
