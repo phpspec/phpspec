@@ -19,8 +19,9 @@ namespace PhpSpec\Mock;
  * A double's stubs, in the order the spec declared them. A call the code
  * under spec makes uses up the first stub matching it that it has not used;
  * once every matching stub is used, the last one answers on. A call the spec
- * makes itself uses none up and is answered by no exception, so that writing
- * the next allow() of the same call declares it.
+ * makes itself uses none up and has an exception withheld from it, so that
+ * writing the next allow() of the same call declares it; toThrow() still sees
+ * what was withheld.
  */
 final class Stubs
 {
@@ -39,7 +40,7 @@ final class Stubs
     /**
      * @param array<int, mixed> $arguments
      * @param bool $made whether the code under spec made the call, rather than the spec
-     * @return array{type: string, data: mixed}|null
+     * @return array{type: string, data: mixed}|null value, callback, throw, or withheld: the exception a call the spec made would have met
      */
     public function answer(string $method, array $arguments, bool $made): ?array
     {
@@ -64,7 +65,7 @@ final class Stubs
         $stub = $this->stubs[$method][$answering];
 
         if (!$made) {
-            return $stub['type'] === 'throw' ? null : ['type' => $stub['type'], 'data' => $stub['data']];
+            return ['type' => $stub['type'] === 'throw' ? 'withheld' : $stub['type'], 'data' => $stub['data']];
         }
 
         $this->stubs[$method][$answering]['used'] = true;

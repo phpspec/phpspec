@@ -38,6 +38,9 @@ final class Expectation extends BaseExpectation
     /** @var LastCallDouble|null Preserved across stub checks so allow() can reconfigure stubs */
     public static ?LastCallDouble $lastCallForAllow = null;
 
+    /** @var \Throwable|null The exception a stub withheld from a call the spec made itself, for toThrow() to see */
+    public static ?\Throwable $withheld = null;
+
     /** @var MatchableDouble The mock subject being verified */
     private MatchableDouble $mockSubject;
 

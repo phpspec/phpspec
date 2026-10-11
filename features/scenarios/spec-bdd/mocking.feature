@@ -249,34 +249,11 @@ Feature: Mocking
           public function find(int $id): ?string;
       }
       """
-    And a class "src/App/Directory.php":
-      """
-      <?php
-      namespace App;
-
-      class Directory {
-          public function __construct(private UserRepository $repo) {}
-
-          public function nameOf(int $id): ?string
-          {
-              return $this->repo->find($id);
-          }
-
-          public function nameOfRetried(int $id): ?string
-          {
-              try {
-                  return $this->repo->find($id);
-              } catch (\RuntimeException) {
-                  return $this->repo->find($id);
-              }
-          }
-      }
-      """
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
       allow($repo->find(999))->toThrow(new \RuntimeException('Not found'));
-      expect(fn () => (new App\Directory($repo))->nameOf(999))->toThrow(\RuntimeException::class, 'Not found');
+      expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class, 'Not found');
       """
     When I run the spec
     Then all examples should pass
@@ -425,38 +402,14 @@ Feature: Mocking
           public function find(int $id): ?string;
       }
       """
-    And a class "src/App/Directory.php":
-      """
-      <?php
-      namespace App;
-
-      class Directory {
-          public function __construct(private UserRepository $repo) {}
-
-          public function nameOf(int $id): ?string
-          {
-              return $this->repo->find($id);
-          }
-
-          public function nameOfRetried(int $id): ?string
-          {
-              try {
-                  return $this->repo->find($id);
-              } catch (\RuntimeException) {
-                  return $this->repo->find($id);
-              }
-          }
-      }
-      """
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
-      $directory = new App\Directory($repo);
       expect($repo->find(1))->toReturn('Alice');
       expect($repo->find(999))->toThrow(new \RuntimeException('Not found'));
-      expect($directory->nameOf(1))->toBe('Alice');
+      expect($repo->find(1))->toBe('Alice');
       expect($repo->find(2))->toBeNull();
-      expect(fn () => $directory->nameOf(999))->toThrow(\RuntimeException::class, 'Not found');
+      expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class, 'Not found');
       """
     When I run the spec
     Then all examples should pass

@@ -31,12 +31,12 @@ describe(Stubs::class, function () {
         expect($this->stubs->answer('pay', [2], true))->toBe(['type' => 'value', 'data' => 5]);
     });
 
-    it('lets the spec see what the next stub would answer without using it up, and no exception', function () {
+    it('lets the spec see what the next stub would answer without using it up, an exception withheld', function () {
         $this->stubs->add('pay', [1], 'value', 5);
         $this->stubs->add('pay', [1], 'throw', ['class' => RuntimeException::class, 'message' => 'Declined']);
 
         expect($this->stubs->answer('pay', [1], false))->toBe(['type' => 'value', 'data' => 5]);
         expect($this->stubs->answer('pay', [1], true))->toBe(['type' => 'value', 'data' => 5]);
-        expect($this->stubs->answer('pay', [1], false))->toBeNull();
+        expect($this->stubs->answer('pay', [1], false)['type'] ?? null)->toBe('withheld');
     });
 });

@@ -85,7 +85,7 @@ Stub a method to throw an exception:
 it('handles errors', function (UserRepository $repo) {
     allow($repo->find(999))->toThrow(new \RuntimeException('Not found'));
 
-    expect(fn () => (new Directory($repo))->nameOf(999))->toThrow(\RuntimeException::class);
+    expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class);
 });
 ```
 
@@ -107,9 +107,10 @@ Stubs that overlap are used in order too: a `find(42)` declared after a
 `find(any())` answers only once `find(any())` has. A stub every example needs
 belongs in `beforeEach`; one an example would replace belongs in that example.
 
-The spec's own calls use no stub up and meet no exception, so the second
-`allow($repo->find(1))` above declares the call rather than throwing; they see
-the value the next stub would give.
+The spec's own calls use no stub up and have its exception withheld, so the
+second `allow($repo->find(1))` above declares the call rather than throwing.
+They see the value the next stub would give, and `toThrow()` sees the
+exception it would throw: `expect(fn () => $repo->find(1))->toThrow(...)`.
 
 ### What an unstubbed call returns
 

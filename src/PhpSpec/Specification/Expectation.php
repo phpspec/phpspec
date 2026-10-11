@@ -18,6 +18,7 @@ use BadMethodCallException;
 use Closure;
 use InvalidArgumentException;
 use PhpSpec\Browser\Response;
+use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\ObjectName;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
@@ -793,14 +794,21 @@ class Expectation
         // expectation is written, and what follows in the example sees what it
         // did. Only the verdict waits for the end of the example. The reader
         // is then shown what was asked for against what happened: the
-        // exception it threw, or the sentence for having thrown none.
+        // exception it threw, or the sentence for having thrown none. A
+        // double's stub withholds its exception from a call the spec makes
+        // itself, which is how a spec writes that call again; here the spec
+        // asks whether it throws, so what was withheld is what it threw.
         $outcome = self::NOTHING_THROWN;
+        MockExpectation::$withheld = null;
 
         try {
             ($this->subject)();
         } catch (Throwable $e) {
             $outcome = $e;
         }
+
+        $outcome = MockExpectation::$withheld ?? $outcome;
+        MockExpectation::$withheld = null;
 
         return $this->match(
             fn() => $outcome instanceof Throwable
