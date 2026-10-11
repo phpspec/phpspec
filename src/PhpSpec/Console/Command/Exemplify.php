@@ -17,6 +17,7 @@ namespace PhpSpec\Console\Command;
 use PhpSpec\CodeGeneration\PhpName;
 use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
@@ -60,7 +61,7 @@ final class Exemplify extends Command
     {
         $class = (string) $input->getArgument('class');
         $method = (string) $input->getArgument('method');
-        $forAgent = $input->getOption('agent') || $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent || $input->getOption('agent');
 
         // Both names are judged before either is written: an invalid method must
         // not leave a spec file behind as a souvenir of a refused command.

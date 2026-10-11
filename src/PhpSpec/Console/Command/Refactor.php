@@ -36,6 +36,7 @@ use PhpSpec\Console\Command\Refactor\TargetResolver;
 use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
@@ -88,7 +89,7 @@ final class Refactor extends Command
 
     protected function execute(Input $input, Output $output): int
     {
-        $forAgent = $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
         $aiConfig = $this->config->getAiConfig();
 
         if ($aiConfig === null) {

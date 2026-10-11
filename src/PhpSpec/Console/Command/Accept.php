@@ -22,6 +22,7 @@ use PhpSpec\Console\Command\Refactor\PlanOffers;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
@@ -84,7 +85,7 @@ final class Accept extends Command
 
     protected function execute(Input $input, Output $output): int
     {
-        $forAgent = $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
         /** @var list<string> $ids */
         $ids = (array) $input->getArgument('offer');
 

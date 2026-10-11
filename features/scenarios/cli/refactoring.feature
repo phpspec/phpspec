@@ -473,3 +473,14 @@ Feature: AI-powered refactoring
       """
     When I run phpspec pair with input "/refactor App\Till"
     Then the output should contain "App\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till"
+
+  Scenario: A format refactor does not speak is refused
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    When I run phpspec command "refactor App/Till --format=json"
+    Then the exit code should be 1
+    And the output should contain "Unknown format: json (available: pretty, agent)"

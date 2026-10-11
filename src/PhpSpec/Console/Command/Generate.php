@@ -24,6 +24,7 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Diff;
 use PhpSpec\Console\Consent;
 use PhpSpec\Console\Prompt;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
@@ -76,7 +77,7 @@ final class Generate extends Command
 
     protected function execute(Input $input, Output $output): int
     {
-        $forAgent = $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
 
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {

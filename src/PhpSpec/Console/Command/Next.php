@@ -33,6 +33,7 @@ use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Console\Consent;
 use PhpSpec\Console\Prompt;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
@@ -93,7 +94,7 @@ final class Next extends Command
 
     protected function execute(Input $input, Output $output): int
     {
-        $forAgent = $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
 
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();

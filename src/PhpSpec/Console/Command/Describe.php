@@ -18,6 +18,7 @@ use PhpSpec\CodeGeneration\PhpName;
 use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Console\Prompt;
+use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\ProjectRoot;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
@@ -81,7 +82,7 @@ final class Describe extends Command
     {
         $class = (string) $input->getArgument('class');
         $method = (string) $input->getOption('exemplify');
-        $forAgent = $input->getOption('agent') || $input->getOption('format') === 'agent';
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent || $input->getOption('agent');
 
         // Refused before anything is written: a spec named after something PHP
         // cannot parse is not a bad spec, it is a file that stops the suite

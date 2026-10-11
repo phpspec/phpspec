@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\Api\Surface;
+use PhpSpec\Console\ReceiptFormat;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
@@ -44,7 +45,7 @@ final class Api extends Command
         $version = $this->getApplication()?->getVersion();
         $document = (new Surface($version === 'UNKNOWN' ? null : $version))->toArray();
 
-        if ($input->getOption('format') === 'agent') {
+        if (ReceiptFormat::of($input) === ReceiptFormat::Agent) {
             $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
             $output->write($json . "\n", false, Output::OUTPUT_RAW);
 
