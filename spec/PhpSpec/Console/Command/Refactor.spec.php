@@ -458,7 +458,7 @@ describe(Refactor::class, function () {
                 'v' => 2,
                 'action' => 'refactor',
                 'error' => 'Specs must pass before refactoring.',
-                'remedy' => 'Fix failing specs first.',
+                'remedy' => 'Fix what the run left first.',
                 'failures' => ['spec/App/Checkout/CheckoutService.spec.php:7  Expected 90 to be 100'],
             ]);
         });

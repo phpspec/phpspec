@@ -114,7 +114,7 @@ final class Refactor extends Command
         $baseline = $suite->check();
 
         if (!$baseline->green()) {
-            return $this->refuse($output, $forAgent, 'Specs must pass before refactoring.', 'Fix failing specs first.', $baseline->failures());
+            return $this->refuse($output, $forAgent, 'Specs must pass before refactoring.', 'Fix what the run left first.', $baseline->failures());
         }
 
         $model = new RefactorModel($provider, $this->config, $this->filesystem, $root, new PromptLibrary($this->filesystem));

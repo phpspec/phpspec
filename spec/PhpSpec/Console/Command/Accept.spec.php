@@ -242,7 +242,7 @@ describe(Accept::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect(($this->accepted)($tester)['applied'])->toBeFalse();
-            expect(($this->accepted)($tester)['reason'])->toBe('Specs must pass before refactoring. spec/App/Till.spec.php:3  Expected 1 to be 2');
+            expect(($this->accepted)($tester)['reason'])->toBe("Specs must pass before refactoring. Fix what the run left first.\nspec/App/Till.spec.php:3  Expected 1 to be 2");
         });
 
         it('refuses a plan made reading a file that has changed since', function () {

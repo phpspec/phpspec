@@ -72,7 +72,7 @@ final readonly class PlanOffers
         $baseline = $suite->check();
 
         if (!$baseline->green()) {
-            return [$this->notApplied(trim('Specs must pass before refactoring. ' . implode(' ', $baseline->failures())))];
+            return [$this->notApplied(implode("\n", ['Specs must pass before refactoring. Fix what the run left first.', ...$baseline->failures()]))];
         }
 
         $plan = RefactorPlan::fromArray($offer->plan());

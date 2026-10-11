@@ -467,7 +467,7 @@ name, no model to ask or one that did not answer, and specs that are not
 green, each failure listed in `failures`:
 
 ```json
-{"v":2,"action":"refactor","error":"Specs must pass before refactoring.","remedy":"Fix failing specs first.","failures":["spec/App/Broken.spec.php:6  Broken > fails: Expected true to be false"]}
+{"v":2,"action":"refactor","error":"Specs must pass before refactoring.","remedy":"Fix what the run left first.","failures":["spec/App/Broken.spec.php:6  Broken > fails: Expected true to be false"]}
 ```
 
 ## The loop
