@@ -142,25 +142,16 @@ final readonly class ResultScanner
                     if ($lines === false) {
                         continue;
                     }
-                    $sourceLine = $lines[$line - 1] ?? '';
+                    $call = $this->callReadBy($lines, $line);
 
-                    // Match: expect($this->prop->method(...))->... or expect($obj->method(...))->...
-                    if (preg_match('/expect\(\$this->(\w+)->(\w+)\(/', $sourceLine, $parts)
-                        || preg_match('/expect\(\$(\w+)->(\w+)\(/', $sourceLine, $parts)
-                    ) {
-                        $varName = $parts[1];
-                        $methodName = $parts[2];
-                        // Resolve $varName to a class name
-                        $className = $this->analyser->resolveVariableClass($lines, $line - 1, $varName);
-                        if ($className !== null) {
-                            $candidates[] = [
-                                'className' => $className,
-                                'methodName' => $methodName,
-                                'fakeExpression' => $fakeExpr,
-                                'file' => $file,
-                                'line' => $line,
-                            ];
-                        }
+                    if ($call !== null) {
+                        $candidates[] = [
+                            'className' => $call[0],
+                            'methodName' => $call[1],
+                            'fakeExpression' => $fakeExpr,
+                            'file' => $file,
+                            'line' => $line,
+                        ];
                     }
                 }
             } elseif ($result instanceof Results) {
@@ -168,6 +159,39 @@ final readonly class ResultScanner
             }
         }
         return $candidates;
+    }
+
+    /**
+     * The class and method whose result the expectation on this line reads,
+     * when it reads it straight off the call: `$subject->method(...)`,
+     * `$this->subject->method(...)`, or a subject built inline,
+     * `(new Subject(...))->method(...)`. A result something else is called on
+     * is not read straight, and nothing is faked for it.
+     *
+     * @param list<string> $lines
+     * @return array{string, string}|null
+     */
+    private function callReadBy(array $lines, int $line): ?array
+    {
+        $class = '\\\\?[A-Za-z_][A-Za-z0-9_\\\\]*';
+        $arguments = '(?<arguments>\((?:[^()\'"]++|\'(?:[^\'\\\\]|\\\\.)*+\'|"(?:[^"\\\\]|\\\\.)*+"|(?&arguments))*+\))';
+        $subject = '(?:\$this->(?<property>\w+)|\$(?<variable>\w+)|\(\s*new\s+(?<inline>' . $class . ')\s*(?&arguments)?\s*\)|new\s+(?<bare>' . $class . ')\s*(?&arguments))';
+
+        if (preg_match('/expect\(\s*' . $subject . '->(?<method>\w+)\s*' . $arguments . '\s*\)\s*->/', $lines[$line - 1] ?? '', $call) !== 1) {
+            return null;
+        }
+
+        $built = ($call['inline'] ?? '') !== '' ? $call['inline'] : ($call['bare'] ?? '');
+
+        if ($built !== '') {
+            $built = ltrim($built, '\\');
+
+            return [str_contains($built, '\\') ? $built : $this->analyser->resolveUseImport($lines, $built), $call['method']];
+        }
+
+        $className = $this->analyser->resolveVariableClass($lines, $line - 1, ($call['property'] ?? '') !== '' ? $call['property'] : $call['variable']);
+
+        return $className === null ? null : [$className, $call['method']];
     }
 
     /**

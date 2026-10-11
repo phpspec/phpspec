@@ -1047,23 +1047,15 @@ class Expectation
      */
     private static function exportValue(mixed $value): ?string
     {
-        if (is_string($value)) {
-            return "'" . addslashes($value) . "'";
-        }
-        if (is_int($value) || is_float($value)) {
-            return (string) $value;
-        }
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-        if (is_null($value)) {
+        if ($value === null) {
             return 'null';
         }
-        if (is_array($value) && !self::holdsAnObject($value)) {
-            return var_export($value, true);
+
+        if (is_object($value) || is_resource($value) || (is_array($value) && self::holdsAnObject($value))) {
+            return null;
         }
 
-        return null;
+        return var_export($value, true);
     }
 
     /**

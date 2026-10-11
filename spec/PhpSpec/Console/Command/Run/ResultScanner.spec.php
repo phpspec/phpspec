@@ -432,6 +432,33 @@ describe(ResultScanner::class, function () {
             expect($result[0]['methodName'])->toBe('add');
         });
 
+        it('collects a method called on a subject built inline, named by import or in full, in parentheses or not', function () {
+            $tmpFile = tempnam(sys_get_temp_dir(), 'phpspec_test_');
+            file_put_contents($tmpFile, implode("\n", [
+                '<?php',
+                'use App\\Greeter;',
+                "expect((new Greeter('Ann'))->greet())->toBe('Hello');",
+                "expect((new \\App\\Shouter(new Greeter()))->shout('a(b'))->toBe('HELLO');",
+                "expect(\$greeter->hello()->twice())->toBe('Hello Hello');",
+                "expect(new Greeter()->wave())->toBe('Hi');",
+            ]));
+
+            $suite = new SuiteResult([new SpecificationResult('spec', [new ExampleResult('test', [
+                MatchResult::failed('Hello', null, 'Expected', $tmpFile, 3, "'Hello'"),
+                MatchResult::failed('HELLO', null, 'Expected', $tmpFile, 4, "'HELLO'"),
+                MatchResult::failed('Hello Hello', null, 'Expected', $tmpFile, 5, "'Hello Hello'"),
+                MatchResult::failed('Hi', null, 'Expected', $tmpFile, 6, "'Hi'"),
+            ])])]);
+
+            $result = $this->scanner->collectFakeableMethods($suite);
+            unlink($tmpFile);
+            expect(array_map(fn(array $c) => [$c['className'], $c['methodName']], $result))->toBe([
+                ['App\\Greeter', 'greet'],
+                ['App\\Shouter', 'shout'],
+                ['App\\Greeter', 'wave'],
+            ]);
+        });
+
         it('skips passed match results', function () {
             $match = MatchResult::failed(null, null, 'Failed', '/tmp/fake.php', 1);
             $example = new ExampleResult('test', [$match]);

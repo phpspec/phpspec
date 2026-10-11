@@ -128,9 +128,9 @@ final class MethodStubGenerator
             throw new RuntimeException("Method '$methodName' in '$filePath' does not have an empty body");
         }
 
-        $newContent = preg_replace(
+        $newContent = preg_replace_callback(
             $pattern,
-            '$1' . "\n        return $returnExpression;\n    " . '$2',
+            static fn(array $method): string => $method[1] . "\n        return $returnExpression;\n    " . $method[2],
             $content,
             1,
         ) ?? $content;

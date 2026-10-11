@@ -112,6 +112,67 @@ Feature: Code generation
     When I run phpspec run in a fresh process
     Then the output should contain "1 example (1 passed)"
 
+  Scenario: --fake writes each value so it comes back as the spec wrote it
+    Given a class "src/App/Quote.php":
+      """
+      <?php
+      namespace App;
+
+      class Quote {
+          public function quote() {}
+          public function price() {}
+          public function third() {}
+          public function smallest() {}
+          public function zero() {}
+          public function nul() {}
+      }
+      """
+    And a spec file "spec/App/Quote.spec.php":
+      """
+      <?php
+      describe('App\Quote', function () {
+          it('quotes', function () { $quote = new App\Quote(); expect($quote->quote())->toBe('He said "hello"'); });
+          it('prices', function () { $quote = new App\Quote(); expect($quote->price())->toBe(90.0); });
+          it('thirds', function () { $quote = new App\Quote(); expect($quote->third())->toBe(0.1 + 0.2); });
+          it('floors', function () { $quote = new App\Quote(); expect($quote->smallest())->toBe(PHP_INT_MIN); });
+          it('signs zero', function () { $quote = new App\Quote(); expect($quote->zero())->toBe(-0.0); });
+          it('keeps a NUL', function () { $quote = new App\Quote(); expect($quote->nul())->toBe("a\0b"); });
+      });
+      """
+    When I run phpspec run with option "--accept-offers --fake"
+    Then the file "src/App/Quote.php" should contain:
+      """
+      return 'He said "hello"';
+      """
+    When I run phpspec run in a fresh process
+    Then all examples should pass
+
+  Scenario: --fake fills a method called on a subject built inline
+    Given a class "src/App/Greeter.php":
+      """
+      <?php
+      namespace App;
+
+      class Greeter {
+          public function __construct(private string $name = 'you') {}
+          public function greet() {}
+          public function shout() {}
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+      use App\Greeter;
+
+      describe('App\Greeter', function () {
+          it('greets', fn () => expect((new Greeter('Ann'))->greet())->toBe('Hello'));
+          it('shouts', fn () => expect((new App\Greeter())->shout())->toBe('HELLO'));
+      });
+      """
+    When I run phpspec run with option "--accept-offers --fake"
+    Then the file "src/App/Greeter.php" should contain "return 'Hello';"
+    And the file "src/App/Greeter.php" should contain "return 'HELLO';"
+
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
       """

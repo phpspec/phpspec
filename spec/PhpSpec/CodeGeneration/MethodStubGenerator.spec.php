@@ -135,6 +135,15 @@ describe(MethodStubGenerator::class, function () {
         expect($result)->toContain("Method 'add()' filled");
     });
 
+    it("fills an empty body with the expression as written, whatever it holds", function (Filesystem $fs) {
+        $expression = "'a' . \"\\0\" . 'b \$1 \\\\1'";
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\n\nclass Calculator\n{\n    public function add(\$a, \$b)\n    {\n    }\n}\n");
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, "return $expression;"))))->toBeCalled();
+
+        $this->generator->fillEmptyMethod('Calculator', 'add', $expression);
+    });
+
     it("detects empty method body", function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n\nclass Calculator\n{\n    public function add(\$a, \$b)\n    {\n    }\n}\n");

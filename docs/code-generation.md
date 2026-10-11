@@ -202,6 +202,10 @@ public function add()
 
 The `--fake` flag works by extracting the expected values from matcher results (via `fakeExpression` metadata) and using them as return values. This creates a quick feedback loop: write spec, run with `--fake`, get passing tests immediately, then replace the faked implementation with real logic.
 
+The value comes back exactly as the spec wrote it: `90.0` stays a float and
+`'He said "hello"'` keeps its quotes. The call can be on a variable, a `let`,
+or a subject built inline, `expect((new Greeter('Ann'))->greet())`.
+
 Two things are never faked: a return no literal expresses (an object, or an
 array holding one), and a method whose result the expectation went on to call
 something on, as in `expect(Oops::for('x')->getMessage())`, where the value

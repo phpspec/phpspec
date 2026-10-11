@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
+ - `--fake` writes each value exactly as the spec wrote it, where a string holding a double quote or a NUL byte, a float such as `90.0` or `0.1 + 0.2`, and `PHP_INT_MIN` came back changed; it fills a method called on a subject built inline, `expect((new Greeter())->greet())`, which it passed over
  - Two examples of one title in one context, or two scenarios of one title in one feature, are numbered, `returns the total #2`, in every formatter and in the agent id; they shared one name and one id
  - An agent entry is named by every `describe` and `context` it sits in, as the other formatters name it, and its `id` hashes its file with that name: examples of one title in different contexts, classes of one name in different namespaces, and specs or features that share every title in different files shared one id
  - A path runs as features when it is a `.feature` file or lies inside `features_path`, and as specs otherwise: a spec under `spec/features/`, or one whose name holds the word, ran as features and found nothing, and a `features_path` of another name ran nothing under `--story`, `--all` or by its path
