@@ -22,16 +22,16 @@ The pair command requires an interactive terminal. It sets up a split-screen lay
 
 Pair mode opens by looking at your project once and greeting you with what matters right now, rather than a static menu:
 
-- **Red suite** — it names the failing subject and its example, and offers to start there.
-- **Green with a pending example** — it names the nearest `xit()` gap to make real.
-- **Green and clean** — a short observation, then it's your call.
-- **Empty project** — an invitation to write the first spec.
+- **Red suite**: it names the failing subject and its example, and offers to start there.
+- **Green with a pending example**: it names the nearest `xit()` gap to make real.
+- **Green and clean**: a short observation, then it's your call.
+- **Empty project**: an invitation to write the first spec.
 
 The greeting adapts to your configuration: with an AI provider configured it invites plain English; without one it points you at the deterministic commands (`/describe`, `/exemplify`, `/run`). The full command list is always available behind `/help`.
 
 ### Driving and navigating
 
-Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more — the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
+Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more: the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
 
 - **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead (intent, then location, then the exact line only when you ask), but it never writes files unbidden. When its advice becomes concrete it **offers** the change instead of dictating code: you see the exact diff and accept or decline through the numbered chooser; an accepted offer lands through the same write gate as every other change and auto-verifies. One offer per turn, and a declined offer is never re-offered. It never asks leave to offer either: if it asks "shall I offer that?" while the offer is still on the table, PhpSpec sends it back to make the offer, since the diff is the question. Once the turn's one offer is spent, a question is a question and it reaches you.
 - **The AI drives, you navigate** (after `/swap`). You give the intent; the AI makes it real one artifact at a time, shows the diff, runs the spec, and hands back.
@@ -48,7 +48,7 @@ These commands work without AI configuration, and each works with or without its
 | `/exemplify <Class> <method>` | Add a method example to an existing spec |
 | `/run [path\|keyword] [options]` | Run specs (or features) and offer code generation for failures |
 | `/next` | Suggest the next step from the real suite state |
-| `/generate <instruction>` | Turn plain English into a spec example or code — diff, then confirm (requires AI) |
+| `/generate <instruction>` | Turn plain English into a spec example or code, shown as a diff to confirm (requires AI) |
 | `/refactor [target]` | Refactor in baby steps, each asked through the chooser (requires AI) |
 | `/clear` | Clear the terminal |
 | `/swap` | Swap who drives (needs an AI provider) |
@@ -80,7 +80,7 @@ Anything else is a prompt for the AI, and the guards keep conversation as conver
 ### Suggested next command (ghost text)
 
 After each command the prompt is pre-filled with a dim **ghost** of the natural next
-step — describe a spec and it suggests running it, run and it suggests `/next`, and so on:
+step: describe a spec and it suggests running it, run and it suggests `/next`, and so on:
 
 ```
 > /describe App/Todo
@@ -148,8 +148,8 @@ composer require papi-ai/papi-core papi-ai/openai       # for GPT
 ```
 
 The status bar reflects whether the provider actually started, not merely that an `ai:`
-section exists. If a provider is configured but can't start — its package isn't installed,
-the name is misspelt, the key is for a different provider — the bar shows **`ai: unavailable`**
+section exists. If a provider is configured but can't start (its package isn't installed,
+the name is misspelt, the key is for a different provider), the bar shows **`ai: unavailable`**
 rather than `ai: on`, and the reason is shown the moment you type a prompt or run `/help`.
 So an `AIza…` (Google) key under `provider: openai` will read as unavailable until you set
 `provider: google`.
@@ -280,7 +280,7 @@ When you're not sure what to work on next, ask PhpSpec:
 bin/phpspec next
 ```
 
-The command coaches the single next step in **outside-in, story-first TDD**, favouring feature (story) tests. When feature files are present it runs the whole suite (`--all`) and reads the real red/green state: a red or unwritten scenario drives the inner spec cycle; when the features are green it offers one baby step over the files you last touched — refactor the last code, add a new scenario, or start a new feature. The shared coaching lives in `src/PhpSpec/Ai/Prompts/next.txt`. With no feature files it falls back to the spec cycle (describe the missing class, or make the nearest pending example real).
+The command coaches the single next step in **outside-in, story-first TDD**, favouring feature (story) tests. When feature files are present it runs the whole suite (`--all`) and reads the real red/green state: a red or unwritten scenario drives the inner spec cycle; when the features are green it offers one baby step over the files you last touched: refactor the last code, add a new scenario, or start a new feature. The shared coaching lives in `src/PhpSpec/Ai/Prompts/next.txt`. With no feature files it falls back to the spec cycle (describe the missing class, or make the nearest pending example real).
 
 Example output:
 
@@ -294,9 +294,9 @@ Example output:
   drive the step definitions and any missing specs.
 ```
 
-The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again — it points you at `bin/phpspec run` to drive out the missing class.
+The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again; it points you at `bin/phpspec run` to drive out the missing class.
 
-Inside pair mode, `/next` reads the real suite state rather than guessing, and follows the same outside-in, feature-first logic — a red scenario drops into the inner cycle, undefined steps get written, and green features prompt a baby step over the last-touched feature and source. **This works even without an AI provider**: the deterministic narrator gives the advice, and `next.txt` enriches it when a provider is configured (the navigator advises, the driver takes the step).
+Inside pair mode, `/next` reads the real suite state rather than guessing, and follows the same outside-in, feature-first logic: a red scenario drops into the inner cycle, undefined steps get written, and green features prompt a baby step over the last-touched feature and source. **This works even without an AI provider**: the deterministic narrator gives the advice, and `next.txt` enriches it when a provider is configured (the navigator advises, the driver takes the step).
 
 ## The `refactor` Command
 

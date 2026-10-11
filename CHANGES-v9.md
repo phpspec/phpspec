@@ -337,7 +337,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [9.0.0-beta.9](https://github.com/phpspec/phpspec/compare/9.0.0-beta.8...9.0.0-beta.9)
 
 ### Fixed
- - `generate` honours a file path named in the instruction and picks the artifact from its extension — a `.feature` request is written as Gherkin, never a spec — and infers a feature, spec, or code target from the wording when no path is given.
+ - `generate` honours a file path named in the instruction and picks the artifact from its extension (a `.feature` request is written as Gherkin, never a spec), and infers a feature, spec, or code target from the wording when no path is given.
  - `generate` rejects a spec the model wrote in phpspec-8 ObjectBehavior syntax instead of writing invalid DSL.
  - Pair `/next` no longer leaks the machine-readable `{type, target, reason}` suggestion JSON into its conversational reply.
 
@@ -348,7 +348,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Slash commands in pair mode: `/describe`, `/exemplify`, `/run`, `/next`, `/generate`, `/clear` (joining `/swap`, `/help`, `/quit`)
  - Generate command and `/generate` to turn a plain-English instruction into a spec example or code
  - Ghost-text next step, the prompt pre-fills a dim suggestion of the next command (Right-arrow/Tab accepts)
- - `next` follows outside-in, feature-first TDD — favours story tests and advises the next baby step from real suite state; works without AI.
+ - `next` follows outside-in, feature-first TDD: favours story tests and advises the next baby step from real suite state; works without AI.
 
 ### Fixed
  - Native PHP 8.4/8.5 deprecations in mock generation (nullable `?object` constructor param; dropped `setAccessible()`).
@@ -357,14 +357,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [9.0.0-beta.7](https://github.com/phpspec/phpspec/compare/9.0.0-beta.6...9.0.0-beta.7)
 
 ### Added
- - Roles & /swap — you drive or the AI drives (one artifact per turn); the navigator never writes files.
- - Grounded & self-verifying — it sees the suite's real red/green each turn and auto-runs specs after its own change, instead of guessing.
- - Designs in conversation — clarify → plan → confirm → make the change → present the diff.
- - Grows specs, never overwrites — describe + add_example; drops-examples or phpspec 8 ObjectBehavior writes are rejected.
+ - Roles & /swap: you drive or the AI drives (one artifact per turn); the navigator never writes files.
+ - Grounded & self-verifying: it sees the suite's real red/green each turn and auto-runs specs after its own change, instead of guessing.
+ - Designs in conversation: clarify → plan → confirm → make the change → present the diff.
+ - Grows specs, never overwrites: describe + add_example; drops-examples or phpspec 8 ObjectBehavior writes are rejected.
  - Plus: inspect_symbol, bounded long sessions, a suite-state greeting, real generated-code diffs, unified chooser, ai.max_tokens.
 
 ### Fixed
- - Fixed — next no longer loops on an existing spec; code generation won't offer to create a class/spec that already exists.
+ - next no longer loops on an existing spec; code generation won't offer to create a class/spec that already exists.
 
 ## [9.0.0-beta.6](https://github.com/phpspec/phpspec/compare/9.0.0-beta.5...9.0.0-beta.6)
 
@@ -397,8 +397,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Breaking Changes
 - Complete rewrite with Jasmine/RSpec-style syntax
-- Removed Prophecy dependency — built-in mock system
-- Removed ObjectBehavior base class — closures everywhere
+- Removed Prophecy dependency: built-in mock system
+- Removed ObjectBehavior base class: closures everywhere
 - Removed dependency on symfony/event-dispatcher, symfony/process, symfony/finder, doctrine/instantiator, sebastian/exporter, phpspec/php-diff
 - Spec files now use `.spec.php` suffix
 
