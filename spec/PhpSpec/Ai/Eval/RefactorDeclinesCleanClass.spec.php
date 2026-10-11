@@ -136,7 +136,7 @@ describe('E15 refactor: a clean class is declined, replayed from a live session'
         $tester = ($this->refactor)();
 
         expect($tester->getStatusCode())->toBe(0);
-        expect($tester->getDisplay())->toContain('Nothing to refactor in Brew\\Till: ' . $this->reason);
+        expect(preg_replace('/\s+/', ' ', $tester->getDisplay()))->toContain('Nothing to refactor in Brew\\Till: ' . $this->reason);
         expect(($this->code)())->toBe($this->before);
     });
 

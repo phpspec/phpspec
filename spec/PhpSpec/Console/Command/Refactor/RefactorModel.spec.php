@@ -66,6 +66,14 @@ describe(RefactorModel::class, function () {
         expect(array_map(fn($tool) => $tool->getName(), $request['options']['tools']))->toBe(['propose_plan', 'decline_refactoring']);
     });
 
+    it('takes a plan with no steps, or an answer with neither plan nor reason, for a model that failed', function () {
+        $empty = ($this->model)(new Response('', [new ToolCall('p', 'propose_plan', ['technique' => 'Extract Class', 'rationale' => 'x', 'steps' => []])]));
+        $silent = ($this->model)(new Response(''));
+
+        expect(fn() => $empty->plan($this->target, ''))->toThrow(new ModelFailedException('The model proposed a plan with no steps.'));
+        expect(fn() => $silent->plan($this->target, ''))->toThrow(new ModelFailedException('The model answered with neither a plan nor a reason to decline.'));
+    });
+
     it('says the model did not answer, in the provider\'s words, when asking it fails', function () {
         $model = ($this->model)(new RuntimeException('Google API error (400): API key not valid.'));
 

@@ -144,7 +144,7 @@ final class Refactor extends Command
 
         if ($plan instanceof Declined) {
             $output->writeln('');
-            $output->writeln(sprintf('  <fg=yellow>Nothing to refactor in %s: %s</>', OutputFormatter::escape($target->fqcn), OutputFormatter::escape($plan->reason)));
+            $output->writeln(sprintf('<fg=yellow>%s</>', OutputFormatter::escape('  ' . wordwrap(sprintf('Nothing to refactor in %s: %s', $target->fqcn, $plan->reason), 76, "\n  "))));
 
             return 0;
         }

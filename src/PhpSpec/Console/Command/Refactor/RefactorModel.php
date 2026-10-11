@@ -95,11 +95,17 @@ final class RefactorModel
         ])], 'required');
 
         foreach ($response->toolCalls as $call) {
-            if ($call->name === 'propose_plan' && is_array($call->arguments['steps'] ?? null) && $call->arguments['steps'] !== []) {
+            if ($call->name === 'propose_plan') {
+                $steps = is_array($call->arguments['steps'] ?? null) ? $call->arguments['steps'] : [];
+
+                if ($steps === []) {
+                    throw new ModelFailedException('The model proposed a plan with no steps.');
+                }
+
                 return new RefactorPlan(
                     (string) ($call->arguments['technique'] ?? ''),
                     (string) ($call->arguments['rationale'] ?? ''),
-                    array_values(array_map($this->plannedStep(...), $call->arguments['steps'])),
+                    array_values(array_map($this->plannedStep(...), $steps)),
                     $response->outputTokens,
                     $this->read(),
                 );
@@ -110,7 +116,11 @@ final class RefactorModel
             }
         }
 
-        return new Declined(trim($response->text) !== '' ? (string) preg_replace('/\s+/', ' ', trim($response->text)) : 'The model proposed no plan.', $response->outputTokens);
+        if (trim($response->text) === '') {
+            throw new ModelFailedException('The model answered with neither a plan nor a reason to decline.');
+        }
+
+        return new Declined((string) preg_replace('/\s+/', ' ', trim($response->text)), $response->outputTokens);
     }
 
     /**

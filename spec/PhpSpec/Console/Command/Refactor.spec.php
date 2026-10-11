@@ -100,6 +100,15 @@ describe(Refactor::class, function () {
             expect($this->replay->requests)->toHaveCount(1);
         });
 
+        it('wraps the model\'s reason to decline as it wraps the plan\'s', function () {
+            $reason = 'CheckoutService already delegates its pricing and its discounts to collaborators named for their roles, and every method reads as one step of the checkout.';
+            $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => $reason])])], [$this->green]);
+
+            $declined = substr($tester->getDisplay(true), (int) strpos($tester->getDisplay(true), '  Nothing to refactor'));
+            expect(max(array_map('mb_strlen', explode("\n", $declined))))->toBeLessThan(80);
+            expect(preg_replace('/\s+/', ' ', $declined))->toContain('Nothing to refactor in App\\Checkout\\CheckoutService: ' . $reason);
+        });
+
         it('says there is nothing to refactor in the class, in the model\'s words, when it declines', function () {
             $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => 'It does one thing.'])])], [$this->green]);
 
