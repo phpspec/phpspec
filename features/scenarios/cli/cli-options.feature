@@ -1096,6 +1096,20 @@ Feature: CLI options
     Then the output should contain "ok 1 - TapReasons is pending # SKIP Needs the rates API"
     And the output should contain "ok 2 - TapReasons is skipped # SKIP No network on this machine"
 
+  Scenario: A run a stop option cut short says so
+    Given a spec file "spec/App/Careful.spec.php":
+      """
+      <?php
+      describe('Careful', function () {
+          it('warns', function () {
+              trigger_error('careful', E_USER_WARNING);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-warning"
+    Then the output should contain "Stopped early by --stop-on-warning: what came after it did not run."
+
   Scenario: TAP reports each scenario of a story run as one test point
     Given a feature file "features/shop.feature":
       """

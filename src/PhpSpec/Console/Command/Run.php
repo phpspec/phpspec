@@ -350,6 +350,16 @@ final class Run extends Command implements InternalOptions
         $this->writeReportFiles($input, $prose, $results);
         $this->printProfile($input, $prose, $results);
 
+        $stoppedBy = $this->stopConditions($input)->reachedBy($results);
+
+        if ($stoppedBy !== null) {
+            $prose->writeln(sprintf('<fg=yellow>Stopped early by %s: what came after it did not run.</>', $stoppedBy));
+
+            if ($formatter instanceof Agent) {
+                $formatter->stoppedBy($stoppedBy);
+            }
+        }
+
         $failed = null;
 
         if ($coverageReporter) {
@@ -754,6 +764,27 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
+     * What the run stops on: the options given, and the config's stop_on
+     * settings unless this is refactor's suite check.
+     */
+    private function stopConditions(Input $input): StopConditions
+    {
+        $problems = (bool) $input->getOption('stop-on-problems');
+        $configStop = $input->getOption('suite-check') ? new StopConditions() : $this->config->getStopConditions();
+        $stopOnFailure = $input->getOption('stop-on-failure') || $configStop->onFailure;
+
+        return new StopConditions(
+            onFailure: $stopOnFailure || $problems,
+            onError: $stopOnFailure || $input->getOption('stop-on-error') || $configStop->onError || $problems,
+            onWarning: $input->getOption('stop-on-warning') || $configStop->onWarning || $problems,
+            onDeprecation: $input->getOption('stop-on-deprecation') || $configStop->onDeprecation || $problems,
+            onNotice: $input->getOption('stop-on-notice') || $configStop->onNotice || $problems,
+            onPending: $input->getOption('stop-on-pending') || $configStop->onPending || $problems,
+            onSkipped: $input->getOption('stop-on-skipped') || $configStop->onSkipped || $problems,
+        );
+    }
+
+    /**
      * The first path given that is a file run cannot take: neither a spec
      * nor a feature.
      *
@@ -840,18 +871,7 @@ final class Run extends Command implements InternalOptions
         $tags = $input->getOption('tags');
         $suite = $this->loader->load($files, $filter, is_string($tags) ? $tags : null);
 
-        $problems = (bool) $input->getOption('stop-on-problems');
-        $configStop = $input->getOption('suite-check') ? new StopConditions() : $this->config->getStopConditions();
-        $stopOnFailure = $input->getOption('stop-on-failure') || $configStop->onFailure;
-        $stop = new StopConditions(
-            onFailure: $stopOnFailure || $problems,
-            onError: $stopOnFailure || $input->getOption('stop-on-error') || $configStop->onError || $problems,
-            onWarning: $input->getOption('stop-on-warning') || $configStop->onWarning || $problems,
-            onDeprecation: $input->getOption('stop-on-deprecation') || $configStop->onDeprecation || $problems,
-            onNotice: $input->getOption('stop-on-notice') || $configStop->onNotice || $problems,
-            onPending: $input->getOption('stop-on-pending') || $configStop->onPending || $problems,
-            onSkipped: $input->getOption('stop-on-skipped') || $configStop->onSkipped || $problems,
-        );
+        $stop = $this->stopConditions($input);
 
         $seed = null;
         if ($input->getOption('order') === 'random') {

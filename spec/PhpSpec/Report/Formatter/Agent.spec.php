@@ -391,6 +391,18 @@ describe(Agent::class, function () {
         expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
     });
 
+    it('says which option stopped the run early, and nothing when none did', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stoppedBy('--stop-on-warning');
+        $formatter->publish();
+        $plain = new BufferedOutput();
+        (new Agent($plain))->publish();
+
+        expect($stream($output->fetch())['result']['stopped_by'])->toBe('--stop-on-warning');
+        expect($stream($plain->fetch())['result'])->not()->toHaveKey('stopped_by');
+    });
+
     it('keeps the first thing that stopped the run', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
