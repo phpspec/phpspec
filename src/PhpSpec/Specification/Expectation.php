@@ -20,6 +20,7 @@ use InvalidArgumentException;
 use PhpSpec\Browser\Response;
 use PhpSpec\ObjectName;
 use Psr\Http\Message\ResponseInterface;
+use Throwable;
 
 /**
  * Fluent assertion API returned by expect(). Provides built-in matchers (toBe, toContain, etc.)
@@ -774,18 +775,18 @@ class Expectation
      * Asserts that invoking the subject callable throws the specified exception.
      * An exception given stands for its class and its message.
      *
-     * @param string|\Throwable $exceptionClass expected exception class, or an exception standing for its class and message
+     * @param string|Throwable $exception the exception class, or an exception standing for its class and message
      * @param string|null $message expected exception message (exact match), after a class name
      * @return static
      */
-    public function toThrow(string|\Throwable $exceptionClass = '', ?string $message = null): static
+    public function toThrow(string|Throwable $exception = '', ?string $message = null): static
     {
-        if ($exceptionClass instanceof \Throwable) {
+        if ($exception instanceof Throwable) {
             if ($message !== null) {
                 throw new InvalidArgumentException('toThrow() takes the message inside the exception it is given, or after a class name, not both.');
             }
 
-            return $this->toThrow($exceptionClass::class, $exceptionClass->getMessage());
+            return $this->toThrow($exception::class, $exception->getMessage());
         }
 
         // The subject is the operation under test, so it runs here, where the
@@ -797,20 +798,20 @@ class Expectation
 
         try {
             ($this->subject)();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $outcome = $e;
         }
 
         return $this->match(
-            fn() => $outcome instanceof \Throwable
-                && ($exceptionClass === '' || $outcome instanceof $exceptionClass)
+            fn() => $outcome instanceof Throwable
+                && ($exception === '' || $outcome instanceof $exception)
                 && ($message === null || $outcome->getMessage() === $message),
-            $exceptionClass === '' ? 'Expected callable to throw' : 'Expected callable to throw %s',
-            $exceptionClass === '' ? '' : ObjectName::named($exceptionClass, $message),
+            $exception === '' ? 'Expected callable to throw' : 'Expected callable to throw %s',
+            $exception === '' ? '' : ObjectName::named($exception, $message),
             // Whatever it was asked for, or nothing at all when it was asked
             // only to throw.
-            $exceptionClass === '' ? self::NO_TARGET : ObjectName::named($exceptionClass, $message),
-            ['__implied' => $exceptionClass === '', '__actual' => fn() => $outcome],
+            $exception === '' ? self::NO_TARGET : ObjectName::named($exception, $message),
+            ['__implied' => $exception === '', '__actual' => fn() => $outcome],
         );
     }
 

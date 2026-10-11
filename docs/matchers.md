@@ -265,7 +265,7 @@ expect(42)->toSatisfy(fn ($n) => $n % 2 === 0);
 
 ## Exception Matcher
 
-### `toThrow(string|Throwable $exceptionClass = '', ?string $message = null)`
+### `toThrow(string|Throwable $exception = '', ?string $message = null)`
 
 Asserts that calling the subject (a callable) throws the expected exception.
 With no argument, any exception will do. An exception given stands for its
