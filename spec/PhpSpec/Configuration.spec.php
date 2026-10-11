@@ -425,6 +425,21 @@ describe(Configuration::class, function () {
         ]);
     });
 
+    it('says guard is on only when a usable section makes it active', function () {
+        expect((new Configuration())->guardIsOn())->toBeFalse();
+        expect((new Configuration(['guard' => ['status' => 'off']]))->guardIsOn())->toBeFalse();
+        expect((new Configuration(['guard' => ['status' => 'active']]))->guardIsOn())->toBeTrue();
+        expect((new Configuration(['guard' => ['status' => 'active', 'detecton' => 'git']]))->guardIsOn())->toBeFalse();
+    });
+
+    it('names the options a phpspec it starts needs to read this same configuration', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/conf/qa.yml');
+        allow($fs->read())->toReturn("spec_path: altspec\n");
+
+        expect(Configuration::load('/app', $fs, '/app/conf/qa.yml')->childOptions())->toBe(['--config=/app/conf/qa.yml']);
+        expect((new Configuration())->childOptions())->toBe([]);
+    });
+
     it('names the guard key it does not know, and the one it thinks was meant', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,

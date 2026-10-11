@@ -599,6 +599,25 @@ final class Configuration
     }
 
     /**
+     * Whether guard judges runs: a usable guard section that makes it active.
+     */
+    public function guardIsOn(): bool
+    {
+        return ($this->getGuardConfig()['status'] ?? 'off') === 'active';
+    }
+
+    /**
+     * The options a phpspec started from this one needs to read the same
+     * configuration: the file it was read from, when there is one.
+     *
+     * @return list<string>
+     */
+    public function childOptions(): array
+    {
+        return $this->settingsFile === null ? [] : ['--config=' . $this->settingsFile];
+    }
+
+    /**
      * Says what is wrong with the guard section, or null when it is usable. An
      * absent section is not a problem: it means guard is off.
      */

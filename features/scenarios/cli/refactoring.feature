@@ -61,6 +61,47 @@ Feature: AI-powered refactoring
     Then the output should not contain "Could not open input file"
     And the output should not contain "Specs must pass"
 
+  Scenario: The specs are checked whole, whatever the configuration stops on
+    Given a phpspec.yaml config:
+      """
+      stop_on_warning: true
+      ai:
+        provider: google
+        api_key: test-key-123
+      """
+    And a spec file "spec/App/Careful.spec.php":
+      """
+      <?php
+      describe('Careful', function () {
+          it('warns', function () {
+              trigger_error('careful', E_USER_WARNING);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/Solid.spec.php":
+      """
+      <?php
+      use App\Solid;
+
+      describe(Solid::class, function () {
+          it('fails', function () {
+              expect(true)->toBeFalse();
+          });
+      });
+      """
+    And a class "src/App/Solid.php":
+      """
+      <?php
+      namespace App;
+
+      class Solid {}
+      """
+    When I run phpspec refactor "App\Solid"
+    Then the exit code should not be 0
+    And the output should contain "Specs must pass before refactoring"
+    And the output should contain "Solid > fails"
+
   Scenario: An example the run skips does not stop a refactoring
     Given a phpspec.yaml config:
       """

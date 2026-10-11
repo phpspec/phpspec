@@ -24,7 +24,6 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
-use PhpSpec\Guard\Inspection;
 use PhpSpec\Offers\Offer;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface as Output;
@@ -68,7 +67,7 @@ final readonly class PlanOffers
             return [$this->notApplied($e->getMessage())];
         }
 
-        $suite = $this->suite ?? new SubprocessSuite($this->root, Inspection::of($this->config, $this->filesystem, $this->root) !== null);
+        $suite = $this->suite ?? new SubprocessSuite($this->root, $this->config);
         $output->writeln('  <fg=gray>Checking the specs...</>');
         $baseline = $suite->check();
 

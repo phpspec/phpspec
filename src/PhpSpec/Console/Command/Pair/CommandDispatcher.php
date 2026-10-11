@@ -35,7 +35,6 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Console\Consent;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
-use PhpSpec\Guard\Inspection;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 use Symfony\Component\Console\Application;
@@ -125,7 +124,7 @@ final class CommandDispatcher
         $this->prompts = new PromptLibrary($this->filesystem);
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->notes = $this->chooser->notes();
-        $this->specRunner = $specRunner ?? new SubprocessRunner(Inspection::of($config, $this->filesystem) !== null);
+        $this->specRunner = $specRunner ?? new SubprocessRunner($config->guardIsOn());
         $this->roleState = $roleState ?? new RoleState();
         $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
         $this->refactor = $refactor ?? fn(Consent $consent): Refactor => new Refactor($this->config, $this->filesystem, consent: $consent);

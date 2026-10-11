@@ -14,28 +14,34 @@
 
 namespace PhpSpec\Console\Command\Refactor;
 
+use PhpSpec\Configuration;
 use PhpSpec\Parallel\ParallelRunner;
 
 /**
  * @internal
  * Runs the project's whole spec suite in a process of its own, so the code a
- * refactoring just wrote is loaded fresh, and reads its agent stream. A run
- * that outlasts the timeout is stopped and read as red.
+ * refactoring just wrote is loaded fresh, and reads its agent stream. It
+ * reads the same configuration, runs every example whatever that stops on,
+ * and collects coverage when guard is on. A run that outlasts the timeout is
+ * stopped and read as red.
  */
 final readonly class SubprocessSuite implements SpecSuite
 {
-    /**
-     * @param bool $guarded whether the project has guard on, which judges a run by its coverage
-     */
     public function __construct(
         private string $directory,
-        private bool $guarded = false,
+        private Configuration $config,
         private int $timeoutSeconds = 300,
     ) {}
 
     public function check(): SuiteCheck
     {
-        $command = [PHP_BINARY, '-d', 'xdebug.mode=' . ($this->guarded ? 'coverage' : 'off'), ParallelRunner::findPhpspecBin(), 'run', '--format=agent', '--no-interaction', '--no-ansi'];
+        $command = [
+            PHP_BINARY,
+            '-d', 'xdebug.mode=' . ($this->config->guardIsOn() ? 'coverage' : 'off'),
+            ParallelRunner::findPhpspecBin(),
+            'run', '--format=agent', '--whole-suite', '--no-interaction', '--no-ansi',
+            ...$this->config->childOptions(),
+        ];
         $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $this->directory);
 
         if (!is_resource($process)) {

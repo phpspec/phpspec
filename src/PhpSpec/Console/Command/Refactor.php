@@ -37,7 +37,6 @@ use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
-use PhpSpec\Guard\Inspection;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\RealFilesystem;
@@ -112,7 +111,7 @@ final class Refactor extends Command
             return $this->refuse($output, $forAgent, $e->getMessage());
         }
 
-        $suite = $this->suite ?? new SubprocessSuite($root, Inspection::of($this->config, $this->filesystem, $root) !== null);
+        $suite = $this->suite ?? new SubprocessSuite($root, $this->config);
         if (!$forAgent) {
             $output->writeln('  <fg=gray>Checking the specs...</>');
         }
