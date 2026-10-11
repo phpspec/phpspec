@@ -35,8 +35,9 @@ final readonly class ReturnType
 
     /**
      * @param string $class the doubled class or interface
+     * @param string $double the double's own class, which static stands for on it
      */
-    public function __construct(string $class, string $method)
+    public function __construct(string $class, string $method, private string $double)
     {
         $this->class = ltrim($class, '\\');
         $this->method = new ReflectionMethod($this->class, $method);
@@ -119,7 +120,7 @@ final readonly class ReturnType
             'object' => is_object($value),
             'void', 'never', 'null' => false,
             'self' => $value instanceof $this->method->class,
-            'static' => $value instanceof $this->class,
+            'static' => $value instanceof $this->double,
             'parent' => ($parent = $this->method->getDeclaringClass()->getParentClass()) !== false && $value instanceof $parent->name,
             default => $value instanceof ($type->getName()),
         };

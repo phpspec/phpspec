@@ -57,6 +57,26 @@ interface DoubleSpecLedger {
     public function same(): static;
 }
 
+interface DoubleSpecKinds {
+    public function flag(): bool;
+    public function list(): array;
+    public function many(): iterable;
+    public function action(): callable;
+    public function thing(): object;
+    public function me(): self;
+    public function both(): DoubleSpecIntersectA&DoubleSpecIntersectB;
+    public function yes(): true;
+    public function no(): false;
+}
+
+class DoubleSpecBase {}
+
+class DoubleSpecChild extends DoubleSpecBase {
+    public function up(): parent { return new DoubleSpecBase(); }
+}
+
+class DoubleSpecBoth implements DoubleSpecIntersectA, DoubleSpecIntersectB {}
+
 interface DoubleSpecMachine {
     public function each(): iterable;
     public function hook(): Closure;
@@ -974,6 +994,7 @@ describe(Double::class, function() {
             expect(fn() => expect($ledger->balance())->toReturn('42'))->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so it cannot return string "42".');
             expect(fn() => allow($ledger->owner())->toReturn(new stdClass()))->toThrow(LogicException::class, 'DoubleSpecLedger::owner() returns ?DoubleSpecContract, so it cannot return stdClass.');
             expect(fn() => allow($ledger->either())->toReturn(1.5))->toThrow(LogicException::class, 'DoubleSpecLedger::either() returns string|int, so it cannot return float 1.5.');
+            expect(fn() => allow($ledger->same())->toReturn(new stdClass()))->toThrow(LogicException::class, 'DoubleSpecLedger::same() returns static, so it cannot return stdClass.');
         });
 
         it("takes what the method could return", function () {
@@ -985,6 +1006,34 @@ describe(Double::class, function() {
 
             expect($ledger->rate())->toBe(3.0);
             expect($ledger->either())->toBe('many');
+        });
+
+        it("answers a method returning true or false, unstubbed, with that value", function () {
+            $kinds = Double::getInstance(DoubleSpecKinds::class);
+
+            expect($kinds->yes())->toBeTrue();
+            expect($kinds->no())->toBeFalse();
+        });
+
+        it("holds each kind of type as PHP holds a return under strict types", function () {
+            $kinds = Double::getInstance(DoubleSpecKinds::class);
+            $child = Double::getInstance(DoubleSpecChild::class);
+            $holds = [
+                [fn() => allow($kinds->flag()), false, 1],
+                [fn() => allow($kinds->list()), [], 'x'],
+                [fn() => allow($kinds->many()), new ArrayIterator([]), 'x'],
+                [fn() => allow($kinds->action()), fn() => 1, 'not_a_function_anywhere'],
+                [fn() => allow($kinds->thing()), new stdClass(), 'x'],
+                [fn() => allow($kinds->me()), $kinds, new stdClass()],
+                [fn() => allow($kinds->both()), new DoubleSpecBoth(), new stdClass()],
+                [fn() => allow($kinds->yes()), true, false],
+                [fn() => allow($child->up()), new DoubleSpecBase(), new stdClass()],
+            ];
+
+            foreach ($holds as [$stub, $could, $never]) {
+                expect(fn() => $stub()->toReturn($could))->not()->toThrow();
+                expect(fn() => $stub()->toReturn($never))->toThrow(LogicException::class);
+            }
         });
 
         it("is refused on a method that returns void, which has nothing to return", function () {

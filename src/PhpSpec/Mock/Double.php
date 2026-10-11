@@ -577,8 +577,10 @@ PHP;
             'int' => $returning('0'),
             'float' => $returning('0.0'),
             'bool' => $returning('false'),
+            'true' => $returning('true'),
+            'false' => $returning('false'),
             // No double can stand in for these, so a usable value does.
-            'static', 'self' => $returning('$this'),
+            'static', 'self', 'parent' => $returning('$this'),
             'object' => $returning('new \\stdClass()'),
             'callable', 'Closure' => $returning('static fn() => null'),
             'Generator' => $returning('(static fn() => yield from [])()'),
@@ -730,7 +732,7 @@ PHP;
             $isCompoundType = $returnedType instanceof ReflectionUnionType || $returnedType instanceof ReflectionIntersectionType;
 
             if ($returnedType !== null) {
-                $returnedTypeSyntax = ': ' . self::formatTypeSyntax($returnedType);
+                $returnedTypeSyntax = ': ' . self::typeIn($returnedType, $method);
             }
 
             // get method parameters
@@ -753,7 +755,7 @@ PHP;
             $paramString = implode(', ', $paramStrings);
             $arguments = self::argumentsCode($parameters, $depth === 0);
             $hold = $depth === 0 ? self::holdCode($reflectionClass->getName(), $method) : '';
-            $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
+            $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s, self::class))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
 
             // Unique suffix for MockedMethodFor classes, includes parent class hash to avoid collisions
             $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($reflectionClass->getName() . '::' . $methodName), 0, 8) . '_' . uniqid();
