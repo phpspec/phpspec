@@ -51,6 +51,27 @@ final readonly class Consent
      */
     public function confirm(Output $output, string $question, string $kind, string $action): bool
     {
+        $decided = $this->decide($output, $question, $kind, $action);
+
+        if ($decided === null) {
+            $this->nobody($output, $action);
+
+            return false;
+        }
+
+        return $decided;
+    }
+
+    /**
+     * Whether the person said yes, or null when nobody answered, for a caller
+     * that does something other than nothing when nobody is there.
+     *
+     * @param string $question the question to display, without a "[Y/n]" suffix
+     * @param string $kind stable identifier grouping this question for chooser "always" memory
+     * @param string $action verb phrase completing "always ..." in the chooser
+     */
+    public function decide(Output $output, string $question, string $kind, string $action): ?bool
+    {
         if ($this->chooser !== null) {
             return $this->chooser->choose($question, $kind, $action);
         }
@@ -66,13 +87,7 @@ final readonly class Consent
 
         $answer = $asking ? $this->answer($output) : null;
 
-        if ($answer === null) {
-            $this->nobody($output, $action);
-
-            return false;
-        }
-
-        return $answer === '' || strtolower($answer) === 'y';
+        return $answer === null ? null : in_array(strtolower(trim($answer)), ['', 'y', 'yes'], true);
     }
 
     /**

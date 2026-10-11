@@ -22,18 +22,19 @@ use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Diff;
+use PhpSpec\Console\Consent;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\OutputInterface as Output;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * @internal
@@ -51,10 +52,14 @@ final class Generate extends Command
      * @param Filesystem|null $filesystem
      * @param ProviderInterface|null $provider injectable AI seam for specs
      */
+    /**
+     * @param Prompt|null $prompt reads the answer to "Apply this change?", from the command's input when not given
+     */
     public function __construct(
         private readonly Configuration $config,
         ?Filesystem $filesystem = null,
         private readonly ?ProviderInterface $provider = null,
+        private readonly ?Prompt $prompt = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         parent::__construct();
@@ -105,27 +110,29 @@ final class Generate extends Command
         }
 
         $writer = new Writer($this->filesystem);
+        $consent = new Consent('', prompt: $this->prompt ?? new Prompt($input instanceof StreamableInputInterface ? $input->getStream() : null));
         $offered = [];
 
         foreach ($outcome->proposals as $proposal) {
             $this->showDiff($output, $proposal);
+            $decided = $input->isInteractive() ? $consent->decide($output, '  <fg=yellow>Apply this change?</>', 'generate', 'apply generated changes') : null;
 
-            if ($input->isInteractive()) {
-                if (!$this->confirm($input, $output)) {
-                    $output->writeln('  <fg=gray>Left unchanged.</>');
-
-                    continue;
-                }
-
-                $writer->apply($proposal);
-                $output->writeln(sprintf('  <fg=green>%s %s</>', $proposal->isNew ? 'Created' : 'Updated', $proposal->path));
+            if ($decided === null) {
+                // Nobody to ask is not the same as a yes. The change waits on
+                // the table under an id, for whoever reads this to accept.
+                $offered[] = $this->offer($proposal);
 
                 continue;
             }
 
-            // Nobody to ask is not the same as a yes. The change waits on the
-            // table under an id, for whoever reads this to accept.
-            $offered[] = $this->offer($proposal);
+            if (!$decided) {
+                $output->writeln('  <fg=gray>Left unchanged.</>');
+
+                continue;
+            }
+
+            $writer->apply($proposal);
+            $output->writeln(sprintf('  <fg=green>%s %s</>', $proposal->isNew ? 'Created' : 'Updated', $proposal->path));
         }
 
         if ($offered !== []) {
@@ -211,13 +218,5 @@ final class Generate extends Command
         $new = explode("\n", $proposal->new);
         $output->writeln(Diff::format(Diff::compute($old, $new)));
         $output->writeln('');
-    }
-
-    private function confirm(Input $input, Output $output): bool
-    {
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
-
-        return (bool) $helper->ask($input, $output, new ConfirmationQuestion('  <fg=yellow>Apply this change?</> [Y/n] ', true));
     }
 }

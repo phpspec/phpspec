@@ -27,6 +27,23 @@ describe(Consent::class, function () {
         expect($this->output->fetch())->toContain('  Apply this step? [Y/n]');
     });
 
+    it('takes yes and no as words, whatever their case', function (Prompt $prompt) {
+        $consent = new Consent('Run with --accept-offers to %s.', prompt: ($this->answering)($prompt, 'yes', 'YES', 'no', 'maybe'));
+
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeTrue();
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeTrue();
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeFalse();
+        expect($consent->confirm($this->output, '  Apply?', 'k', 'apply'))->toBeFalse();
+    });
+
+    it('tells nobody answering apart from a no, for the caller to decide what nobody means', function (Prompt $prompt) {
+        $consent = new Consent('Run with --accept-offers to %s.', prompt: ($this->answering)($prompt, 'n'));
+
+        expect($consent->decide($this->output, '  Apply?', 'k', 'apply'))->toBeFalse();
+        expect($consent->decide($this->output, '  Apply?', 'k', 'apply'))->toBeNull();
+        expect($this->output->fetch())->not()->toContain('nobody to answer');
+    });
+
     it('says nothing was written, and how to have it anyway, when nobody answers', function (Prompt $prompt) {
         $consent = new Consent('Run phpspec refactor in a terminal to %s.', prompt: ($this->answering)($prompt));
 

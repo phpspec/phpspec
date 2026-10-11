@@ -4,6 +4,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Next;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
@@ -220,6 +221,27 @@ describe(Next::class, function () {
             expect($fakeGenerate->received)->toBe('a feature for deleting_a_task');
             expect($tester->getDisplay())->toContain('feature written');
             expect($tester->getDisplay())->not()->toContain('Specification');
+        });
+
+        it('hints the command, running nothing, when nobody answers', function (Filesystem $fs, Prompt $prompt) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($prompt->ask())->toReturn(null);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'feature',
+                'target' => 'deleting_a_task',
+                'reason' => 'The suite is green; grow the story.',
+            ];
+            $cmd = new Next(Configuration::load('.', $fs), $fs, $suggestFn, prompt: $prompt);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
+            expect($tester->getDisplay())->toContain('Run:');
+            expect($tester->getDisplay())->toContain('generate "a feature for deleting_a_task"');
         });
 
         it('hints generate for a feature suggestion when not interactive', function (Filesystem $fs) {

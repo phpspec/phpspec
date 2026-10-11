@@ -26,16 +26,20 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
  *     2. Yes, and don't ask again — always <action>
  *     3. No
  *
- * On a TTY a single keypress decides — 1/2/3, y (yes), a (always), n or
- * Esc (no), no Enter needed — and the arrow keys move the highlight with
+ * On a TTY a single keypress decides (1/2/3, y for yes, a for always, n or
+ * Esc for no), no Enter needed, and the arrow keys move the highlight with
  * Enter confirming it. Piped input falls back to reading one answer line
- * (digits or y/a/n; empty defaults to yes) so scripted sessions keep
- * working. Option 2 is remembered per question kind for the session, so
- * later questions of the same kind auto-accept without prompting.
- * Non-interactive sessions print the question and auto-accept.
+ * (a digit, or y/yes, a/always, n/no; empty is yes, anything else no) so
+ * scripted sessions keep working. Input that ends is nobody answering:
+ * nothing is done, and the chooser says so. Option 2 is remembered per
+ * question kind for the session, so later questions of the same kind
+ * auto-accept without prompting. Non-interactive sessions print the
+ * question and auto-accept.
  */
 final class Chooser
 {
+    private const NOBODY = 0;
+
     /** @var array<string, true> question kinds answered with "always" this session */
     private array $always = [];
 
@@ -54,11 +58,11 @@ final class Chooser
     /**
      * @param PairOutput $output the pair screen to render into
      * @param bool $interactive whether a user is attached; false auto-accepts
-     * @param Closure|null $reader reads one answer line (piped input); injectable
-     *                             for specs, defaults to the stdin flow
-     * @param Closure|null $keys reads one raw key token (TTY input); injectable
-     *                           for specs — when given, key mode is used without
-     *                           touching the real terminal
+     * @param (Closure(): (string|null))|null $reader reads one answer line (piped input), null once
+     *                                         the input ends; injectable for specs, defaults to the stdin flow
+     * @param (Closure(): (string|null))|null $keys reads one raw key token (TTY input), null once the
+     *                                       input ends; injectable for specs, and when given, key mode is
+     *                                       used without touching the real terminal
      * @param Notes|null $notes the session's note book every answer reports to;
      *                          defaults to one of its own
      */
@@ -71,7 +75,7 @@ final class Chooser
         ?Closure $keys = null,
         ?Notes $notes = null,
     ) {
-        $this->reader = $reader ?? fn(): string => $this->readAnswer();
+        $this->reader = $reader ?? fn(): ?string => $this->readAnswer();
         $this->keys = $keys;
         $this->notes = $notes ?? new Notes();
         // Only probe the real terminal when no input source was injected,
@@ -154,17 +158,23 @@ final class Chooser
     /**
      * Applies the chosen option: records "always", reports acceptance.
      *
-     * @param int $choice the selected option (1 yes, 2 always, 3 no)
+     * @param int $choice the selected option (1 yes, 2 always, 3 no), or nobody's
      * @param string $kind the question kind for "always" memory
      * @return bool true when option 1 or 2 was chosen
      */
     private function resolve(int $choice, string $kind): bool
     {
+        if ($choice === self::NOBODY) {
+            $this->output->getOutput()->writeln('  <fg=yellow>Nothing was written: there is nobody to answer.</>');
+
+            return false;
+        }
+
         if ($choice === 2) {
             $this->always[$kind] = true;
         }
 
-        return $choice !== 3;
+        return $choice === 1 || $choice === 2;
     }
 
     /**
@@ -192,6 +202,10 @@ final class Chooser
 
             while (true) {
                 $key = $this->keys !== null ? ($this->keys)() : $this->readKeyToken();
+
+                if ($key === null) {
+                    return self::NOBODY;
+                }
 
                 if ($note !== null) {
                     switch ($key) {
@@ -277,16 +291,21 @@ final class Chooser
         $rendered = false;
         $this->renderOptions(1, $action, $rendered);
 
-        $answer = trim(($this->reader)());
+        $answer = ($this->reader)();
+        if ($answer === null) {
+            return self::NOBODY;
+        }
+
+        $answer = trim($answer);
         if (str_contains($answer, ',')) {
             [$answer, $note] = explode(',', $answer, 2);
             $this->note = trim($note);
         }
 
         return match (strtolower(trim($answer))) {
-            '2', 'a' => 2,
-            '3', 'n' => 3,
-            default => 1,
+            '', '1', 'y', 'yes' => 1,
+            '2', 'a', 'always' => 2,
+            default => 3,
         };
     }
 
@@ -333,14 +352,14 @@ final class Chooser
      * Reads one raw key token from the terminal: a single character, or a
      * complete escape sequence for the arrow keys (bare Esc stays a lone \033).
      *
-     * @return string the key token
+     * @return string|null the key token, null once the input has ended
      */
-    private function readKeyToken(): string
+    private function readKeyToken(): ?string
     {
         $char = fgetc(STDIN);
 
         if ($char === false) {
-            return "\n";
+            return null;
         }
 
         if ($char !== "\033") {
@@ -367,13 +386,19 @@ final class Chooser
      * Reads one answer line from piped stdin, cooperating with the pair
      * screen's reserved input row.
      *
-     * @return string the raw answer
+     * @return string|null the raw answer, null once the input has ended
      */
-    private function readAnswer(): string
+    private function readAnswer(): ?string
     {
         $this->output->prepareForInput();
-        $result = trim((string) fgets(STDIN));
+        $line = fgets(STDIN);
         $this->output->returnToContent();
+
+        if ($line === false) {
+            return null;
+        }
+
+        $result = trim($line);
         $this->output->echoInput($result !== '' ? $result : '1');
 
         return $result;

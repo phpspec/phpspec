@@ -4,6 +4,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Generate;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -71,6 +72,34 @@ describe(Generate::class, function () {
         expect($out)->toContain('[NEW FILE]');
         expect($out)->toContain('src/App/Calc.php');
         expect($out)->toContain('phpspec accept o_');
+        expect($projectWrites($written))->toBe([]);
+    });
+
+    it('writes the change when told yes', function (Filesystem $fs) use ($withAi, $proposing, $projectWrites) {
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+        $tester = new CommandTester(new Generate($withAi(), $fs, $proposing()));
+        $tester->setInputs(['yes']);
+
+        $tester->execute(['instruction' => ['a', 'Calc', 'class']]);
+
+        expect($tester->getDisplay())->toContain('Created src/App/Calc.php');
+        expect(array_keys($projectWrites($written)))->toBe([getcwd() . '/src/App/Calc.php']);
+    });
+
+    it('offers the change rather than writing it when nobody answers', function (Filesystem $fs, Prompt $prompt) use ($withAi, $proposing, $projectWrites) {
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+        allow($prompt->ask())->toReturn(null);
+        $tester = new CommandTester(new Generate($withAi(), $fs, $proposing(), $prompt));
+
+        $tester->execute(['instruction' => ['a', 'Calc', 'class']]);
+
+        expect($tester->getDisplay())->toContain('phpspec accept o_');
         expect($projectWrites($written))->toBe([]);
     });
 

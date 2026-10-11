@@ -31,7 +31,7 @@ if (!function_exists('_pair_exec')) {
 
         $process = proc_open($cmd, $descriptors, $pipes, $world->projectDir);
 
-        if ($answers !== null) {
+        if ($answers !== null && $answers !== '') {
             fwrite($pipes[0], implode("\n", array_map('trim', explode(',', $answers))) . "\n");
         }
         fclose($pipes[0]);
@@ -100,6 +100,10 @@ when('I run phpspec pair with input {string}', function (string $input) {
 
 when('I run phpspec pair with input {string} answering {string}', function (string $input, string $answers) {
     _pair_exec($this, $input, $answers);
+});
+
+when('I run phpspec pair with input {string} and nobody answering', function (string $input) {
+    _pair_exec($this, $input, '');
 });
 
 when('I start a pair session', function () {

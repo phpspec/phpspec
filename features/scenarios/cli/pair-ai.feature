@@ -86,6 +86,11 @@ Feature: AI-assisted pair programming
     And the output should contain "3. No"
     And a class file "src/App/Wanted.php" should be generated
 
+  Scenario: Input that ends before an answer creates nothing
+    When I run phpspec pair with input "/describe App/Unanswered" and nobody answering
+    Then the output should contain "Nothing was written: there is nobody to answer."
+    And no file "src/App/Unanswered.php" should be generated
+
   Scenario: Answering No declines the offer
     When I run phpspec pair with input "/describe App/Declined" answering "3,3"
     Then no file "src/App/Declined.php" should be generated

@@ -31,18 +31,19 @@ use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\Console\Consent;
+use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\StoryBDD\StepVocabulary;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface as Output;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * @internal
@@ -74,6 +75,7 @@ final class Next extends Command
         ?callable $suggestFn = null,
         ?SpecRunner $specRunner = null,
         private readonly ?ProviderInterface $provider = null,
+        private readonly ?Prompt $prompt = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->suggestFn = $suggestFn;
@@ -310,24 +312,23 @@ final class Next extends Command
     }
 
     /**
-     * Offers to act on the suggestion: a printed hint when not interactive, a
-     * [Y/n] confirmation and the command run when it is.
+     * Offers to act on the suggestion: a [Y/n] confirmation and the command
+     * run on a yes, the command to run printed when nobody is there to ask.
      *
      * @param array<string, mixed> $args the bound arguments for the command
      */
     private function offerToRun(Input $input, Output $output, string $hint, string $command, array $args, string $ask = 'Would you like me to create that for you?'): int
     {
-        if (!$input->isInteractive()) {
+        $consent = new Consent('', prompt: $this->prompt ?? new Prompt($input instanceof StreamableInputInterface ? $input->getStream() : null));
+        $decided = $input->isInteractive() ? $consent->decide($output, "  <fg=yellow>$ask</>", 'next', 'act on suggestions') : null;
+
+        if ($decided === null) {
             $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' ' . $hint);
 
             return 0;
         }
 
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
-        $question = new ConfirmationQuestion("  <fg=yellow>$ask</> [Y/n] ", true);
-
-        if (!$helper->ask($input, $output, $question)) {
+        if (!$decided) {
             return 0;
         }
 
