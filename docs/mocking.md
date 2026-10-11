@@ -134,9 +134,14 @@ App\Stock::reserve() takes 2 arguments (string $item, int $quantity), so a call 
 Write the arguments it is called with, any() for one whose value does not matter, or cetera() for the rest.
 ```
 
-The code under spec calling a double with too few arguments fails as it would
-on the real object: `Too few arguments to function App\Stock::reserve(), 1
-passed in src/App/Checkout.php on line 8 and exactly 2 expected`.
+An argument of a type the method does not take is refused the same way. The
+code under spec calling a double with too few arguments, or with an argument
+of the wrong type, fails as it would on the real object, its argument coerced
+or held strictly as the file it calls from declares:
+
+```
+App\Stock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in src/App/Checkout.php on line 11
+```
 
 The spec file itself is free to call anything: that is how `allow()` and
 `expect()` reach the call they declare. A collaborator whose calls do not

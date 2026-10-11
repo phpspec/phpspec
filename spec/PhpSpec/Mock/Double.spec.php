@@ -36,8 +36,16 @@ interface DoubleSpecTill {
 define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
 if (!function_exists('double_spec_outsider_reserves')) {
     register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
-    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\n");
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\n");
     require DOUBLE_SPEC_OUTSIDER;
+}
+
+// The same, in a file that declares strict types.
+define('DOUBLE_SPEC_STRICT_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_strict_outsider_' . getmypid() . '.php');
+if (!function_exists('double_spec_strict_outsider_reserves_with')) {
+    register_shutdown_function(static fn() => is_file(DOUBLE_SPEC_STRICT_OUTSIDER) && unlink(DOUBLE_SPEC_STRICT_OUTSIDER));
+    file_put_contents(DOUBLE_SPEC_STRICT_OUTSIDER, "<?php\n\ndeclare(strict_types=1);\n\nfunction double_spec_strict_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\n");
+    require DOUBLE_SPEC_STRICT_OUTSIDER;
 }
 
 interface DoubleSpecLedger {
@@ -897,6 +905,29 @@ describe(Double::class, function() {
             }
 
             expect(false)->toBeTrue();
+        });
+
+        it("fails a call the code under spec makes with an argument of the wrong type, as PHP would", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve(cetera()))->toReturn(true);
+
+            expect(fn() => double_spec_outsider_reserves_with($stock, 'tea', 'two'))->toThrow(TypeError::class, sprintf('DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in %s on line 5', str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER))));
+            expect(fn() => double_spec_strict_outsider_reserves_with($stock, 'tea', '2'))->toThrow(TypeError::class, sprintf('DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in %s on line 5', str_replace('\\', '/', realpath(DOUBLE_SPEC_STRICT_OUTSIDER))));
+        });
+
+        it("takes an argument the way the code under spec hands it to the real object, coerced where its file allows", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+            allow($stock->reserve('tea', 2))->toReturn(true);
+
+            expect(double_spec_outsider_reserves_with($stock, 'tea', '2'))->toBeTrue();
+        });
+
+        it("is refused where the spec writes it with an argument the method could never take", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            expect(fn() => $stock->reserve('tea', 'two'))->toThrow(LogicException::class, 'DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, string given, so a call written with it can never be made.');
+            expect(fn() => $stock->reserve(any(), [2]))->toThrow(LogicException::class, 'DoubleSpecStock::reserve(): Argument #2 ($quantity) must be of type int, array given, so a call written with it can never be made.');
+            expect(fn() => $stock->reserve('tea', any()))->not()->toThrow();
         });
 
         it("takes a call that leaves out an argument with a default as the call with that default", function () {

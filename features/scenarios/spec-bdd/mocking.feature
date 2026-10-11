@@ -496,6 +496,50 @@ Feature: Mocking
     Then the exit code should be 1
     And the output should contain "Too few arguments to function App\Stock::reserve(), 1 passed in src/App/Checkout.php on line 8 and exactly 2 expected"
 
+  Scenario: The code under spec calling a double with an argument of the wrong type fails as it would on the real object
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+
+      declare(strict_types=1);
+
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, '2');
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders tea', function (Stock $stock) {
+              allow($stock->reserve('tea', 2))->toReturn(true);
+
+              expect((new Checkout($stock))->order('tea'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "App\Stock::reserve(): Argument #2 ($quantity) must be of type int, string given, called in src/App/Checkout.php on line 11"
+
   Scenario: A stub given what the method cannot return is refused, naming the method
     Given an interface "src/App/Counter.php":
       """

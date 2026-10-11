@@ -18,6 +18,7 @@ use ArgumentCountError;
 use Closure;
 use LogicException;
 use PhpSpec\ProjectRoot;
+use TypeError;
 
 /**
  * @internal
@@ -35,6 +36,7 @@ final readonly class Signature
      * @param int $required how many arguments the method requires
      * @param int|null $takes how many it takes at most, null when it is variadic
      * @param string $parameters the parameter list, as declared
+     * @param list<array{string, string, Closure|null}> $typed each parameter's name, its type as declared, and a closure taking that type alone, null when untyped
      */
     public function __construct(
         private string $class,
@@ -42,22 +44,24 @@ final readonly class Signature
         private int $required,
         private ?int $takes,
         private string $parameters,
+        private array $typed = [],
     ) {}
 
     /**
      * @param array<int|string, mixed> $arguments the arguments the call was made with
+     * @param bool $strict whether the file the call was made from declares strict types
+     * @return list<mixed> the arguments as the real method would be given them, coerced where the calling file allows
      * @throws LogicException when a spec wrote a call that can never be made
-     * @throws ArgumentCountError when the code under spec made one
+     * @throws ArgumentCountError|TypeError when the code under spec made one
      */
-    public function hold(array $arguments, string $file, int $line): void
+    public function hold(array $arguments, string $file, int $line, bool $strict): array
     {
-        if (ArrangingCode::includes($file)) {
-            $this->holdWritten(array_values($arguments));
+        $arguments = array_values($arguments);
+        $written = ArrangingCode::includes($file);
 
-            return;
-        }
-
-        if (count($arguments) < $this->required) {
+        if ($written) {
+            $this->holdWritten($arguments);
+        } elseif (count($arguments) < $this->required) {
             throw new ArgumentCountError(sprintf(
                 'Too few arguments to function %s(), %d passed in %s on line %d and %s %d expected',
                 $this->name(),
@@ -68,6 +72,8 @@ final readonly class Signature
                 $this->required,
             ));
         }
+
+        return $this->typedAsTaken($arguments, $written, $strict, $file, $line);
     }
 
     /**
@@ -75,7 +81,7 @@ final readonly class Signature
      */
     private function holdWritten(array $arguments): void
     {
-        $cetera = $this->positionOf($arguments, static fn(ArgumentMatcher $matcher): bool => $matcher->isCetera());
+        $cetera = $this->ceteraIn($arguments);
 
         if ($cetera !== null && $cetera < count($arguments) - 1) {
             throw new LogicException(sprintf('cetera() stands for the rest of the arguments to %s(), so nothing can follow it.', $this->name()));
@@ -101,13 +107,46 @@ final readonly class Signature
     }
 
     /**
+     * Each argument held to its parameter's type the way PHP holds it, strictly
+     * where the calling file declares strict types, else coerced; a matcher
+     * stands for values and is held to nothing.
+     *
      * @param list<mixed> $arguments
-     * @param Closure(ArgumentMatcher): bool $is
+     * @return list<mixed>
      */
-    private function positionOf(array $arguments, Closure $is): ?int
+    private function typedAsTaken(array $arguments, bool $written, bool $strict, string $file, int $line): array
     {
         foreach ($arguments as $position => $argument) {
-            if ($argument instanceof ArgumentMatcher && $is($argument)) {
+            $parameter = $this->typed[$position] ?? ($this->takes === null && $this->typed !== [] ? $this->typed[count($this->typed) - 1] : null);
+
+            if ($parameter === null || $parameter[2] === null || $argument instanceof ArgumentMatcher) {
+                continue;
+            }
+
+            try {
+                $arguments[$position] = $strict ? (new StrictCall())($parameter[2], $argument) : ($parameter[2])($argument);
+            } catch (TypeError) {
+                $wrong = sprintf('%s(): Argument #%d ($%s) must be of type %s, %s given', $this->name(), $position + 1, $parameter[0], $parameter[1], get_debug_type($argument));
+
+                if ($written) {
+                    throw new LogicException($wrong . ', so a call written with it can never be made.');
+                }
+
+                throw new TypeError(sprintf('%s, called in %s on line %d', $wrong, ProjectRoot::here()->relative($file), $line));
+            }
+        }
+
+        return $arguments;
+    }
+
+
+    /**
+     * @param list<mixed> $arguments
+     */
+    private function ceteraIn(array $arguments): ?int
+    {
+        foreach ($arguments as $position => $argument) {
+            if ($argument instanceof ArgumentMatcher && $argument->isCetera()) {
                 return $position;
             }
         }

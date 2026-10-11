@@ -131,6 +131,9 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
     private \$______phpspec_stubbedReturnCallbacks = [];
     private \$______phpspec_lenient = false;
     private \$______phpspec_declared = [];
+    private \$______phpspec_signatures = [];
+    private \$______phpspec_returnTypes = [];
+    private \$______phpspec_strictFiles = [];
 
     $methods
     $undefinedMethodGuard
@@ -156,6 +159,10 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
 
     public function ______PhpSpecNameOfClassDoubled(): string {
         return '$prefixedClass';
+    }
+
+    private function ______PhpSpecStrictIn(string \$file): bool {
+        return \$this->______phpspec_strictFiles[\$file] ??= (new \PhpSpec\Mock\CallingFile(\$file))->declaresStrictTypes();
     }
 
     public function ______PhpSpecBeLenient(): void {
@@ -429,12 +436,49 @@ PHP;
     private static function holdCode(string $class, ReflectionMethod $method): string
     {
         return sprintf(
-            "\$__frame = \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []; (new \\PhpSpec\\Mock\\Signature(%s, %s, %d, %s, %s))->hold(\\func_get_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0);",
+            "\$__frame = \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []; \$__given = (\$this->______phpspec_signatures[%2\$s] ??= new \\PhpSpec\\Mock\\Signature(%1\$s, %2\$s, %3\$d, %4\$s, %5\$s, %6\$s))->hold(\\func_get_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
             var_export($class, true),
             var_export($method->getName(), true),
             $method->getNumberOfRequiredParameters(),
             $method->isVariadic() ? 'null' : (string) $method->getNumberOfParameters(),
             var_export(self::parameterList($method), true),
+            self::typedCode($method),
+        );
+    }
+
+    /**
+     * The code for each parameter's name, its type as declared, and a closure
+     * taking that type alone, through which an argument is held to it as PHP
+     * holds it; no closure for a parameter that takes anything.
+     */
+    private static function typedCode(ReflectionMethod $method): string
+    {
+        $typed = [];
+
+        foreach ($method->getParameters() as $parameter) {
+            $type = $parameter->getType();
+            $taking = $type === null || ($type instanceof ReflectionNamedType && $type->getName() === 'mixed')
+                ? 'null'
+                : sprintf('static fn(%s $value) => $value', self::typeIn($type, $method));
+            $typed[] = sprintf('[%s, %s, %s]', var_export($parameter->getName(), true), var_export((string) $type, true), $taking);
+        }
+
+        return '[' . implode(', ', $typed) . ']';
+    }
+
+    /**
+     * A type as code outside the class that declares it: self and parent
+     * named for the classes they stand for.
+     */
+    private static function typeIn(ReflectionType $type, ReflectionMethod $method): string
+    {
+        $declaring = $method->getDeclaringClass();
+        $parent = $declaring->getParentClass();
+
+        return (string) preg_replace_callback(
+            '/(?<![\\\\\w])(self|parent)(?![\\\\\w])/',
+            static fn(array $word): string => '\\' . ($word[1] === 'self' || $parent === false ? $declaring->getName() : $parent->getName()),
+            self::formatTypeSyntax($type),
         );
     }
 
@@ -444,7 +488,7 @@ PHP;
      *
      * @param list<ReflectionParameter> $parameters
      */
-    private static function argumentsCode(array $parameters): string
+    private static function argumentsCode(array $parameters, bool $held): string
     {
         $named = [];
 
@@ -454,6 +498,10 @@ PHP;
             }
 
             $named[] = '$' . $parameter->getName();
+        }
+
+        if ($held) {
+            return $named === [] ? '$__given' : sprintf('\\array_merge($__given, \\array_slice([%s], \\count($__given)))', implode(', ', $named));
         }
 
         if ($named === []) {
@@ -703,9 +751,9 @@ PHP;
                 $paramStrings[] = $paramStr;
             }
             $paramString = implode(', ', $paramStrings);
-            $arguments = self::argumentsCode($parameters);
+            $arguments = self::argumentsCode($parameters, $depth === 0);
             $hold = $depth === 0 ? self::holdCode($reflectionClass->getName(), $method) : '';
-            $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('(new \\PhpSpec\\Mock\\ReturnType(%s, %s))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
+            $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
 
             // Unique suffix for MockedMethodFor classes, includes parent class hash to avoid collisions
             $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($reflectionClass->getName() . '::' . $methodName), 0, 8) . '_' . uniqid();
