@@ -183,7 +183,7 @@ expect([1, 2, 3])->toContainEqual('2');   // passes (loose comparison)
 
 ## Comparison Matchers
 
-### `toBeGreaterThan(int|float $value)`
+### `toBeGreaterThan(mixed $value)`
 
 Asserts the subject is greater than the given value.
 
@@ -191,7 +191,7 @@ Asserts the subject is greater than the given value.
 expect(10)->toBeGreaterThan(5);
 ```
 
-### `toBeLessThan(int|float $value)`
+### `toBeLessThan(mixed $value)`
 
 Asserts the subject is less than the given value.
 

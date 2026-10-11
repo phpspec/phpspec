@@ -56,6 +56,7 @@ describe(Expectation::class, function() {
 
     context("key matcher", function() {
         it("passes toHaveKey for existing key", fn() => expect(["a" => 1, "b" => 2])->toHaveKey("a"));
+        it("passes toHaveKey for an integer key", fn() => expect([10, 20])->toHaveKey(1));
     });
 
     context("exception matcher", function() {

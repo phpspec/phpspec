@@ -150,70 +150,67 @@ class Expectation
     }
 
     /**
-     * Asserts strict identity (===) between subject and actual value.
+     * Asserts strict identity (===) between the subject and the expected value.
      *
-     * @param mixed $actual expected value
      * @return static
      */
-    public function toBe(mixed $actual): static
+    public function toBe(mixed $expected): static
     {
         return $this->match(
-            fn($expected) => $actual === $expected,
+            fn($subject) => $expected === $subject,
             'Expected %s to be %s',
             $this->subject,
-            $actual,
-            ['__fake' => self::exportValue($actual)],
+            $expected,
+            ['__fake' => self::exportValue($expected)],
         );
     }
 
     /**
-     * Asserts loose equality (==) between subject and actual value.
+     * Asserts loose equality (==) between the subject and the expected value.
      *
-     * @param mixed $actual expected value
      * @return static
      */
-    public function toBeLike(mixed $actual): static
+    public function toBeLike(mixed $expected): static
     {
         return $this->match(
-            fn($expected) => $actual == $expected,
+            fn($subject) => $expected == $subject,
             'Expected %s to be %s',
             $this->subject,
-            $actual,
-            ['__fake' => self::exportValue($actual)],
+            $expected,
+            ['__fake' => self::exportValue($expected)],
         );
     }
 
     /**
      * Asserts that the subject (array/countable) has the given count.
      *
-     * @param int $actual expected element count
      * @return static
      */
-    public function toHaveCount(mixed $actual): static
+    public function toHaveCount(int $count): static
     {
         return $this->match(
-            fn($expected) => $actual === count($expected),
+            fn($subject) => $count === count($subject),
             'Expected %s to have count %s',
             $this->subject,
-            $actual,
-            ['__fake' => 'array_fill(0, ' . (int) $actual . ', null)'],
+            $count,
+            ['__fake' => 'array_fill(0, ' . $count . ', null)'],
         );
     }
 
     /**
      * Asserts that the subject is an instance of the given class or interface.
      *
-     * @param string $actual fully qualified class name
+     * @param string $class fully qualified class name
      * @return static
      */
-    public function toBeAnInstanceOf(string $actual): static
+    public function toBeAnInstanceOf(string $class): static
     {
         return $this->match(
-            fn($expected) => $expected instanceof $actual,
+            fn($subject) => $subject instanceof $class,
             'Expected %s to be an instance of %s',
             $this->subject,
-            $actual,
-            ['__fake' => 'new \\' . ltrim($actual, '\\') . '()'],
+            $class,
+            ['__fake' => 'new \\' . ltrim($class, '\\') . '()'],
         );
     }
 
@@ -284,17 +281,18 @@ class Expectation
     /**
      * Asserts that the subject contains the given value (in_array for arrays, str_contains for strings).
      *
-     * @param mixed $value element or substring to find
+     * @param mixed $needle element or substring to find
      * @return static
      */
-    public function toContain(mixed $value): static
+    public function toContain(mixed $needle): static
     {
-        $fake = is_string($value) ? self::exportValue($value) : '[' . self::exportValue($value) . ']';
+        $fake = is_string($needle) ? self::exportValue($needle) : '[' . self::exportValue($needle) . ']';
+
         return $this->match(
-            fn($expected) => is_array($expected) ? in_array($value, $expected, true) : str_contains($expected, $value),
+            fn($subject) => is_array($subject) ? in_array($needle, $subject, true) : str_contains($subject, $needle),
             'Expected %s to contain %s',
             $this->subject,
-            $value,
+            $needle,
             ['__fake' => $fake],
         );
     }
@@ -352,13 +350,13 @@ class Expectation
     /**
      * Asserts that the subject array has the given key.
      *
-     * @param string $key array key to check
+     * @param string|int $key array key to check
      * @return static
      */
-    public function toHaveKey(string $key): static
+    public function toHaveKey(string|int $key): static
     {
         return $this->match(
-            fn($expected) => is_array($expected) && array_key_exists($key, $expected),
+            fn($subject) => is_array($subject) && array_key_exists($key, $subject),
             'Expected %s to have key %s',
             $this->subject,
             $key,

@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `refactor` takes a short class name (`refactor Calculator`, the one modified last under `src_path`), a slashed one (`App/Calculator`), a source file, or no target, meaning the source file modified last; `/refactor` in pair takes the same. A name no class answers to is refused with the `describe` command that gives it one
  - `refactor --format=agent` answers with the plan as one JSON receipt, offered once and whole, or the model's reason to decline; `accept` carries the plan out unattended and names the files written, or where it stopped
 ### Changed
+ - Matchers take their arguments by the names the docs give them: `toBe(expected:)`, `toBeLike(expected:)`, `toBeAnInstanceOf(class:)`, `toHaveCount(count:)` (an `int`), `toContain(needle:)`
  - `toThrow()`'s first parameter is named `$exception`, as it takes an exception or its class; a call that named `exceptionClass:` names `exception:`
  - `generate` and `next` under `--format=agent` answer with the receipt every other command gives, `{"v":2,"action":"generate",...}`, where they nested it under `command`; a model that does not answer is refused as an `error`, exit 1, where it read as a suggestion or as nothing generated
  - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
@@ -70,6 +71,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
+ - `toHaveKey()` takes an integer key in a spec that declares strict types, as documented, where it threw a TypeError
  - Line selectors add up: a line that runs a whole context keeps every example in it, nested contexts included, where another selector inside one of its examples narrowed it to that one; an example at the top of a file runs by its line, where it ran nothing
  - `--fake` writes each value exactly as the spec wrote it, where a string holding a double quote or a NUL byte, a float such as `90.0` or `0.1 + 0.2`, and `PHP_INT_MIN` came back changed; it fills a method called on a subject built inline, `expect((new Greeter())->greet())`, which it passed over
  - Two examples of one title in one context, or two scenarios of one title in one feature, are numbered, `returns the total #2`, in every formatter and in the agent id; they shared one name and one id
