@@ -4,6 +4,7 @@ use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\Formatter\Agent;
 use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
+use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
@@ -475,7 +476,7 @@ describe(Agent::class, function () {
         expect($doc['examples'])->toBe([[
             'v' => 2,
             'event' => 'example',
-            'id' => substr(sha1('App\\Basket > holds products'), 0, 12),
+            'id' => substr(sha1("spec/App/Basket.spec.php\n" . 'App\\Basket > holds products'), 0, 12),
             'example' => 'App\\Basket > holds products',
             'state' => 'passing',
             'spec' => 'spec/App/Basket.spec.php:7',
@@ -915,6 +916,33 @@ describe(Agent::class, function () {
         expect($doc['examples'][0]['steps'][1])->toBe(['title' => 'Then I see a receipt', 'state' => 'skipped', 'message' => 'No printer here']);
     });
 
+    it('names an example by every describe and context it sits in, and tells files that share every title apart', function () use ($render) {
+        $failing = function (string $file, int $line): ExampleResult {
+            $example = new ExampleResult('returns the total', [MatchResult::failed(0, 1, 'Expected 0 to be 1', __FILE__, __LINE__)]);
+            $example->declaredAt(getcwd() . '/' . $file, $line);
+
+            return $example;
+        };
+
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('Total', [new ContextResult('App\\Total', [
+                new ContextResult('when empty', [$failing('spec/App/Total.spec.php', 4)]),
+                new ContextResult('when full', [$failing('spec/App/Total.spec.php', 7)]),
+            ])]),
+            new SpecificationResult('Total', [new ContextResult('App\\Total', [
+                new ContextResult('when empty', [$failing('spec/Legacy/Total.spec.php', 4)]),
+            ])]),
+        ]));
+
+        expect(array_column($doc['examples'], 'example'))->toBe([
+            'Total > App\\Total > when empty > returns the total',
+            'Total > App\\Total > when full > returns the total',
+            'Total > App\\Total > when empty > returns the total',
+        ]);
+        expect(array_unique(array_column($doc['examples'], 'id')))->toHaveLength(3);
+        expect($doc['examples'][0]['id'])->toBe(substr(sha1("spec/App/Total.spec.php\nTotal > App\\Total > when empty > returns the total"), 0, 12));
+    });
+
     it('counts a story run in scenarios and steps, never in examples', function () use ($render) {
         $step = new StepResult('Given a basket', 'failure');
         $step->setError(new \PhpSpec\StoryBDD\StepError('step went wrong', new \RuntimeException('step went wrong')));
@@ -932,7 +960,7 @@ describe(Agent::class, function () {
         expect($doc['examples'][0]['state'])->toBe('failing');
         expect($doc['examples'][0]['example'])->toBe('Shopping > Checkout');
         expect($doc['examples'][0]['message'])->toBe('step went wrong');
-        expect($doc['examples'][0]['id'])->toBe(substr(sha1($doc['examples'][0]['example']), 0, 12));
+        expect($doc['examples'][0]['id'])->toBe(substr(sha1("/features/shopping.feature\n" . $doc['examples'][0]['example']), 0, 12));
     });
 
     it('carries the steps that were not passing, so the broken one is named', function () use ($render) {

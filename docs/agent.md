@@ -38,8 +38,8 @@ class) produces four lines:
 
 ```json
 {"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}
-{"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
-{"v":2,"event":"example","id":"66b1647a77b6","example":"App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
+{"v":2,"event":"example","id":"6fd046add251","example":"Basket > App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
+{"v":2,"event":"example","id":"66b1647a77b6","example":"Basket > App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
 {"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"risky":0,"warnings":0,"deprecations":0,"notices":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
 ```
 
@@ -86,8 +86,8 @@ Scenario Outline is its own entry, named by its values
 
 | Field | Meaning |
 |---|---|
-| `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
-| `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
+| `id` | A stable identifier for this example: a hash of the file it lives in and its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs, and it tells apart examples that share every title in different files. Recomputable from the file in `spec` and `example`. |
+| `example` | The full name, as a path through the spec file, every `describe` and `context`, and the example: `Basket > App\Basket > when empty > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
 | `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` when it raised a PHP warning, deprecation or notice, and otherwise only under `-v`. |
 | `message` | What went wrong, whatever the state; for `pending` and `skipped`, the reason the example gave, when it gave one. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing, pending or skipped example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
@@ -171,7 +171,7 @@ library's code calling it is left out, as it is on the console (see
 [Warnings, deprecations and notices](writing-specs.md#warnings-deprecations-and-notices)).
 
 ```json
-{"v":2,"event":"example","id":"4c2e34fc4bc4","example":"App\\Ledger > totals the entries","state":"passing","spec":"spec/App/Ledger.spec.php:3","rerun":"run spec/App/Ledger.spec.php:3","warnings":[{"message":"totals are rounded","at":"src/App/Ledger.php:9"}]}
+{"v":2,"event":"example","id":"4c2e34fc4bc4","example":"Ledger > App\\Ledger > totals the entries","state":"passing","spec":"spec/App/Ledger.spec.php:3","rerun":"run spec/App/Ledger.spec.php:3","warnings":[{"message":"totals are rounded","at":"src/App/Ledger.php:9"}]}
 {"v":2,"event":"example","id":"ffd3b79b2ddb","example":"Counting > Counting up","state":"passing","steps":[{"title":"Given I run the counter","state":"passing","deprecations":[{"message":"run() is deprecated, use count()","at":"features/steps/steps.php:4"}]}],"spec":"features/counting.feature:2","rerun":"run features/counting.feature:2"}
 ```
 

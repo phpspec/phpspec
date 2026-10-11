@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
 
 ### Fixed
+ - An agent entry is named by every `describe` and `context` it sits in, as the other formatters name it, and its `id` hashes its file with that name: examples of one title in different contexts, classes of one name in different namespaces, and specs or features that share every title in different files shared one id
  - A path runs as features when it is a `.feature` file or lies inside `features_path`, and as specs otherwise: a spec under `spec/features/`, or one whose name holds the word, ran as features and found nothing, and a `features_path` of another name ran nothing under `--story`, `--all` or by its path
  - A double's method returning `true`, `false` or `parent` answers a call nobody stubbed, where even arranging the call threw; one returning `self` or `parent` takes a stub of the class it stands for, where it took only the double's own class
  - A stub is held strictly to what the real method returns: a value it could never return is refused where the spec sets it, and a `toReturnUsing()` callback's answer when the call is made, naming the real method; it failed only at the call, naming the double's generated class, and `toReturn()` on a `void` method was ignored

@@ -593,6 +593,84 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the report should have 1 entry
 
+  Scenario: Examples of one title in different contexts are told apart by name and id
+    Given a spec file "spec/App/Total.spec.php":
+      """
+      <?php
+      describe('Total', function () {
+          context('when empty', function () {
+              it('returns the total', fn () => expect(0)->toBe(1));
+          });
+          context('when full', function () {
+              it('returns the total', fn () => expect(100)->toBe(101));
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain "when empty > returns the total"
+    And the output should contain "when full > returns the total"
+
+  Scenario: Classes of one name in different namespaces are told apart by name and id
+    Given a spec file "spec/App/Billing/Invoice.spec.php":
+      """
+      <?php
+      describe(App\Billing\Invoice::class, function () {
+          it('totals', fn () => expect(1)->toBe(2));
+      });
+      """
+    And a spec file "spec/App/Shipping/Invoice.spec.php":
+      """
+      <?php
+      describe(App\Shipping\Invoice::class, function () {
+          it('totals', fn () => expect(3)->toBe(4));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain:
+      """
+      App\\Billing\\Invoice > totals
+      """
+    And the output should contain:
+      """
+      App\\Shipping\\Invoice > totals
+      """
+
+  Scenario: Specs that share every title, in different files, are told apart by id
+    Given a spec file "spec/App/Billing/Ledger.spec.php":
+      """
+      <?php
+      describe('Ledger', function () {
+          it('balances', fn () => expect(1)->toBe(2));
+      });
+      """
+    And a spec file "spec/App/Shipping/Ledger.spec.php":
+      """
+      <?php
+      describe('Ledger', function () {
+          it('balances', fn () => expect(3)->toBe(4));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+
+  Scenario: Features of one title in different files are told apart by id
+    Given a feature file "features/checkout/paying.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    And a feature file "features/returns/paying.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--story --format=agent"
+    Then the failing entries should have distinct ids
+
   Scenario: Each row of a scenario outline is told apart by its values
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/adding.feature":

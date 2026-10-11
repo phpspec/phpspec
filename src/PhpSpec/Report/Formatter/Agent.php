@@ -26,6 +26,7 @@ use PhpSpec\Report\Formatter\Agent\Origin;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Report\Formatter\Agent\ValueExporter;
+use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
@@ -449,7 +450,7 @@ final class Agent extends AbstractFormatter
         return match (true) {
             $result instanceof FeatureResult => $origin->within($result->getTitle(), $result->getPath()),
             $result instanceof ScenarioResult => $origin->within($result->getTitle(), line: $result->getLine()),
-            $result instanceof SpecificationResult => $origin->within($result->getTitle()),
+            $result instanceof SpecificationResult, $result instanceof ContextResult => $origin->within($result->getTitle()),
             default => $origin,
         };
     }
@@ -528,7 +529,7 @@ final class Agent extends AbstractFormatter
         $entry = [
             'v' => Schema::V,
             'event' => Schema::EVENT_EXAMPLE,
-            'id' => $this->identify($name),
+            'id' => $this->identify($name, $example->getFile()),
             'example' => $name,
             'state' => $state,
         ];
@@ -798,7 +799,7 @@ final class Agent extends AbstractFormatter
         $entry = [
             'v' => Schema::V,
             'event' => Schema::EVENT_EXAMPLE,
-            'id' => $this->identify($origin->name),
+            'id' => $this->identify($origin->name, $origin->path),
             'example' => $origin->name,
             'state' => $state,
         ];
@@ -893,9 +894,14 @@ final class Agent extends AbstractFormatter
      * points into src/, not the spec). Lets an agent ask "is THIS exact failure
      * still here?" across runs; recomputable from the emitted `example` field.
      */
-    private function identify(string $name): string
+    /**
+     * A stable identifier for an entry: the file it lives in, as the project
+     * names it, and its full name. Lines move as a file is edited; neither of
+     * these does, and two files can share every title.
+     */
+    private function identify(string $name, ?string $file): string
     {
-        return substr(sha1($name), 0, 12);
+        return substr(sha1(($file === null ? '' : ProjectRoot::here()->relative($file) . "\n") . $name), 0, 12);
     }
 
     /**
