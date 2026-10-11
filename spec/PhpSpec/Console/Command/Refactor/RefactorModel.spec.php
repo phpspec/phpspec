@@ -72,6 +72,16 @@ describe(RefactorModel::class, function () {
         expect(fn() => $model->plan($this->target, ''))->toThrow(new ModelFailedException('The model did not answer: Google API error (400): API key not valid.'));
     });
 
+    it('asks with the model, the token limit and the effort the configuration sets', function () {
+        $this->replay = new ReplayProvider([$this->plan]);
+        $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k', 'model' => 'gemini-x', 'max_tokens' => 2048, 'effort' => 'low']]);
+
+        (new RefactorModel($this->replay, $config, $this->filesystem, '/proj', new PromptLibrary($this->filesystem)))->plan($this->target, '');
+
+        $options = $this->replay->requests[0]['options'];
+        expect([$options['model'], $options['maxTokens'], $options['effort']])->toBe(['gemini-x', 2048, 'low']);
+    });
+
     it('reads a decline, or an answer in prose, as nothing to refactor, in the model\'s words', function () {
         $declined = ($this->model)(new Response('', [new ToolCall('d1', 'decline_refactoring', ['reason' => 'It does one thing.'])]))->plan($this->target, '');
         $prose = ($this->model)(new Response('Nothing here is worth moving.'))->plan($this->target, '');

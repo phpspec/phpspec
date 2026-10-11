@@ -40,7 +40,6 @@ use Throwable;
 final class Agent
 {
     /** Fallback output-token ceiling; a tight cap returns EMPTY from reasoning models (gemini-3.1-pro-preview at 8192). */
-    private const DEFAULT_MAX_TOKENS = 16384;
 
     private readonly Filesystem $filesystem;
 
@@ -442,24 +441,7 @@ final class Agent
      */
     private function providerOptions(CommandProfile $profile, array $aiConfig): array
     {
-        $options = [
-            'maxTokens' => $aiConfig['maxTokens'] ?? $profile->maxTokens ?? self::DEFAULT_MAX_TOKENS,
-        ];
-
-        // Providers that cannot map effort ignore the option.
-        if (isset($aiConfig['effort'])) {
-            $options['effort'] = $aiConfig['effort'];
-        }
-
-        $model = $aiConfig['model'] ?? (isset($aiConfig['provider']) ? ProviderFactory::defaultModel($aiConfig['provider']) : null);
-        if ($model !== null) {
-            $options['model'] = $model;
-        }
-
-        if ($profile->temperature !== null) {
-            $options['temperature'] = $profile->temperature;
-        }
-
+        $options = $profile->providerOptions($aiConfig);
         $tools = $this->registry->definitions($profile);
         if ($tools !== []) {
             $options['tools'] = $tools;

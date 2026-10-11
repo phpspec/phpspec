@@ -343,24 +343,7 @@ final class RefactorModel
      */
     private function options(array $tools, string|array $choice): array
     {
-        $ai = $this->config->getAiConfig() ?? ['provider' => 'google'];
-        $profile = $this->profile();
-        $options = [
-            'model' => $ai['model'] ?? ProviderFactory::defaultModel($ai['provider']),
-            'maxTokens' => $profile->maxTokens ?? 8192,
-            'tools' => $tools,
-            'toolChoice' => $choice,
-        ];
-
-        if ($profile->temperature !== null) {
-            $options['temperature'] = $profile->temperature;
-        }
-
-        if (isset($ai['effort'])) {
-            $options['effort'] = $ai['effort'];
-        }
-
-        return $options;
+        return $this->profile()->providerOptions($this->config->getAiConfig() ?? []) + ['tools' => $tools, 'toolChoice' => $choice];
     }
 
     private function stepTool(): Tool
