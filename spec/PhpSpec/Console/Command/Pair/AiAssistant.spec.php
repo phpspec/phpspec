@@ -19,19 +19,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 describe(AiAssistant::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturn(false);
-        allow($fs->read(any()))->toReturn('');
-        allow($fs->isDir(any()))->toReturn(false);
-        allow($fs->isFile(any()))->toReturn(false);
-        allow($fs->scandir(any()))->toReturn([]);
         allow($fs->mkdir(any()));
 
-        // Every write is tracked by path; the debug capture under .phpspec/ai/
-        // is bookkeeping, so artifact assertions look through this helper.
+        // Every write is tracked by path, with what it wrote; the debug capture
+        // under .phpspec/ai/ is bookkeeping, so artifact assertions look through
+        // this helper.
         $this->writtenPaths = [];
+        $this->written = [];
         $writtenPaths = &$this->writtenPaths;
-        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$writtenPaths) {
+        $written = &$this->written;
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$writtenPaths, &$written) {
             $writtenPaths[] = $path;
+            $written[$path] = $content;
         });
         $this->artifactWrites = fn() => array_values(array_filter($this->writtenPaths, fn(string $path) => !str_contains($path, '.phpspec/ai/')));
 
@@ -79,27 +78,10 @@ describe(AiAssistant::class, function () {
         };
     });
 
-    it('passes the configured reasoning effort through to the provider', function (Filesystem $fs) {
-        $options = null;
-        $this->provider->responder = function (array $messages, array $chatOptions) use (&$options) {
-            $options = $chatOptions;
-
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k', 'effort' => 'high']]), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('hello');
-
-        expect($options['effort'])->toBe('high');
-    });
-
     it('shows a navigator offer as a diff and applies it on yes', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
-        $written = [];
-        allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
-            $written[$p] = $c;
-        });
         allow($fs->mkdir(any()));
 
         $captured = null;
@@ -124,11 +106,12 @@ describe(AiAssistant::class, function () {
 
         $text = $this->buffer->fetch();
         expect($text)->toContain('add a tasks() accessor');   // the stated intent at the chooser
-        expect(array_filter($written, fn(string $p) => !str_contains($p, '.phpspec/ai/'), ARRAY_FILTER_USE_KEY))->toHaveLength(1);
+        expect(array_filter($this->written, fn(string $p) => !str_contains($p, '.phpspec/ai/'), ARRAY_FILTER_USE_KEY))->toHaveLength(1);
         expect((string) json_encode($captured))->toContain('applied');
     });
 
     it('keeps a declined offer unwritten and steers the model to re-plan', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old");
         allow($fs->mkdir(any()));
@@ -157,6 +140,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('verifies a feature offer with the whole suite, not specs alone', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
         allow($fs->mkdir(any()));
@@ -181,29 +165,8 @@ describe(AiAssistant::class, function () {
         expect($this->specRunner->arguments)->toContain('--all');
     });
 
-    it('keeps the plain spec run when the landed artifact is a spec', function (Filesystem $fs) {
-        allow($fs->mkdir(any()));
-
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', [
-                    'class_name' => 'App/Wanted',
-                ])]);
-            }
-
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['1'];
-        $assistant->handle('spec App/Wanted');
-
-        expect($this->specRunner->arguments)->toContain('');
-        expect($this->specRunner->arguments)->not()->toContain('--all');
-    });
-
     it('winds the turn down after a verified change instead of registering another suggestion', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
         allow($fs->mkdir(any()));
@@ -245,6 +208,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('hands the acceptance note to the model when an offer is applied', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
         allow($fs->mkdir(any()));
@@ -274,6 +238,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('hands the decline note to the model as the direction to take instead', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old");
         allow($fs->mkdir(any()));
@@ -304,6 +269,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects an offer that would drop spec examples, before any chooser', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe('TodoList', function () {\n    it(\"should add\", fn() => expect(null)->toBe(null));\n    it(\"should tasks\", fn() => expect(null)->toBe(null));\n});\n");
 
@@ -330,33 +296,11 @@ describe(AiAssistant::class, function () {
         expect((string) json_encode($captured))->toContain('drop existing examples');
     });
 
-    it('offers replace writes while navigating, and writes replace offers while driving', function (Filesystem $fs) {
-        $names = null;
-        $this->provider->responder = function (array $messages, array $options) use (&$names) {
-            $names = array_column($options['tools'], 'name');
-
-            return new Response('done');
-        };
-
-        $navigator = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $navigator->handle('hello');
-        expect($names)->toContain('offer_change');
-        expect($names)->not()->toContain('write_file');
-
-        $driver = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $driver->handle('hello');
-        expect($names)->toContain('write_file');
-        expect($names)->not()->toContain('offer_change');
-    });
-
     it('allows at most one offer per turn, withholding and refusing the second', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old");
         allow($fs->mkdir(any()));
-        $written = [];
-        allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
-            $written[$p] = $c;
-        });
 
         $secondTurnTools = null;
         $captured = null;
@@ -378,200 +322,14 @@ describe(AiAssistant::class, function () {
         $this->answers = ['1'];
         $assistant->handle('thoughts?');
 
-        $artifacts = array_filter($written, fn(string $p) => !str_contains($p, '.phpspec/ai/'), ARRAY_FILTER_USE_KEY);
+        $artifacts = array_filter($this->written, fn(string $p) => !str_contains($p, '.phpspec/ai/'), ARRAY_FILTER_USE_KEY);
         expect($artifacts)->toHaveLength(1);                               // only the first offer landed
         expect((string) json_encode($captured))->toContain('One offer per turn');
         expect($secondTurnTools)->not()->toContain('offer_change');        // and none advertised after
     });
 
-    it('registers at most one suggestion per turn, ending the advice in prose', function (Filesystem $fs) {
-        $secondTurnTools = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages, array $options) use (&$secondTurnTools, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\First', 'reason' => 'one'])]);
-            }
-            $secondTurnTools = array_column($options['tools'], 'name');
-
-            return new Response('My advice in prose.');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('what next?');
-
-        expect($assistant->lastSuggestion()['target'])->toBe('App\\First');
-        expect($secondTurnTools)->not()->toContain('suggest_next');        // one registration per turn
-    });
-
-    it('registers the model suggestion for the dispatcher ghost', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'suggest_next', [
-                    'type' => 'example',
-                    'target' => 'App\\TodoList',
-                    'reason' => 'The current examples assert null.',
-                ])]);
-            }
-
-            return new Response('Let us make the example real.');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        expect($assistant->lastSuggestion())->toBeNull();
-
-        $assistant->handle('what next?');
-
-        expect($assistant->lastSuggestion())->toBe(['type' => 'example', 'target' => 'App\\TodoList', 'reason' => 'The current examples assert null.']);
-    });
-
-    it('routes ask_user tool calls from the model through the chooser', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'ask_user', [
-                    'question' => 'Do you want me to generate the method fooBar()?',
-                    'action' => 'generate methods',
-                ])]);
-            }
-            $captured = $messages;
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $this->answers = ['2'];
-        $assistant->handle('add a fooBar method');
-
-        $text = $this->buffer->fetch();
-        expect($text)->toContain('Do you want me to generate the method fooBar()?');
-        expect($text)->toContain('1. Yes');
-        expect((string) json_encode($captured))->toContain('always');
-    });
-
-    it('does not advertise write tools while the human drives', function (Filesystem $fs) {
-        $captured = null;
-        $this->provider->responder = function (array $messages, array $options) use (&$captured) {
-            $captured = $options;
-            return new Response('ok');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('write me a spec for a Calculator');
-
-        $names = array_column($captured['tools'] ?? [], 'name');
-        expect($names)->not()->toContain('describe');
-        expect($names)->not()->toContain('write_file');
-        expect($names)->not()->toContain('add_example');
-        expect($names)->toContain('read_file');
-        expect($names)->toContain('run_specs');
-        // Read tools like inspect_symbol stay available while navigating.
-        expect($names)->toContain('inspect_symbol');
-    });
-
-    it('refuses a write tool call while the human drives', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', [
-                    'class_name' => 'App/Thing',
-                ])]);
-            }
-            $captured = $messages;
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('write a spec');
-
-        expect(($this->artifactWrites)())->toBe([]);
-        expect((string) json_encode($captured))->toContain('navigating');
-        // A refused write is not displayed as if it ran.
-        expect($this->buffer->fetch())->not()->toContain('Describe');
-    });
-
-    it('blocks write tools when the chooser declines', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', [
-                    'class_name' => 'App/Wanted',
-                ])]);
-            }
-            $captured = $messages;
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['3'];
-        $assistant->handle('spec App/Wanted');
-
-        expect(($this->artifactWrites)())->toBe([]);
-        // Declining steers the driver back into the cycle, rather than a bare "declined".
-        expect((string) json_encode($captured))->toContain('declined this step');
-    });
-
-    it('hands an ask_user note back to the model with the answer', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'ask_user', [
-                    'question' => 'Shall I generate fooBar()?',
-                    'action' => 'generate methods',
-                ])]);
-            }
-            $captured = $messages;
-
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $this->answers = ['3, name it barFoo instead'];
-        $assistant->handle('what next?');
-
-        $text = (string) json_encode($captured);
-        expect($text)->toContain('no. The human added');
-        expect($text)->toContain('name it barFoo instead');
-    });
-
-    it('hands the confirm-step notes to the driving model, on yes and on no', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', [
-                    'class_name' => 'App/Wanted',
-                ])]);
-            }
-            $captured = $messages;
-
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['3, exemplify addTask first'];
-        $assistant->handle('spec App/Wanted');
-
-        $text = (string) json_encode($captured);
-        expect($text)->toContain('exemplify addTask first');
-        expect($text)->toContain('Address that');
-
-        $captured = null;
-        $turn = 0;
-        allow($fs->mkdir(any()));
-        $accepting = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, new RoleState(PairRole::AiDrives), $this->specRunner);
-        $this->answers = ['1, then run it'];
-        $accepting->handle('spec App/Wanted');
-
-        $text = (string) json_encode($captured);
-        expect($text)->toContain('The human added');
-        expect($text)->toContain('then run it');
-    });
-
     it('ends the driver turn after one artifact instead of chasing a bigger goal', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe(A::class, function () {});\n");
 
@@ -604,6 +362,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects phpspec 8 ObjectBehavior syntax written to a spec path via update_file', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Wallet::class, function () {});\n");
 
@@ -666,35 +425,6 @@ describe(AiAssistant::class, function () {
         expect((string) json_encode($captured))->toContain('reuse');
     });
 
-    it('writes generated steps to steps.php, or to the steps file the assistant names', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            return match (++$turn) {
-                1 => new Response('', [new ToolCall('t1', 'generate_steps', ['content' => "<?php\ngiven(\"a fresh step\", function () {});\n"])]),
-                default => new Response('done'),
-            };
-        };
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['1'];
-        $assistant->handle('write the steps');
-
-        expect(($this->artifactWrites)())->toBe([getcwd() . '/features/steps/steps.php']);
-
-        $turn = 0;
-        $this->writtenPaths = [];
-        $this->provider->responder = function () use (&$turn) {
-            return match (++$turn) {
-                1 => new Response('', [new ToolCall('t1', 'generate_steps', ['steps_file' => 'web', 'content' => "<?php\ngiven(\"I visit {string}\", function (string \$url) {});\n"])]),
-                default => new Response('done'),
-            };
-        };
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['1'];
-        $assistant->handle('write the web steps');
-
-        expect(($this->artifactWrites)())->toBe([getcwd() . '/features/steps/web.steps.php']);
-    });
-
     it('rejects generated steps that drop a definition the steps file already holds', function (Filesystem $fs) {
         $cwd = getcwd();
         allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps/steps.php'], true));
@@ -729,6 +459,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects shouldXxx spec content even without the ObjectBehavior literal', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Basket::class, function () {});\n");
 
@@ -758,39 +489,8 @@ describe(AiAssistant::class, function () {
         expect((string) json_encode($captured))->toContain('phpspec 9');
     });
 
-    it('writes only one artifact per turn while driving, rejecting the rest', function (Filesystem $fs) {
-        $captured = null;
-        $secondTurnMessages = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages, array $options) use (&$captured, &$secondTurnMessages, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [
-                    new ToolCall('t1', 'generate_feature', ['feature_name' => 'checkout', 'content' => 'Feature: Checkout']),
-                    new ToolCall('t2', 'generate_steps', ['content' => '<?php // steps']),
-                    new ToolCall('t3', 'write_file', ['path' => 'src/App/Checkout.php', 'content' => '<?php // class']),
-                ]);
-            }
-            $captured = $options;
-            $secondTurnMessages = $messages;
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['2'];
-        $assistant->handle('build the checkout feature');
-
-        // Only the first artifact is written; the other two are rejected.
-        expect(($this->artifactWrites)())->toHaveLength(1);
-        expect((string) json_encode($secondTurnMessages))->toContain('One artifact per turn');
-
-        // Once an artifact is written, no further write tools are advertised this turn.
-        $names = array_column($captured['tools'] ?? [], 'name');
-        expect($names)->not()->toContain('generate_feature');
-        expect($names)->not()->toContain('write_file');
-        expect($names)->toContain('run_specs');
-    });
-
     it('updates an existing file showing what changed', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old body\n");
 
@@ -813,6 +513,7 @@ describe(AiAssistant::class, function () {
     });
 
     it('rejects a spec overwrite via update_file that would drop existing examples', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         // The spec on disk has two examples; the rewrite keeps only one.
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"adds\", fn() => null);\n    it(\"subtracts\", fn() => null);\n});\n");
@@ -839,14 +540,9 @@ describe(AiAssistant::class, function () {
     });
 
     it('appends a single example with add_example instead of rewriting the whole spec', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
-        $written = null;
-        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
-            if (!str_contains($path, '.phpspec/ai/')) {
-                $written = $content;
-            }
-        });
 
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
@@ -866,11 +562,13 @@ describe(AiAssistant::class, function () {
         $text = $this->buffer->fetch();
         expect($text)->toContain('[MODIFIED]');
         expect($text)->not()->toContain('[NEW FILE]');
-        expect($written)->toContain('should total');
-        expect($written)->toContain('instantiates');
+        $artifact = implode('', array_filter($this->written, fn(string $path) => !str_contains($path, '.phpspec/ai/'), ARRAY_FILTER_USE_KEY));
+        expect($artifact)->toContain('should total');
+        expect($artifact)->toContain('instantiates');
     });
 
     it('does not duplicate an example when add_example targets an already-exemplified method', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n    it(\"should total\", fn() => null);\n});\n");
 
@@ -893,23 +591,8 @@ describe(AiAssistant::class, function () {
         expect($this->buffer->fetch())->toContain('already exists');
     });
 
-    it('starts a new spec with describe, writing a skeleton', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', ['class_name' => 'App/Ledger'])]);
-            }
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['1'];
-        $assistant->handle('start a ledger spec');
-
-        expect(($this->artifactWrites)())->not()->toBe([]);
-    });
-
     it('is idempotent: describe on an existing spec writes nothing', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Ledger::class, function () {});\n");
 
@@ -929,93 +612,8 @@ describe(AiAssistant::class, function () {
         expect($this->buffer->fetch())->toContain('already exists');
     });
 
-    it('allows a source write via write_file, unaffected by the spec guard', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'write_file', [
-                    'path' => 'src/App/Ledger.php',
-                    'content' => "<?php\n\nnamespace App;\n\nclass Ledger {}\n",
-                ])]);
-            }
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['1'];
-        $assistant->handle('create the Ledger class');
-
-        expect(($this->artifactWrites)())->not()->toBe([]);
-    });
-
-    it('shows the driver\'s stated intent at the confirm prompt', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', [
-                    'class_name' => 'App/Ledger',
-                    'intent' => 'start a spec that pins down how the ledger records entries',
-                ])]);
-            }
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        $this->answers = ['1'];
-        $assistant->handle('describe the ledger');
-
-        expect($this->buffer->fetch())->toContain('Plan: start a spec that pins down how the ledger records entries');
-    });
-
-    it('grounds a symbol via inspect_symbol, reporting its real signatures instead of guessing', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'inspect_symbol', [
-                    'fqcn' => 'PhpSpec\\CodeGeneration\\ClassLocation',
-                ])]);
-            }
-            $captured = $messages;
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('what does ClassLocation offer?');
-
-        // The tool result carries the real class surface, not a guess or a "File not found".
-        $json = (string) json_encode($captured);
-        expect($json)->toContain('class PhpSpec');
-        expect($json)->toContain('isAutoloadable');
-    });
-
-    it('reports the structured red/green state from run_specs, not raw stdout', function (Filesystem $fs) {
-        $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary(
-            'red',
-            ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
-            [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
-        ));
-
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'run_specs', ['path' => ''])]);
-            }
-            $captured = $messages;
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('run the specs');
-
-        $json = (string) json_encode($captured);
-        expect($json)->toContain('SUITE: red');
-        expect($json)->toContain('adds numbers');
-        expect($json)->toContain('Expected 5 but got 3');
-    });
-
     it('auto-verifies after the driver writes, feeding the fresh state back to the model', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\ndescribe(Calculator::class, function () {});\n");
 
@@ -1046,114 +644,10 @@ describe(AiAssistant::class, function () {
         expect($json)->toContain('SUITE: green');
     });
 
-    it('does not auto-verify a write the navigator role refused', function (Filesystem $fs) {
-        $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary('green'));
-
-        $secondTurnMessages = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$secondTurnMessages, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', [
-                    'class_name' => 'App/Thing',
-                ])]);
-            }
-            $secondTurnMessages = $messages;
-            return new Response('done');
-        };
-
-        // No role passed: the human drives, so the write is refused and nothing lands.
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('write a spec');
-
-        $json = (string) json_encode($secondTurnMessages);
-        expect($json)->toContain('navigating');
-        expect($json)->not()->toContain('[Auto-verify');
-    });
-
-    it('reports unknown tools back to the model instead of crashing', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'no_such_tool', [])]);
-            }
-            $captured = $messages;
-            return new Response('done');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('do something odd');
-
-        expect((string) json_encode($captured))->toContain('Unknown tool');
-    });
-
-    it('reports a provider failure to the human instead of crashing', function (Filesystem $fs) {
-        $this->provider->responder = function () {
-            throw new RuntimeException('rate limited');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('anything');
-
-        // The pipeline degrades the failure into prose, so the human reads the
-        // real reason and the session keeps going.
-        expect($this->buffer->fetch())->toContain('rate limited');
-    });
-
-    it('grounds the turn in the real suite state, before the input, when a summary is supplied', function (Filesystem $fs) {
-        $captured = null;
-        $this->provider->responder = function (array $messages) use (&$captured) {
-            $captured = $messages;
-            return new Response('ok');
-        };
-
-        $summary = new SuiteSummary(
-            'red',
-            ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
-            [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
-        );
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('what should we do next?', $summary);
-
-        $json = (string) json_encode($captured);
-        expect($json)->toContain('[Current situation]');
-        expect($json)->toContain('FAILING');
-        expect($json)->toContain('adds numbers');
-        expect($json)->toContain('Expected 5 but got 3');
-
-        // The grounding is injected before the input, so the model reads state first.
-        expect(strpos($json, '[Current situation]'))->toBeLessThan(strpos($json, 'what should we do next?'));
-    });
-
-    it('grounds the turn in the resolved TDD step, so the model sees where the cycle stands', function (Filesystem $fs) {
-        $captured = null;
-        $this->provider->responder = function (array $messages) use (&$captured) {
-            $captured = $messages;
-            return new Response('ok');
-        };
-
-        $summary = new SuiteSummary(
-            'red',
-            ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
-            [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
-        );
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('what should we do next?', $summary);
-
-        $json = (string) json_encode($captured);
-        expect($json)->toContain('[Current situation]');
-        expect($json)->toContain('Current step:');
-    });
-
     it('turns a request for permission to offer into the offer itself', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
-        $written = [];
-        allow($fs->write(cetera()))->toReturnUsing(function (string $p, string $c) use (&$written) {
-            $written[$p] = $c;
-        });
         allow($fs->mkdir(any()));
 
         $seen = [];
@@ -1179,174 +673,686 @@ describe(AiAssistant::class, function () {
         $assistant->handle('how do we make this real?');
 
         expect((string) json_encode($seen[1]))->toContain('permission you already have');
-        expect(array_keys($written))->toContain(getcwd() . '/src/App/TodoList.php');
+        expect(array_keys($this->written))->toContain(getcwd() . '/src/App/TodoList.php');
     });
 
-    it('lets the navigator ask again once its one offer is spent', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$turn) {
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'offer_change', [
-                    'path' => 'src/App/TodoList.php',
-                    'content' => "<?php\nnamespace App;\nclass TodoList {}\n",
-                    'intent' => 'add the class',
-                ])]);
-            }
-
-            return new Response('Shall I try a different shape instead?');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $this->answers = ['3'];
-        $assistant->handle('offer me something');
-
-        // The offer is spent for this turn, so there is nothing to correct: the
-        // model has no way to comply and the human answers instead.
-        expect($turn)->toBe(2);
-    });
-
-    it('leaves a question that is not asking for permission alone', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            return new Response(++$turn === 1 ? 'What should the argument be?' : 'Should we extract a Basket class?');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('where do we go from here?');
-        $assistant->handle('and after that?');
-
-        expect($turn)->toBe(2);
-    });
-
-    it('carries a note left on a deterministic question into the next turn', function (Filesystem $fs) {
-        $captured = null;
-        $this->provider->responder = function (array $messages) use (&$captured) {
-            $captured = $messages;
-
-            return new Response('a value object it is');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-
-        // A scaffolding question answered with a note while no AI turn was running.
-        $this->answers = ['n, it should be a value object'];
-        $this->chooser->choose('Do you want me to create class App\Todo for you?', 'create-class', 'create classes');
-
-        $assistant->handle('what next?');
-
-        $json = (string) json_encode($captured);
-        expect($json)->toContain('[Notes I left on the choices I just made]');
-        expect($json)->toContain('I declined \"Do you want me to create class App\\\\Todo for you?\" and said: it should be a value object');
-        expect(strpos($json, 'Notes I left'))->toBeLessThan(strpos($json, 'what next?'));
-    });
-
-    it('does not repeat a note the turn already answered', function (Filesystem $fs) {
-        $captured = null;
-        $turn = 0;
-        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
-            $captured = $messages;
-            if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'offer_change', [
-                    'path' => 'src/App/Todo.php',
-                    'content' => "<?php\nnamespace App;\nclass Todo {}\n",
-                    'intent' => 'add the class',
-                ])]);
-            }
-
-            return new Response('understood');
-        };
-
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $this->answers = ['3, use a collection'];
-        $assistant->handle('offer me something');
-
-        // The decline steer already told the model, so the second turn must not
-        // hand it the same note again.
-        $assistant->handle('and now?');
-
-        expect((string) json_encode($captured))->not()->toContain('[Notes I left on the choices I just made]');
-    });
-
-    it('captures the pair turn to the ai debug recording', function (Filesystem $fs) {
-        $written = [];
-        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
-            $written[$path] = $content;
+    context('in a project with nothing on disk', function () {
+        beforeEach(function (Filesystem $fs) {
+            allow($fs->exists(any()))->toReturn(false);
+            allow($fs->read(any()))->toReturn('');
+            allow($fs->isDir(any()))->toReturn(false);
+            allow($fs->isFile(any()))->toReturn(false);
+            allow($fs->scandir(any()))->toReturn([]);
         });
-        allow($fs->mkdir(any()));
-        $this->provider->responder = fn() => new Response('hello there');
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('hi');
+        it('passes the configured reasoning effort through to the provider', function (Filesystem $fs) {
+            $options = null;
+            $this->provider->responder = function (array $messages, array $chatOptions) use (&$options) {
+                $options = $chatOptions;
 
-        $captures = array_filter(array_keys($written), fn(string $path) => str_ends_with($path, '.phpspec/ai/last-request.json'));
-        expect($captures)->toHaveLength(1);
-    });
+                return new Response('done');
+            };
 
-    it('does not accumulate stale [Current situation] grounding across turns', function (Filesystem $fs) {
-        $captured = null;
-        $this->provider->responder = function (array $messages) use (&$captured) {
-            $captured = $messages;
-            return new Response('ok');
-        };
+            $assistant = new AiAssistant($this->provider, new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k', 'effort' => 'high']]), $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('hello');
 
-        $red = new SuiteSummary('red', ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0], [['subject' => 'App\\C', 'example' => 'adds', 'error' => 'boom']]);
-        $green = new SuiteSummary('green', ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0]);
+            expect($options['effort'])->toBe('high');
+        });
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('turn one', $red);
-        $assistant->handle('turn two', $green);
+        it('keeps the plain spec run when the landed artifact is a spec', function (Filesystem $fs) {
+            allow($fs->mkdir(any()));
 
-        // Only the latest situation survives in what the model sees.
-        expect(substr_count((string) json_encode($captured), '[Current situation]'))->toBe(1);
-    });
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', [
+                        'class_name' => 'App/Wanted',
+                    ])]);
+                }
 
-    it('injects no situation message when no summary is supplied', function (Filesystem $fs) {
-        $captured = null;
-        $this->provider->responder = function (array $messages) use (&$captured) {
-            $captured = $messages;
-            return new Response('ok');
-        };
+                return new Response('done');
+            };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('just chatting');
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['1'];
+            $assistant->handle('spec App/Wanted');
 
-        expect((string) json_encode($captured))->not()->toContain('[Current situation]');
-    });
+            expect($this->specRunner->arguments)->toContain('');
+            expect($this->specRunner->arguments)->not()->toContain('--all');
+        });
 
-    it('asks the provider for the generous default token ceiling', function (Filesystem $fs) {
-        $captured = null;
-        $this->provider->responder = function (array $messages, array $options) use (&$captured) {
-            $captured = $options;
-            return new Response('ok');
-        };
+        it('offers replace writes while navigating, and writes replace offers while driving', function (Filesystem $fs) {
+            $names = null;
+            $this->provider->responder = function (array $messages, array $options) use (&$names) {
+                $names = array_column($options['tools'], 'name');
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-        $assistant->handle('anything');
+                return new Response('done');
+            };
 
-        expect($captured['maxTokens'])->toBe(16384);
-    });
+            $navigator = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $navigator->handle('hello');
+            expect($names)->toContain('offer_change');
+            expect($names)->not()->toContain('write_file');
 
-    it('stops asking about write tools after answering always, across turns', function (Filesystem $fs) {
-        $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
-            $turn++;
-            if ($turn === 1) {
-                return new Response('', [new ToolCall('t1', 'describe', ['class_name' => 'App/First'])]);
-            }
-            if ($turn === 3) {
-                return new Response('', [new ToolCall('t2', 'describe', ['class_name' => 'App/Second'])]);
-            }
-            return new Response('done');
-        };
+            $driver = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $driver->handle('hello');
+            expect($names)->toContain('write_file');
+            expect($names)->not()->toContain('offer_change');
+        });
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-        // "always" on the first write; the artifact cap means one write per turn,
-        // so the second spec comes on a second turn and must not ask again.
-        $this->answers = ['2'];
-        $assistant->handle('spec the first class');
-        $assistant->handle('spec the second class');
+        it('registers at most one suggestion per turn, ending the advice in prose', function (Filesystem $fs) {
+            $secondTurnTools = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages, array $options) use (&$secondTurnTools, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\First', 'reason' => 'one'])]);
+                }
+                $secondTurnTools = array_column($options['tools'], 'name');
 
-        expect($this->reads)->toBe(1);
-        expect(($this->artifactWrites)())->toHaveLength(2);
+                return new Response('My advice in prose.');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('what next?');
+
+            expect($assistant->lastSuggestion()['target'])->toBe('App\\First');
+            expect($secondTurnTools)->not()->toContain('suggest_next');        // one registration per turn
+        });
+
+        it('registers the model suggestion for the dispatcher ghost', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'suggest_next', [
+                        'type' => 'example',
+                        'target' => 'App\\TodoList',
+                        'reason' => 'The current examples assert null.',
+                    ])]);
+                }
+
+                return new Response('Let us make the example real.');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            expect($assistant->lastSuggestion())->toBeNull();
+
+            $assistant->handle('what next?');
+
+            expect($assistant->lastSuggestion())->toBe(['type' => 'example', 'target' => 'App\\TodoList', 'reason' => 'The current examples assert null.']);
+        });
+
+        it('routes ask_user tool calls from the model through the chooser', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'ask_user', [
+                        'question' => 'Do you want me to generate the method fooBar()?',
+                        'action' => 'generate methods',
+                    ])]);
+                }
+                $captured = $messages;
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $this->answers = ['2'];
+            $assistant->handle('add a fooBar method');
+
+            $text = $this->buffer->fetch();
+            expect($text)->toContain('Do you want me to generate the method fooBar()?');
+            expect($text)->toContain('1. Yes');
+            expect((string) json_encode($captured))->toContain('always');
+        });
+
+        it('does not advertise write tools while the human drives', function (Filesystem $fs) {
+            $captured = null;
+            $this->provider->responder = function (array $messages, array $options) use (&$captured) {
+                $captured = $options;
+                return new Response('ok');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('write me a spec for a Calculator');
+
+            $names = array_column($captured['tools'] ?? [], 'name');
+            expect($names)->not()->toContain('describe');
+            expect($names)->not()->toContain('write_file');
+            expect($names)->not()->toContain('add_example');
+            expect($names)->toContain('read_file');
+            expect($names)->toContain('run_specs');
+            // Read tools like inspect_symbol stay available while navigating.
+            expect($names)->toContain('inspect_symbol');
+        });
+
+        it('refuses a write tool call while the human drives', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', [
+                        'class_name' => 'App/Thing',
+                    ])]);
+                }
+                $captured = $messages;
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('write a spec');
+
+            expect(($this->artifactWrites)())->toBe([]);
+            expect((string) json_encode($captured))->toContain('navigating');
+            // A refused write is not displayed as if it ran.
+            expect($this->buffer->fetch())->not()->toContain('Describe');
+        });
+
+        it('blocks write tools when the chooser declines', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', [
+                        'class_name' => 'App/Wanted',
+                    ])]);
+                }
+                $captured = $messages;
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['3'];
+            $assistant->handle('spec App/Wanted');
+
+            expect(($this->artifactWrites)())->toBe([]);
+            // Declining steers the driver back into the cycle, rather than a bare "declined".
+            expect((string) json_encode($captured))->toContain('declined this step');
+        });
+
+        it('hands an ask_user note back to the model with the answer', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'ask_user', [
+                        'question' => 'Shall I generate fooBar()?',
+                        'action' => 'generate methods',
+                    ])]);
+                }
+                $captured = $messages;
+
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $this->answers = ['3, name it barFoo instead'];
+            $assistant->handle('what next?');
+
+            $text = (string) json_encode($captured);
+            expect($text)->toContain('no. The human added');
+            expect($text)->toContain('name it barFoo instead');
+        });
+
+        it('hands the confirm-step notes to the driving model, on yes and on no', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', [
+                        'class_name' => 'App/Wanted',
+                    ])]);
+                }
+                $captured = $messages;
+
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['3, exemplify addTask first'];
+            $assistant->handle('spec App/Wanted');
+
+            $text = (string) json_encode($captured);
+            expect($text)->toContain('exemplify addTask first');
+            expect($text)->toContain('Address that');
+
+            $captured = null;
+            $turn = 0;
+            allow($fs->mkdir(any()));
+            $accepting = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, new RoleState(PairRole::AiDrives), $this->specRunner);
+            $this->answers = ['1, then run it'];
+            $accepting->handle('spec App/Wanted');
+
+            $text = (string) json_encode($captured);
+            expect($text)->toContain('The human added');
+            expect($text)->toContain('then run it');
+        });
+
+        it('writes generated steps to steps.php, or to the steps file the assistant names', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                return match (++$turn) {
+                    1 => new Response('', [new ToolCall('t1', 'generate_steps', ['content' => "<?php\ngiven(\"a fresh step\", function () {});\n"])]),
+                    default => new Response('done'),
+                };
+            };
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['1'];
+            $assistant->handle('write the steps');
+
+            expect(($this->artifactWrites)())->toBe([getcwd() . '/features/steps/steps.php']);
+
+            $turn = 0;
+            $this->writtenPaths = [];
+            $this->provider->responder = function () use (&$turn) {
+                return match (++$turn) {
+                    1 => new Response('', [new ToolCall('t1', 'generate_steps', ['steps_file' => 'web', 'content' => "<?php\ngiven(\"I visit {string}\", function (string \$url) {});\n"])]),
+                    default => new Response('done'),
+                };
+            };
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['1'];
+            $assistant->handle('write the web steps');
+
+            expect(($this->artifactWrites)())->toBe([getcwd() . '/features/steps/web.steps.php']);
+        });
+
+        it('writes only one artifact per turn while driving, rejecting the rest', function (Filesystem $fs) {
+            $captured = null;
+            $secondTurnMessages = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages, array $options) use (&$captured, &$secondTurnMessages, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [
+                        new ToolCall('t1', 'generate_feature', ['feature_name' => 'checkout', 'content' => 'Feature: Checkout']),
+                        new ToolCall('t2', 'generate_steps', ['content' => '<?php // steps']),
+                        new ToolCall('t3', 'write_file', ['path' => 'src/App/Checkout.php', 'content' => '<?php // class']),
+                    ]);
+                }
+                $captured = $options;
+                $secondTurnMessages = $messages;
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['2'];
+            $assistant->handle('build the checkout feature');
+
+            // Only the first artifact is written; the other two are rejected.
+            expect(($this->artifactWrites)())->toHaveLength(1);
+            expect((string) json_encode($secondTurnMessages))->toContain('One artifact per turn');
+
+            // Once an artifact is written, no further write tools are advertised this turn.
+            $names = array_column($captured['tools'] ?? [], 'name');
+            expect($names)->not()->toContain('generate_feature');
+            expect($names)->not()->toContain('write_file');
+            expect($names)->toContain('run_specs');
+        });
+
+        it('starts a new spec with describe, writing a skeleton', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', ['class_name' => 'App/Ledger'])]);
+                }
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['1'];
+            $assistant->handle('start a ledger spec');
+
+            expect(($this->artifactWrites)())->not()->toBe([]);
+        });
+
+        it('allows a source write via write_file, unaffected by the spec guard', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'write_file', [
+                        'path' => 'src/App/Ledger.php',
+                        'content' => "<?php\n\nnamespace App;\n\nclass Ledger {}\n",
+                    ])]);
+                }
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['1'];
+            $assistant->handle('create the Ledger class');
+
+            expect(($this->artifactWrites)())->not()->toBe([]);
+        });
+
+        it('shows the driver\'s stated intent at the confirm prompt', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', [
+                        'class_name' => 'App/Ledger',
+                        'intent' => 'start a spec that pins down how the ledger records entries',
+                    ])]);
+                }
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            $this->answers = ['1'];
+            $assistant->handle('describe the ledger');
+
+            expect($this->buffer->fetch())->toContain('Plan: start a spec that pins down how the ledger records entries');
+        });
+
+        it('grounds a symbol via inspect_symbol, reporting its real signatures instead of guessing', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'inspect_symbol', [
+                        'fqcn' => 'PhpSpec\\CodeGeneration\\ClassLocation',
+                    ])]);
+                }
+                $captured = $messages;
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('what does ClassLocation offer?');
+
+            // The tool result carries the real class surface, not a guess or a "File not found".
+            $json = (string) json_encode($captured);
+            expect($json)->toContain('class PhpSpec');
+            expect($json)->toContain('isAutoloadable');
+        });
+
+        it('reports the structured red/green state from run_specs, not raw stdout', function (Filesystem $fs) {
+            $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary(
+                'red',
+                ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+                [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
+            ));
+
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'run_specs', ['path' => ''])]);
+                }
+                $captured = $messages;
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('run the specs');
+
+            $json = (string) json_encode($captured);
+            expect($json)->toContain('SUITE: red');
+            expect($json)->toContain('adds numbers');
+            expect($json)->toContain('Expected 5 but got 3');
+        });
+
+        it('does not auto-verify a write the navigator role refused', function (Filesystem $fs) {
+            $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary('green'));
+
+            $secondTurnMessages = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$secondTurnMessages, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', [
+                        'class_name' => 'App/Thing',
+                    ])]);
+                }
+                $secondTurnMessages = $messages;
+                return new Response('done');
+            };
+
+            // No role passed: the human drives, so the write is refused and nothing lands.
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('write a spec');
+
+            $json = (string) json_encode($secondTurnMessages);
+            expect($json)->toContain('navigating');
+            expect($json)->not()->toContain('[Auto-verify');
+        });
+
+        it('reports unknown tools back to the model instead of crashing', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'no_such_tool', [])]);
+                }
+                $captured = $messages;
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('do something odd');
+
+            expect((string) json_encode($captured))->toContain('Unknown tool');
+        });
+
+        it('reports a provider failure to the human instead of crashing', function (Filesystem $fs) {
+            $this->provider->responder = function () {
+                throw new RuntimeException('rate limited');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('anything');
+
+            // The pipeline degrades the failure into prose, so the human reads the
+            // real reason and the session keeps going.
+            expect($this->buffer->fetch())->toContain('rate limited');
+        });
+
+        it('grounds the turn in the real suite state, before the input, when a summary is supplied', function (Filesystem $fs) {
+            $captured = null;
+            $this->provider->responder = function (array $messages) use (&$captured) {
+                $captured = $messages;
+                return new Response('ok');
+            };
+
+            $summary = new SuiteSummary(
+                'red',
+                ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+                [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
+            );
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('what should we do next?', $summary);
+
+            $json = (string) json_encode($captured);
+            expect($json)->toContain('[Current situation]');
+            expect($json)->toContain('FAILING');
+            expect($json)->toContain('adds numbers');
+            expect($json)->toContain('Expected 5 but got 3');
+
+            // The grounding is injected before the input, so the model reads state first.
+            expect(strpos($json, '[Current situation]'))->toBeLessThan(strpos($json, 'what should we do next?'));
+        });
+
+        it('grounds the turn in the resolved TDD step, so the model sees where the cycle stands', function (Filesystem $fs) {
+            $captured = null;
+            $this->provider->responder = function (array $messages) use (&$captured) {
+                $captured = $messages;
+                return new Response('ok');
+            };
+
+            $summary = new SuiteSummary(
+                'red',
+                ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+                [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
+            );
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('what should we do next?', $summary);
+
+            $json = (string) json_encode($captured);
+            expect($json)->toContain('[Current situation]');
+            expect($json)->toContain('Current step:');
+        });
+
+        it('lets the navigator ask again once its one offer is spent', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$turn) {
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'offer_change', [
+                        'path' => 'src/App/TodoList.php',
+                        'content' => "<?php\nnamespace App;\nclass TodoList {}\n",
+                        'intent' => 'add the class',
+                    ])]);
+                }
+
+                return new Response('Shall I try a different shape instead?');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $this->answers = ['3'];
+            $assistant->handle('offer me something');
+
+            // The offer is spent for this turn, so there is nothing to correct: the
+            // model has no way to comply and the human answers instead.
+            expect($turn)->toBe(2);
+        });
+
+        it('leaves a question that is not asking for permission alone', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                return new Response(++$turn === 1 ? 'What should the argument be?' : 'Should we extract a Basket class?');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('where do we go from here?');
+            $assistant->handle('and after that?');
+
+            expect($turn)->toBe(2);
+        });
+
+        it('carries a note left on a deterministic question into the next turn', function (Filesystem $fs) {
+            $captured = null;
+            $this->provider->responder = function (array $messages) use (&$captured) {
+                $captured = $messages;
+
+                return new Response('a value object it is');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+
+            // A scaffolding question answered with a note while no AI turn was running.
+            $this->answers = ['n, it should be a value object'];
+            $this->chooser->choose('Do you want me to create class App\Todo for you?', 'create-class', 'create classes');
+
+            $assistant->handle('what next?');
+
+            $json = (string) json_encode($captured);
+            expect($json)->toContain('[Notes I left on the choices I just made]');
+            expect($json)->toContain('I declined \"Do you want me to create class App\\\\Todo for you?\" and said: it should be a value object');
+            expect(strpos($json, 'Notes I left'))->toBeLessThan(strpos($json, 'what next?'));
+        });
+
+        it('does not repeat a note the turn already answered', function (Filesystem $fs) {
+            $captured = null;
+            $turn = 0;
+            $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+                $captured = $messages;
+                if (++$turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'offer_change', [
+                        'path' => 'src/App/Todo.php',
+                        'content' => "<?php\nnamespace App;\nclass Todo {}\n",
+                        'intent' => 'add the class',
+                    ])]);
+                }
+
+                return new Response('understood');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $this->answers = ['3, use a collection'];
+            $assistant->handle('offer me something');
+
+            // The decline steer already told the model, so the second turn must not
+            // hand it the same note again.
+            $assistant->handle('and now?');
+
+            expect((string) json_encode($captured))->not()->toContain('[Notes I left on the choices I just made]');
+        });
+
+        it('captures the pair turn to the ai debug recording', function (Filesystem $fs) {
+            allow($fs->mkdir(any()));
+            $this->provider->responder = fn() => new Response('hello there');
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('hi');
+
+            $captures = array_filter(array_keys($this->written), fn(string $path) => str_ends_with($path, '.phpspec/ai/last-request.json'));
+            expect($captures)->toHaveLength(1);
+        });
+
+        it('does not accumulate stale [Current situation] grounding across turns', function (Filesystem $fs) {
+            $captured = null;
+            $this->provider->responder = function (array $messages) use (&$captured) {
+                $captured = $messages;
+                return new Response('ok');
+            };
+
+            $red = new SuiteSummary('red', ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0], [['subject' => 'App\\C', 'example' => 'adds', 'error' => 'boom']]);
+            $green = new SuiteSummary('green', ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0]);
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('turn one', $red);
+            $assistant->handle('turn two', $green);
+
+            // Only the latest situation survives in what the model sees.
+            expect(substr_count((string) json_encode($captured), '[Current situation]'))->toBe(1);
+        });
+
+        it('injects no situation message when no summary is supplied', function (Filesystem $fs) {
+            $captured = null;
+            $this->provider->responder = function (array $messages) use (&$captured) {
+                $captured = $messages;
+                return new Response('ok');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('just chatting');
+
+            expect((string) json_encode($captured))->not()->toContain('[Current situation]');
+        });
+
+        it('asks the provider for the generous default token ceiling', function (Filesystem $fs) {
+            $captured = null;
+            $this->provider->responder = function (array $messages, array $options) use (&$captured) {
+                $captured = $options;
+                return new Response('ok');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+            $assistant->handle('anything');
+
+            expect($captured['maxTokens'])->toBe(16384);
+        });
+
+        it('stops asking about write tools after answering always, across turns', function (Filesystem $fs) {
+            $turn = 0;
+            $this->provider->responder = function () use (&$turn) {
+                $turn++;
+                if ($turn === 1) {
+                    return new Response('', [new ToolCall('t1', 'describe', ['class_name' => 'App/First'])]);
+                }
+                if ($turn === 3) {
+                    return new Response('', [new ToolCall('t2', 'describe', ['class_name' => 'App/Second'])]);
+                }
+                return new Response('done');
+            };
+
+            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+            // "always" on the first write; the artifact cap means one write per turn,
+            // so the second spec comes on a second turn and must not ask again.
+            $this->answers = ['2'];
+            $assistant->handle('spec the first class');
+            $assistant->handle('spec the second class');
+
+            expect($this->reads)->toBe(1);
+            expect(($this->artifactWrites)())->toHaveLength(2);
+        });
     });
 });

@@ -72,8 +72,6 @@ describe(Request::class, function () {
     it('marks overridden prompt names in composedFrom so the capture shows whose words the model heard', function (Filesystem $project, Filesystem $fs) {
         allow($project->exists(any()))->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.phpspec/prompts/instructions/tdd-cycle.txt'));
         allow($project->read(any()))->toReturn('OUR-CYCLE');
-        allow($fs->exists(any()))->toReturn(true);
-        allow($fs->read(any()))->toReturnUsing(fn(string $p): string => str_contains($p, 'write-steps') ? 'STEPS-GUIDE' : '');
         $profile = new CommandProfile(name: 'generate', body: 'THE-BODY', origin: PhpSpec\Ai\Prompt::PROJECT);
         $step = new Step(Phase::WriteSteps, null, 'features/adding.feature', 'steps are undefined');
 

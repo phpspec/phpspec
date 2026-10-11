@@ -37,13 +37,8 @@ class NextFakeRunner implements SpecRunner
 
 describe(Next::class, function () {
 
-    beforeEach(function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturn(false);
-        allow($fs->isFile(any()))->toReturn(false);
-        allow($fs->isDir(any()))->toReturn(false);
-    });
-
     it('instantiates', function (Filesystem $fs) {
+        allow($fs->exists(any()))->toReturn(false);
         $config = Configuration::load('.', $fs);
         $cmd = new Next($config, $fs);
         expect($cmd)->toBeAnInstanceOf(Next::class);
@@ -52,6 +47,7 @@ describe(Next::class, function () {
     context('command execution', function () {
 
         it('returns error when AI config is missing', function (Filesystem $fs) {
+            allow($fs->exists(any()))->toReturn(false);
             $config = Configuration::load('.', $fs);
             $cmd = new Next($config, $fs);
 
@@ -63,6 +59,7 @@ describe(Next::class, function () {
         });
 
         it('refuses in JSON under the agent format when AI config is missing', function (Filesystem $fs) {
+            allow($fs->exists(any()))->toReturn(false);
             $tester = new CommandTester(new Next(Configuration::load('.', $fs), $fs));
 
             $exitCode = $tester->execute(['--format' => 'agent']);

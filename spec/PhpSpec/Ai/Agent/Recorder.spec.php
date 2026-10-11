@@ -18,7 +18,12 @@ describe(Recorder::class, function () {
     beforeEach(function (Filesystem $fs) {
         $this->written = [];
         $written = &$this->written;
-        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->exists(any()))->toReturnUsing(function (string $path) use (&$written): bool {
+            return isset($written[$path]);
+        });
+        allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$written): string {
+            return $written[$path] ?? '';
+        });
         allow($fs->mkdir(any()));
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
@@ -26,23 +31,12 @@ describe(Recorder::class, function () {
     });
 
     it('appends each turn of a conversation to the session capture', function (Filesystem $fs) {
-        $store = [];
-        $stored = &$store;
-        allow($fs->exists(any()))->toReturnUsing(function (string $path) use (&$stored): bool {
-            return isset($stored[$path]);
-        });
-        allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$stored): string {
-            return $stored[$path] ?? '';
-        });
-        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$stored) {
-            $stored[$path] = $content;
-        });
         $recorder = new Recorder($fs, '/proj');
 
         $recorder->captureSession('navigator', 'first ask', null, [], new Response('first answer'), [], [], fresh: true);
         $recorder->captureSession('navigator', 'second ask', null, [], new Response('second answer'), [], [], fresh: false);
 
-        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+        $doc = json_decode($this->written['/proj/.phpspec/ai/last-session.json'] ?? '', true);
 
         expect($doc['command'])->toBe('navigator');
         expect($doc['turns'])->toHaveLength(2);
@@ -51,45 +45,23 @@ describe(Recorder::class, function () {
     });
 
     it('keeps session turns slim: the request never repeats into the session capture', function (Filesystem $fs) {
-        $store = [];
-        $stored = &$store;
-        allow($fs->exists(any()))->toReturnUsing(function (string $path) use (&$stored): bool {
-            return isset($stored[$path]);
-        });
-        allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$stored): string {
-            return $stored[$path] ?? '';
-        });
-        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$stored) {
-            $stored[$path] = $content;
-        });
         $recorder = new Recorder($fs, '/proj');
 
         $recorder->captureSession('navigator', 'an ask', null, [], new Response('answer'), [], [], fresh: true);
 
-        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+        $doc = json_decode($this->written['/proj/.phpspec/ai/last-session.json'] ?? '', true);
 
         expect($doc['turns'][0]['request'])->toBeNull();
         expect($doc['turns'][0]['response']['text'])->toBe('answer');
     });
 
     it('starts the session capture over when the conversation is fresh', function (Filesystem $fs) {
-        $store = [];
-        $stored = &$store;
-        allow($fs->exists(any()))->toReturnUsing(function (string $path) use (&$stored): bool {
-            return isset($stored[$path]);
-        });
-        allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$stored): string {
-            return $stored[$path] ?? '';
-        });
-        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$stored) {
-            $stored[$path] = $content;
-        });
         $recorder = new Recorder($fs, '/proj');
 
         $recorder->captureSession('navigator', 'old session', null, [], new Response('stale'), [], [], fresh: true);
         $recorder->captureSession('driver', 'new session', null, [], new Response('fresh'), [], [], fresh: true);
 
-        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+        $doc = json_decode($this->written['/proj/.phpspec/ai/last-session.json'] ?? '', true);
 
         expect($doc['command'])->toBe('driver');
         expect($doc['turns'])->toHaveLength(1);

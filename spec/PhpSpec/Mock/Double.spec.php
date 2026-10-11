@@ -4,6 +4,8 @@ use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\UnexpectedCallException;
 
+require_once __DIR__ . '/CodeUnderSpec.php';
+
 interface DoubleSpecContract {
     public function doSomething(): string;
 }
@@ -36,7 +38,7 @@ interface DoubleSpecTill {
 define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
 if (!function_exists('double_spec_outsider_reserves')) {
     register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
-    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\n");
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\n");
     require DOUBLE_SPEC_OUTSIDER;
 }
 
@@ -322,13 +324,13 @@ describe(Double::class, function() {
     it("stubs exception with toThrow on no-return-type method", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         $double->noReturn()->toThrow(\RuntimeException::class, 'boom');
-        expect(fn() => $double->noReturn())->toThrow(\RuntimeException::class, 'boom');
+        expect(fn() => code_under_spec_calls($double, 'noReturn'))->toThrow(\RuntimeException::class, 'boom');
     });
 
     it("stubs exception via allow()->toThrow()", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         allow($double->greet())->toThrow(\InvalidArgumentException::class, 'bad');
-        expect(fn() => $double->greet())->toThrow(\InvalidArgumentException::class, 'bad');
+        expect(fn() => code_under_spec_calls($double, 'greet'))->toThrow(\InvalidArgumentException::class, 'bad');
     });
 
     it("throws the very exception instance a stub was given", function() {
@@ -337,7 +339,7 @@ describe(Double::class, function() {
         allow($double->greet())->toThrow($notFound);
 
         try {
-            $double->greet();
+            code_under_spec_calls($double, 'greet');
         } catch (\RuntimeException $thrown) {
             expect($thrown)->toBe($notFound);
 
@@ -657,7 +659,7 @@ describe(Double::class, function() {
     it("stubs exception with toThrow on interface-return method", function() {
         $double = Double::getInstance(DoubleSpecClassWithDeps::class);
         $double->getDep()->toThrow(\RuntimeException::class, 'dep-error');
-        expect(fn() => $double->getDep())->toThrow(\RuntimeException::class, 'dep-error');
+        expect(fn() => code_under_spec_calls($double, 'getDep'))->toThrow(\RuntimeException::class, 'dep-error');
     });
 
     it("handles never return type", function() {
@@ -740,7 +742,7 @@ describe(Double::class, function() {
     it("stubs exception on interface-return method via allow()", function() {
         $double = Double::getInstance(DoubleSpecClassWithDeps::class);
         allow($double->getDep())->toThrow(\LogicException::class, 'dep-fail');
-        expect(fn() => $double->getDep())->toThrow(\LogicException::class, 'dep-fail');
+        expect(fn() => code_under_spec_calls($double, 'getDep'))->toThrow(\LogicException::class, 'dep-fail');
     });
 
     it("stubs callback on void-return method via allow()", function() {
@@ -764,7 +766,7 @@ describe(Double::class, function() {
     it("stubs exception on string-return method via allow()", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         allow($double->greet())->toThrow(\RuntimeException::class, 'greet-fail');
-        expect(fn() => $double->greet())->toThrow(\RuntimeException::class, 'greet-fail');
+        expect(fn() => code_under_spec_calls($double, 'greet'))->toThrow(\RuntimeException::class, 'greet-fail');
     });
 
     it("stubs return value on nullable-return method via allow()", function() {
@@ -782,13 +784,13 @@ describe(Double::class, function() {
     it("stubs exception on enum-return method via allow()", function() {
         $double = Double::getInstance(DoubleSpecEnumContract::class);
         allow($double->getStatus())->toThrow(\RuntimeException::class, 'enum-fail');
-        expect(fn() => $double->getStatus())->toThrow(\RuntimeException::class, 'enum-fail');
+        expect(fn() => code_under_spec_calls($double, 'getStatus'))->toThrow(\RuntimeException::class, 'enum-fail');
     });
 
     it("stubs exception on int-return method via allow()", function() {
         $double = Double::getInstance(DoubleSpecIntReturn::class);
         allow($double->getCount())->toThrow(\RuntimeException::class, 'int-fail');
-        expect(fn() => $double->getCount())->toThrow(\RuntimeException::class, 'int-fail');
+        expect(fn() => code_under_spec_calls($double, 'getCount'))->toThrow(\RuntimeException::class, 'int-fail');
     });
 
     it("stubs return value on bool-return method via allow()", function() {
@@ -870,7 +872,7 @@ describe(Double::class, function() {
     it("stubs exception on void-return method via allow()->toThrow()", function() {
         $double = Double::getInstance(DoubleSpecVoidReturn::class);
         allow($double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
-        expect(fn() => $double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
+        expect(fn() => code_under_spec_calls($double, 'doWork'))->toThrow(\RuntimeException::class, 'void-fail');
     });
 
     context("a call no object of the real class could take", function () {
@@ -965,6 +967,7 @@ describe(Double::class, function() {
             allow($till->pay(cetera()))->toReturnUsing(fn(int $amount) => $amount * 2);
             allow($till->pay(any()))->toThrow(new \RuntimeException('Closed'));
 
+            expect(double_spec_outsider_pays($till, 5))->toBe(10);
             expect(fn() => double_spec_outsider_pays($till, 5))->toThrow(\RuntimeException::class, 'Closed');
         });
 
@@ -1047,6 +1050,48 @@ describe(Double::class, function() {
             allow($ledger->balance())->toReturnUsing(fn() => 'lots');
 
             expect(fn() => $ledger->balance())->toThrow(LogicException::class, 'DoubleSpecLedger::balance() returns int, so its toReturnUsing() callback cannot answer string "lots".');
+        });
+    });
+
+    context("stubs answering in the order they were declared", function () {
+        beforeEach(function () {
+            $this->saved = ArrangingCode::roots();
+            ArrangingCode::under(__DIR__);
+        });
+
+        afterEach(function () {
+            ArrangingCode::under(...$this->saved);
+        });
+
+        it("answer the code under spec one after the other, the last one answering on", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(1))->toThrow(new \RuntimeException('Declined'));
+            allow($till->pay(1))->toReturn(5);
+
+            expect(fn() => double_spec_outsider_pays($till, 1))->toThrow(\RuntimeException::class, 'Declined');
+            expect(double_spec_outsider_pays($till, 1))->toBe(5);
+            expect(double_spec_outsider_pays($till, 1))->toBe(5);
+        });
+
+        it("are used in order whatever arguments they overlap on", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->find(any()))->toReturn('default');
+            allow($till->find(42))->toReturn('special');
+
+            expect(double_spec_outsider_finds($till, 42))->toBe('default');
+            expect(double_spec_outsider_finds($till, 42))->toBe('special');
+            expect(double_spec_outsider_finds($till, 99))->toBe('default');
+        });
+
+        it("are read by the spec without being used up, and never throw at it", function () {
+            $till = Double::getInstance(DoubleSpecTill::class);
+            allow($till->pay(2))->toReturn(7);
+            allow($till->pay(3))->toThrow(new \RuntimeException('No'));
+
+            expect($till->pay(2))->toBe(7);
+            expect($till->pay(3))->toBe(0);
+            expect(double_spec_outsider_pays($till, 2))->toBe(7);
+            expect(fn() => double_spec_outsider_pays($till, 3))->toThrow(\RuntimeException::class, 'No');
         });
     });
 

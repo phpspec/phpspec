@@ -2,6 +2,8 @@
 
 use PhpSpec\Mock\Expectation;
 
+require_once __DIR__ . '/CodeUnderSpec.php';
+
 interface ExpectationSpecService {
     public function processWith(string $tag = ""): void;
     public function process(): string;
@@ -95,9 +97,9 @@ describe(Expectation::class, function() {
         expect($service->price('gold'))->toThrow(new \RuntimeException('Not for sale'));
         expect($service->store('locked', 0))->toThrow(new \RuntimeException('Locked'));
 
-        expect(fn() => $service->price('gold'))->toThrow(\RuntimeException::class, 'Not for sale');
+        expect(fn() => code_under_spec_calls($service, 'price', 'gold'))->toThrow(\RuntimeException::class, 'Not for sale');
         expect($service->price('tea'))->toBe(0);
-        expect(fn() => $service->store('locked', 0))->toThrow(\RuntimeException::class, 'Locked');
+        expect(fn() => code_under_spec_calls($service, 'store', 'locked', 0))->toThrow(\RuntimeException::class, 'Locked');
         expect(fn() => $service->store('open', 0))->not()->toThrow();
     });
 
@@ -110,12 +112,12 @@ describe(Expectation::class, function() {
         expect($service->store('b', 2))->not()->toBe('stored');
         expect($service->store('twice', 5))->toBe(10);
         expect($service->store('once', 5))->not()->toBe(10);
-        expect(fn() => $service->store('locked', 0))->toThrow(\RuntimeException::class, 'Locked');
+        expect(fn() => code_under_spec_calls($service, 'store', 'locked', 0))->toThrow(\RuntimeException::class, 'Locked');
         expect(fn() => $service->store('open', 0))->not()->toThrow();
     });
     it("stubs exception with allow", function(ExpectationSpecService $service) {
         allow($service->save())->toThrow(\RuntimeException::class, "boom");
-        expect(fn() => $service->save())->toThrow(\RuntimeException::class, "boom");
+        expect(fn() => code_under_spec_calls($service, 'save'))->toThrow(\RuntimeException::class, "boom");
     });
 
     // Arguments written in the expect call are a promise, not decoration:
@@ -169,12 +171,12 @@ describe(Expectation::class, function() {
 
     it("stubs via toThrow on LastCallDouble for void method", function(ExpectationSpecService $service) {
         $service->save()->toThrow(\LogicException::class, 'nope');
-        expect(fn() => $service->save())->toThrow(\LogicException::class, 'nope');
+        expect(fn() => code_under_spec_calls($service, 'save'))->toThrow(\LogicException::class, 'nope');
     });
 
     it("stubs exception with allow via scalar-return method", function(ExpectationSpecService $service) {
         allow($service->process())->toThrow(\RuntimeException::class, "scalar-throw");
-        expect(fn() => $service->process())->toThrow(\RuntimeException::class, "scalar-throw");
+        expect(fn() => code_under_spec_calls($service, 'process'))->toThrow(\RuntimeException::class, "scalar-throw");
     });
 
     it("exposes the method name via LastCallDouble", function(ExpectationSpecService $service) {
@@ -270,7 +272,7 @@ describe(Expectation::class, function() {
 
     it("stubs exception via expect()->toThrow()", function(ExpectationSpecService $service) {
         expect($service->save())->toThrow(\RuntimeException::class, "expect-throw");
-        expect(fn() => $service->save())->toThrow(\RuntimeException::class, "expect-throw");
+        expect(fn() => code_under_spec_calls($service, 'save'))->toThrow(\RuntimeException::class, "expect-throw");
     });
 
     it("toBeCalled()->once() passes with one call", function(ExpectationSpecService $service) {

@@ -249,11 +249,34 @@ Feature: Mocking
           public function find(int $id): ?string;
       }
       """
+    And a class "src/App/Directory.php":
+      """
+      <?php
+      namespace App;
+
+      class Directory {
+          public function __construct(private UserRepository $repo) {}
+
+          public function nameOf(int $id): ?string
+          {
+              return $this->repo->find($id);
+          }
+
+          public function nameOfRetried(int $id): ?string
+          {
+              try {
+                  return $this->repo->find($id);
+              } catch (\RuntimeException) {
+                  return $this->repo->find($id);
+              }
+          }
+      }
+      """
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
       allow($repo->find(999))->toThrow(new \RuntimeException('Not found'));
-      expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class, 'Not found');
+      expect(fn () => (new App\Directory($repo))->nameOf(999))->toThrow(\RuntimeException::class, 'Not found');
       """
     When I run the spec
     Then all examples should pass
@@ -402,19 +425,43 @@ Feature: Mocking
           public function find(int $id): ?string;
       }
       """
+    And a class "src/App/Directory.php":
+      """
+      <?php
+      namespace App;
+
+      class Directory {
+          public function __construct(private UserRepository $repo) {}
+
+          public function nameOf(int $id): ?string
+          {
+              return $this->repo->find($id);
+          }
+
+          public function nameOfRetried(int $id): ?string
+          {
+              try {
+                  return $this->repo->find($id);
+              } catch (\RuntimeException) {
+                  return $this->repo->find($id);
+              }
+          }
+      }
+      """
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
+      $directory = new App\Directory($repo);
       expect($repo->find(1))->toReturn('Alice');
       expect($repo->find(999))->toThrow(new \RuntimeException('Not found'));
-      expect($repo->find(1))->toBe('Alice');
+      expect($directory->nameOf(1))->toBe('Alice');
       expect($repo->find(2))->toBeNull();
-      expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class, 'Not found');
+      expect(fn () => $directory->nameOf(999))->toThrow(\RuntimeException::class, 'Not found');
       """
     When I run the spec
     Then all examples should pass
 
-  Scenario: Catch-all stub with specific override
+  Scenario: Stubs answer in the order they were declared, whatever arguments they overlap on
     Given an interface "src/App/UserRepository.php":
       """
       <?php
@@ -424,13 +471,83 @@ Feature: Mocking
           public function find(int $id): ?string;
       }
       """
+    And a class "src/App/Directory.php":
+      """
+      <?php
+      namespace App;
+
+      class Directory {
+          public function __construct(private UserRepository $repo) {}
+
+          public function nameOf(int $id): ?string
+          {
+              return $this->repo->find($id);
+          }
+
+          public function nameOfRetried(int $id): ?string
+          {
+              try {
+                  return $this->repo->find($id);
+              } catch (\RuntimeException) {
+                  return $this->repo->find($id);
+              }
+          }
+      }
+      """
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
-      allow($repo->find(any()))->toReturn('default');
       allow($repo->find(42))->toReturn('special');
-      expect($repo->find(42))->toBe('special');
-      expect($repo->find(99))->toBe('default');
+      allow($repo->find(any()))->toReturn('default');
+      $directory = new App\Directory($repo);
+      expect($directory->nameOf(42))->toBe('special');
+      expect($directory->nameOf(99))->toBe('default');
+      expect($directory->nameOf(42))->toBe('default');
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: Stubs of the same call answer one call after the other, the last one answering on
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a class "src/App/Directory.php":
+      """
+      <?php
+      namespace App;
+
+      class Directory {
+          public function __construct(private UserRepository $repo) {}
+
+          public function nameOf(int $id): ?string
+          {
+              return $this->repo->find($id);
+          }
+
+          public function nameOfRetried(int $id): ?string
+          {
+              try {
+                  return $this->repo->find($id);
+              } catch (\RuntimeException) {
+                  return $this->repo->find($id);
+              }
+          }
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      allow($repo->find(1))->toThrow(new \RuntimeException('Busy'));
+      allow($repo->find(1))->toReturn('Alice');
+      $directory = new App\Directory($repo);
+      expect($directory->nameOfRetried(1))->toBe('Alice');
+      expect($directory->nameOf(1))->toBe('Alice');
       """
     When I run the spec
     Then all examples should pass
@@ -613,8 +730,8 @@ Feature: Mocking
     And a spec with example:
       """
       $repo = mock(App\UserRepository::class);
-      allow($repo->find(any()))->toReturn('fallback');
       allow($repo->find(42))->toReturn('special');
+      allow($repo->find(any()))->toReturn('fallback');
       expect($repo->find(42))->toBe('special');
       expect($repo->find(99))->toBe('fallback');
       """

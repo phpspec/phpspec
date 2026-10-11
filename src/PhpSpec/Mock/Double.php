@@ -126,11 +126,9 @@ namespace $mockNamespace;
 
 class $mockShortName $extends $prefixedClass $implementsGenerated {
     private \$______phpspec_stack;
-    private \$______phpspec_stubbedReturns = [];
-    private \$______phpspec_stubbedThrows = [];
-    private \$______phpspec_stubbedReturnCallbacks = [];
+    private ?\PhpSpec\Mock\Stubs \$______phpspec_stubs = null;
     private \$______phpspec_lenient = false;
-    private \$______phpspec_declared = [];
+    private ?\PhpSpec\Mock\Declarations \$______phpspec_declared = null;
     private \$______phpspec_signatures = [];
     private \$______phpspec_returnTypes = [];
     private \$______phpspec_strictFiles = [];
@@ -170,12 +168,12 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
     }
 
     public function ______PhpSpecDeclare(string \$method, ?array \$args): void {
-        \$this->______phpspec_declared[\$method][] = \$args;
+        (\$this->______phpspec_declared ??= new \PhpSpec\Mock\Declarations())->add(\$method, \$args);
     }
 
     private function ______PhpSpecUnexpectedUnlessArranging(string \$method, array \$args, array \$frame): void {
         if (\$this->______phpspec_lenient
-            || \PhpSpec\Mock\StubRegistry::isDeclared(\$method, \$args, \$this->______phpspec_declared)
+            || (\$this->______phpspec_declared?->cover(\$method, \$args) ?? false)
             || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')) {
             return;
         }
@@ -183,20 +181,20 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
         throw \PhpSpec\Mock\UnexpectedCallException::to('$prefixedClass', \$method, \$args, \$frame['file'] ?? '', \$frame['line'] ?? 0);
     }
 
+    private function ______PhpSpecStubs(): \PhpSpec\Mock\Stubs {
+        return \$this->______phpspec_stubs ??= new \PhpSpec\Mock\Stubs();
+    }
+
     public function ______PhpSpecStubReturn(string \$method, mixed \$value, ?array \$args = null): void {
-        if (!isset(\$this->______phpspec_stubbedReturns[\$method])) { \$this->______phpspec_stubbedReturns[\$method] = []; }
-        array_unshift(\$this->______phpspec_stubbedReturns[\$method], [\$args, \$value]);
+        \$this->______PhpSpecStubs()->add(\$method, \$args, 'value', \$value);
     }
 
     public function ______PhpSpecStubReturnUsing(string \$method, callable \$callback, ?array \$args = null): void {
-        if (!isset(\$this->______phpspec_stubbedReturnCallbacks[\$method])) { \$this->______phpspec_stubbedReturnCallbacks[\$method] = []; }
-        array_unshift(\$this->______phpspec_stubbedReturnCallbacks[\$method], [\$args, \$callback]);
+        \$this->______PhpSpecStubs()->add(\$method, \$args, 'callback', \$callback);
     }
 
     public function ______PhpSpecStubThrow(string \$method, string|\Throwable \$exception, string \$message = '', ?array \$args = null): void {
-        if (!isset(\$this->______phpspec_stubbedThrows[\$method])) { \$this->______phpspec_stubbedThrows[\$method] = []; }
-        \$stub = \$exception instanceof \Throwable ? ['throwable' => \$exception] : ['class' => \$exception, 'message' => \$message];
-        array_unshift(\$this->______phpspec_stubbedThrows[\$method], [\$args, \$stub]);
+        \$this->______PhpSpecStubs()->add(\$method, \$args, 'throw', \$exception instanceof \Throwable ? ['throwable' => \$exception] : ['class' => \$exception, 'message' => \$message]);
     }
 }
 PHP;
@@ -436,7 +434,7 @@ PHP;
     private static function holdCode(string $class, ReflectionMethod $method): string
     {
         return sprintf(
-            "\$__frame = \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []; \$__given = (\$this->______phpspec_signatures[%2\$s] ??= new \\PhpSpec\\Mock\\Signature(%1\$s, %2\$s, %3\$d, %4\$s, %5\$s, %6\$s))->hold(\\func_get_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
+            "\$__frame = \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []; \$__made = !\\PhpSpec\\Mock\\ArrangingCode::includes(\$__frame['file'] ?? ''); \$__given = (\$this->______phpspec_signatures[%2\$s] ??= new \\PhpSpec\\Mock\\Signature(%1\$s, %2\$s, %3\$d, %4\$s, %5\$s, %6\$s))->hold(\\func_get_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
             var_export($class, true),
             var_export($method->getName(), true),
             $method->getNumberOfRequiredParameters(),
@@ -910,16 +908,15 @@ PHP;
                 $guard = "if (\$__match === null) { \$this->______PhpSpecUnexpectedUnlessArranging('$methodName', \$__args, \$__frame); }";
             }
 
-            // stub check — uses StubRegistry to find matching stub by method + args
             $stubCheck = '';
             $throwCheck = '';
             if ($simpleReturnName === 'void') {
-                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', \$__args, \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
+                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
                     . " if (\$__match['type'] === 'callback') { (\$__match['data'])(...\$__args); }"
                     . ' \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
             } elseif ($simpleReturnName !== 'never') {
-                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', \$__args, \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
+                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
                     . " if (\$__match['type'] === 'callback') { \$__ret = (\$__match['data'])(...\$__args); $holdAnswer \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
                     . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";

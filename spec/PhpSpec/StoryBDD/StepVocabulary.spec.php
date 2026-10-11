@@ -5,13 +5,6 @@ use PhpSpec\StoryBDD\StepVocabulary;
 
 describe(StepVocabulary::class, function () {
 
-    beforeEach(function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturn(false);
-        allow($fs->isDir(any()))->toReturn(false);
-        allow($fs->isFile(any()))->toReturn(false);
-        allow($fs->scandir(any()))->toReturn([]);
-    });
-
     it('parses definition titles out of steps content, whatever the keyword or quoting', function (Filesystem $fs) {
         $titles = (new StepVocabulary($fs))->titlesIn(
             "<?php\n\ngiven('I have a todo list', function () {});\n"

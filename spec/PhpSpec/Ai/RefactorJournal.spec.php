@@ -7,12 +7,12 @@ use PhpSpec\Filesystem;
 describe(RefactorJournal::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturn(false);
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->mkdir(any()));
     });
 
     it('records an applied refactoring as one JSON line with a timestamp', function (Filesystem $fs) {
+        allow($fs->exists(any()))->toReturn(false);
         $written = [];
         allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;

@@ -84,11 +84,7 @@ class AgentSpecScriptedExecutor implements PhpSpec\Ai\Contracts\ToolExecutor
 describe(Agent::class, function () {
 
     beforeEach(function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturn(false);
         allow($fs->isFile(any()))->toReturn(false);
-        allow($fs->isDir(any()))->toReturn(false);
-        allow($fs->scandir(any()))->toReturn([]);
-        allow($fs->read(any()))->toReturn('');
         allow($fs->mkdir(any()))->ignoreOthers();
         $this->written = [];
         $written = &$this->written;
