@@ -211,10 +211,23 @@ describe(Refactor::class, function () {
 
             expect($tester->getStatusCode())->toBe(1);
             expect($display)->toContain('  Examples lost ✘, asking for a fix...');
-            expect($display)->toContain('The specs have 3 examples where they had 4: a refactoring moves or rewrites an example, never drops one.');
+            expect($display)->toContain('3 examples ran where 4 did: a refactoring moves or rewrites an example, never drops, skips or leaves one pending.');
             expect($display)->toContain('Stopped at step 1: the steps before it are kept, this one is undone.');
-            expect(end($this->replay->requests[2]['messages'])->content)->toContain('The specs have 3 examples where they had 4');
+            expect(end($this->replay->requests[2]['messages'])->content)->toContain('3 examples ran where 4 did');
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
+        });
+
+        it('takes an example the step skips for one it lost', function () {
+            $ran = fn(int $examples, int $skipped): SuiteCheck => SuiteCheck::fromStream(json_encode(['event' => 'summary', 'examples' => $examples, 'skipped' => $skipped, 'actionable' => 0]));
+
+            $tester = ($this->run)([
+                ($this->plan)('Use a DiscountPolicy in CheckoutService'),
+                ($this->step)(['spec/App/Checkout/CheckoutService.spec.php' => "<?php // one example skipped\n"]),
+                ($this->step)(['spec/App/Checkout/CheckoutService.spec.php' => "<?php // still skipped\n"]),
+            ], [$ran(4, 0), $ran(4, 1), $ran(4, 1)], ['', '', '']);
+
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay(true))->toContain('3 examples ran where 4 did');
         });
 
         it('keeps a step that moves examples, the count holding', function () {

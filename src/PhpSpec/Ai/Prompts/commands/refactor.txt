@@ -19,9 +19,9 @@ or creates, in full.
 - Keep behaviour: a step either leaves every spec green, or is red only in the
   spec it writes first, and a later step makes it green. The last step is green.
 
-Keep steps small enough to read in one go. Never weaken or delete an example to
-make a step pass: an example may move or be rewritten, and no step leaves fewer
-examples than it found. Reversing a refactoring under "Recent refactorings" needs a
+Keep steps small enough to read in one go. Never weaken, skip or delete an
+example to make a step pass: an example may move or be rewritten, and no step
+leaves fewer examples running than it found. Reversing a refactoring under "Recent refactorings" needs a
 reason a person would accept. When nothing is worth changing, say so with
 `decline_refactoring`: that is a good answer, never a failure.
 

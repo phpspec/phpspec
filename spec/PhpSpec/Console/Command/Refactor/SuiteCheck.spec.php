@@ -42,11 +42,11 @@ describe(SuiteCheck::class, function () {
         );
     });
 
-    it('counts the examples the run ran, none when it printed no summary', function () {
-        $ran = SuiteCheck::fromStream(($this->stream)(['event' => 'summary', 'examples' => 24, 'actionable' => 0]));
+    it('counts the examples that ran, leaving out the skipped and the pending, none when it printed no summary', function () {
+        $ran = SuiteCheck::fromStream(($this->stream)(['event' => 'summary', 'examples' => 24, 'skipped' => 2, 'pending' => 1, 'actionable' => 1]));
 
-        expect($ran->examples())->toBe(24);
-        expect(SuiteCheck::fromStream('')->examples())->toBe(0);
+        expect($ran->ran())->toBe(21);
+        expect(SuiteCheck::fromStream('')->ran())->toBe(0);
     });
 
     it('keeps every failure inside the spec files named, and none outside them', function () {

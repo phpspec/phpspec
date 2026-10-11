@@ -63,7 +63,7 @@ final readonly class StepByStep
 
     private function stepThrough(RefactorPlan $plan, SuiteCheck $baseline): Carried
     {
-        $examples = $baseline->examples();
+        $examples = $baseline->ran();
         $kept = [];
         $files = [];
 
@@ -95,7 +95,7 @@ final readonly class StepByStep
                 return $this->stopped(1, $kept, $files, sprintf('Stopped at step %d: the steps before it are kept, this one is undone.', $number));
             }
 
-            $examples = $standing['check']->examples();
+            $examples = $standing['check']->ran();
             $kept[] = $planned->title;
             $files = array_values(array_unique([...$files, ...$standing['files']]));
         }
@@ -122,7 +122,7 @@ final readonly class StepByStep
      * stand. The suite it stands on and the files written, or nothing when
      * it was undone.
      *
-     * @param int $examples how many examples there were before the step
+     * @param int $examples how many examples ran before the step
      * @return array{check: SuiteCheck, files: list<string>}|null
      */
     private function standing(RefactorStep $step, bool $last, int $examples): ?array
@@ -173,8 +173,8 @@ final readonly class StepByStep
     {
         $wrong = $this->holds($check, $step, $last) ? [] : $check->failures();
 
-        if ($check->examples() < $examples) {
-            $wrong[] = sprintf('The specs have %d examples where they had %d: a refactoring moves or rewrites an example, never drops one.', $check->examples(), $examples);
+        if ($check->ran() < $examples) {
+            $wrong[] = sprintf('%d examples ran where %d did: a refactoring moves or rewrites an example, never drops, skips or leaves one pending.', $check->ran(), $examples);
         }
 
         return implode("\n", $wrong);
