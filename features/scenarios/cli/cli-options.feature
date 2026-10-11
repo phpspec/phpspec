@@ -1096,6 +1096,18 @@ Feature: CLI options
     Then the output should contain "ok 1 - TapReasons is pending # SKIP Needs the rates API"
     And the output should contain "ok 2 - TapReasons is skipped # SKIP No network on this machine"
 
+  Scenario: TAP reports each scenario of a story run as one test point
+    Given a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--story --format tap"
+    Then the output should contain "1..1"
+    And the output should contain "not ok 1 - Paying"
+    And the output should contain "Undefined step: When I pay"
+
   Scenario: JUnit carries the reason an example was left pending or skipped
     Given a spec file "spec/App/JunitReasons.spec.php":
       """

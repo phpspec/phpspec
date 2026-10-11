@@ -172,6 +172,7 @@ final class Junit extends AbstractFormatter
         }
 
         $featureTime = 0.0;
+        $featureCounts = ['tests' => 0, 'failures' => 0, 'errors' => 0, 'skipped' => 0];
 
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
@@ -186,40 +187,60 @@ final class Junit extends AbstractFormatter
             }
 
             $scenarioTime = 0.0;
+            $counts = ['tests' => 0, 'failures' => 0, 'errors' => 0, 'skipped' => 0];
 
             foreach ($scenario->getResults() as $step) {
                 if (!$step instanceof StepResult) {
                     continue;
                 }
+                $counts['tests']++;
                 $testcase = $xml->createElement('testcase');
                 $testcase->setAttribute('name', $step->getTitle());
                 $testcase->setAttribute('classname', $feature->getTitle() . ' > ' . $scenario->getTitle());
                 $testcase->setAttribute('time', self::seconds($step->getDuration()));
                 $scenarioTime += $step->getDuration();
 
-                if ($step->isPending() || $step->isUndefined() || $step->isSkipped()) {
+                if ($step->isUndefined()) {
+                    // An undefined step fails the run, so it fails the report.
+                    $failure = $xml->createElement('failure');
+                    $failure->setAttribute('message', 'Undefined step: ' . $step->getTitle());
+                    $testcase->appendChild($failure);
+                    $counts['failures']++;
+                } elseif ($step->isPending() || $step->isSkipped()) {
                     $skip = $xml->createElement('skipped');
                     if ($step->getReason() !== null) {
                         $skip->setAttribute('message', $step->getReason());
                     }
                     $testcase->appendChild($skip);
+                    $counts['skipped']++;
                 } elseif ($step->isError()) {
                     $error = $xml->createElement('error');
                     $error->setAttribute('message', $step->getError()?->getMessage() ?? 'Errored');
                     $error->setAttribute('type', $step->getError()?->getType() ?? 'Error');
                     $testcase->appendChild($error);
+                    $counts['errors']++;
                 } elseif ($step->isFailure()) {
                     $failure = $xml->createElement('failure');
                     $failure->setAttribute('message', $step->getError()?->getMessage() ?? 'Failed');
                     $testcase->appendChild($failure);
+                    $counts['failures']++;
                 }
 
                 $scenarioSuite->appendChild($testcase);
             }
 
+            foreach ($counts as $count => $value) {
+                $scenarioSuite->setAttribute($count, (string) $value);
+                $featureCounts[$count] += $value;
+            }
+
             $scenarioSuite->setAttribute('time', self::seconds($scenarioTime));
             $featureTime += $scenarioTime;
             $featureSuite->appendChild($scenarioSuite);
+        }
+
+        foreach ($featureCounts as $count => $value) {
+            $featureSuite->setAttribute($count, (string) $value);
         }
 
         $featureSuite->setAttribute('time', self::seconds($featureTime));

@@ -155,7 +155,20 @@ describe(Junit::class, function() {
             expect($text)->toContain('<skipped');
         });
 
-        it('formats undefined steps with skipped element', function () {
+        it('counts each feature\'s and each scenario\'s tests, failures, errors and skipped steps', function () {
+            $output = new BufferedOutput();
+            $failed = new StepResult('Then it is refunded', 'failure');
+            $failed->setError(new StepError('Expected 0 to be 5', new \RuntimeException('Expected 0 to be 5')));
+            $scenario = new ScenarioResult('Checkout', [new StepResult('When I pay', 'passed'), $failed, new StepResult('Then I see a receipt', 'skipped')]);
+
+            (new Junit($output))->format(new SuiteResult([new FeatureResult('Shop', [$scenario, new ScenarioResult('Browsing', [new StepResult('When I browse', 'passed')])])]));
+
+            $text = $output->fetch();
+            expect($text)->toMatch('/<testsuite name="Shop" type="feature" tests="4" failures="1" errors="0" skipped="1"/');
+            expect($text)->toMatch('/<testsuite name="Checkout" type="scenario" tests="3" failures="1" errors="0" skipped="1"/');
+        });
+
+        it('fails an undefined step, as it fails the run', function () {
             $output = new BufferedOutput();
             $formatter = new Junit($output);
 
@@ -169,7 +182,7 @@ describe(Junit::class, function() {
             $formatter->format($suite);
             $text = $output->fetch();
 
-            expect($text)->toContain('<skipped');
+            expect($text)->toContain('<failure message="Undefined step: Given an undefined step"');
         });
 
         it('formats failed steps with failure element', function () {
@@ -261,8 +274,8 @@ describe(Junit::class, function() {
         $formatter->format(new SuiteResult([$feature]));
         $text = $output->fetch();
         expect($text)->toContain('<testcase name="Given a basket" classname="Checkout &gt; Paying" time="0.250000"');
-        expect($text)->toContain('<testsuite name="Paying" type="scenario" line="3" time="1.000000"');
-        expect($text)->toContain('<testsuite name="Checkout" type="feature" file="features/checkout.feature" time="1.000000"');
+        expect($text)->toContain('<testsuite name="Paying" type="scenario" line="3" tests="2" failures="0" errors="0" skipped="0" time="1.000000"');
+        expect($text)->toContain('<testsuite name="Checkout" type="feature" file="features/checkout.feature" tests="2" failures="0" errors="0" skipped="0" time="1.000000"');
     });
 
     it("formats results with nested contexts", function() {

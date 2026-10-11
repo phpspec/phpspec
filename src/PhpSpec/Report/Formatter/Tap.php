@@ -17,13 +17,16 @@ namespace PhpSpec\Report\Formatter;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\ScenarioResult;
+use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 
 /**
  * @internal
- * Renders spec results in TAP (Test Anything Protocol) version 13 format.
- * Outputs one line per example with ok/not ok status and YAML diagnostics for failures.
+ * Renders results in TAP (Test Anything Protocol) version 13 format: one
+ * line per example and per scenario, ok or not ok, with YAML diagnostics for
+ * a failure.
  */
 final class Tap extends AbstractFormatter
 {
@@ -117,6 +120,8 @@ final class Tap extends AbstractFormatter
                     'failure' => $result->isFailure(),
                     'message' => $result->getMessage(),
                 ];
+            } elseif ($result instanceof ScenarioResult) {
+                $examples[] = $this->scenario($result, $prefix);
             } elseif ($result instanceof Results) {
                 $newPrefix = $prefix;
                 if ($result instanceof ContextResult) {
@@ -127,6 +132,48 @@ final class Tap extends AbstractFormatter
         }
 
         return $examples;
+    }
+
+    /**
+     * A scenario as one test point, judged as the run judges it: the first
+     * step that failed, errored or is undefined fails it, a pending one
+     * leaves it to do.
+     *
+     * @return array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string}
+     */
+    private function scenario(ScenarioResult $scenario, string $prefix): array
+    {
+        $point = [
+            'title' => $prefix ? "{$prefix} {$scenario->getTitle()}" : $scenario->getTitle(),
+            'pending' => false,
+            'skipped' => false,
+            'reason' => null,
+            'error' => false,
+            'failure' => false,
+            'message' => '',
+        ];
+
+        foreach ($scenario->getResults() as $step) {
+            if (!$step instanceof StepResult) {
+                continue;
+            }
+
+            if ($step->isError() || $step->isFailure()) {
+                $said = $step->getError()?->getMessage() ?? $step->getMatch()?->getMessage() ?? '';
+
+                return ['error' => $step->isError(), 'failure' => !$step->isError(), 'message' => trim($step->getTitle() . ': ' . $said, ': ')] + $point;
+            }
+
+            if ($step->isUndefined()) {
+                return ['failure' => true, 'message' => 'Undefined step: ' . $step->getTitle()] + $point;
+            }
+
+            if ($step->isPending() && !$point['pending']) {
+                $point = ['pending' => true, 'reason' => $step->getReason()] + $point;
+            }
+        }
+
+        return $point;
     }
 
     /**

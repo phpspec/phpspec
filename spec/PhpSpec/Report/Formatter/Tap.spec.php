@@ -1,6 +1,10 @@
 <?php
 
 use PhpSpec\Report\Formatter\Tap;
+use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\ScenarioResult;
+use PhpSpec\Result\StepResult;
+use PhpSpec\StoryBDD\StepError;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\ExampleResult;
@@ -10,6 +14,27 @@ use PhpSpec\Specification\ExampleError;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(Tap::class, function() {
+
+    it("reports each scenario as one test point, judged by its steps as the run judges it", function() {
+        $output = new BufferedOutput();
+        $failed = new StepResult('Then the total is refunded', 'failure');
+        $failed->setError(new StepError('Expected 0 to be 5', new RuntimeException('Expected 0 to be 5')));
+        $scenarios = [
+            new ScenarioResult('Pays', [new StepResult('When I pay', 'passed')]),
+            new ScenarioResult('Refunds', [new StepResult('When I refund', 'passed'), $failed, new StepResult('Then I see a receipt', 'skipped')]),
+            new ScenarioResult('Later', [new StepResult('When later', 'pending', 'Needs the gateway')]),
+            new ScenarioResult('Unknown', [new StepResult('When something new', 'undefined')]),
+        ];
+
+        (new Tap($output))->format(new SuiteResult([new FeatureResult('Shop', $scenarios)]));
+
+        $text = $output->fetch();
+        expect($text)->toContain("1..4");
+        expect($text)->toContain("ok 1 - Pays\n");
+        expect($text)->toContain("not ok 2 - Refunds\n  ---\n  message: \"Then the total is refunded: Expected 0 to be 5\"");
+        expect($text)->toContain("ok 3 - Later # SKIP Needs the gateway");
+        expect($text)->toContain("not ok 4 - Unknown\n  ---\n  message: \"Undefined step: When something new\"");
+    });
 
     it("formats passing results", function() {
         $output = new BufferedOutput();
