@@ -560,11 +560,29 @@ final class Agent
         }
 
         $resolved = $this->uniqueClassFor($step->subject);
-        if ($resolved === null || $resolved === $step->subject) {
+        if ($resolved !== null && $resolved !== $step->subject) {
+            return new Step($step->phase, null, $resolved, $step->because . sprintf(', resolved to "%s" from the project tree', $resolved));
+        }
+
+        $namespace = $resolved === null ? $this->theOneNamespace() : null;
+        if ($namespace === null) {
             return $step;
         }
 
-        return new Step($step->phase, null, $resolved, $step->because . sprintf(', resolved to "%s" from the project tree', $resolved));
+        return new Step($step->phase, null, $namespace . '\\' . $step->subject, $step->because . sprintf(', placed under %s\\ as the project\'s namespace', $namespace));
+    }
+
+    /**
+     * The namespace a new class named bare belongs under, as describe would
+     * place it: the default namespace the config names, else the one the
+     * project maps, or none when it maps several.
+     */
+    private function theOneNamespace(): ?string
+    {
+        $layout = $this->config->getSourceLayout();
+        $mappings = $layout->mappings();
+
+        return $layout->defaultNamespace() ?? (count($mappings) === 1 ? (string) array_key_first($mappings) : null);
     }
 
     private function uniqueClassFor(string $class): ?string

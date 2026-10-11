@@ -151,6 +151,18 @@ describe(Agent::class, function () {
         expect($replay->requests[0]['options']['tools'])->toHaveLength(3);
     });
 
+    it('places a new class named bare under the project\'s one namespace, as describe would', function (Filesystem $fs) {
+        $proposing = fn(): ReplayProvider => new ReplayProvider([new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe(Brew\\Coupon::class, fn() => null);"])])]);
+
+        $one = (new Agent(new Configuration(['autoload' => ['Brew\\' => 'src/Brew']]), $fs, $proposing()))->chat('generate', 'a spec for a Coupon');
+        $named = (new Agent(new Configuration(['autoload' => ['Brew\\' => 'src/Brew', 'Acme\\' => 'lib'], 'default_namespace' => 'Acme']), $fs, $proposing()))->chat('generate', 'a spec for a Coupon');
+        $several = (new Agent(new Configuration(['autoload' => ['Brew\\' => 'src/Brew', 'Acme\\' => 'lib']]), $fs, $proposing()))->chat('generate', 'a spec for a Coupon');
+
+        expect($one->proposals[0]->path)->toBe('spec/Brew/Coupon.spec.php');
+        expect($named->proposals[0]->path)->toBe('spec/Acme/Coupon.spec.php');
+        expect($several->proposals[0]->path)->toBe('spec/Coupon.spec.php');
+    });
+
     it('forces the tool channel via toolChoice: required with several tools declared', function (Filesystem $fs) {
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
