@@ -133,7 +133,7 @@ callable you handed it:
 | `toThrow(new RuntimeException('boom'))` | `"RuntimeException(\"boom\")"` | `"RuntimeException(\"boom\")"` |
 | `toThrow(RuntimeException::class)` and it did not | `"RuntimeException"` | `"No exception"` |
 
-`toThrow()` now takes no argument at all, meaning "throw something".
+`toThrow()` with no argument means "throw something".
 
 A mock expectation (`toBeCalled`, `toBeCalledWith`, `toBeCalledTimes`) compares
 the call the spec wanted with the calls the double received, arguments included:
@@ -360,10 +360,10 @@ With `--format=agent`, `accept` answers with one receipt:
 
 `target` is what the offer named, a class, a method, a feature file, the
 path of a proposed write, or the class a plan refactors; `files` are the
-files it wrote, from the project root. An offer that could not be applied,
-because the method was written by hand in the meantime or the class file is
-not where the layout says, comes back with `applied: false`, a `reason` and
-no `files`, and the command exits `1`. Generated classes land where the project's layout says their namespace
+files it wrote, from the project root. An offer that could not be applied
+(a method written by hand meanwhile, a class file not where the layout says,
+a plan that stopped short) comes back with `applied: false` and a `reason`,
+and the command exits `1`. Generated classes land where the project's layout says their namespace
 lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
 
 For the common case of taking everything a run found, the bulk shortcut remains:
@@ -432,18 +432,15 @@ bin/phpspec exemplify App/Basket checkout --agent
 
 ## Refactoring
 
-`refactor --format=agent` asks the model for a refactoring plan and answers
-with one receipt: the plan, offered once and whole. Nothing is written until
-you accept it. Accepting carries every step out with nobody asked, as
-`refactor --no-interaction` does: the whole suite runs after each step, a
-step that breaks more than it meant to, or loses an example, gets one fix
-from the model and is otherwise undone, and the run stops there.
+`refactor --format=agent` answers with the plan as one receipt, offered once
+and whole. Nothing is written until you `accept` it, which carries every step
+out as `refactor --no-interaction` does (see [How it works](pair.md#how-it-works)).
 
 ```bash
 bin/phpspec refactor Brew/DrinkPricer --format=agent
 ```
 ```json
-{"v":2,"action":"refactor","class":"Brew\\DrinkPricer","source":"src/Brew/DrinkPricer.php","spec":"spec/Brew/DrinkPricer.spec.php","technique":"Introduce Parameter Object","rationale":"The `priceOf` method takes three primitive parameters (`size`, `milk`, `shots`) that naturally belong together as a single concept. Introducing a `Drink` parameter object groups this data, making the signature clearer and providing a place to encapsulate drink-specific rules later.","steps":["Describe Drink","Implement Drink","Add price method to DrinkPricer","Update DrinkPricer specs to use price","Remove priceOf method"],"offer":{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer"}}
+{"v":2,"action":"refactor","class":"Brew\\DrinkPricer","source":"src/Brew/DrinkPricer.php","spec":"spec/Brew/DrinkPricer.spec.php","technique":"Introduce Parameter Object","rationale":"priceOf takes size, milk and shots, which always travel together; a Drink holds them.","steps":["Describe Drink","Implement Drink","Add price method to DrinkPricer","Update DrinkPricer specs to use price","Remove priceOf method"],"offer":{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer"}}
 ```
 ```bash
 bin/phpspec accept o_4e6db6b4 --format=agent
@@ -452,22 +449,17 @@ bin/phpspec accept o_4e6db6b4 --format=agent
 {"v":2,"action":"accept","accepted":[{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer","files":["spec/Brew/Drink.spec.php","src/Brew/Drink.php","src/Brew/DrinkPricer.php","spec/Brew/DrinkPricer.spec.php"],"applied":true}]}
 ```
 
-`class`, `source` and `spec` say what was resolved, which matters when no
-target was given and the source modified last was taken; `method` is there
-when the target named one. When the model finds nothing worth changing, the
-receipt carries its reason as `declined` and no offer. Both exit `0`.
+`class`, `source` and `spec` say what was resolved; `method` appears when the
+target named one. When the model finds nothing worth changing, the receipt
+carries its reason as `declined` and no offer. Both exit `0`.
 
 `files` in the `accept` receipt are what the kept steps wrote. A plan that
-stopped short (a step the model could not fix, a model that did not answer)
-comes back `applied: false` with the `reason`, the steps before it kept and
-their files listed, and `accept` exits `1`. A plan made reading a file that
-has changed since is refused like any stale offer, and one whose specs no
-longer pass is not started.
+stopped short comes back `applied: false` with the `reason`, and `accept`
+exits `1`. A plan made reading a file that has changed since is refused like
+any stale offer.
 
-A refusal of `refactor` itself carries `error` and, when the way past is
-known, `remedy`, and exits `1`: no spec for the class, no class by that
-name, no model to ask or one that did not answer, and specs that are not
-green, each failure listed in `failures`:
+A refusal carries `error`, a `remedy` when there is one, and `failures` when
+the specs are not green; it exits `1`:
 
 ```json
 {"v":2,"action":"refactor","error":"Specs must pass before refactoring.","remedy":"Fix what the run left first.","failures":["spec/App/Broken.spec.php:6  Broken > fails: Expected true to be false"]}

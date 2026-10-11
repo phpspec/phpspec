@@ -49,6 +49,7 @@ These commands work without AI configuration, and each works with or without its
 | `/run [path\|keyword] [options]` | Run specs (or features) and offer code generation for failures |
 | `/next` | Suggest the next step from the real suite state |
 | `/generate <instruction>` | Turn plain English into a spec example or code — diff, then confirm (requires AI) |
+| `/refactor [target]` | Refactor in baby steps, each asked through the chooser (requires AI) |
 | `/clear` | Clear the terminal |
 | `/swap` | Swap who drives (needs an AI provider) |
 | `/help` | Show available commands and AI status |
@@ -299,16 +300,17 @@ Inside pair mode, `/next` reads the real suite state rather than guessing, and f
 
 ## The `refactor` Command
 
-AI-powered, behaviour-preserving refactoring in baby steps. The model writes a
-plan; you agree to it, then to each step as it is shown; the whole spec suite
-runs after every step.
+Behaviour-preserving refactoring in baby steps. The model writes a plan; you
+approve it, then each step as it is shown; the whole spec suite runs after
+every step.
 
 ```bash
 bin/phpspec refactor
 bin/phpspec refactor Calculator
 bin/phpspec refactor "App\Calculator"
 bin/phpspec refactor "App\Calculator::sum"
-bin/phpspec refactor "spec/App/Calculator.spec.php"
+bin/phpspec refactor src/App/Calculator.php
+bin/phpspec refactor spec/App/Calculator.spec.php
 ```
 
 ### Target Resolution
@@ -319,23 +321,35 @@ bin/phpspec refactor "spec/App/Calculator.spec.php"
 | `Calculator` | the `Calculator.php` modified last under `src_path` | the spec of the class it declares |
 | `App\Calculator` or `App/Calculator` | `src/App/Calculator.php` | `spec/App/Calculator.spec.php` |
 | `App\Calculator::sum` | `src/App/Calculator.php` (focused on `sum`) | `spec/App/Calculator.spec.php` |
-| `spec/App/Calculator.spec.php` | `src/App/Calculator.php` (inferred) | `spec/App/Calculator.spec.php` |
+| `src/App/Calculator.php` | that file | the spec of the class it declares |
+| `spec/App/Calculator.spec.php` | `src/App/Calculator.php` (inferred) | that file |
 
 In pair mode `/refactor` (or `refactor Calculator`) takes the same targets, typed as they are: `/refactor App\Calculator` needs no quoting.
 
 ### How It Works
 
-1. **Baseline** -- the whole spec suite runs first, judged as `run` judges it. If it leaves anything to act on (a failure, an error, a pending example, a missed coverage gate, logic guard finds no example reaching), refactoring is refused with what it left: you can't preserve behaviour that is already broken. A skipped or risky example, or a PHP warning, does not stop it. With [guard](guard.md) on, the suite runs under coverage so guard can judge it.
-2. **Plan** -- the model names the technique (Extract Class, Replace Conditional with Polymorphism, Introduce Parameter Object, ...), says why it improves the design, and lists the baby steps. You are asked `Would you like to proceed?`.
-3. **Steps** -- one at a time. A line says what is under way and, once the model answers, how long it took and how many tokens it wrote; the checklist marks the steps done (✔), under way (◼) and to come (◻). Every file the step writes is shown as a diff, and you are asked `Apply this step?`. No stops the run there; the steps before it stay.
-4. **Verify** -- the whole suite runs after each step. A step may be red only when it writes a spec first (a new collaborator described before it exists), and only in the spec it wrote; a later step makes it green, and the last step leaves everything green. Nor may a step leave fewer examples than it found: an example may move to a collaborator's spec or be rewritten, never dropped. A step that breaks anything else, or loses an example, gets one fix from the model, shown and asked for like the step; still wrong, the step is undone and the run stops, the steps before it kept.
+1. **Baseline**: the whole suite runs first and must leave nothing to act on, as `run` judges it (under coverage when [guard](guard.md) is on). Otherwise refactoring is refused with what it left: you can't preserve behaviour that is already broken.
+2. **Plan**: the model names the technique (Extract Class, Replace Conditional with Polymorphism, Introduce Parameter Object, ...), says why it improves the design, and lists the baby steps. You are asked `Would you like to proceed?`.
+3. **Steps**: one at a time, every file the step writes shown as a diff, then `Apply this step?`.
+4. **Verify**: the whole suite runs after each step and must stay green, with no fewer examples running (an example may move or be rewritten, never dropped or skipped). A step that writes a new collaborator's spec first may leave that spec red until the next step. A step that breaks anything else gets one fix, asked for like the step; if that fails too, the step is undone and the run stops.
 
-The model works the GOOS way: behaviour moves to the object that has the data,
-a new collaborator gets its own spec first, and the subject's spec talks to it
-through a double. A step writes PHP files under `src_path` or `spec_path`
-only; anything else stops the run before a line of it is written. A model
-that does not answer stops the run too, in the provider's words; a step it
-was fixing is undone.
+However the run stops, it stops green: a No, Ctrl-C, or a model that does not
+answer undoes the steps since the specs last passed, and the line says which
+steps were undone and which kept. When a No would undo a step already
+written, the question says so:
+
+```
+  Apply this step?
+    1. Yes
+    2. No (this will undo all changes until the last green state)
+  >
+```
+
+The model works the GOOS way (*Growing Object-Oriented Software, Guided by
+Tests*): behaviour moves to the object that has the data, a new collaborator
+gets its own spec first, and the subject's spec talks to it through a double.
+A step may only write PHP files under `src_path` or `spec_path`; anything else
+stops the run before it writes a line.
 
 When nothing is worth changing, it says so in its own words: `Nothing to refactor in App\Till: Till does one thing, and its names say what.`
 
@@ -345,12 +359,10 @@ On the command line each question is a `[Y/n]` line. In pair mode it is the
 chooser, where *Yes, and don't ask again* on a step applies the remaining
 steps without asking.
 
-`--no-interaction` refactors without asking anything: the plan and the
-diffs go unshown, each step names the files it writes and the verdict of
-the suite, and the rules above hold as they do for a person (one fix, then
-the step is undone). A single `pair --prompt "/refactor ..."` runs the same
-way. Input that ends before a question is answered writes nothing of what
-was asked, and says to run with `--no-interaction`.
+`--no-interaction` asks nothing: the plan and the diffs go unshown, and each
+step prints the files it wrote and the suite's verdict. `pair --prompt
+"/refactor ..."` runs the same way. Piped input that runs out before an
+answer writes nothing and points to `--no-interaction`.
 
 ```
 $ bin/phpspec refactor DrinkPricer --no-interaction
@@ -367,31 +379,12 @@ Extracting Size… (6s · ↓ 353 tokens)
   src/Brew/Size.php (new)
   Specs still pass ✓
 
-Describing Milk… (5s · ↓ 191 tokens)
-  spec/Brew/Milk.spec.php (new)
-  Red, as this step meant: spec/Brew/Milk.spec.php
-
-Extracting Milk… (5s · ↓ 281 tokens)
-  src/Brew/DrinkPricer.php
-  src/Brew/Milk.php (new)
-  Specs still pass ✓
-
-Describing Shots… (3s · ↓ 133 tokens)
-  spec/Brew/Shots.spec.php (new)
-  Red, as this step meant: spec/Brew/Shots.spec.php
-
-Extracting Shots… (6s · ↓ 240 tokens)
-  src/Brew/DrinkPricer.php
-  src/Brew/Shots.php (new)
-  Specs still pass ✓
+...
 
   Refactoring done: Extract Class ✓
 ```
 
-A coding agent asks with `--format=agent` and gets the plan, offered once
-and whole, or the model's reason to decline, as one JSON receipt; nothing
-is written until it runs `accept` with the offer's id, which carries the
-plan out as `--no-interaction` does (see [Coding Agents](agent.md#refactoring)).
+Coding agents use `--format=agent` and `accept` instead; see [Coding Agents](agent.md#refactoring).
 
 ### Example Output
 
@@ -407,10 +400,6 @@ CheckoutService decides itself how a loyal customer's discount is worked
 out. Discount rules change for reasons of their own, and every new one would
 grow the conditional in total().
 
-Introduce a DiscountPolicy role and move the loyalty rule behind it, so
-CheckoutService coordinates the checkout and the pricing rules can evolve
-independently.
-
 Plan:
 
   ◻ Introduce a DiscountPolicy abstraction
@@ -421,6 +410,8 @@ Plan:
 PhpSpec has written a refactoring plan and is ready to start.
 
   Would you like to proceed? [Y/n]
+
+...
 
 Describing LoyaltyDiscount… (6s · ↓ 420 tokens)
   ✔ Introduce a DiscountPolicy abstraction
@@ -451,9 +442,8 @@ Describing LoyaltyDiscount… (6s · ↓ 420 tokens)
 - The class must have a spec: one without is refused, with the `describe` command that gives it one
 - The whole spec suite must be green before refactoring begins
 
-The steps kept are noted in `.phpspec/ai/journal.jsonl`, so a later run
-neither undoes nor repeats them without a reason. The whole conversation is
-kept in `.phpspec/ai/last-refactor.json`, in the shape an eval replays. The
-rules the model follows are `commands/refactor.txt` and the tools
-`propose_plan`, `propose_step` and `decline_refactoring`, each overridable
-under `.phpspec/prompts` (see [Configuration](configuration.md)).
+Kept steps are recorded in `.phpspec/ai/journal.jsonl`, so a later run does
+not undo or repeat them. The last conversation is in
+`.phpspec/ai/last-refactor.json`. The rules (`commands/refactor.txt`) and
+tools (`propose_plan`, `propose_step`, `decline_refactoring`) can be
+overridden under `.phpspec/prompts` (see [Configuration](configuration.md)).

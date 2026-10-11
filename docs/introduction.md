@@ -71,9 +71,9 @@ PhpSpec 9.0 is built for this reality:
 - **`next` command** — Scans your project and suggests the single most
   impactful next step. It follows the scenario-first workflow: recommend a
   feature before a spec, a spec before an implementation.
-- **`refactor` command** — AI-powered, behaviour-preserving refactoring.
-  The AI applies a single baby-step refactoring and verifies that specs still
-  pass. If they fail, the change is rolled back automatically.
+- **`refactor` command**: behaviour-preserving refactoring in baby steps. The
+  model plans; you approve the plan and each step; the whole suite runs after
+  every step, and a step that breaks it gets one fix or is undone.
 - **`--fake` mode** — Instant feedback with hardcoded return values generated
   from spec expectations. Write the spec, run with `--fake`, see it pass, then
   replace stubs with real logic.
