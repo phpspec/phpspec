@@ -92,7 +92,11 @@ final class Refactor extends Command
         $aiConfig = $this->config->getAiConfig();
 
         if ($aiConfig === null) {
-            return $this->refuse($output, $forAgent, (string) $this->config->aiConfigProblem());
+            $refusal = $this->config->aiConfigRefusal() ?? ['problem' => '', 'remedy' => null];
+
+            return $forAgent
+                ? $this->refuse($output, true, $refusal['problem'], (string) $refusal['remedy'])
+                : $this->refuse($output, false, (string) $this->config->aiConfigProblem());
         }
 
         $root = getcwd() ?: '.';

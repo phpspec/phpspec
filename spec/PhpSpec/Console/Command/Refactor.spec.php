@@ -542,7 +542,8 @@ describe(Refactor::class, function () {
             expect($unanswered->getStatusCode())->toBe(1);
             expect(($this->receipt)($unanswered))->toBe(['v' => 2, 'action' => 'refactor', 'error' => 'The model did not answer: Google API error (400): API key not valid.']);
             expect($unconfigured->getStatusCode())->toBe(1);
-            expect(($this->receipt)($unconfigured)['error'])->toContain('AI configuration required');
+            expect(($this->receipt)($unconfigured)['error'])->toBe('AI configuration required. Create phpspec.yml with an "ai" section.');
+            expect(($this->receipt)($unconfigured)['remedy'])->toContain('api_key: YOUR_API_KEY');
         });
     });
 

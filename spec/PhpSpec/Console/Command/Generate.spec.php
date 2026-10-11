@@ -40,7 +40,8 @@ describe(Generate::class, function () {
 
         $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         expect($document['action'])->toBe('generate');
-        expect($document['error'])->toContain('Create phpspec.yml with an "ai" section');
+        expect($document['error'])->toBe('AI configuration required. Create phpspec.yml with an "ai" section.');
+        expect($document['remedy'])->toContain('api_key: YOUR_API_KEY');
         expect($tester->getStatusCode())->toBe(1);
     });
 

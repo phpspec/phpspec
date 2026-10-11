@@ -566,6 +566,15 @@ describe(Configuration::class, function () {
         expect($config->aiConfigProblem())->toBe('The ai section is missing api_key. Add it to your phpspec config.');
     });
 
+    it('gives a missing ai section as a problem and, apart, the section that would answer it', function () {
+        $refusal = (new Configuration([], '/app'))->aiConfigRefusal();
+
+        expect($refusal['problem'] ?? null)->toBe('AI configuration required. Create phpspec.yml with an "ai" section.');
+        expect($refusal['remedy'] ?? null)->toContain("ai:\n  provider: ");
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '']]))->aiConfigRefusal())->toBe(['problem' => 'The ai section\'s api_key is empty. Put your key in your phpspec config.', 'remedy' => null]);
+        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]))->aiConfigRefusal())->toBeNull();
+    });
+
     it('takes an empty api_key for a missing one', function () {
         expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '']]))->aiConfigProblem())->toBe('The ai section\'s api_key is empty. Put your key in your phpspec config.');
         expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '  ']]))->getAiConfig())->toBeNull();

@@ -81,7 +81,11 @@ final class Generate extends Command
 
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            return $this->refuse((string) $this->config->aiConfigProblem(), $forAgent, $output);
+            $refusal = $this->config->aiConfigRefusal() ?? ['problem' => '', 'remedy' => null];
+
+            return $forAgent
+                ? $this->refuse($refusal['problem'], true, $output, $refusal['remedy'])
+                : $this->refuse((string) $this->config->aiConfigProblem(), false, $output);
         }
 
         $argument = $input->getArgument('instruction');
@@ -156,10 +160,10 @@ final class Generate extends Command
      * Says why nothing will be generated, on the channel the caller reads: a
      * machine consumer gets the refusal as its receipt, not as prose.
      */
-    private function refuse(string $problem, bool $forAgent, Output $output): int
+    private function refuse(string $problem, bool $forAgent, Output $output, ?string $remedy = null): int
     {
         if ($forAgent) {
-            $json = json_encode(['v' => Schema::V, 'action' => 'generate', 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+            $json = json_encode(['v' => Schema::V, 'action' => 'generate', 'error' => $problem] + ($remedy === null ? [] : ['remedy' => $remedy]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
             $output->write($json . "\n", false, Output::OUTPUT_RAW);
 
             return 1;

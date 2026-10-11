@@ -854,19 +854,40 @@ final class Configuration
      */
     public function aiConfigProblem(): ?string
     {
+        $refusal = $this->aiConfigRefusal();
+
+        if ($refusal === null || $refusal['remedy'] === null) {
+            return $refusal['problem'] ?? null;
+        }
+
+        return sprintf("%s, for example:\n\n%s", rtrim($refusal['problem'], '.'), $refusal['remedy']);
+    }
+
+    /**
+     * The same as {@see aiConfigProblem()}, the problem apart from the
+     * config that would answer it, for a reader that keeps them apart.
+     *
+     * @return array{problem: string, remedy: string|null}|null
+     */
+    public function aiConfigRefusal(): ?array
+    {
         $ai = $this->normalisedAiSection();
         if ($ai === null) {
             return $this->missingAiSection();
         }
 
-        return $this->aiSectionGap($ai);
+        $gap = $this->aiSectionGap($ai);
+
+        return $gap === null ? null : ['problem' => $gap, 'remedy' => null];
     }
 
     /**
      * Which file to put the ai section in, and what one looks like in that
      * file's own notation, with the installed provider when there is one.
+     *
+     * @return array{problem: string, remedy: string}
      */
-    private function missingAiSection(): string
+    private function missingAiSection(): array
     {
         $installed = ProviderFactory::installed();
         $provider = count($installed) === 1 ? $installed[0] : 'anthropic';
@@ -879,12 +900,14 @@ final class Configuration
             default => sprintf("ai:\n  provider: %s\n  api_key: YOUR_API_KEY", $provider),
         };
 
-        return sprintf(
-            "AI configuration required. %s an \"ai\" section%s, for example:\n\n%s",
-            $this->settingsFile === null ? 'Create ' . $shown . ' with' : 'Add',
-            $this->settingsFile === null ? '' : ' to ' . $shown,
-            $example,
-        );
+        return [
+            'problem' => sprintf(
+                'AI configuration required. %s an "ai" section%s.',
+                $this->settingsFile === null ? 'Create ' . $shown . ' with' : 'Add',
+                $this->settingsFile === null ? '' : ' to ' . $shown,
+            ),
+            'remedy' => $example,
+        ];
     }
 
     /**

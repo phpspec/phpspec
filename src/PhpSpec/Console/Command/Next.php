@@ -100,7 +100,11 @@ final class Next extends Command
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            return $this->refuse($output, $forAgent, (string) $this->config->aiConfigProblem());
+            $refusal = $this->config->aiConfigRefusal() ?? ['problem' => '', 'remedy' => null];
+
+            return $forAgent
+                ? $this->refuse($output, true, $refusal['problem'], $refusal['remedy'])
+                : $this->refuse($output, false, (string) $this->config->aiConfigProblem());
         }
 
         // 2. Load bootstrap
@@ -506,10 +510,10 @@ final class Next extends Command
      * Says why there will be no suggestion, as a receipt for a coding agent,
      * else in red.
      */
-    private function refuse(Output $output, bool $forAgent, string $problem): int
+    private function refuse(Output $output, bool $forAgent, string $problem, ?string $remedy = null): int
     {
         if ($forAgent) {
-            $json = json_encode(['v' => Schema::V, 'action' => 'next', 'error' => $problem], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+            $json = json_encode(['v' => Schema::V, 'action' => 'next', 'error' => $problem] + ($remedy === null ? [] : ['remedy' => $remedy]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
             $output->write($json . "\n", false, Output::OUTPUT_RAW);
 
             return 1;

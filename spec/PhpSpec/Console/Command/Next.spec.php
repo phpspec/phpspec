@@ -69,7 +69,9 @@ describe(Next::class, function () {
 
             $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
             expect($document['action'])->toBe('next');
-            expect($document['error'])->toContain('AI configuration required');
+            expect($document['error'])->toStartWith('AI configuration required.');
+            expect($document['error'])->not()->toContain('api_key');
+            expect($document['remedy'])->toContain('api_key: YOUR_API_KEY');
             expect($exitCode)->toBe(1);
         });
 
