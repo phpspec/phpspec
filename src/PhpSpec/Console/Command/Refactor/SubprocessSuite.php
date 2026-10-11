@@ -22,7 +22,7 @@ use PhpSpec\Parallel\ParallelRunner;
  * Runs the project's whole spec suite in a process of its own, so the code a
  * refactoring just wrote is loaded fresh, and reads its agent stream. It
  * reads the same configuration, runs every example whatever that stops on,
- * and collects coverage when guard is on. A run that outlasts the timeout is
+ * keeps none of the run's offers, and collects coverage when guard is on. A run that outlasts the timeout is
  * stopped and read as red.
  */
 final readonly class SubprocessSuite implements SpecSuite
@@ -39,7 +39,7 @@ final readonly class SubprocessSuite implements SpecSuite
             PHP_BINARY,
             '-d', 'xdebug.mode=' . ($this->config->guardIsOn() ? 'coverage' : 'off'),
             ParallelRunner::findPhpspecBin(),
-            'run', '--format=agent', '--whole-suite', '--no-interaction', '--no-ansi',
+            'run', '--format=agent', '--suite-check', '--no-interaction', '--no-ansi',
             ...$this->config->childOptions(),
         ];
         $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $this->directory);

@@ -17,7 +17,10 @@ describe(SubprocessSuite::class, function () {
                 unlink($file);
             }
         }
-        foreach (['/spec', '/altspec', '/conf', ''] as $dir) {
+        foreach (glob($this->project . '/.phpspec/*') ?: [] as $file) {
+            unlink($file);
+        }
+        foreach (['/spec', '/altspec', '/conf', '/.phpspec', ''] as $dir) {
             if (is_dir($this->project . $dir)) {
                 rmdir($this->project . $dir);
             }
@@ -47,6 +50,14 @@ describe(SubprocessSuite::class, function () {
 
         expect($check->green())->toBeFalse();
         expect($check->report())->toContain('spec/Red.spec.php:3');
+    });
+
+    it('keeps none of the offers the run could make: nobody will accept them', function () {
+        file_put_contents($this->project . '/spec/Red.spec.php', "<?php\ndescribe('Red', function () {\n    it('needs a class', fn() => expect(new App\\Missing())->toBeNull());\n});\n");
+
+        (new SubprocessSuite($this->project, new Configuration()))->check();
+
+        expect(file_exists($this->project . '/.phpspec/offers.json'))->toBeFalse();
     });
 
     it('reads the configuration file it was given, not the one the project would find', function () {

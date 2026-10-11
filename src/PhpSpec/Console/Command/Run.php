@@ -143,7 +143,7 @@ final class Run extends Command implements InternalOptions
             ->addOption('coverage-json', null, Option::VALUE_REQUIRED, 'Generate JSON coverage report with per-example detail, for mutation testing tools (experimental)')
             ->addOption('coverage-src', null, Option::VALUE_REQUIRED, 'Source directory to scope coverage reports to (overrides config src_path)')
             ->addOption('coverage-partial', null, Option::VALUE_REQUIRED, 'Dump raw coverage state to a file (internal, used by parallel workers)')
-            ->addOption('whole-suite', null, Option::VALUE_NONE, 'Run every example whatever the config stops on (internal, used by refactor\'s suite check)')
+            ->addOption('suite-check', null, Option::VALUE_NONE, 'Run every example whatever the config stops on, keeping no offers (internal, used by refactor\'s suite check)')
             ->addOption('parallel', null, Option::VALUE_OPTIONAL, 'Run specs in parallel processes (--parallel=N for N workers)', false)
             ->setDescription('Runs specifications');
     }
@@ -409,7 +409,7 @@ final class Run extends Command implements InternalOptions
             $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive() ? Generation::Asks : Generation::Declines);
         }
 
-        if ($formatter instanceof Agent) {
+        if ($formatter instanceof Agent && !$input->getOption('suite-check')) {
             // A reader that was told about an offer can take it later by id,
             // so what was reported has to still be there when they do.
             $this->recordOffers($results);
@@ -841,7 +841,7 @@ final class Run extends Command implements InternalOptions
         $suite = $this->loader->load($files, $filter, is_string($tags) ? $tags : null);
 
         $problems = (bool) $input->getOption('stop-on-problems');
-        $configStop = $input->getOption('whole-suite') ? new StopConditions() : $this->config->getStopConditions();
+        $configStop = $input->getOption('suite-check') ? new StopConditions() : $this->config->getStopConditions();
         $stopOnFailure = $input->getOption('stop-on-failure') || $configStop->onFailure;
         $stop = new StopConditions(
             onFailure: $stopOnFailure || $problems,
@@ -1060,7 +1060,7 @@ final class Run extends Command implements InternalOptions
 
     public function internalOptions(): array
     {
-        return ['coverage-partial', 'whole-suite'];
+        return ['coverage-partial', 'suite-check'];
     }
 
     private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
