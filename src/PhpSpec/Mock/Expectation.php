@@ -93,9 +93,11 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Asserts that the mock method was called at least once.
-     * Returns a CallCountExpectation for fluent count chaining
-     * (once(), twice(), exactly(N)->times(), etc.).
+     * Declares, before the act, that the method will be called at least once
+     * by the end of the example: the future tense, a mock. Written after the
+     * call was made it is refused, since that call is a spy's to check with
+     * toHaveBeenCalled(). Returns a CallCountExpectation for fluent count
+     * chaining (once(), twice(), exactly(N)->times(), etc.).
      */
     public function toBeCalled(): CallCountExpectation
     {
@@ -109,7 +111,19 @@ final class Expectation extends BaseExpectation
         $methodName = $method->method;
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
-        HeldCalls::claim($double, $methodName, $method->arguments);
+
+        // A mock is declared before the act: a call already made is a spy's
+        // to check, and this refusal names it, so it is not refused again.
+        if ($calls->countCallsToWithArgs($methodName, $method->arguments) > 0) {
+            HeldCalls::claim($double, $methodName, null);
+
+            throw new \LogicException(sprintf(
+                '%s::%s() was already called when toBeCalled() was written: toBeCalled() declares a call to come, before the act; check a call already made with %s.',
+                ltrim($class, '\\'),
+                $methodName,
+                $this->negated ? 'not()->toHaveBeenCalled()' : 'toHaveBeenCalled()',
+            ));
+        }
 
         $trace = debug_backtrace()[0];
 

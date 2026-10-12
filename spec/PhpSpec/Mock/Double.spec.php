@@ -428,7 +428,7 @@ describe(Double::class, function() {
             allow($stock->reserve('tea', 2));
 
             expect(double_spec_outsider_reserves($stock))->toBeFalse();
-            expect($stock->reserve('tea', 2))->toBeCalled()->once();
+            expect($stock->reserve('tea', 2))->toHaveBeenCalled();
         });
 
         it("answers a call that expect() declared before the act", function () {

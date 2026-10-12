@@ -59,7 +59,7 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
-  Scenario: An argument expectation judges calls made before it was written
+  Scenario: toHaveBeenCalled() judges the calls made before it was written
     Given an interface "src/App/Logger.php":
       """
       <?php
@@ -73,7 +73,7 @@ Feature: Mocking
       """
       $logger = mock(App\Logger::class);
       $logger->log('paid');
-      expect($logger->log('paid'))->toBeCalled();
+      expect($logger->log('paid'))->toHaveBeenCalled();
       """
     When I run the spec
     Then all examples should pass
@@ -135,7 +135,7 @@ Feature: Mocking
 
       $ledger = mock(App\Ledger::class);
       $ledger->record(new App\Money(5));
-      expect($ledger->record(new App\Money(5)))->toBeCalled();
+      expect($ledger->record(new App\Money(5)))->toHaveBeenCalled();
       """
     When I run the spec
     Then all examples should pass

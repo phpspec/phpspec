@@ -192,7 +192,10 @@ Declared before the act, judged when the example ends: the method must be
 called at least once by then. Arguments written in the expect call are part
 of the promise: `save($user)` is not satisfied by a `save()` of something
 else, `save(any())` by a `save()` of anything. The declaration also makes the
-call expected, so the code under spec may make it:
+call expected, so the code under spec may make it. This is a mock: it is
+written before the act, and a `toBeCalled()` written after the call was made
+is refused on its line. A call already made is a spy's to check, with
+[`toHaveBeenCalled()`](#tohavebeencalled):
 
 ```php
 it('calls save', function (UserRepository $repo) {
