@@ -19,7 +19,9 @@ use PhpSpec\EventDispatcher\Event;
 
 /**
  * @internal
- * Dispatched when a deferred match closure is created, to be evaluated after the example runs.
+ * Dispatched when an expectation is made, carrying a closure the example reads
+ * its verdict from when it ends: a verdict already decided for an expectation
+ * on a value, one decided then for a call expectation on a double (toBeCalled).
  */
 final readonly class MatchCreated implements Event
 {

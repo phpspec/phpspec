@@ -491,6 +491,25 @@ describe(Context::class, function() {
         expect($built)->toBe(2);
     });
 
+    it("judges each expectation on the object as it stands on that line, and reports them in the order written", function() {
+        $ctx = new Context("timing", function() {
+            it("counts before and after adding", function() {
+                $items = new ArrayObject();
+                expect($items)->toHaveCount(0);
+                $items->append('one');
+                expect($items)->toHaveCount(1);
+                expect($items)->toHaveCount(5);
+            });
+        });
+        $world = new Subject();
+        $ctx = $ctx->withWorld($world);
+        $ctx->setWorld($world);
+
+        $matches = $ctx->run()->getResults()[0]->getResults();
+
+        expect(array_map(fn($match) => $match->isFailure(), $matches))->toBe([false, false, true]);
+    });
+
     it("leaves a let nobody reads unbuilt", function() {
         $built = 0;
         $ctx = new Context("unread let", function() use (&$built) {

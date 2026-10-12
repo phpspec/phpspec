@@ -56,10 +56,13 @@ final readonly class EventfulExpectation
     public function createMatchEvent(\Closure $match, string $message, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false, bool $impliedTarget = false, ?\Closure $actual = null, ?array $expects = null, ...$values): void
     {
         DispatcherRegistry::dispatcher()->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
-        DispatcherRegistry::dispatcher()->dispatch(new MatchCreated(fn() => match (true) {
+
+        // Judged here, on the line the expectation is written: an object the
+        // example changes afterwards is not what this expectation was about.
+        $result = match (true) {
             $match($this->subject) => MatchResult::passed(),
-            // Resolved here rather than at call time: the matcher has run by
-            // now, so a matcher that only learns its actual by running knows it.
+            // The matcher has run by now, so one that only learns its actual
+            // by running knows it.
             default => MatchResult::failed(
                 $actual !== null ? $actual() : $this->subject,
                 $expects !== null ? $expects[0] : ($values[1] ?? null),
@@ -70,7 +73,9 @@ final readonly class EventfulExpectation
                 $matcher,
                 $negated,
                 $impliedTarget,
-            )
-        }), MatchCreated::NAME);
+            ),
+        };
+
+        DispatcherRegistry::dispatcher()->dispatch(new MatchCreated(fn(): MatchResult => $result), MatchCreated::NAME);
     }
 }

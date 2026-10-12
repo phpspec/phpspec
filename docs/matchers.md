@@ -2,6 +2,17 @@
 
 Matchers are methods on the `Expectation` object returned by `expect()`. They assert a condition about the subject.
 
+An expectation is judged on the line it is written, on its subject as it stands there. What the example does to an object afterwards changes neither the verdict nor what a failure reports, so this holds:
+
+```php
+$items = new ArrayObject();
+expect($items)->toHaveCount(0);
+$items->append('one');
+expect($items)->toHaveCount(1);
+```
+
+A failed expectation does not stop the example: every expectation is judged, in the order written, and the report leads with the first that did not hold. Call expectations on doubles differ by design: `toBeCalled()` is declared before the act and judged when the example ends (see [`toBeCalled()`](#tobecalled)).
+
 All matchers are chainable -- they return the `Expectation` instance, so you can write `expect($x)->toBe(1)->toBeLike('1')`.
 
 ## Identity & Equality
@@ -305,8 +316,7 @@ expect(fn () => throw new \RuntimeException('boom'))
 
 The callable runs where the expectation is written, so the lines after it see
 what it did: a fixture cleaned up in a `finally`, or a file checked for
-rollback, is looked at after the operation, in reading order. Only the verdict
-waits for the end of the example, as it does for every matcher.
+rollback, is looked at after the operation, in reading order.
 
 ## HTTP Response Matchers
 

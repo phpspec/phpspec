@@ -77,7 +77,9 @@ final class FirstDifference
         }
 
         foreach ($expected as $key => $value) {
-            if ($value === $actual[$key]) {
+            // Two objects kept as they stood are the same when they were
+            // named and shown the same.
+            if ($value === $actual[$key] || ($value instanceof ReportedObject && $value == $actual[$key])) {
                 continue;
             }
 

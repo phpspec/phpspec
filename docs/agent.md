@@ -552,8 +552,8 @@ or reflecting on the source:
 
 One JSON object: every DSL function and matcher with its signature and
 summary, the mock and story functions, and the `timing` rules. Read `timing`
-first: expectations are judged at the end of the example, and `toThrow()` runs
-its callable where it is written.
+first: an expectation is judged on the line it is written, `toThrow()` runs its
+callable there, and only `toBeCalled()` waits for the end of the example.
 
 ## Writing specs that explain themselves
 

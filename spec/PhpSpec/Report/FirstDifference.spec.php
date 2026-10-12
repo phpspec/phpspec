@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Report\FirstDifference;
+use PhpSpec\Report\ReportedObject;
 
 describe(FirstDifference::class, function () {
 
@@ -27,6 +28,12 @@ describe(FirstDifference::class, function () {
         $difference = FirstDifference::between(['a' => 1, 'b' => [1, 2, 3]], ['a' => 1, 'b' => [1, 5, 3]]);
 
         expect($difference)->toBe(['path' => 'b[1]', 'expected' => 2, 'actual' => 5]);
+    });
+
+    it('passes over two objects kept as they stood when they were shown the same', function () {
+        $point = fn(): ReportedObject => new ReportedObject('App\\Point', 'App\\Point{x: 1}');
+
+        expect(FirstDifference::between([$point(), 1], [$point(), 2]))->toBe(['path' => '[1]', 'expected' => 1, 'actual' => 2]);
     });
 
     it('leaves two arrays of different shape alone at the top, and names the key that holds them deeper down', function () {

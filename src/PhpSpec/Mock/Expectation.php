@@ -156,8 +156,8 @@ final class Expectation extends BaseExpectation
 
 
     /**
-     * Dispatches a mock verification as an expectation event, judged at the
-     * end of the example over every call the double received by then.
+     * Judges a mock verification now, over the calls the double has received
+     * so far, and hands the verdict over as an expectation event.
      * Handles negation by inverting the match closure and adjusting the message.
      *
      * @param Closure(): bool $match whether the calls received satisfy the expectation
@@ -178,20 +178,20 @@ final class Expectation extends BaseExpectation
             $message = str_replace(' to ', ' not to ', $message);
         }
 
-        return $this->expectation(function () use ($match, $message, $comparison, $matcher, $file, $line) {
-            return match (true) {
-                $match() => MatchResult::passed(),
-                default => MatchResult::failed(
-                    $comparison->received(),
-                    $comparison->wanted(),
-                    $message,
-                    $file,
-                    $line,
-                    matcher: $matcher,
-                    negated: $this->negated,
-                )
-            };
-        });
+        $result = match (true) {
+            $match() => MatchResult::passed(),
+            default => MatchResult::failed(
+                $comparison->received(),
+                $comparison->wanted(),
+                $message,
+                $file,
+                $line,
+                matcher: $matcher,
+                negated: $this->negated,
+            ),
+        };
+
+        return $this->expectation(fn(): MatchResult => $result);
     }
 
     /**

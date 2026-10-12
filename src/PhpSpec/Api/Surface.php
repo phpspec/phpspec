@@ -68,10 +68,10 @@ final readonly class Surface
     private const RUNS_SUBJECT = ['toThrow'];
 
     private const TIMING = [
-        'Expectations are judged at the end of the example, in the order written; the failure detail shows the first that did not hold.',
-        'expect() captures its subject when called: a value the body reassigns afterwards is not seen, an object the body mutates afterwards is.',
-        'toThrow() runs its callable where the expectation is written, so what follows sees what it did; only the verdict waits.',
-        'Mock expectations (toBeCalled and its counts) judge the calls made during the whole example.',
+        'An expectation is judged on the line it is written, on its subject as it stands there: what the example does to an object afterwards changes neither the verdict nor what a failure reports.',
+        'A failed expectation does not stop the example: every expectation is judged, in the order written, and the failure detail shows the first that did not hold.',
+        'toThrow() runs its callable where the expectation is written, so what follows sees what it did.',
+        'toBeCalled() and its counts are declared before the act and judge the calls made during the whole example; toHaveBeenCalled() is asked after the act and judges the calls made so far.',
         'let() values are built the first time an example reads them, once for that example; a let() no example reads never runs, one read in a beforeEach is built before the example, and one whose closure throws fails that example alone.',
     ];
 
