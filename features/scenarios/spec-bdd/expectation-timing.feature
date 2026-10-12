@@ -184,7 +184,7 @@ Feature: An expectation judges its subject on the line it is written
     And the reported entry should be "failing" at "spec/App/Greeter.spec.php:14"
     And the output should contain "to have been called"
 
-  Scenario: toBeCalled() written after the call was made is refused, and points at toHaveBeenCalled()
+  Scenario: toBeCalled() written after the call was made is refused
     Given an interface "src/App/Notifier.php":
       """
       <?php
@@ -230,5 +230,5 @@ Feature: An expectation judges its subject on the line it is written
     Then the exit code should be 1
     And the report should have 2 entries
     And every reported entry should carry a message
-    And the output should contain "::notify() was already called: toBeCalled() goes before the act, toHaveBeenCalled() after."
-    And the output should contain "not()->toBeCalled() goes before the act, not()->toHaveBeenCalled() after."
+    And the output should contain "::notify() was already called before toBeCalled()."
+    And the output should contain "::notify() was already called before not()->toBeCalled()."

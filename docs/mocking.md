@@ -125,17 +125,13 @@ instance of it built without its constructor, for `allow()` to replace; a
 ## Calls the spec never declared
 
 A double is strict towards the code under spec. A call that no `allow()` or
-`expect()` declared, made from anywhere outside the spec code, is held, as a
-stub's exception is: the code under spec carries on with the type's default,
-and a `toHaveBeenCalled()` after the act claims the call it checks. A call
-nothing claims fails the example when it ends, naming where it was made. The
-spec code is every file PhpSpec loaded as a spec, step or
+`expect()` declared and no `toHaveBeenCalled()` checks, made from anywhere
+outside the spec code, fails the example. The spec code is every file PhpSpec loaded as a spec, step or
 support file, wherever it sits, and whatever sits in the spec, features and
 suite folders, or the folder of a path the run was given:
 
 ```
 App\Stock::reserve("tea", 2) was called but not expected, at src/App/Checkout.php:8.
-Declare it with allow() or expect(), check it with toHaveBeenCalled(), or use a dummy() if its calls do not matter.
 ```
 
 A call is declared by the arguments it was written with, read as PHP reads
@@ -192,10 +188,7 @@ Declared before the act, judged when the example ends: the method must be
 called at least once by then. Arguments written in the expect call are part
 of the promise: `save($user)` is not satisfied by a `save()` of something
 else, `save(any())` by a `save()` of anything. The declaration also makes the
-call expected, so the code under spec may make it. This is a mock: it is
-written before the act, and a `toBeCalled()` written after the call was made
-is refused on its line. A call already made is a spy's to check, with
-[`toHaveBeenCalled()`](#tohavebeencalled):
+call expected, so the code under spec may make it:
 
 ```php
 it('calls save', function (UserRepository $repo) {
@@ -213,9 +206,8 @@ it('saves something', function (UserRepository $repo) {
 
 ### `toHaveBeenCalled()`
 
-Asked after the act, judged at once from the calls recorded so far. Nothing
-needs declaring before the act: the call is held until the check claims it,
-and the code under spec gets the type's default meanwhile.
+Asked after the act, judged at once from the calls made so far. Nothing needs
+declaring before the act.
 
 ```php
 it('saves the user', function (UserRepository $repo) {
@@ -226,7 +218,6 @@ it('saves the user', function (UserRepository $repo) {
 ```
 
 Negated, it asks that the call was not made: `expect($repo->save($other))->not()->toHaveBeenCalled()`.
-A check that fails names every call the method received.
 
 
 ### Counting calls

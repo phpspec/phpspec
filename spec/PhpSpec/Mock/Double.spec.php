@@ -403,8 +403,6 @@ describe(Double::class, function() {
             expect($refusal)->toBeAnInstanceOf(UnexpectedCallException::class);
             expect($refusal?->getMessage())->toContain('DoubleSpecStock::reserve("tea", 2) was called but not expected');
             expect($refusal?->getMessage())->toContain(str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER)) . ':2');
-            expect($refusal?->getMessage())->toContain('toHaveBeenCalled()');
-            expect($refusal?->getMessage())->toContain('dummy()');
         });
 
         it("lets toHaveBeenCalled() after the act claim the call it checks", function () {

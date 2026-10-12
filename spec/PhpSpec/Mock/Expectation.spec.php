@@ -182,11 +182,11 @@ describe(Expectation::class, function() {
         expect($lcd->______PhpSpecGetMethod())->toBe('process');
     });
 
-    it("refuses toBeCalled written after the call it declares was made, pointing at toHaveBeenCalled", function(ExpectationSpecService $service) {
+    it("refuses toBeCalled written after the call it declares was made", function(ExpectationSpecService $service) {
         $service->store('foo', 42);
 
         expect(fn() => expect($service->store('foo', 42))->toBeCalled())
-            ->toThrow(\LogicException::class, 'ExpectationSpecService::store() was already called: toBeCalled() goes before the act, toHaveBeenCalled() after.');
+            ->toThrow(\LogicException::class, 'ExpectationSpecService::store() was already called before toBeCalled().');
     });
 
     it("checks a call made before with toHaveBeenCalled", function(ExpectationSpecService $service) {

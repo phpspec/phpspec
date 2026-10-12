@@ -16,11 +16,9 @@ namespace PhpSpec\Mock;
 
 /**
  * @internal
- * The calls a double received that nothing declared, held from the act as a
- * stub's exception is: the code under spec carries on with the type's
- * default, a toHaveBeenCalled() after the act claims the call it checks, and
- * a call still unclaimed when the example ends is refused there, as it would
- * have been where it was made.
+ * The calls a double received that nothing declared, until a
+ * toHaveBeenCalled() checks them; one still unchecked when the example ends
+ * is refused.
  */
 final class HeldCalls
 {

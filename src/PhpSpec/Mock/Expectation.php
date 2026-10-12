@@ -94,10 +94,8 @@ final class Expectation extends BaseExpectation
 
     /**
      * Declares, before the act, that the method will be called at least once
-     * by the end of the example: the future tense, a mock. Written after the
-     * call was made it is refused, since that call is a spy's to check with
-     * toHaveBeenCalled(). Returns a CallCountExpectation for fluent count
-     * chaining (once(), twice(), exactly(N)->times(), etc.).
+     * by the end of the example. Returns a CallCountExpectation for fluent
+     * count chaining (once(), twice(), exactly(N)->times(), etc.).
      */
     public function toBeCalled(): CallCountExpectation
     {
@@ -116,11 +114,10 @@ final class Expectation extends BaseExpectation
             HeldCalls::claim($double, $methodName, null);
 
             throw new \LogicException(sprintf(
-                '%s::%s() was already called: %s goes before the act, %s after.',
+                '%s::%s() was already called before %s.',
                 ltrim($class, '\\'),
                 $methodName,
                 $this->negated ? 'not()->toBeCalled()' : 'toBeCalled()',
-                $this->negated ? 'not()->toHaveBeenCalled()' : 'toHaveBeenCalled()',
             ));
         }
 
