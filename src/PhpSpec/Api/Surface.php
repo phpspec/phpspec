@@ -111,7 +111,7 @@ final readonly class Surface
             'story' => [
                 'steps' => self::functions(self::STORY_STEPS),
                 'hooks' => self::functions(self::STORY_HOOKS),
-                'support' => 'Classes under features/support load before step files; the steps of one scenario share $this.',
+                'support' => 'Classes under features/support load before step files, as do #[ParameterType] functions, which make a step parameter of the class they return, and #[DocStringType(name)] functions, which turn the doc string for the parameter of that name; the steps of one scenario share $this.',
             ],
             'browser' => [
                 'functions' => self::functions(self::BROWSER),

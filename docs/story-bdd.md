@@ -71,6 +71,8 @@ features/
     steps.php       # use Acme\Support\Server;
 ```
 
+[Parameter types](#parameter-types) and [doc string types](#doc-string-types) are functions declared there.
+
 ## Step Patterns
 
 Patterns use placeholders that capture values from the step text:
@@ -214,6 +216,52 @@ given('a note titled {string}:', function (string $title, string $note) {
 A table is passed the same way, as a `DataTable`. The step definitions PhpSpec
 generates for undefined steps take the table or doc string their step carries,
 and import `DataTable` once when a step takes one.
+
+## Parameter Types
+
+A step parameter typed with a class is made by the function marked
+`#[ParameterType]` that returns that class. The function takes as many of the
+step's captures as it has parameters, in order. Each class has one such
+function.
+
+```php
+// features/support/types.php
+use PhpSpec\StoryBDD\ParameterType;
+
+#[ParameterType]
+function book(string $author, string $isbn): Book
+{
+    return new Book($author, $isbn);
+}
+```
+
+```php
+given('a book by {string} with isbn {string} costing {int}', function (Book $book, int $price) {
+    // $book is book($author, $isbn), $price the third capture
+});
+```
+
+## Doc String Types
+
+A function marked `#[DocStringType('json')]` turns the doc string for the
+step parameter named `$json`:
+
+```php
+// features/support/types.php
+use PhpSpec\StoryBDD\DocStringType;
+
+#[DocStringType('json')]
+function json(string $text): array
+{
+    return json_decode($text, true);
+}
+```
+
+```php
+given('the settings:', function (array $json) {
+    $this->settings = $json;
+});
+```
 
 ## Tags
 

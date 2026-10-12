@@ -86,8 +86,7 @@ final class StepRegistry
     {
         foreach ($this->steps as $step) {
             if (preg_match($step['regex'], $text, $matches)) {
-                array_shift($matches);
-                return new StepMatch($step['callback'], $matches, $step['pattern']);
+                return new StepMatch($step['callback'], array_values(array_slice($matches, 1)), $step['pattern']);
             }
         }
 

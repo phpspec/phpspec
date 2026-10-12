@@ -21,6 +21,7 @@ use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\GherkinParser;
 use PhpSpec\StoryBDD\ScenarioLineSelector;
 use PhpSpec\StoryBDD\StepsFile;
+use PhpSpec\StoryBDD\StepTypes;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
 use PhpSpec\StoryBDD\TagExpression;
 
@@ -324,6 +325,7 @@ final class Loader
             $this->requireFile($stepFile, false);
         }
 
+        $types = StepTypes::declared();
         $features = [];
         foreach ($featureFiles as $featureFile) {
             $content = $this->fs->read($featureFile);
@@ -344,6 +346,7 @@ final class Loader
                 $featureNode,
                 StoryBDDRegistry::steps(),
                 StoryBDDRegistry::hooks(),
+                $types,
             );
         }
 

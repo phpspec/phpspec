@@ -520,3 +520,159 @@ Feature: Story BDD with Gherkin
     When I run phpspec run "features/greeting.feature"
     Then the exit code should be 0
     And the output should contain "2 steps (2 passed)"
+
+  Scenario: A parameter type makes the object a step asks for from the captures its function takes
+    Given a feature file "features/library.feature":
+      """
+      Feature: Library
+        Scenario: Pricing a book
+          Given a book by "Ann" with isbn "123" costing 9
+          Then the book is "Ann, 123" at 9
+      """
+    And a file "features/support/types.php":
+      """
+      <?php
+
+      use PhpSpec\StoryBDD\ParameterType;
+
+      final class Book
+      {
+          public function __construct(public string $author, public string $isbn) {}
+      }
+
+      #[ParameterType]
+      function book(string $author, string $isbn): Book
+      {
+          return new Book($author, $isbn);
+      }
+      """
+    And a step file "features/steps/library.steps.php":
+      """
+      <?php
+
+      given('a book by {string} with isbn {string} costing {int}', function (Book $book, int $price) {
+          $this->book = $book;
+          $this->price = $price;
+      });
+
+      then('the book is {string} at {int}', function (string $book, int $price) {
+          expect($this->book->author . ', ' . $this->book->isbn)->toBe($book);
+          expect($this->price)->toBe($price);
+      });
+      """
+    When I run phpspec run in a fresh process with option "features/library.feature"
+    Then the exit code should be 0
+    And the output should contain "2 steps (2 passed)"
+
+  Scenario: A doc string type turns the doc string for the parameter named after it
+    Given a feature file "features/settings.feature":
+      """
+      Feature: Settings
+        Scenario: Reading the settings
+          Given the settings:
+            \"\"\"
+            {"debug": true}
+            \"\"\"
+          Then debugging is on
+      """
+    And a file "features/support/types.php":
+      """
+      <?php
+
+      use PhpSpec\StoryBDD\DocStringType;
+
+      #[DocStringType('json')]
+      function json(string $text): array
+      {
+          return json_decode($text, true);
+      }
+      """
+    And a step file "features/steps/settings.steps.php":
+      """
+      <?php
+
+      given('the settings:', function (array $json) {
+          $this->settings = $json;
+      });
+
+      then('debugging is on', function () {
+          expect($this->settings['debug'])->toBeTrue();
+      });
+      """
+    When I run phpspec run in a fresh process with option "features/settings.feature"
+    Then the exit code should be 0
+    And the output should contain "2 steps (2 passed)"
+
+  Scenario: Two functions that make one class stop the run
+    Given a feature file "features/library.feature":
+      """
+      Feature: Library
+        Scenario: Pricing a book
+          Given a book by "Ann"
+      """
+    And a file "features/support/types.php":
+      """
+      <?php
+
+      use PhpSpec\StoryBDD\ParameterType;
+
+      final class Book
+      {
+          public function __construct(public string $author) {}
+      }
+
+      #[ParameterType]
+      function book(string $author): Book
+      {
+          return new Book($author);
+      }
+
+      #[ParameterType]
+      function anonymous_book(): Book
+      {
+          return new Book('anonymous');
+      }
+      """
+    And a step file "features/steps/library.steps.php":
+      """
+      <?php
+
+      given('a book by {string}', function (Book $book) {});
+      """
+    When I run phpspec run in a fresh process with option "features/library.feature"
+    Then the exit code should be 1
+    And the output should contain "book() and anonymous_book() both make Book."
+
+  Scenario: A parameter type that takes more captures than a step has left errors that step
+    Given a feature file "features/library.feature":
+      """
+      Feature: Library
+        Scenario: Pricing a book
+          Given a book by "Ann"
+      """
+    And a file "features/support/types.php":
+      """
+      <?php
+
+      use PhpSpec\StoryBDD\ParameterType;
+
+      final class Book
+      {
+          public function __construct(public string $author, public string $isbn) {}
+      }
+
+      #[ParameterType]
+      function book(string $author, string $isbn): Book
+      {
+          return new Book($author, $isbn);
+      }
+      """
+    And a step file "features/steps/library.steps.php":
+      """
+      <?php
+
+      given('a book by {string}', function (Book $book) {});
+      """
+    When I run phpspec run in a fresh process with option "features/library.feature"
+    Then the exit code should be 1
+    And the output should contain "book() takes 2 captures, the step has 1 left."

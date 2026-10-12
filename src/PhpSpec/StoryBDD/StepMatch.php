@@ -25,7 +25,7 @@ readonly class StepMatch
      * Creates a StepMatch with the matched closure, captured arguments, and source pattern.
      *
      * @param \Closure $callback the step closure to execute
-     * @param array<mixed> $args captured values from placeholder groups in the pattern
+     * @param list<string> $args captured values from placeholder groups in the pattern
      * @param string $pattern the original registered step pattern
      */
     public function __construct(
