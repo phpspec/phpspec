@@ -16,12 +16,14 @@ namespace PhpSpec\Specification;
 
 use BadMethodCallException;
 use Closure;
+use Countable;
 use InvalidArgumentException;
 use PhpSpec\Browser\Response;
 use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\ObjectName;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
+use Traversable;
 
 /**
  * Fluent assertion API returned by expect(). Provides built-in matchers (toBe, toContain, etc.)
@@ -150,70 +152,67 @@ class Expectation
     }
 
     /**
-     * Asserts strict identity (===) between subject and actual value.
+     * Asserts strict identity (===) between the subject and the expected value.
      *
-     * @param mixed $actual expected value
      * @return static
      */
-    public function toBe(mixed $actual): static
+    public function toBe(mixed $expected): static
     {
         return $this->match(
-            fn($expected) => $actual === $expected,
+            fn($subject) => $expected === $subject,
             'Expected %s to be %s',
             $this->subject,
-            $actual,
-            ['__fake' => self::exportValue($actual)],
+            $expected,
+            ['__fake' => self::exportValue($expected)],
         );
     }
 
     /**
-     * Asserts loose equality (==) between subject and actual value.
+     * Asserts loose equality (==) between the subject and the expected value.
      *
-     * @param mixed $actual expected value
      * @return static
      */
-    public function toBeLike(mixed $actual): static
+    public function toBeLike(mixed $expected): static
     {
         return $this->match(
-            fn($expected) => $actual == $expected,
+            fn($subject) => $expected == $subject,
             'Expected %s to be %s',
             $this->subject,
-            $actual,
-            ['__fake' => self::exportValue($actual)],
+            $expected,
+            ['__fake' => self::exportValue($expected)],
         );
     }
 
     /**
      * Asserts that the subject (array/countable) has the given count.
      *
-     * @param int $actual expected element count
      * @return static
      */
-    public function toHaveCount(mixed $actual): static
+    public function toHaveCount(int $count): static
     {
         return $this->match(
-            fn($expected) => $actual === count($expected),
+            fn($subject) => $count === count($subject),
             'Expected %s to have count %s',
             $this->subject,
-            $actual,
-            ['__fake' => 'array_fill(0, ' . (int) $actual . ', null)'],
+            $count,
+            ['__fake' => 'array_fill(0, ' . $count . ', null)'],
         );
     }
 
     /**
      * Asserts that the subject is an instance of the given class or interface.
      *
-     * @param string $actual fully qualified class name
+     * @param string $class fully qualified class name
      * @return static
      */
-    public function toBeAnInstanceOf(string $actual): static
+    public function toBeAnInstanceOf(string $class): static
     {
         return $this->match(
-            fn($expected) => $expected instanceof $actual,
+            fn($subject) => $subject instanceof $class,
             'Expected %s to be an instance of %s',
             $this->subject,
-            $actual,
-            ['__fake' => 'new \\' . ltrim($actual, '\\') . '()'],
+            $class,
+            ['__fake' => 'new \\' . ltrim($class, '\\') . '()'],
         );
     }
 
@@ -266,14 +265,23 @@ class Expectation
     }
 
     /**
-     * Asserts that the subject is empty (empty string, empty array, null, etc.).
+     * Asserts that the subject holds nothing: a string of no characters, an
+     * array or a Countable of no elements, or null. A number or a boolean is
+     * empty as PHP's empty() has it, at zero or false. An iterator that is not
+     * Countable is refused: only advancing it would tell, and an iterator
+     * advanced is not the one the caller handed over.
      *
      * @return static
+     * @throws InvalidArgumentException when the subject is an iterator that cannot be counted
      */
     public function toBeEmpty(): static
     {
+        if ($this->subject instanceof Traversable && !$this->subject instanceof Countable) {
+            throw new InvalidArgumentException(sprintf('toBeEmpty() cannot tell whether "%s" holds anything without advancing it: it takes a string, an array, a Countable or null.', get_debug_type($this->subject)));
+        }
+
         return $this->match(
-            fn($expected) => empty($expected),
+            fn($subject) => self::holdsNothing($subject),
             'Expected %s to be empty',
             $this->subject,
             self::emptyLike($this->subject),
@@ -284,17 +292,18 @@ class Expectation
     /**
      * Asserts that the subject contains the given value (in_array for arrays, str_contains for strings).
      *
-     * @param mixed $value element or substring to find
+     * @param mixed $needle element or substring to find
      * @return static
      */
-    public function toContain(mixed $value): static
+    public function toContain(mixed $needle): static
     {
-        $fake = is_string($value) ? self::exportValue($value) : '[' . self::exportValue($value) . ']';
+        $fake = is_string($needle) ? self::exportValue($needle) : '[' . self::exportValue($needle) . ']';
+
         return $this->match(
-            fn($expected) => is_array($expected) ? in_array($value, $expected, true) : str_contains($expected, $value),
+            fn($subject) => is_array($subject) ? in_array($needle, $subject, true) : str_contains($subject, $needle),
             'Expected %s to contain %s',
             $this->subject,
-            $value,
+            $needle,
             ['__fake' => $fake],
         );
     }
@@ -352,13 +361,13 @@ class Expectation
     /**
      * Asserts that the subject array has the given key.
      *
-     * @param string $key array key to check
+     * @param string|int $key array key to check
      * @return static
      */
-    public function toHaveKey(string $key): static
+    public function toHaveKey(string|int $key): static
     {
         return $this->match(
-            fn($expected) => is_array($expected) && array_key_exists($key, $expected),
+            fn($subject) => is_array($subject) && array_key_exists($key, $subject),
             'Expected %s to have key %s',
             $this->subject,
             $key,
@@ -990,11 +999,22 @@ class Expectation
     private static function emptyLike(mixed $subject): mixed
     {
         return match (true) {
-            is_array($subject) => [],
+            is_array($subject), $subject instanceof Countable => [],
             is_string($subject) => '',
             is_int($subject) => 0,
             is_float($subject) => 0.0,
+            is_bool($subject) => false,
             default => null,
+        };
+    }
+
+    private static function holdsNothing(mixed $subject): bool
+    {
+        return match (true) {
+            is_string($subject) => $subject === '',
+            is_array($subject) => $subject === [],
+            $subject instanceof Countable => count($subject) === 0,
+            default => empty($subject),
         };
     }
 
@@ -1047,23 +1067,15 @@ class Expectation
      */
     private static function exportValue(mixed $value): ?string
     {
-        if (is_string($value)) {
-            return "'" . addslashes($value) . "'";
-        }
-        if (is_int($value) || is_float($value)) {
-            return (string) $value;
-        }
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-        if (is_null($value)) {
+        if ($value === null) {
             return 'null';
         }
-        if (is_array($value) && !self::holdsAnObject($value)) {
-            return var_export($value, true);
+
+        if (is_object($value) || is_resource($value) || (is_array($value) && self::holdsAnObject($value))) {
+            return null;
         }
 
-        return null;
+        return var_export($value, true);
     }
 
     /**

@@ -2,6 +2,17 @@
 
 Matchers are methods on the `Expectation` object returned by `expect()`. They assert a condition about the subject.
 
+An expectation is judged on the line it is written, on its subject as it stands there. What the example does to an object afterwards changes neither the verdict nor what a failure reports, so this holds:
+
+```php
+$items = new ArrayObject();
+expect($items)->toHaveCount(0);
+$items->append('one');
+expect($items)->toHaveCount(1);
+```
+
+A failed expectation does not stop the example: every expectation is judged, in the order written, and the report leads with the first that did not hold. Call expectations on doubles differ by design: `toBeCalled()` is declared before the act and judged when the example ends (see [`toBeCalled()`](#tobecalled)).
+
 All matchers are chainable -- they return the `Expectation` instance, so you can write `expect($x)->toBe(1)->toBeLike('1')`.
 
 ## Identity & Equality
@@ -53,12 +64,31 @@ expect(null)->toBeNull();    // passes
 
 ### `toBeEmpty()`
 
-Asserts the subject is empty (works with arrays, strings, and countables).
+Asserts the subject holds nothing:
+
+| Subject | Empty when |
+|---|---|
+| string | it has no characters, `''` |
+| array | it has no elements, `[]` |
+| `Countable` (an `ArrayObject`, a collection) | it counts `0` |
+| `null` | always |
+| int, float, bool | it is `0`, `0.0` or `false`, as PHP's `empty()` has it |
 
 ```php
-expect([])->toBeEmpty();     // passes
-expect('')->toBeEmpty();     // passes
+expect([])->toBeEmpty();                 // passes
+expect('')->toBeEmpty();                 // passes
+expect(new ArrayObject())->toBeEmpty();  // passes
+expect('0')->toBeEmpty();                // fails: a string of one character
 ```
+
+Unlike PHP's `empty()`, the string `'0'` is not empty. A failure names the
+empty form of what it was given as the value it wanted: `''`, `[]`, `0`.
+
+An iterator that is not `Countable`, such as an `EmptyIterator` or a generator,
+is refused, and so is `not()->toBeEmpty()` on one: only advancing it would tell
+whether it holds anything, and a generator advanced no longer gives the caller
+what it would have. `toBeEmpty()` reads none of its values; count it into an
+array first when that is what you mean, `expect(iterator_to_array($it))`.
 
 ### `toBeTruthy()`
 
@@ -183,7 +213,7 @@ expect([1, 2, 3])->toContainEqual('2');   // passes (loose comparison)
 
 ## Comparison Matchers
 
-### `toBeGreaterThan(int|float $value)`
+### `toBeGreaterThan(mixed $value)`
 
 Asserts the subject is greater than the given value.
 
@@ -191,7 +221,7 @@ Asserts the subject is greater than the given value.
 expect(10)->toBeGreaterThan(5);
 ```
 
-### `toBeLessThan(int|float $value)`
+### `toBeLessThan(mixed $value)`
 
 Asserts the subject is less than the given value.
 
@@ -286,8 +316,7 @@ expect(fn () => throw new \RuntimeException('boom'))
 
 The callable runs where the expectation is written, so the lines after it see
 what it did: a fixture cleaned up in a `finally`, or a file checked for
-rollback, is looked at after the operation, in reading order. Only the verdict
-waits for the end of the example, as it does for every matcher.
+rollback, is looked at after the operation, in reading order.
 
 ## HTTP Response Matchers
 

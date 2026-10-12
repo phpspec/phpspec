@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\CommandLine;
 use PhpSpec\Filesystem;
 use PhpSpec\Guard\Baseline;
 use PhpSpec\Guard\CannotJudge;
@@ -97,7 +98,14 @@ describe(Baseline::class, function () {
         allow($fs->exists(any()))->toReturn(false);
 
         expect(fn() => (new Baseline($fs, $git, '/app'))->recorded())
-            ->toThrow(CannotJudge::class, 'Guard is on but no baseline is recorded in this checkout: run "bin/phpspec guard" to judge from here.');
+            ->toThrow(CannotJudge::class, 'Guard is on but no baseline is recorded in this checkout: run "phpspec guard" to judge from here.');
+    });
+
+    it('names the command that records it the way this phpspec was started, with the config it was named', function (Filesystem $fs, Git $git) {
+        allow($fs->exists(any()))->toReturn(false);
+
+        expect(fn() => (new Baseline($fs, $git, '/app', new CommandLine('vendor/bin/phpspec', ['--config=conf/qa.yml'])))->recorded())
+            ->toThrow(CannotJudge::class, 'Guard is on but no baseline is recorded in this checkout: run "vendor/bin/phpspec guard --config=conf/qa.yml" to judge from here.');
     });
 
     it('refuses to judge on a baseline it cannot read', function (Filesystem $fs, Git $git) {
@@ -105,7 +113,7 @@ describe(Baseline::class, function () {
         allow($fs->read(any()))->toReturn('{ this is not the file we wrote');
 
         expect(fn() => (new Baseline($fs, $git, '/app'))->recorded())
-            ->toThrow(CannotJudge::class, 'Guard cannot read the baseline in .phpspec/guard/baseline.json: run "bin/phpspec guard" to record it again.');
+            ->toThrow(CannotJudge::class, 'Guard cannot read the baseline in .phpspec/guard/baseline.json: run "phpspec guard" to record it again.');
     });
 
 });

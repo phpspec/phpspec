@@ -38,4 +38,13 @@ readonly class ScenarioNode
         public int $line = 0,
         public ?int $exampleLine = null,
     ) {}
+
+    /**
+     * This scenario numbered among the scenarios of its feature that share its
+     * title: the second is #2.
+     */
+    public function numbered(int $ordinal): self
+    {
+        return new self($this->title . ' #' . $ordinal, $this->steps, $this->tags, $this->line, $this->exampleLine);
+    }
 }

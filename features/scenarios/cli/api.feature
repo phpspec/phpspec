@@ -15,6 +15,7 @@ Feature: Spec API reference
     And the output should contain "mock(string $class): object"
     And the output should contain "given(string $pattern, Closure $fn): void"
     And the output should contain "visit(string $path): PhpSpec\Browser\Response"
+    And the output should contain "let() values are built the first time an example reads them"
 
   Scenario: The api command answers a coding agent as one JSON object
     When I run phpspec api with option "--format=agent"

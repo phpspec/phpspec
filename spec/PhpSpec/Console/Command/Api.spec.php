@@ -58,8 +58,9 @@ describe(Api::class, function () {
     it('states the timing rules a reader cannot introspect', function () {
         $timing = implode(' ', $this->document['timing']);
 
-        expect($timing)->toContain('end of the example');
+        expect($timing)->toContain('judged on the line it is written');
         expect($timing)->toContain('toThrow()');
+        expect($timing)->toContain('toHaveBeenCalled() is asked after the act');
     });
 
     it('carries the version of the application it runs in', function () {

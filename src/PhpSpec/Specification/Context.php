@@ -35,10 +35,18 @@ use Throwable;
  * Represents a describe()/context() block containing examples, nested contexts,
  * lifecycle hooks, and shared world state.
  */
-class Context implements ExampleRegistry, Rebindable
+class Context implements ExampleRegistry, Rebindable, Titled
 {
     /** @var array<SpecBlock> child examples and nested contexts */
     private array $specBlocks = [];
+
+    /** @var int its place among the siblings that share its title, 1 for the first */
+    private int $ordinal = 1;
+
+    /** @var bool whether a line target already asks for this context whole, so no other line narrows it */
+    private bool $keptWhole = false;
+
+    private ?Namesakes $namesakes = null;
 
     /** @var array<Closure> hooks executed once before all examples */
     private array $beforeAllHooks = [];
@@ -93,6 +101,7 @@ class Context implements ExampleRegistry, Rebindable
         $copy = new self($this->context, Closure::bind($this->specBlock, $world, $world));
         $copy->pending = $this->pending;
         $copy->focused = $this->focused;
+        $copy->ordinal = $this->ordinal;
 
         return $copy;
     }
@@ -163,7 +172,7 @@ class Context implements ExampleRegistry, Rebindable
         CoverageRegistry::collector()?->pushContext($this->context);
 
         try {
-            DispatcherRegistry::dispatcher()->dispatch(new ContextStarted($this->context), ContextStarted::NAME);
+            DispatcherRegistry::dispatcher()->dispatch(new ContextStarted($this->numberedTitle()), ContextStarted::NAME);
             DispatcherRegistry::dispatcher()->pushScope($this);
             ($this->specBlock)();
             DispatcherRegistry::dispatcher()->popScope();
@@ -222,11 +231,11 @@ class Context implements ExampleRegistry, Rebindable
                 }
             }
         } catch (Throwable $e) {
-            DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
-            $result = new ExampleResult($this->context, [], true);
+            DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->numberedTitle(), $this), ContextRan::NAME);
+            $result = new ExampleResult($this->numberedTitle(), [], true);
             $error = $e instanceof ExampleError ? $e : new ExampleError($e->getMessage(), $e);
             $result->setError($error);
-            $contextResult = new ContextResult($this->context, [$result]);
+            $contextResult = new ContextResult($this->numberedTitle(), [$result]);
             $contextResult->setError($error);
 
             return $contextResult;
@@ -234,9 +243,9 @@ class Context implements ExampleRegistry, Rebindable
             CoverageRegistry::collector()?->popContext();
         }
 
-        DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->numberedTitle(), $this), ContextRan::NAME);
 
-        return new ContextResult($this->context, $results);
+        return new ContextResult($this->numberedTitle(), $results);
     }
 
     /**
@@ -328,7 +337,18 @@ class Context implements ExampleRegistry, Rebindable
      */
     public function addSpecBlock(SpecBlock $example): void
     {
+        ($this->namesakes ??= new Namesakes())->number($example);
         $this->specBlocks[] = $example;
+    }
+
+    public function writtenTitle(): string
+    {
+        return (string) $this->context;
+    }
+
+    public function numberAmongNamesakes(int $ordinal): void
+    {
+        $this->ordinal = $ordinal;
     }
 
     /**
@@ -471,16 +491,27 @@ class Context implements ExampleRegistry, Rebindable
     }
 
     /**
-     * Reduces this context to the block at the targeted line, when one is set
-     * for the running spec file. If a child example or context spans the line,
-     * only the spanning children are kept; otherwise the line addresses this
-     * context as a whole and every child runs.
+     * Reduces this context to the blocks at the targeted lines, when some are
+     * set for the running spec file. A line in this context but in none of
+     * its children asks for the context whole: every child runs, and every
+     * nested context runs whole too, whatever other lines are asked for.
+     * Otherwise only the children spanning a line are kept.
      */
     private function applyLineFilter(): void
     {
         $lines = LineTargetRegistry::currentTargets();
 
         if ($lines === []) {
+            return;
+        }
+
+        if ($this->keptWhole || $this->askedWholeBy($lines)) {
+            foreach ($this->specBlocks as $block) {
+                if ($block instanceof Context) {
+                    $block->keepWhole();
+                }
+            }
+
             return;
         }
 
@@ -493,6 +524,40 @@ class Context implements ExampleRegistry, Rebindable
         if ($containing !== []) {
             $this->specBlocks = $containing;
         }
+    }
+
+    /**
+     * Runs this context whole whatever lines are targeted: an enclosing
+     * context was asked for whole.
+     */
+    public function keepWhole(): void
+    {
+        $this->keptWhole = true;
+    }
+
+    /**
+     * Whether a targeted line falls in this context but in none of its
+     * children.
+     *
+     * @param list<int> $lines
+     */
+    private function askedWholeBy(array $lines): bool
+    {
+        foreach ($lines as $line) {
+            if (!$this->containsLine($line)) {
+                continue;
+            }
+
+            foreach ($this->specBlocks as $block) {
+                if (($block instanceof Example || $block instanceof Context) && $block->containsLine($line)) {
+                    continue 2;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -607,5 +672,10 @@ class Context implements ExampleRegistry, Rebindable
             }
         }
         return $args;
+    }
+
+    private function numberedTitle(): string
+    {
+        return $this->ordinal === 1 ? $this->writtenTitle() : $this->writtenTitle() . ' #' . $this->ordinal;
     }
 }

@@ -91,7 +91,7 @@ describe('Outer', function () {
 
 ## `let(string $name, Closure $fn)`
 
-While not strictly a hook, `let` is the primary way to set up shared state. The closure runs the first time an example reads the value, once per example, so every example gets its own value and the hooks have run by then: a `beforeEach` can arrange a double the let consumes, and a let may read one declared after it. A let nobody reads never runs; one that throws fails that example alone:
+While not strictly a hook, `let` is the primary way to set up shared state. The closure runs the first time an example reads the value, once per example, so every example gets its own value and the hooks have run by then: a `beforeEach` can arrange a double the let consumes, and a let may read one declared after it. A let nobody reads never runs; one that throws fails that example alone. To build one before the example starts, read it in a `beforeEach`, as in `beforeEach(fn () => $this->server)`; it is still built once for that example:
 
 ```php
 describe(UserService::class, function () {

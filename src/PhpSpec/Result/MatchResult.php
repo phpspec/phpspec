@@ -15,6 +15,7 @@
 namespace PhpSpec\Result;
 
 use PhpSpec\CodeGeneration\SurroundingCode;
+use PhpSpec\Report\Snapshot;
 use PhpSpec\Results;
 
 /**
@@ -76,8 +77,8 @@ final readonly class MatchResult implements Results
         return new self(
             Result::Failed,
             Detail\Failed::matcher(
-                $expected,
-                $actual,
+                Snapshot::of($expected),
+                Snapshot::of($actual),
                 $message,
                 new SurroundingCode($file, $line),
                 $line,

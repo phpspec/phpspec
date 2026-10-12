@@ -38,7 +38,7 @@ final class ParallelRunner
      * @param StopConditions $stop conditions under which to halt early
      * @param string|null $phpspecBin absolute path to phpspec binary (null = auto-detect)
      * @param string|null $coveragePartialDir directory for workers to dump raw coverage state to, or null to run without coverage
-     * @param string|null $configPath explicit config file path to forward to workers, or null to use the working directory lookup
+     * @param list<string> $childOptions the options the run was started with that set up the project, forwarded to every worker
      * @param string|null $filter the title filter to forward to workers
      * @param string|null $tags the tag expression to forward to workers
      */
@@ -48,7 +48,7 @@ final class ParallelRunner
         private readonly StopConditions $stop = new StopConditions(),
         ?string $phpspecBin = null,
         private readonly ?string $coveragePartialDir = null,
-        private readonly ?string $configPath = null,
+        private readonly array $childOptions = [],
         private readonly ?string $filter = null,
         private readonly ?string $tags = null,
     ) {
@@ -96,7 +96,7 @@ final class ParallelRunner
                 $this->coveragePartials[] = $coveragePartial;
             }
 
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->configPath, $this->stop, $this->filter, $this->tags);
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags);
             $processes[] = $process;
 
             $fiber = new \Fiber(function () use ($process) {

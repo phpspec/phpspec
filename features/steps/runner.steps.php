@@ -30,9 +30,12 @@ if (!function_exists('_phpspec_exec')) {
         _phpspec_exec_subprocess($world, $args, $interactive);
     }
 
-    function _phpspec_exec_subprocess(object $world, string $args, bool $interactive = false, string $xdebugMode = 'off', ?string $answers = null): void
+    /**
+     * @param string|list<string> $args a command line, or the arguments as a process takes them
+     */
+    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $xdebugMode = 'off', ?string $answers = null): void
     {
-        $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...\PhpSpec\InProcessRunner::argv($args)];
+        $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...(is_array($args) ? $args : \PhpSpec\InProcessRunner::argv($args))];
 
         // The error stream goes to a file rather than a second pipe: reading
         // two pipes one after the other deadlocks once the child fills the one
@@ -122,6 +125,31 @@ when('I run phpspec run in a fresh process with option {string}', function (stri
 
 when('I run phpspec run in a fresh process', function () {
     _phpspec_exec_subprocess($this, 'run');
+});
+
+// A command line exactly as a shell hands it over, in a process of its own, so
+// standard output is read apart from the error stream.
+when('I run phpspec command {string} in a fresh process', function (string $command) {
+    _phpspec_exec_subprocess($this, $command);
+});
+
+// The rerun a report hands over, run exactly as handed: its arguments go to a
+// process of their own, started where the run was. The run's own report is
+// kept to compare the replay with.
+when('I run the rerun the reported entry hands over', function () {
+    $this->original = $this->stdout;
+
+    foreach (explode("\n", trim($this->stdout)) as $line) {
+        $event = json_decode($line, true);
+
+        if (($event['event'] ?? null) === 'example' && isset($event['rerun_argv'])) {
+            _phpspec_exec_subprocess($this, $event['rerun_argv']);
+
+            return;
+        }
+    }
+
+    throw new \RuntimeException('No reported entry hands over a rerun.');
 });
 
 // A terminal PhpSpec can print a question to, with nothing behind it to answer:

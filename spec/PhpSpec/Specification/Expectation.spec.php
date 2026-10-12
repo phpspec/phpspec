@@ -38,6 +38,18 @@ describe(Expectation::class, function() {
     context("empty matcher", function() {
         it("passes toBeEmpty for empty array", fn() => expect([])->toBeEmpty());
         it("passes toBeEmpty for empty string", fn() => expect("")->toBeEmpty());
+        it("passes toBeEmpty for an empty Countable", fn() => expect(new \ArrayObject())->toBeEmpty());
+        it("fails toBeEmpty for a Countable that holds something", fn() => expect(new \ArrayObject([1]))->not()->toBeEmpty());
+        it("fails toBeEmpty for the one-character string 0, unlike empty()", fn() => expect("0")->not()->toBeEmpty());
+        it("refuses an iterator it could only judge by advancing it, reading none of its values", function () {
+            $read = [];
+            $generator = (function () use (&$read) { $read[] = 1; yield 1; })();
+            $refusal = "toBeEmpty() cannot tell whether \"%s\" holds anything without advancing it: it takes a string, an array, a Countable or null.";
+
+            expect(fn() => expect(new \EmptyIterator())->toBeEmpty())->toThrow(\InvalidArgumentException::class, sprintf($refusal, "EmptyIterator"));
+            expect(fn() => expect($generator)->not()->toBeEmpty())->toThrow(\InvalidArgumentException::class, sprintf($refusal, "Generator"));
+            expect($read)->toBe([]);
+        });
     });
 
     context("containment matchers", function() {
@@ -56,6 +68,7 @@ describe(Expectation::class, function() {
 
     context("key matcher", function() {
         it("passes toHaveKey for existing key", fn() => expect(["a" => 1, "b" => 2])->toHaveKey("a"));
+        it("passes toHaveKey for an integer key", fn() => expect([10, 20])->toHaveKey(1));
     });
 
     context("exception matcher", function() {
@@ -408,6 +421,8 @@ describe(Expectation::class, function() {
             expect($of("stuff"))->toBe("");
             expect($of(3434))->toBe(0);
             expect($of(new \stdClass()))->toBeNull();
+            expect($of(new \ArrayObject([1])))->toBe([]);
+            expect($of(true))->toBe(false);
         });
     });
 

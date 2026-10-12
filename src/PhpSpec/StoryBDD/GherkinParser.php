@@ -85,10 +85,10 @@ final class GherkinParser
         $exampleRows = $this->buildExampleRowIndex($document);
         $featureTags = $this->mapTags($document->feature->tags);
 
-        $scenarios = array_map(
+        $scenarios = $this->numberedNamesakes(array_map(
             fn(Pickle $pickle) => $this->mapPickle($pickle, $stepIndex, $scenarioLines, $exampleRows, $featureTags),
             $pickles,
-        );
+        ));
 
         return new FeatureNode(
             $document->feature->name,
@@ -97,6 +97,29 @@ final class GherkinParser
             $scenarios,
             $featureTags,
         );
+    }
+
+    /**
+     * The scenarios, a scenario whose title one before it already has
+     * numbered, so every name a formatter prints and every id an agent keeps
+     * tells the two apart.
+     *
+     * @param array<int, ScenarioNode> $scenarios
+     * @return array<int, ScenarioNode>
+     */
+    private function numberedNamesakes(array $scenarios): array
+    {
+        $counted = [];
+
+        foreach ($scenarios as $position => $scenario) {
+            $counted[$scenario->title] = ($counted[$scenario->title] ?? 0) + 1;
+
+            if ($counted[$scenario->title] > 1) {
+                $scenarios[$position] = $scenario->numbered($counted[$scenario->title]);
+            }
+        }
+
+        return $scenarios;
     }
 
     /**

@@ -46,7 +46,7 @@ describe(Calculator::class, function() {
 Run it:
 
 ```bash
-bin/phpspec run
+vendor/bin/phpspec run
 ```
 
 Output:

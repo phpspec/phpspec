@@ -180,6 +180,29 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "/run; /run"
     Then the output should contain "1 example (1 passed)" exactly 2 times
 
+  Scenario: A run in a pair session started with a config reads that config
+    Given a file "configured/custom.json":
+      """
+      {"bootstrap": "configured/bootstrap.php"}
+      """
+    And a file "configured/bootstrap.php":
+      """
+      <?php
+      define('PAIR_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "spec/App/Bootstrapped.spec.php":
+      """
+      <?php
+      describe('Bootstrapped', function () {
+          it('sees the bootstrap', function () {
+              expect(PAIR_PROBE_BOOTSTRAPPED)->toBe('yes');
+          });
+      });
+      """
+    When I run phpspec pair with config "configured/custom.json" and input "/run spec/App/Bootstrapped.spec.php"
+    Then the output should contain "1 example (1 passed)"
+    And the output should not contain "Undefined constant"
+
   Scenario: Running a spec that declares a top-level type twice does not crash
     Given a spec file "spec/App/Widget.spec.php":
       """

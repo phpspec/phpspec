@@ -188,13 +188,14 @@ describe(Run::class, function () {
             expect($tester->getStatusCode())->toBe(0);
         });
 
-        it('runs with filter option', function (Filesystem $execFs) {
+        it('fails a filter that matches nothing, saying so', function (Filesystem $execFs) {
             $config = new Configuration();
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
             $tester->execute(['--filter' => 'NonExistent']);
-            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getStatusCode())->toBe(1);
+            expect($tester->getDisplay())->toContain('No example or scenario matches --filter "NonExistent".');
         });
 
         it('filters examples by title and hides specs left with no examples', function (Filesystem $execFs) {
@@ -313,8 +314,8 @@ describe(Run::class, function () {
             try {
                 $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
                 $exitCode = $tester->execute(['--paths-from' => $pathsFile]);
-                expect($exitCode)->toBe(0);
-                expect($tester->getDisplay())->toContain('No specs found');
+                expect($exitCode)->toBe(1);
+                expect($tester->getDisplay())->toContain('No example or scenario in ' . sys_get_temp_dir() . '.');
             } finally {
                 unlink($pathsFile);
             }

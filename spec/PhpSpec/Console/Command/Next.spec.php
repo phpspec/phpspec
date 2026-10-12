@@ -7,6 +7,7 @@ use PhpSpec\Console\Command\Next;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
+use PhpSpec\CommandLine;
 use PhpSpec\Console\Prompt;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
@@ -253,7 +254,7 @@ describe(Next::class, function () {
             expect($exitCode)->toBe(0);
             expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
             expect($tester->getDisplay())->toContain('Run:');
-            expect($tester->getDisplay())->toContain('generate "a feature for deleting_a_task"');
+            expect($tester->getDisplay())->toContain("generate 'a feature for deleting_a_task'");
         });
 
         it('hints generate for a feature suggestion when not interactive', function (Filesystem $fs) {
@@ -273,7 +274,7 @@ describe(Next::class, function () {
             $exitCode = $tester->execute([], ['interactive' => false]);
 
             expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('generate "a feature for deleting_a_task"');
+            expect($tester->getDisplay())->toContain("generate 'a feature for deleting_a_task'");
             expect($tester->getDisplay())->not()->toContain('describe');
         });
 
@@ -582,7 +583,7 @@ describe(Next::class, function () {
             $exitCode = $tester->execute([], ['interactive' => false]);
 
             expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('generate "add a spec example for App\\Calculator');
+            expect($tester->getDisplay())->toContain("generate 'add a spec example for App\\Calculator");
         });
 
         it('displays an info suggestion when well-covered', function (Filesystem $fs) {
@@ -968,9 +969,22 @@ describe(Next::class, function () {
             $document = json_decode(trim($tester->getDisplay()), true);
             expect($document['action'])->toBe('next');
             expect($document['suggestion']['type'])->toBe('feature');
-            expect($document['suggestion']['run'])->toContain('generate "a feature for deleting_a_task"');
+            expect($document['suggestion']['run'])->toContain("generate 'a feature for deleting_a_task'");
             expect($tester->getDisplay())->not()->toContain('Would you like');
             expect($tester->getDisplay())->not()->toContain('Analysing');
+        });
+
+        it('hands over the command that acts on the suggestion as this phpspec was started, with the config it was named', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            $suggestFn = fn(array $aiConfig): array => ['type' => 'spec', 'target' => 'App\\Ledger', 'reason' => 'Nothing describes the ledger yet.'];
+            $cmd = new Next(Configuration::load('.', $fs), $fs, $suggestFn, commandLine: new CommandLine('vendor/bin/phpspec', ['--config=conf/qa.yml']));
+
+            $tester = new CommandTester($cmd);
+            $tester->execute(['--format' => 'agent']);
+
+            expect(json_decode(trim($tester->getDisplay()), true)['suggestion']['run'])->toBe('vendor/bin/phpspec describe App/Ledger --config=conf/qa.yml');
         });
 
         it('keeps the growth steer inside the agent document', function (Filesystem $fs) {

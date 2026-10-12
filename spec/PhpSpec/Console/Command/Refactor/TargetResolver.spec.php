@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Configuration;
+use PhpSpec\CommandLine;
 use PhpSpec\Console\Command\Refactor\TargetResolver;
 use PhpSpec\Console\Command\Refactor\UnresolvedTargetException;
 use PhpSpec\Filesystem;
@@ -37,8 +38,9 @@ describe(TargetResolver::class, function () {
         allow($fs->read(any()))->toReturnUsing(fn(string $p): string => $files()[$p][0] ?? '');
         allow($fs->mtime(any()))->toReturnUsing(fn(string $p): int => $files()[$p][1] ?? 0);
 
-        return new TargetResolver(new Configuration(['autoload' => ['App\\' => 'src/App', 'Acme\\' => 'lib/Acme']]), $fs, '/proj');
+        return new TargetResolver(new Configuration(['autoload' => ['App\\' => 'src/App', 'Acme\\' => 'lib/Acme']]), $fs, '/proj', $this->commandLine);
     });
+    let('commandLine', fn() => new CommandLine());
 
     context('with no argument', function () {
 
@@ -57,6 +59,18 @@ describe(TargetResolver::class, function () {
             $this->project['files'] = $files;
 
             expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'App\\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till');
+        });
+
+        context('in a phpspec started with a config of its own', function () {
+            let('commandLine', fn() => new CommandLine('vendor/bin/phpspec', ['--config=conf/qa.yml']));
+
+            it('names the describe that gives the class a spec as this phpspec was started, with that config', function () {
+                $files = $this->project['files'];
+                unset($files['/proj/spec/App/Till.spec.php']);
+                $this->project['files'] = $files;
+
+                expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'App\\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: vendor/bin/phpspec describe App/Till --config=conf/qa.yml');
+            });
         });
 
         it('refuses when there is no source, naming where it looked', function () {

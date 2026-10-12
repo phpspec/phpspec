@@ -19,7 +19,7 @@ PhpSpec 9.0 unifies Story BDD and Spec BDD in a single tool — no more juggling
 Generate a spec:
 
 ```bash
-bin/phpspec describe App/Calculator
+vendor/bin/phpspec describe App/Calculator
 ```
 
 Write your spec in `spec/App/Calculator.spec.php`:
@@ -45,7 +45,7 @@ describe(Calculator::class, function () {
 Run it:
 
 ```bash
-bin/phpspec run
+vendor/bin/phpspec run
 ```
 
 ```
@@ -86,29 +86,29 @@ Finished in 0.0042 seconds
 
 ```bash
 # Run all specs
-bin/phpspec run
+vendor/bin/phpspec run
 
 # Run a specific file or directory
-bin/phpspec run spec/App/Calculator.spec.php
+vendor/bin/phpspec run spec/App/Calculator.spec.php
 
 # Run with options
-bin/phpspec run --stop-on-failure --format dot
-bin/phpspec run --order random --seed 42
-bin/phpspec run --filter Calculator
-bin/phpspec run --profile
+vendor/bin/phpspec run --stop-on-failure --format dot
+vendor/bin/phpspec run --order random --seed 42
+vendor/bin/phpspec run --filter Calculator
+vendor/bin/phpspec run --profile
 
 # Generate a spec
-bin/phpspec describe App/Calculator
-bin/phpspec describe App/Calculator -e add    # with example for "add" method
+vendor/bin/phpspec describe App/Calculator
+vendor/bin/phpspec describe App/Calculator -e add    # with example for "add" method
 
 # Run features (Story BDD)
-bin/phpspec run features/
+vendor/bin/phpspec run features/
 
 # Code coverage
-bin/phpspec run --coverage
-bin/phpspec run --coverage-html coverage/
-bin/phpspec run --coverage-clover clover.xml
-bin/phpspec run --coverage-min 90
+vendor/bin/phpspec run --coverage
+vendor/bin/phpspec run --coverage-html coverage/
+vendor/bin/phpspec run --coverage-clover clover.xml
+vendor/bin/phpspec run --coverage-min 90
 ```
 
 ## Mocking
@@ -161,7 +161,7 @@ then('I should see {string}', function (string $expected) {
 });
 ```
 
-Run features: `bin/phpspec run features/`
+Run features: `vendor/bin/phpspec run features/`
 
 ## Documentation
 

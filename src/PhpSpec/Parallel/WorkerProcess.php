@@ -48,7 +48,7 @@ final class WorkerProcess
      * @param string[] $paths spec file paths to run in this worker
      * @param string $phpspecBin absolute path to the phpspec binary
      * @param string|null $coveragePartial file path for the worker to dump raw coverage state to, or null to run without coverage
-     * @param string|null $configPath explicit config file path to forward to the worker, or null to use the working directory lookup
+     * @param list<string> $childOptions the options the parent was started with that set up the project (a named config, a bootstrap), forwarded so the worker runs against the same one
      * @param StopConditions $stop the conditions the worker halts on, as its parent does
      * @param string|null $filter the title filter the parent runs under, forwarded so a worker selects as it did
      * @param string|null $tags the tag expression the parent runs under, forwarded likewise
@@ -57,7 +57,7 @@ final class WorkerProcess
         private readonly array $paths,
         private readonly string $phpspecBin,
         private readonly ?string $coveragePartial = null,
-        private readonly ?string $configPath = null,
+        private readonly array $childOptions = [],
         private readonly StopConditions $stop = new StopConditions(),
         private readonly ?string $filter = null,
         private readonly ?string $tags = null,
@@ -88,9 +88,7 @@ final class WorkerProcess
             $command[] = '--coverage-partial=' . $this->coveragePartial;
         }
 
-        if ($this->configPath !== null) {
-            $command[] = '--config=' . $this->configPath;
-        }
+        array_push($command, ...$this->childOptions);
 
         if ($this->filter !== null) {
             $command[] = '--filter=' . $this->filter;

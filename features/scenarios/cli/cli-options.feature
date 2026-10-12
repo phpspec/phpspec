@@ -126,6 +126,7 @@ Feature: CLI options
       No example or scenario matches --filter "zzz".
       """
     And the output should not contain "run with --story"
+    And the exit code should be 1
 
   Scenario: Filter scenarios by title
     Given a PSR-4 project with "spec", "src", and "features" directories
@@ -261,6 +262,58 @@ Feature: CLI options
     And the output should contain "first example" exactly 1 times
     And the output should contain "second example" exactly 1 times
     And the output should contain "2 examples"
+
+  Scenario: A line in a describe but in none of its examples keeps the whole describe, whatever other lines are asked for
+    Given a spec file "spec/App/Selection.spec.php":
+      """
+      <?php
+      describe('Selection', function () {
+
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+          context('nested', function () {
+              it('third example', fn () => expect(true)->toBeTrue());
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Selection.spec.php:3 spec/App/Selection.spec.php:5"
+    Then all examples should pass
+    And the output should contain "3 examples"
+    When I run phpspec run "spec/App/Selection.spec.php:3 spec/App/Selection.spec.php:11"
+    Then all examples should pass
+    And the output should contain "3 examples"
+
+  Scenario: A describe kept whole keeps its nested contexts whole
+    Given a spec file "spec/App/Deep.spec.php":
+      """
+      <?php
+      describe('Deep', function () {
+
+          context('nested', function () {
+              it('third example', fn () => expect(true)->toBeTrue());
+              it('fourth example', fn () => expect(true)->toBeTrue());
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Deep.spec.php:3 spec/App/Deep.spec.php:5"
+    Then all examples should pass
+    And the output should contain "2 examples"
+
+  Scenario: An example at the top of a file runs by its line
+    Given a spec file "spec/App/Alone.spec.php":
+      """
+      <?php
+
+      it('stands alone', fn () => expect(true)->toBeTrue());
+      """
+    When I run phpspec run "spec/App/Alone.spec.php:3"
+    Then all examples should pass
+    And the output should contain "stands alone"
+    And the output should contain "1 example"
 
   Scenario: Run several scenarios of one feature by their line numbers
     Given a PSR-4 project with "spec", "src", and "features" directories
@@ -546,6 +599,87 @@ Feature: CLI options
     And the output should be valid JSON
     And the output should contain "Not a spec or a feature: src/App/Till.php"
     And the output should contain "Name a spec file (*.spec.php), a feature file or a directory of them."
+
+  Scenario: A spec in a folder named features runs as a spec
+    Given a spec file "spec/features/Checkout.spec.php":
+      """
+      <?php
+      describe('Checkout', function () {
+          it('totals the basket', fn() => expect(1 + 1)->toBe(2));
+      });
+      """
+    When I run phpspec run with option "spec/features/Checkout.spec.php --format=agent"
+    Then the output should contain:
+      """
+      "examples":1,"scenarios":0
+      """
+
+  Scenario: Specs whose path holds the word features run as specs, by folder or by name
+    Given a spec file "spec/features/Checkout.spec.php":
+      """
+      <?php
+      describe('Checkout', function () {
+          it('totals the basket', fn() => expect(1 + 1)->toBe(2));
+      });
+      """
+    And a spec file "spec/App/featuresFlag.spec.php":
+      """
+      <?php
+      describe('Flag', function () {
+          it('flags', fn() => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec run with option "spec/features spec/App/featuresFlag.spec.php --format=agent"
+    Then the output should contain:
+      """
+      "examples":2,"scenarios":0
+      """
+
+  Scenario: The features under a features_path of another name run with --story, and by their path
+    Given a phpspec.yaml config:
+      """
+      features_path: acceptance/
+      """
+    And a feature file "acceptance/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--story --format=agent"
+    Then the output should contain:
+      """
+      "examples":0,"scenarios":1
+      """
+    When I run phpspec run with option "acceptance --format=agent"
+    Then the output should contain:
+      """
+      "examples":0,"scenarios":1
+      """
+
+  Scenario: --all runs the features under the configured features_path alongside the specs
+    Given a phpspec.yaml config:
+      """
+      features_path: acceptance/
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      describe('Till', function () {
+          it('rings', fn() => expect(true)->toBeTrue());
+      });
+      """
+    And a feature file "acceptance/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--all --format=agent"
+    Then the output should contain:
+      """
+      "examples":1,"scenarios":1
+      """
 
   Scenario: Random execution order with seed
     Given a spec file "spec/App/Random.spec.php":
@@ -884,6 +1018,17 @@ Feature: CLI options
   Scenario: --story on a project without features says so
     When I run phpspec run with option "--story"
     Then the output should contain "No features found under features/."
+    And the exit code should be 0
+
+  Scenario: A plain run of a project with nothing to run yet passes, saying so
+    When I run phpspec run
+    Then the output should contain "No specs found."
+    And the exit code should be 0
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the summary should state "examples" as "0"
+    And the summary should state "actionable" as "0"
+    And the exit code should be 0
 
   Scenario: Run only features with --story flag
     Given a PSR-4 project with "spec", "src", and "features" directories

@@ -169,3 +169,55 @@ Feature: Matchers
       """
     When I run the spec
     Then all examples should pass
+
+  Scenario: toHaveKey takes an integer key in a spec that declares strict types
+    Given a spec file "spec/App/Keys.spec.php":
+      """
+      <?php
+
+      declare(strict_types=1);
+
+      describe('Keys', function () {
+          it('has the keys it was given', function () {
+              expect([10, 20])->toHaveKey(0);
+              expect(['name' => 'Alice'])->toHaveKey('name');
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: Matchers take their arguments by the names the docs give them
+    Given a spec with example:
+      """
+      expect(5)->toBe(expected: 5);
+      expect('5')->toBeLike(expected: 5);
+      expect(new ArrayObject())->toBeAnInstanceOf(class: ArrayObject::class);
+      expect([1, 2])->toHaveCount(count: 2);
+      expect([1, 2])->toContain(needle: 2);
+      expect([10, 20])->toHaveKey(key: 0);
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: toBeEmpty takes a Countable by its count and a string by its length
+    Given a spec with example:
+      """
+      expect(new ArrayObject())->toBeEmpty();
+      expect(new ArrayObject([1]))->not()->toBeEmpty();
+      expect('')->toBeEmpty();
+      expect('0')->not()->toBeEmpty();
+      expect([])->toBeEmpty();
+      expect(null)->toBeEmpty();
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: toBeEmpty refuses an iterator it could only judge by advancing it
+    Given a spec with example:
+      """
+      expect((function () { yield 1; })())->toBeEmpty();
+      """
+    When I run the spec
+    Then the output should contain "toBeEmpty() cannot tell whether"
+    And the output should contain "holds anything without advancing it: it takes a string, an array, a Countable or null."

@@ -262,6 +262,21 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should expect "[]" and have got "[1,2]"
 
+  Scenario: An emptiness failure on a Countable wants an empty array
+    Given a spec file "spec/App/Bag.spec.php":
+      """
+      <?php
+      describe('App\Bag', function () {
+          it('holds nothing', function () { expect(new ArrayObject([1, 2]))->toBeEmpty(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain:
+      """
+      "expectation":{"matcher":"toBeEmpty","expected":[],"actual":"ArrayObject"
+      """
+
   Scenario: A scenario hands over the log it was watching, read before its teardown
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/watching.feature":
@@ -592,6 +607,114 @@ Feature: Agent output format
     When I run phpspec run with option "features/ --format=agent"
     Then the output should be valid JSON
     And the report should have 1 entry
+
+  Scenario: Examples of one title in different contexts are told apart by name and id
+    Given a spec file "spec/App/Total.spec.php":
+      """
+      <?php
+      describe('Total', function () {
+          context('when empty', function () {
+              it('returns the total', fn () => expect(0)->toBe(1));
+          });
+          context('when full', function () {
+              it('returns the total', fn () => expect(100)->toBe(101));
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain "when empty > returns the total"
+    And the output should contain "when full > returns the total"
+
+  Scenario: Classes of one name in different namespaces are told apart by name and id
+    Given a spec file "spec/App/Billing/Invoice.spec.php":
+      """
+      <?php
+      describe(App\Billing\Invoice::class, function () {
+          it('totals', fn () => expect(1)->toBe(2));
+      });
+      """
+    And a spec file "spec/App/Shipping/Invoice.spec.php":
+      """
+      <?php
+      describe(App\Shipping\Invoice::class, function () {
+          it('totals', fn () => expect(3)->toBe(4));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain:
+      """
+      App\\Billing\\Invoice > totals
+      """
+    And the output should contain:
+      """
+      App\\Shipping\\Invoice > totals
+      """
+
+  Scenario: Specs that share every title, in different files, are told apart by id
+    Given a spec file "spec/App/Billing/Ledger.spec.php":
+      """
+      <?php
+      describe('Ledger', function () {
+          it('balances', fn () => expect(1)->toBe(2));
+      });
+      """
+    And a spec file "spec/App/Shipping/Ledger.spec.php":
+      """
+      <?php
+      describe('Ledger', function () {
+          it('balances', fn () => expect(3)->toBe(4));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+
+  Scenario: Features of one title in different files are told apart by id
+    Given a feature file "features/checkout/paying.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    And a feature file "features/returns/paying.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+      """
+    When I run phpspec run with option "--story --format=agent"
+    Then the failing entries should have distinct ids
+
+  Scenario: Examples of one title in one context are told apart by number, in every formatter
+    Given a spec file "spec/App/Total.spec.php":
+      """
+      <?php
+      describe('Total', function () {
+          context('when empty', function () {
+              it('returns the total', fn () => expect(0)->toBe(1));
+              it('returns the total', fn () => expect(0)->toBe(2));
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain "when empty > returns the total #2"
+    When I run phpspec run with option "--no-ansi"
+    Then the output should contain "when empty > returns the total #2"
+
+  Scenario: Scenarios of one title in one feature are told apart by number
+    Given a feature file "features/paying.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying
+          When I pay
+        Scenario: Paying
+          When I pay twice
+      """
+    When I run phpspec run with option "--story --format=agent"
+    Then the failing entries should have distinct ids
+    And the output should contain "Checkout > Paying #2"
 
   Scenario: Each row of a scenario outline is told apart by its values
     Given a PSR-4 project with "spec", "src", and "features" directories
@@ -1051,6 +1174,47 @@ Feature: Agent output format
     And the first event should be "run_started"
     And the output should contain "ai expects a map"
 
+  Scenario: An option run does not take answers a coding agent in JSON, on standard output alone
+    When I run phpspec run in a fresh process with option "--format=agent --definitely-unknown-option"
+    Then the exit code should be 1
+    And the standard output should be valid JSON
+    And the output should have 3 events
+    And the first event should be "run_started"
+    And the fatal event should say:
+      """
+      The "--definitely-unknown-option" option does not exist.
+      """
+    And the last event should be "summary"
+    And the summary should state "actionable" as "1"
+
+  Scenario Outline: A command line run cannot read answers a coding agent in JSON
+    When I run phpspec command "<command line>" in a fresh process
+    Then the exit code should be 1
+    And the standard output should be valid JSON
+    And the output should have 3 events
+    And the first event should be "run_started"
+    And the fatal event should name "<culprit>"
+    And the summary should state "actionable" as "1"
+
+    Examples:
+      | command line                 | culprit |
+      | run -f agent --seed          | --seed  |
+      | run --format agent --all=yes | --all   |
+      | run -fagent -x               | -x      |
+
+  Scenario Outline: A command line a receipt command cannot read answers its agent in JSON
+    When I run phpspec command "<command line>" in a fresh process
+    Then the exit code should be 1
+    And the standard output should be valid JSON
+    And the only receipt should be an error naming "<culprit>"
+
+    Examples:
+      | command line                                      | culprit                 |
+      | describe App/Basket --agent --no-such-option      | --no-such-option        |
+      | describe App/Basket App/Other --format=agent      | Too many arguments      |
+      | generate --format=agent --no-such-option a spec   | --no-such-option        |
+      | rnu --format=agent                                | is not defined          |
+
   Scenario: A configuration that cannot be taken answers a receipt command's agent in JSON
     Given a phpspec.yaml config:
       """
@@ -1060,3 +1224,145 @@ Feature: Agent output format
     Then the exit code should be 1
     And the output should be valid JSON
     And the output should contain "ai expects a map"
+
+  Scenario: A rerun keeps the config the run was named, and replays the same failure
+    Given a file "configured/custom.json":
+      """
+      {"bootstrap": "configured/bootstrap.php"}
+      """
+    And a file "configured/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "configured/Bootstrapped.spec.php":
+      """
+      <?php
+      describe('Bootstrapped', function () {
+          it('sees the bootstrap', function () {
+              expect(AGENT_PROBE_BOOTSTRAPPED)->toBe('no');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "configured/Bootstrapped.spec.php:3 --format=agent --config configured/custom.json"
+    Then the reported entry should rerun as "run configured/Bootstrapped.spec.php:3 --config=configured/custom.json"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      configured/Bootstrapped.spec.php:3
+      --format=agent
+      --config=configured/custom.json
+      """
+    And the summary should rerun as "run configured/Bootstrapped.spec.php:3 --config=configured/custom.json"
+    And the summary should rerun with the arguments:
+      """
+      run
+      configured/Bootstrapped.spec.php:3
+      --format=agent
+      --config=configured/custom.json
+      """
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported
+
+  Scenario: A rerun keeps the bootstrap the run was given, and replays the same failure
+    Given a file "configured/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "spec/Bootstrapped.spec.php":
+      """
+      <?php
+      describe('Bootstrapped', function () {
+          it('sees the bootstrap', function () {
+              expect(AGENT_PROBE_BOOTSTRAPPED)->toBe('no');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/Bootstrapped.spec.php:3 --format=agent -b configured/bootstrap.php"
+    Then the reported entry should rerun as "run spec/Bootstrapped.spec.php:3 --bootstrap=configured/bootstrap.php"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      spec/Bootstrapped.spec.php:3
+      --format=agent
+      --bootstrap=configured/bootstrap.php
+      """
+    And the summary should rerun as "run spec/Bootstrapped.spec.php:3 --bootstrap=configured/bootstrap.php"
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported
+
+  Scenario: A rerun keeps both the config and the bootstrap the run was given
+    Given a file "configured/custom.json":
+      """
+      {"autoload": {"Probe\\": "configured/lib/Probe"}}
+      """
+    And a class "configured/lib/Probe/Meter.php":
+      """
+      <?php
+      namespace Probe;
+      class Meter
+      {
+          public function reading(): int
+          {
+              return 3;
+          }
+      }
+      """
+    And a file "configured/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_LEVEL', 4);
+      """
+    And a spec file "configured/Meter.spec.php":
+      """
+      <?php
+      describe('Probe\Meter', function () {
+          it('reads the level', function () {
+              expect((new Probe\Meter())->reading())->toBe(AGENT_PROBE_LEVEL);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "configured/Meter.spec.php:3 --format=agent --config configured/custom.json -b configured/bootstrap.php"
+    Then the reported entry should rerun as "run configured/Meter.spec.php:3 --config=configured/custom.json --bootstrap=configured/bootstrap.php"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      configured/Meter.spec.php:3
+      --format=agent
+      --config=configured/custom.json
+      --bootstrap=configured/bootstrap.php
+      """
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported
+
+  Scenario: A rerun quotes a path holding a space in the line to paste, never in the arguments
+    Given a file "my config/custom.json":
+      """
+      {"bootstrap": "my config/bootstrap.php"}
+      """
+    And a file "my config/bootstrap.php":
+      """
+      <?php
+      define('AGENT_PROBE_BOOTSTRAPPED', 'yes');
+      """
+    And a spec file "my specs/Bootstrapped.spec.php":
+      """
+      <?php
+      describe('Bootstrapped', function () {
+          it('sees the bootstrap', function () {
+              expect(AGENT_PROBE_BOOTSTRAPPED)->toBe('no');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "'my specs/Bootstrapped.spec.php:3' --format=agent --config 'my config/custom.json'"
+    Then the reported entry should rerun as "run 'my specs/Bootstrapped.spec.php:3' '--config=my config/custom.json'"
+    And the reported entry should rerun with the arguments:
+      """
+      run
+      my specs/Bootstrapped.spec.php:3
+      --format=agent
+      --config=my config/custom.json
+      """
+    When I run the rerun the reported entry hands over
+    Then the replay should report the failure the run reported

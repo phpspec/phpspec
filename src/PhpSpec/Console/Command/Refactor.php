@@ -20,6 +20,7 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
+use PhpSpec\CommandLine;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Declined;
 use PhpSpec\Console\Command\Refactor\PlannedStep;
@@ -72,6 +73,7 @@ final class Refactor extends Command
         private readonly ?SpecSuite $suite = null,
         private readonly ?ProviderInterface $provider = null,
         private readonly ?Consent $consent = null,
+        private readonly ?CommandLine $commandLine = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         parent::__construct();
@@ -103,7 +105,7 @@ final class Refactor extends Command
         $argument = $input->getArgument('target');
 
         try {
-            $target = (new TargetResolver($this->config, $this->filesystem, $root))->resolve(is_string($argument) ? $argument : null);
+            $target = (new TargetResolver($this->config, $this->filesystem, $root, $this->commandLine))->resolve(is_string($argument) ? $argument : null);
             $provider = $this->provider ?? ProviderFactory::create($aiConfig);
         } catch (UnresolvedTargetException $e) {
             return $this->refuse($output, $forAgent, $e->problem(), $e->remedy());

@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Report\Typed;
 use PhpSpec\Result\Result;
 
 describe(MatchResult::class, function () {
@@ -17,6 +18,15 @@ describe(MatchResult::class, function () {
         expect($result->getExpected())->toBeNull();
         expect($result->getActual())->toBeNull();
         expect($result->getFakeExpression())->toBeNull();
+    });
+
+    it('keeps the objects a failure compared as they stood when it failed', function () {
+        $point = (object) ['x' => 1];
+        $failure = MatchResult::failed($point, [(object) ['x' => 5]], 'Expected stdClass to be like stdClass', __FILE__, __LINE__);
+        $point->x = 9;
+
+        expect(Typed::value($failure->getExpected()))->toBe('stdClass{x: 1}');
+        expect(Typed::value($failure->getActual()))->toBe('[stdClass{x: 5}]');
     });
 
     it('creates a failed result', function () {

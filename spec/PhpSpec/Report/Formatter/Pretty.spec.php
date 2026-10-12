@@ -410,6 +410,14 @@ describe(Pretty::class, function() {
         expect($text)->toContain("No specs found");
     });
 
+    it("says nothing of an empty suite when the run says why itself", function() {
+        $output = new BufferedOutput();
+
+        (new Pretty($output, null))->format(new SuiteResult([]));
+
+        expect($output->fetch())->toBe('');
+    });
+
     it("formats results with context", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

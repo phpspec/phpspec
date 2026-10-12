@@ -7,13 +7,13 @@ PhpSpec includes an interactive pair programming mode and AI-powered refactoring
 Start an interactive REPL session:
 
 ```bash
-bin/phpspec pair
+vendor/bin/phpspec pair
 ```
 
 Or send a single prompt without entering the REPL:
 
 ```bash
-bin/phpspec pair --prompt "write a spec for a Calculator that adds two numbers"
+vendor/bin/phpspec pair --prompt "write a spec for a Calculator that adds two numbers"
 ```
 
 The pair command requires an interactive terminal. It sets up a split-screen layout with a scrolling content area and a fixed input line at the bottom.
@@ -277,7 +277,7 @@ All AI interactions are logged to `.phpspec/pair/session.log` with timestamps, t
 When you're not sure what to work on next, ask PhpSpec:
 
 ```bash
-bin/phpspec next
+vendor/bin/phpspec next
 ```
 
 The command coaches the single next step in **outside-in, story-first TDD**, favouring feature (story) tests. When feature files are present it runs the whole suite (`--all`) and reads the real red/green state: a red or unwritten scenario drives the inner spec cycle; when the features are green it offers one baby step over the files you last touched: refactor the last code, add a new scenario, or start a new feature. The shared coaching lives in `src/PhpSpec/Ai/Prompts/next.txt`. With no feature files it falls back to the spec cycle (describe the missing class, or make the nearest pending example real).
@@ -294,7 +294,7 @@ Example output:
   drive the step definitions and any missing specs.
 ```
 
-The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again; it points you at `bin/phpspec run` to drive out the missing class.
+The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again; it points you at `vendor/bin/phpspec run` to drive out the missing class.
 
 Inside pair mode, `/next` reads the real suite state rather than guessing, and follows the same outside-in, feature-first logic: a red scenario drops into the inner cycle, undefined steps get written, and green features prompt a baby step over the last-touched feature and source. **This works even without an AI provider**: the deterministic narrator gives the advice, and `next.txt` enriches it when a provider is configured (the navigator advises, the driver takes the step).
 
@@ -305,12 +305,12 @@ approve it, then each step as it is shown; the whole spec suite runs after
 every step.
 
 ```bash
-bin/phpspec refactor
-bin/phpspec refactor Calculator
-bin/phpspec refactor "App\Calculator"
-bin/phpspec refactor "App\Calculator::sum"
-bin/phpspec refactor src/App/Calculator.php
-bin/phpspec refactor spec/App/Calculator.spec.php
+vendor/bin/phpspec refactor
+vendor/bin/phpspec refactor Calculator
+vendor/bin/phpspec refactor "App\Calculator"
+vendor/bin/phpspec refactor "App\Calculator::sum"
+vendor/bin/phpspec refactor src/App/Calculator.php
+vendor/bin/phpspec refactor spec/App/Calculator.spec.php
 ```
 
 ### Target Resolution
@@ -365,7 +365,7 @@ step prints the files it wrote and the suite's verdict. `pair --prompt
 answer writes nothing and points to `--no-interaction`.
 
 ```
-$ bin/phpspec refactor DrinkPricer --no-interaction
+$ vendor/bin/phpspec refactor DrinkPricer --no-interaction
   Checking the specs...
 
 Planning the refactoring… (41s · ↓ 207 tokens)
@@ -389,7 +389,7 @@ Coding agents use `--format=agent` and `accept` instead; see [Coding Agents](age
 ### Example Output
 
 ```
-$ bin/phpspec refactor CheckoutService
+$ vendor/bin/phpspec refactor CheckoutService
   Checking the specs...
 
 Planning the refactoring… (14s · ↓ 1.2k tokens)

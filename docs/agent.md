@@ -19,7 +19,7 @@ output and never hand-editing what PhpSpec can generate.
 ## Running
 
 ```bash
-bin/phpspec run --format=agent
+vendor/bin/phpspec run --format=agent
 ```
 
 Standard output carries one JSON object per line, with no ANSI and no prose.
@@ -38,8 +38,8 @@ class) produces four lines:
 
 ```json
 {"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}
-{"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
-{"v":2,"event":"example","id":"66b1647a77b6","example":"App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
+{"v":2,"event":"example","id":"6fd046add251","example":"Basket > App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
+{"v":2,"event":"example","id":"66b1647a77b6","example":"Basket > App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
 {"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"risky":0,"warnings":0,"deprecations":0,"notices":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
 ```
 
@@ -86,13 +86,13 @@ Scenario Outline is its own entry, named by its values
 
 | Field | Meaning |
 |---|---|
-| `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
-| `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
+| `id` | A stable identifier for this example: a hash of the file it lives in and its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs, and it tells apart examples that share every title in different files. Recomputable from the file in `spec` and `example`. |
+| `example` | The full name, as a path through the spec file, every `describe` and `context`, and the example: `Basket > App\Basket > when empty > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. A title a sibling before it already has is numbered, `totals the prices #2`, as every formatter names it. |
 | `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` when it raised a PHP warning, deprecation or notice, and otherwise only under `-v`. |
 | `message` | What went wrong, whatever the state; for `pending` and `skipped`, the reason the example gave, when it gave one. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing, pending or skipped example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
-| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
-| `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
+| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. It carries the `--config` the run was named and the `--bootstrap` it was given, so it runs against the same project; a config PhpSpec found by itself is found again from the same directory. An argument a shell would split or expand is single-quoted. Absent with `spec`. |
+| `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]` followed by the same `--config` and `--bootstrap`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
 | `steps` | Scenarios only: the steps that did not pass or that raised a PHP note, each `{ title, state, message?, expectation?, at?, warnings?, deprecations?, notices? }`, in the order they were declared. |
@@ -171,7 +171,7 @@ library's code calling it is left out, as it is on the console (see
 [Warnings, deprecations and notices](writing-specs.md#warnings-deprecations-and-notices)).
 
 ```json
-{"v":2,"event":"example","id":"4c2e34fc4bc4","example":"App\\Ledger > totals the entries","state":"passing","spec":"spec/App/Ledger.spec.php:3","rerun":"run spec/App/Ledger.spec.php:3","warnings":[{"message":"totals are rounded","at":"src/App/Ledger.php:9"}]}
+{"v":2,"event":"example","id":"4c2e34fc4bc4","example":"Ledger > App\\Ledger > totals the entries","state":"passing","spec":"spec/App/Ledger.spec.php:3","rerun":"run spec/App/Ledger.spec.php:3","warnings":[{"message":"totals are rounded","at":"src/App/Ledger.php:9"}]}
 {"v":2,"event":"example","id":"ffd3b79b2ddb","example":"Counting > Counting up","state":"passing","steps":[{"title":"Given I run the counter","state":"passing","deprecations":[{"message":"run() is deprecated, use count()","at":"features/steps/steps.php:4"}]}],"spec":"features/counting.feature:2","rerun":"run features/counting.feature:2"}
 ```
 
@@ -285,8 +285,8 @@ tests, it leaves the exit code at `0`.
 
 | Field | Present when | Meaning |
 |---|---|---|
-| `rerun` | an entry needing attention has a location | One command that re-runs every failing example, and every one that raised a note, at once, so a fix is checked against all of what it was meant to fix. |
-| `rerun_argv` | with `rerun` | The same as an argument list ending in `--format=agent`. |
+| `rerun` | an entry needing attention has a location | One command that re-runs every failing example, and every one that raised a note, at once, so a fix is checked against all of what it was meant to fix. It carries the run's `--config` and `--bootstrap` as an entry's `rerun` does. |
+| `rerun_argv` | with `rerun` | The same as an argument list, carrying `--format=agent`. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
@@ -296,13 +296,16 @@ tests, it leaves the exit code at `0`.
 
 ### `fatal`: when the run could not finish
 
-A run that never started (a missing bootstrap, an unknown format) or that died
+A run that never started (a missing bootstrap, an unknown format, a config that
+cannot be taken, an option `run` does not take or one missing its value), that
+was narrowed by `--filter`, `--tags` or paths to nothing at all, or that died
 partway (a parse error, a class that fails to compile) still answers. It emits a
 `fatal` line of `{ "message", "at", "remedy"? }`, keeps whatever it managed to
 collect, and counts 1 in `actionable`. `remedy` is present when the way past is
 known: a run that wanted coverage and found no Xdebug gets the same command
 under `XDEBUG_MODE=coverage`, a missing bootstrap or path gets what to point
-where, and a `file:LINE` selector that reaches no example is told to point
+where, a `--filter` that matches nothing is told it is not a pattern, and a
+`file:LINE` selector that reaches no example is told to point
 inside an `it()` or a `Scenario`:
 
 ```json
@@ -343,8 +346,8 @@ offer carries an `id` and waits under it, so you accept what you have actually
 read, in a second command:
 
 ```bash
-bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
-bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
+vendor/bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
+vendor/bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
 ```
 
 An id is derived from what the offer would do, so the same offer keeps it
@@ -370,8 +373,8 @@ lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
 For the common case of taking everything a run found, the bulk shortcut remains:
 
 ```bash
-bin/phpspec run --accept-offers            # create missing classes/interfaces/methods/steps
-bin/phpspec run --accept-offers --fake     # ...and fill empty methods with their spec'd return values
+vendor/bin/phpspec run --accept-offers            # create missing classes/interfaces/methods/steps
+vendor/bin/phpspec run --accept-offers --fake     # ...and fill empty methods with their spec'd return values
 ```
 
 `--accept-offers` runs the suite, applies all of that run's offers (no prompts),
@@ -396,14 +399,17 @@ one-line JSON receipt, so an agent can scaffold without parsing English. No file
 content is returned; the agent reads the file itself.
 
 ```bash
-bin/phpspec describe App/Basket --agent
+vendor/bin/phpspec describe App/Basket --agent
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":true}
 ```
 
-A name under none of the mapped namespaces, with no `default_namespace` to
-put it under, is refused with the remedy, exit code 1:
+A command line the command cannot read (an option it does not take, an argument
+too many, a command that does not exist) is refused the same way, as
+`{ "v", "action", "error" }` with exit code 1, and nothing else on standard
+output. A name under none of the mapped namespaces, with no `default_namespace`
+to put it under, is refused with the remedy, exit code 1:
 
 ```json
 {"v":2,"action":"describe","error":"Acme\\Thing is under none of the mapped namespaces: Brew\\.","remedy":"Describe Brew\\Acme\\Thing, name a default_namespace in the phpspec config to put every such name under, or answer when asked which one."}
@@ -413,7 +419,7 @@ put it under, is refused with the remedy, exit code 1:
 idempotent). Combine `describe --agent` with `-e` to also add a method example:
 
 ```bash
-bin/phpspec describe App/Basket --agent -e checkout
+vendor/bin/phpspec describe App/Basket --agent -e checkout
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":false,"example":{"method":"checkout","added":true}}
@@ -423,7 +429,7 @@ bin/phpspec describe App/Basket --agent -e checkout
 first if needed):
 
 ```bash
-bin/phpspec exemplify App/Basket checkout --agent
+vendor/bin/phpspec exemplify App/Basket checkout --agent
 ```
 ```json
 {"v":2,"action":"exemplify","class":"App\\Basket","method":"checkout","spec":"spec/App/Basket.spec.php","added":true}
@@ -438,13 +444,13 @@ and whole. Nothing is written until you `accept` it, which carries every step
 out as `refactor --no-interaction` does (see [How it works](pair.md#how-it-works)).
 
 ```bash
-bin/phpspec refactor Brew/DrinkPricer --format=agent
+vendor/bin/phpspec refactor Brew/DrinkPricer --format=agent
 ```
 ```json
 {"v":2,"action":"refactor","class":"Brew\\DrinkPricer","source":"src/Brew/DrinkPricer.php","spec":"spec/Brew/DrinkPricer.spec.php","technique":"Introduce Parameter Object","rationale":"priceOf takes size, milk and shots, which always travel together; a Drink holds them.","steps":["Describe Drink","Implement Drink","Add price method to DrinkPricer","Update DrinkPricer specs to use price","Remove priceOf method"],"offer":{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer"}}
 ```
 ```bash
-bin/phpspec accept o_4e6db6b4 --format=agent
+vendor/bin/phpspec accept o_4e6db6b4 --format=agent
 ```
 ```json
 {"v":2,"action":"accept","accepted":[{"id":"o_4e6db6b4","action":"refactor","target":"Brew\\DrinkPricer","files":["spec/Brew/Drink.spec.php","src/Brew/Drink.php","src/Brew/DrinkPricer.php","spec/Brew/DrinkPricer.spec.php"],"applied":true}]}
@@ -492,7 +498,7 @@ agent-instruction file) so the agent uses PhpSpec effectively:
 
 Always run PhpSpec with the machine-readable formatter and parse the JSON:
 
-    bin/phpspec run --format=agent
+    vendor/bin/phpspec run --format=agent
 
 It prints JSON Lines: one JSON object per line. Decode each line and branch on
 its `event`:
@@ -530,7 +536,7 @@ its `event`:
   name: a log, a captured stdout, an HTTP response body. Read it before you go
   looking at files yourself.
 - To verify a single fix, re-run just that example: take its `rerun` value and
-  prepend the binary, e.g. `bin/phpspec run spec/App/Basket.spec.php:6`. Don't
+  prepend the binary, e.g. `vendor/bin/phpspec run spec/App/Basket.spec.php:6`. Don't
   re-run the whole suite to check one change. The `summary`'s `rerun` does the
   same for every failure at once.
 - Track a specific failure across runs by its `id` (stable across edits that
@@ -542,12 +548,12 @@ its `event`:
 Before writing specs, read the surface off the code once instead of guessing
 or reflecting on the source:
 
-    bin/phpspec api --format=agent
+    vendor/bin/phpspec api --format=agent
 
 One JSON object: every DSL function and matcher with its signature and
 summary, the mock and story functions, and the `timing` rules. Read `timing`
-first: expectations are judged at the end of the example, and `toThrow()` runs
-its callable where it is written.
+first: an expectation is judged on the line it is written, `toThrow()` runs its
+callable there, and only `toBeCalled()` waits for the end of the example.
 
 ## Writing specs that explain themselves
 
@@ -570,12 +576,12 @@ helper is the only thing that knows why it gave up.
 
 Prefer letting PhpSpec generate boilerplate over writing it by hand:
 
-- Scaffold a spec: `bin/phpspec describe App/Basket --agent`
-- Add a method example: `bin/phpspec exemplify App/Basket checkout --agent`
+- Scaffold a spec: `vendor/bin/phpspec describe App/Basket --agent`
+- Add a method example: `vendor/bin/phpspec exemplify App/Basket checkout --agent`
 - Apply all pending offers (missing classes/interfaces/methods/steps):
-  `bin/phpspec run --accept-offers`
+  `vendor/bin/phpspec run --accept-offers`
 - Also fill empty methods with their spec'd return values (fast first green):
-  `bin/phpspec run --accept-offers --fake`
+  `vendor/bin/phpspec run --accept-offers --fake`
 - The summary of an `--accept-offers` run carries `applied`: what was written,
   by file. Its counts describe the run before the writing, so run again to
   verify; exit code 0 means applied, not green.

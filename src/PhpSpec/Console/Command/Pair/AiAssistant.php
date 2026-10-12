@@ -83,7 +83,7 @@ final class AiAssistant
             $output,
             $chooser,
             $this->roleState,
-            $specRunner ?? new SubprocessRunner($config->guardIsOn()),
+            $specRunner ?? new SubprocessRunner($config),
             $prompts,
             $extensionLoader,
         );

@@ -24,6 +24,7 @@ use PhpSpec\Console\Command\Run\CoverageReporter;
 use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
+use PhpSpec\Console\Command\Run\OptionValues;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Console\InternalOptions;
@@ -128,8 +129,8 @@ final class Run extends Command implements InternalOptions
             ->addOption('paths-from', null, Option::VALUE_REQUIRED, 'Read spec/feature paths to run from a file, one per line')
             ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html, agent (JSON Lines for coding agents); repeatable, pair each with -o', [])
             ->addOption('out', 'o', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Report destination for the corresponding --format; "std" is the console', [])
-            ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order (default, random)', 'default')
-            ->addOption('seed', null, Option::VALUE_REQUIRED, 'Seed for random order')
+            ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order: default, or random')
+            ->addOption('seed', null, Option::VALUE_REQUIRED, 'Shuffle the run by this seed, as a random run prints it')
             ->addOption('profile', null, Option::VALUE_OPTIONAL, 'Show N slowest examples', false)
             ->addOption('bootstrap', 'b', Option::VALUE_REQUIRED, 'PHP file to require before running specs')
             ->addOption('all', null, Option::VALUE_NONE, 'Run all suites (specs and features)')
@@ -207,6 +208,7 @@ final class Run extends Command implements InternalOptions
         $document = $formatter instanceof Agent ? $formatter : null;
         $prose = $document !== null ? new BufferedOutput() : $output;
         $document?->targets($files);
+        $document?->rerunsWith($this->childOptions($input));
 
         // PHP prints a fatal to standard output as well as the error stream, and
         // standard output is the document's. Sending its own reports to the error
@@ -239,6 +241,12 @@ final class Run extends Command implements InternalOptions
      */
     private function perform(Input $input, Output $prose, Formatter $formatter, string $files, array $given): int
     {
+        $refused = (new OptionValues($input))->problem();
+
+        if ($refused !== null) {
+            return $this->stopped($prose, $formatter, $refused);
+        }
+
         $missingBootstrap = $this->loadBootstrap($input);
 
         if ($missingBootstrap !== null) {
@@ -250,6 +258,10 @@ final class Run extends Command implements InternalOptions
 
         if ($pathsFrom !== null && !is_file($pathsFrom)) {
             return $this->stopped($prose, $formatter, "Paths file not found: $pathsFrom", 'Point --paths-from at a file that exists.');
+        }
+
+        if ($pathsFrom !== null && $given === []) {
+            return $this->stopped($prose, $formatter, "Paths file lists no path: $pathsFrom", 'List the spec and feature paths to run in it, one per line.');
         }
 
         $missing = self::missingPath($given);
@@ -332,15 +344,12 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, $e->getMessage(), $e instanceof FileLoadException ? $e->remedy() : null);
         }
 
-        if ($this->selectedNothing($given, $results)) {
-            $status = $this->stopped(
-                $prose,
-                $formatter,
-                'No example at ' . implode(', ', $given),
-                'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.',
-            );
+        $emptied = $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given);
 
-            if ($formatter instanceof Pretty || $formatter instanceof Dot) {
+        if ($emptied !== null) {
+            $status = $this->stopped($prose, $formatter, ...$emptied);
+
+            if ($this->onlyLines($given) && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
                 $this->showCodeAround($prose, $given);
             }
 
@@ -503,19 +512,48 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
-     * Whether every path given was a "file:LINE" selector and none of them
-     * reached an example or a scenario: an explicit line is a precise ask, and
-     * a run that answers it with nothing has not answered it.
+     * Why a run the caller narrowed selected nothing, and the way past it:
+     * its tags, its filter, its lines or its paths, the first of them that
+     * was given. Null for a run nobody narrowed, which may hold nothing yet;
+     * a narrowed one that answers with nothing has not answered, and must not
+     * pass for green.
+     *
+     * @param list<string> $given the paths as given on the command line
+     * @return array{0: string, 1: string}|null the message and the remedy
+     */
+    private function narrowedToNothingBy(Input $input, array $given): ?array
+    {
+        $tags = $input->getOption('tags');
+
+        if (is_string($tags)) {
+            return [sprintf('No scenario matches --tags "%s".', $tags), 'Check the tags the scenarios carry: a tag on a feature counts for every scenario in it.'];
+        }
+
+        $filter = $input->getOption('filter');
+
+        if (is_string($filter)) {
+            return [sprintf('No example or scenario matches --filter "%s".', $filter), '--filter keeps what holds its text as written, in a file path or a path of titles: it is not a pattern.'];
+        }
+
+        if ($given === []) {
+            return null;
+        }
+
+        if ($this->onlyLines($given)) {
+            return ['No example at ' . implode(', ', $given), 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.'];
+        }
+
+        return [sprintf('No example or scenario in %s.', implode(', ', $given)), 'Name a spec, a feature or a directory holding them, or give none to run the configured suite.'];
+    }
+
+    /**
+     * Whether every path given is a "file:LINE" selector.
      *
      * @param list<string> $given the paths as given on the command line
      */
-    private function selectedNothing(array $given, SuiteResult $results): bool
+    private function onlyLines(array $given): bool
     {
-        if ($given === [] || array_filter($given, static fn(string $path): bool => preg_match('/:\d+$/', $path) !== 1) !== []) {
-            return false;
-        }
-
-        return !$this->ranAnything($results);
+        return $given !== [] && array_filter($given, static fn(string $path): bool => preg_match('/:\d+$/', $path) !== 1) === [];
     }
 
     private function ranAnything(Results $results): bool
@@ -657,6 +695,20 @@ final class Run extends Command implements InternalOptions
         return null;
     }
 
+    /**
+     * The options a phpspec started from this run (a worker, a rerun) needs
+     * to run against the same project: the config it was named, and the
+     * bootstrap it was given.
+     *
+     * @return list<string>
+     */
+    private function childOptions(Input $input): array
+    {
+        $bootstrap = $input->getOption('bootstrap');
+
+        return [...$this->config->childOptions(), ...(is_string($bootstrap) ? ['--bootstrap=' . $bootstrap] : [])];
+    }
+
     private function registerAutoloader(): void
     {
         $this->config->registerAutoloaders();
@@ -711,7 +763,13 @@ final class Run extends Command implements InternalOptions
         if ($input->getOption('all')) {
             $suitePaths = $this->config->getAllLoadPaths();
 
-            return str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
+            foreach (explode(',', $suitePaths) as $suitePath) {
+                if ($this->loader->runsAsFeatures(trim($suitePath))) {
+                    return $suitePaths;
+                }
+            }
+
+            return $suitePaths . ',' . $this->config->getFeaturesPath();
         }
 
         return $this->config->getAllLoadPaths();
@@ -874,7 +932,7 @@ final class Run extends Command implements InternalOptions
         $stop = $this->stopConditions($input);
 
         $seed = null;
-        if ($input->getOption('order') === 'random') {
+        if ((new OptionValues($input))->shuffles()) {
             $seed = $input->getOption('seed') !== null ? (int) $input->getOption('seed') : random_int(0, 999999);
             $prose->writeln("<fg=yellow>Randomised with seed $seed</>");
 
@@ -906,16 +964,12 @@ final class Run extends Command implements InternalOptions
                 ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
                 : null;
 
-            // --config is defined at the application level, absent when the
-            // command runs standalone (e.g. under CommandTester)
-            $configPath = $input->hasOption('config') ? $input->getOption('config') : null;
-
             $parallelRunner = new ParallelRunner(
                 $paths,
                 $workers,
                 $stop,
                 coveragePartialDir: $coveragePartialDir,
-                configPath: $configPath,
+                childOptions: $this->childOptions($input),
                 filter: is_string($filter) ? $filter : null,
                 tags: is_string($tags) ? $tags : null,
             );
@@ -1046,28 +1100,18 @@ final class Run extends Command implements InternalOptions
 
     /**
      * What a run that found nothing to run ends with: which suite it looked
-     * for, and where the other one is when it exists.
+     * for, and where the other one is when it exists. Nothing for a run the
+     * caller narrowed, which stops saying what selected nothing.
      *
      * @param list<string> $given the paths the caller named outright
      */
-    private function nothingFoundLine(Input $input, array $given): string
+    private function nothingFoundLine(Input $input, array $given): ?string
     {
+        if ($given !== [] || $input->getOption('tags') !== null || $input->getOption('filter') !== null || $input->getOption('paths-from') !== null) {
+            return null;
+        }
+
         $featuresPath = rtrim($this->config->getFeaturesPath(), '/') . '/';
-        $tags = $input->getOption('tags');
-
-        if (is_string($tags)) {
-            return sprintf('No scenario matches --tags "%s".', $tags);
-        }
-
-        $filter = $input->getOption('filter');
-
-        if (is_string($filter)) {
-            return sprintf('No example or scenario matches --filter "%s".', $filter);
-        }
-
-        if ($given !== []) {
-            return 'No specs found.';
-        }
 
         if ($input->getOption('story')) {
             return sprintf('No features found under %s.', $featuresPath);
@@ -1089,7 +1133,7 @@ final class Run extends Command implements InternalOptions
         return ['coverage-partial', 'suite-check'];
     }
 
-    private function createFormatter(string $format, Output $output, string $nothingFound = 'No specs found.'): Formatter
+    private function createFormatter(string $format, Output $output, ?string $nothingFound = 'No specs found.'): Formatter
     {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
             return new FormatterBridge($this->extensionLoader->getFormatter($format), $output);

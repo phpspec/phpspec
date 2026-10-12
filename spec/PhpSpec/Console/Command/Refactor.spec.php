@@ -8,6 +8,7 @@ use PhpSpec\Console\Command\Refactor;
 use PhpSpec\Console\Command\Refactor\SpecSuite;
 use PhpSpec\Console\Command\Refactor\SuiteCheck;
 use PhpSpec\Console\Command\Run\Generation;
+use PhpSpec\CommandLine;
 use PhpSpec\Console\Consent;
 use PhpSpec\Console\Prompt;
 use PhpSpec\Offers\OfferBook;
@@ -62,7 +63,7 @@ describe(Refactor::class, function () {
             }
         };
         $consent = new Consent('Run with --no-interaction to %s.', $interactive ? Generation::Asks : Generation::Declines, prompt: $prompt);
-        $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']] + $settings), $this->project, $suite, $this->replay, $consent);
+        $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']] + $settings), $this->project, $suite, $this->replay, $consent, new CommandLine());
         $app = new Application('phpspec-test', '1.0');
         $app->setAutoExit(false);
         $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($command);

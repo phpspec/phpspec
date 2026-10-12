@@ -55,12 +55,14 @@ final class Configuration
      * @param string $rootDir the project root the paths are relative to
      * @param array<string, string> $composerMappings PSR-4 prefix to directory, as composer.json declares them
      * @param string|null $settingsFile the file the settings were read from, when there is one
+     * @param bool $named whether the settings file was named with --config rather than found under the root
      */
     public function __construct(
         private array $config = [],
         private string $rootDir = '.',
         private array $composerMappings = [],
         private ?string $settingsFile = null,
+        private bool $named = false,
     ) {}
 
     /**
@@ -78,7 +80,7 @@ final class Configuration
         $path = $configFile ?? self::settingsFile($rootDir, $fs);
         $settings = $path === null ? [] : self::readFile($path, $fs);
 
-        return new self($settings, $rootDir, self::readComposerMappings($rootDir, $fs), $path);
+        return new self($settings, $rootDir, self::readComposerMappings($rootDir, $fs), $path, $configFile !== null);
     }
 
     /**
@@ -633,13 +635,14 @@ final class Configuration
 
     /**
      * The options a phpspec started from this one needs to read the same
-     * configuration: the file it was read from, when there is one.
+     * configuration: the file --config named, when one was. A file found under
+     * the root is found again by a phpspec started from the same directory.
      *
      * @return list<string>
      */
     public function childOptions(): array
     {
-        return $this->settingsFile === null ? [] : ['--config=' . $this->settingsFile];
+        return $this->named && $this->settingsFile !== null ? ['--config=' . $this->settingsFile] : [];
     }
 
     /**

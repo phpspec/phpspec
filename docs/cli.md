@@ -7,7 +7,7 @@
 Loads and executes spec files.
 
 ```bash
-bin/phpspec run [files] [options]
+vendor/bin/phpspec run [files] [options]
 ```
 
 **Arguments:**
@@ -16,13 +16,13 @@ bin/phpspec run [files] [options]
 **Examples:**
 
 ```bash
-bin/phpspec run                                    # Run all specs in spec/
-bin/phpspec run spec/App/Calculator.spec.php        # Run a single spec
-bin/phpspec run spec/App/Calculator.spec.php:14     # Run the example at line 14
-bin/phpspec run spec/App/Console                    # Run all specs in a directory
-bin/phpspec run features/                           # Run all feature files
-bin/phpspec run features/greeting.feature           # Run a single feature
-bin/phpspec run features/greeting.feature:12        # Run the scenario at line 12
+vendor/bin/phpspec run                                    # Run all specs in spec/
+vendor/bin/phpspec run spec/App/Calculator.spec.php        # Run a single spec
+vendor/bin/phpspec run spec/App/Calculator.spec.php:14     # Run the example at line 14
+vendor/bin/phpspec run spec/App/Console                    # Run all specs in a directory
+vendor/bin/phpspec run features/                           # Run all feature files
+vendor/bin/phpspec run features/greeting.feature           # Run a single feature
+vendor/bin/phpspec run features/greeting.feature:12        # Run the scenario at line 12
 ```
 
 ### `pair`
@@ -30,8 +30,8 @@ bin/phpspec run features/greeting.feature:12        # Run the scenario at line 1
 Interactive pair programming REPL with optional AI assistant.
 
 ```bash
-bin/phpspec pair
-bin/phpspec pair --prompt "write a spec for a Calculator"
+vendor/bin/phpspec pair
+vendor/bin/phpspec pair --prompt "write a spec for a Calculator"
 ```
 
 See [Pair Programming & AI](pair.md) for full documentation.
@@ -41,7 +41,7 @@ See [Pair Programming & AI](pair.md) for full documentation.
 Coaches the single next step in outside-in, feature-first TDD — favouring story tests, grounded in the real suite state.
 
 ```bash
-bin/phpspec next
+vendor/bin/phpspec next
 ```
 
 See [Pair Programming & AI](pair.md#the-next-command) for full documentation.
@@ -52,13 +52,13 @@ AI-powered, behaviour-preserving refactoring: a plan, then baby steps you
 approve one at a time, the whole spec suite checked after each.
 
 ```bash
-bin/phpspec refactor                                 # the source file modified last under src_path
-bin/phpspec refactor Calculator                      # the Calculator modified last under src_path
-bin/phpspec refactor "App\Calculator"
-bin/phpspec refactor "App\Calculator::sum"
-bin/phpspec refactor src/App/Calculator.php
-bin/phpspec refactor Calculator --no-interaction     # carry the plan out without asking
-bin/phpspec refactor App/Calculator --format=agent   # the plan as one JSON receipt, nothing written
+vendor/bin/phpspec refactor                                 # the source file modified last under src_path
+vendor/bin/phpspec refactor Calculator                      # the Calculator modified last under src_path
+vendor/bin/phpspec refactor "App\Calculator"
+vendor/bin/phpspec refactor "App\Calculator::sum"
+vendor/bin/phpspec refactor src/App/Calculator.php
+vendor/bin/phpspec refactor Calculator --no-interaction     # carry the plan out without asking
+vendor/bin/phpspec refactor App/Calculator --format=agent   # the plan as one JSON receipt, nothing written
 ```
 
 See [Pair Programming & AI](pair.md#the-refactor-command) for full documentation.
@@ -79,10 +79,10 @@ confirmation. With no terminal to ask, nothing is written: the change is offered
 under an id for [`accept`](#accept) to apply.
 
 ```bash
-bin/phpspec generate a feature for adding a task    # Gherkin skeleton under features/
-bin/phpspec generate the steps                      # steps for the last-touched feature, parsed from it
-bin/phpspec generate a spec for a Coupon that reduces a total
-bin/phpspec generate implement Calculator::add to return the sum of its arguments
+vendor/bin/phpspec generate a feature for adding a task    # Gherkin skeleton under features/
+vendor/bin/phpspec generate the steps                      # steps for the last-touched feature, parsed from it
+vendor/bin/phpspec generate a spec for a Coupon that reduces a total
+vendor/bin/phpspec generate implement Calculator::add to return the sum of its arguments
 ```
 
 An explicit path in the instruction (`... in features/adding.feature`) always wins,
@@ -99,8 +99,8 @@ rather than changing anything on their own, so the decision is taken by whoever
 read them.
 
 ```bash
-bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
-bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
+vendor/bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
+vendor/bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
 ```
 
 The id is derived from the offer itself, so it is stable while the offer stands.
@@ -117,10 +117,10 @@ saying when it was made, as an `error` to an agent.
 Turns on the TDD guard and records where this session starts.
 
 ```bash
-bin/phpspec guard
+vendor/bin/phpspec guard
 ```
 
-From then on `bin/phpspec run` refuses a change whose new logic no example
+From then on `vendor/bin/phpspec run` refuses a change whose new logic no example
 reaches, naming the member and showing the lines. `--check --hash=<sha>
 --coverage=<file>` asks the same question on demand, after the suite, for CI and
 pre-commit hooks. See [Guard](guard.md).
@@ -133,8 +133,8 @@ the timing rules nothing can introspect (expectations are judged at the end of
 the example; `toThrow()` runs its callable where it is written).
 
 ```bash
-bin/phpspec api                   # as prose
-bin/phpspec api --format=agent    # as one JSON object, for a coding agent
+vendor/bin/phpspec api                   # as prose
+vendor/bin/phpspec api --format=agent    # as one JSON object, for a coding agent
 ```
 
 Because it is read off the code, it cannot drift from what runs. See
@@ -145,7 +145,7 @@ Because it is read off the code, it cannot drift from what runs. See
 Generates a spec file for a class.
 
 ```bash
-bin/phpspec describe <class> [options]
+vendor/bin/phpspec describe <class> [options]
 ```
 
 **Arguments:**
@@ -159,10 +159,10 @@ bin/phpspec describe <class> [options]
 **Examples:**
 
 ```bash
-bin/phpspec describe App/Calculator
-bin/phpspec describe App/Console/Command/Run
-bin/phpspec describe App/Calculator -e add          # with "add" method example
-bin/phpspec describe App/Calculator --agent          # JSON receipt (see Coding Agents)
+vendor/bin/phpspec describe App/Calculator
+vendor/bin/phpspec describe App/Console/Command/Run
+vendor/bin/phpspec describe App/Calculator -e add          # with "add" method example
+vendor/bin/phpspec describe App/Calculator --agent          # JSON receipt (see Coding Agents)
 ```
 
 ### `exemplify`
@@ -170,7 +170,7 @@ bin/phpspec describe App/Calculator --agent          # JSON receipt (see Coding 
 Adds an example for a method to a spec file, generating the spec first if needed.
 
 ```bash
-bin/phpspec exemplify <class> <method> [options]
+vendor/bin/phpspec exemplify <class> <method> [options]
 ```
 
 **Arguments:**
@@ -181,8 +181,8 @@ bin/phpspec exemplify <class> <method> [options]
 - `--agent` -- Emit a machine-readable JSON receipt instead of prose.
 
 ```bash
-bin/phpspec exemplify App/Calculator add
-bin/phpspec exemplify App/Calculator add --agent
+vendor/bin/phpspec exemplify App/Calculator add
+vendor/bin/phpspec exemplify App/Calculator add --agent
 ```
 
 See [Coding Agents](agent.md) for the `--agent` receipts and
@@ -247,7 +247,7 @@ not ok 3 - divides by zero
 Outputs JUnit XML for CI integration:
 
 ```bash
-bin/phpspec run --format=junit > results.xml
+vendor/bin/phpspec run --format=junit > results.xml
 ```
 
 Each spec is a `testsuite` and each example a `testcase` named by its title,
@@ -268,7 +268,7 @@ or step that raised a PHP warning, deprecation or notice unfolds to each one,
 with the line that raised it, and the header and its group's bar count them:
 
 ```bash
-bin/phpspec run --format=html > report.html
+vendor/bin/phpspec run --format=html > report.html
 ```
 
 #### Agent Formatter
@@ -282,7 +282,7 @@ code-generation `offer`; the closing `summary` line carries the counts, one
 collected, and a run-wide `offers` list:
 
 ```bash
-bin/phpspec run --format=agent
+vendor/bin/phpspec run --format=agent
 ```
 
 Those lines are the only thing on standard output, whatever happens: the seed
@@ -302,8 +302,8 @@ pair each occurrence with an `--out`/`-o` destination. Outs pair with formats
 by position (Behat style), and `std` names the console:
 
 ```bash
-bin/phpspec run -f html -o report.html                             # pretty on console + HTML file
-bin/phpspec run -f pretty -o std -f html -o report.html -f junit -o report.xml
+vendor/bin/phpspec run -f html -o report.html                             # pretty on console + HTML file
+vendor/bin/phpspec run -f pretty -o std -f html -o report.html -f junit -o report.xml
 ```
 
 A format without a matching `-o` writes to the console; when every format
@@ -320,7 +320,7 @@ rejected with an error rather than silently falling back.
 | `--all` | Run all suites -- both specs and features |
 | `--story` | Run only features (Story BDD) |
 | `--order=ORDER` | Run order: `default` or `random` |
-| `--seed=SEED` | Seed for random ordering (for reproducibility) |
+| `--seed=SEED` | Shuffle by this whole number, as a random run prints it, to reproduce that order; implies `--order random` |
 
 **Stopping early.** By default a run continues to the end. These flags halt it at
 the first result of a given kind: nothing after that example or scenario runs,
@@ -339,21 +339,33 @@ the same way (useful for tight feedback loops and CI):
 | `--stop-on-problems` | any non-passing result |
 
 ```bash
-bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
-bin/phpspec run --filter "should be good"        # Example/scenario titles matching a phrase
-bin/phpspec run --filter "it should be good"     # Leading "it" on the filter is ignored
-bin/phpspec run --filter "when empty"            # A context title selects everything in it
-bin/phpspec run --filter "when empty > starts"   # Titles joined by > narrow to one example
-bin/phpspec run --tags "@smoke and not @wip"      # Scenarios tagged @smoke, unless also @wip
-bin/phpspec run --paths-from specs.txt            # Run the specs listed in specs.txt
-bin/phpspec run --stop-on-failure                 # Stop on first failing spec
-bin/phpspec run --order random                    # Randomize spec order
-bin/phpspec run --order random --seed 42          # Reproducible random order
+vendor/bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
+vendor/bin/phpspec run --filter "should be good"        # Example/scenario titles matching a phrase
+vendor/bin/phpspec run --filter "it should be good"     # Leading "it" on the filter is ignored
+vendor/bin/phpspec run --filter "when empty"            # A context title selects everything in it
+vendor/bin/phpspec run --filter "when empty > starts"   # Titles joined by > narrow to one example
+vendor/bin/phpspec run --tags "@smoke and not @wip"      # Scenarios tagged @smoke, unless also @wip
+vendor/bin/phpspec run --paths-from specs.txt            # Run the specs listed in specs.txt
+vendor/bin/phpspec run --stop-on-failure                 # Stop on first failing spec
+vendor/bin/phpspec run --order random                    # Randomize spec order
+vendor/bin/phpspec run --order random --seed 42          # Reproducible random order
 ```
 
-Matching is a case-insensitive substring test. When a spec file's path matches,
-every example in it runs; otherwise only the examples whose title matches run.
-Feature files behave the same with scenario titles.
+A value an option cannot take stops the run before anything runs, naming the
+option and what it takes: an `--order` other than `default` or `random`, a
+`--seed` that is not a whole number or that comes with `--order default`, a
+`--profile` or `--parallel` count below 1, a `--coverage-min` outside 0 to 100,
+and an empty `--filter`, `--out` or coverage path.
+
+Matching is a case-insensitive substring test, not a pattern. When a spec file's
+path matches, every example in it runs; otherwise only the examples whose title
+matches run. Feature files behave the same with scenario titles.
+
+A run you narrow, with `--filter`, `--tags`, paths or `--paths-from`, fails
+(exit code 1) when the whole of it selects nothing, saying what selected nothing,
+so an empty selection never passes for green. Paths add up: one that holds
+nothing is fine while another holds something. A plain `run` of a project with
+nothing to run yet still passes, saying `No specs found.`
 
 `--tags` selects scenarios by their tags with a Cucumber tag expression: `and`,
 `or`, `not` and parentheses, `not` binding tightest and `and` before `or`. A tag
@@ -371,12 +383,13 @@ exceed the operating system's argument size limit, while a file cannot.
 Append `:LINE` to a spec or feature path to run just the block at that line:
 
 ```bash
-bin/phpspec run spec/App/Calculator.spec.php:14   # The example at line 14
-bin/phpspec run features/checkout.feature:12      # The scenario at line 12
+vendor/bin/phpspec run spec/App/Calculator.spec.php:14   # The example at line 14
+vendor/bin/phpspec run features/checkout.feature:12      # The scenario at line 12
 ```
 
-Any line inside an example (or scenario) body selects it; a line inside a
-`describe` but outside its examples runs that whole context. For Gherkin,
+Any line inside an example (or scenario) body selects it, an example at the top
+of a file included; a line inside a `describe` but outside its examples runs
+that whole context. For Gherkin,
 targeting a `Scenario Outline:` line runs every row of its examples table,
 while targeting a single examples row runs just that expansion. A line that
 reaches no example at all stops the run with `No example at <path:LINE>` and
@@ -389,10 +402,13 @@ one file or of many, so the `rerun` command an agent summary carries can be
 pasted back as it is:
 
 ```bash
-bin/phpspec run spec/App/Calculator.spec.php:14 spec/App/Calculator.spec.php:22
+vendor/bin/phpspec run spec/App/Calculator.spec.php:14 spec/App/Calculator.spec.php:22
 ```
 
-A path given whole alongside one of its lines runs whole.
+Each selector selects, and the run takes them all together: a line that runs
+a whole context keeps every example in it, nested contexts included, even when
+another selector points inside one of them. A path given whole alongside one
+of its lines runs whole.
 
 ### Bootstrap
 
@@ -401,7 +417,7 @@ A path given whole alongside one of its lines runs whole.
 | `-b`, `--bootstrap=FILE` | PHP file to require before running specs |
 
 ```bash
-bin/phpspec run --bootstrap tests/bootstrap.php
+vendor/bin/phpspec run --bootstrap tests/bootstrap.php
 ```
 
 ### Configuration File
@@ -411,14 +427,19 @@ bin/phpspec run --bootstrap tests/bootstrap.php
 | `-c`, `--config=FILE` | Path to a phpspec configuration file (overrides the working directory lookup) |
 
 ```bash
-bin/phpspec run --config custom/phpspec.ci.yaml
+vendor/bin/phpspec run --config custom/phpspec.ci.yaml
 ```
 
 By default PhpSpec looks for `phpspec.yaml`, `phpspec.yml`, `phpspec.json` or
 `phpspec.php` in the working directory. With `--config` exactly the given file
 is loaded instead (its format is resolved from the extension), and the command
-fails if the file does not exist. The option is available on every command and
-is forwarded to worker processes in `--parallel` runs.
+fails if the file does not exist. The option is available on every command, and
+every phpspec a command starts reads the same file: the workers of a
+`--parallel` run, a `run` in a `pair` session, and the `rerun` an agent is handed.
+So does `--bootstrap`, for the workers and the `rerun`. A command PhpSpec
+suggests (what `next` proposes, the `describe` a `refactor` refusal points to,
+the `guard` that records a baseline) names the binary as you invoked it and
+carries the same `--config`.
 
 ### Parallel Execution
 
@@ -427,8 +448,8 @@ is forwarded to worker processes in `--parallel` runs.
 | `--parallel[=N]` | Run specs across N worker processes (defaults to the number of CPU cores) |
 
 ```bash
-bin/phpspec run --parallel        # one worker per CPU core
-bin/phpspec run --parallel=4      # four workers
+vendor/bin/phpspec run --parallel        # one worker per CPU core
+vendor/bin/phpspec run --parallel=4      # four workers
 ```
 
 Each worker runs a slice of the spec files in its own process and reports each
@@ -452,7 +473,7 @@ order rather than file order.
 When specs reference methods that don't exist, PhpSpec can generate method stubs. With `--fake`, it goes further and fills in the method body based on what your specs expect:
 
 ```bash
-bin/phpspec run --fake
+vendor/bin/phpspec run --fake
 ```
 
 `--accept-offers` applies every pending offer (missing classes, interfaces,
@@ -461,8 +482,8 @@ scripted counterpart to the interactive "shall I create this?" prompts. Combine
 it with `--fake` to also fill empty method bodies:
 
 ```bash
-bin/phpspec run --accept-offers            # generate all missing code, no prompts
-bin/phpspec run --accept-offers --fake     # ...and fill empty methods with spec'd returns
+vendor/bin/phpspec run --accept-offers            # generate all missing code, no prompts
+vendor/bin/phpspec run --accept-offers --fake     # ...and fill empty methods with spec'd returns
 ```
 
 See [Coding Agents](agent.md) for the offer format and the full agent workflow.
@@ -479,12 +500,12 @@ See [Coding Agents](agent.md) for the offer format and the full agent workflow.
 | `--coverage-min=PCT` | Fail if coverage is below the threshold (0-100) |
 
 ```bash
-bin/phpspec run --coverage                       # Text report
-bin/phpspec run --coverage-html coverage/        # HTML report
-bin/phpspec run --coverage-clover clover.xml     # Clover XML
-bin/phpspec run --coverage-json coverage.json    # JSON report (per-example detail)
-bin/phpspec run --coverage-min 90                # Fail below 90%
-bin/phpspec run --coverage --coverage-src lib    # Scope the report to lib/
+vendor/bin/phpspec run --coverage                       # Text report
+vendor/bin/phpspec run --coverage-html coverage/        # HTML report
+vendor/bin/phpspec run --coverage-clover clover.xml     # Clover XML
+vendor/bin/phpspec run --coverage-json coverage.json    # JSON report (per-example detail)
+vendor/bin/phpspec run --coverage-min 90                # Fail below 90%
+vendor/bin/phpspec run --coverage --coverage-src lib    # Scope the report to lib/
 ```
 
 Coverage requires the xdebug extension with `xdebug.mode=coverage`. Coverage
