@@ -66,6 +66,8 @@ it('returns user data', function (UserRepository $repo) {
 });
 ```
 
+`andReturn()` is another name for `toReturn()`.
+
 The value has to be one the real method could return, held strictly: a method
 returning `int` is not given `'42'`, and one returning `void` is not given
 anything, its call is declared with `allow()` alone. A value it could never

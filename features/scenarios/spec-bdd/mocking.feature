@@ -239,6 +239,25 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: Stubbing a return value with andReturn()
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      allow($repo->find(1))->andReturn('Alice');
+      expect($repo->find(1))->toBe('Alice');
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing a method to throw the exception it is given
     Given an interface "src/App/UserRepository.php":
       """

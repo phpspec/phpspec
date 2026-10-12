@@ -81,6 +81,16 @@ describe(Expectation::class, function() {
         expect($service->process())->toBe("hello");
     });
 
+    it("takes andReturn wherever it takes toReturn", function(ExpectationSpecService $service) {
+        allow($service->process())->andReturn('hello');
+        expect($service->price('tea'))->andReturn(9);
+        $service->store('a', 1)->andReturn('stored');
+
+        expect($service->process())->toBe('hello');
+        expect($service->price('tea'))->toBe(9);
+        expect($service->store('a', 1))->toBe('stored');
+    });
+
     it("holds a value set through expect() to the arguments it was written with", function(ExpectationSpecService $service) {
         expect($service->price('tea'))->toReturn(9);
         expect($service->store('a', 1))->toReturn('stored');

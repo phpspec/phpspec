@@ -79,6 +79,11 @@ final class LastCallDouble implements MatchableDouble
         return $this;
     }
 
+    public function andReturn(mixed $value): static
+    {
+        return $this->toReturn($value);
+    }
+
     /**
      * Configures the tracked method to compute its return value using a callback.
      * The callback receives the same arguments as the mocked method call.

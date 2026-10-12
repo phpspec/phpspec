@@ -78,6 +78,11 @@ final class Expectation extends BaseExpectation
         return $this;
     }
 
+    public function andReturn(mixed $value): static
+    {
+        return $this->toReturn($value);
+    }
+
     /**
      * Configures the mock method to throw an exception when called: the very
      * instance given, or one built from a class name and a message.
