@@ -112,15 +112,14 @@ final class Expectation extends BaseExpectation
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
-        // A mock is declared before the act: a call already made is a spy's
-        // to check, and this refusal names it, so it is not refused again.
         if ($calls->countCallsToWithArgs($methodName, $method->arguments) > 0) {
             HeldCalls::claim($double, $methodName, null);
 
             throw new \LogicException(sprintf(
-                '%s::%s() was already called when toBeCalled() was written: toBeCalled() declares a call to come, before the act; check a call already made with %s.',
+                '%s::%s() was already called: %s goes before the act, %s after.',
                 ltrim($class, '\\'),
                 $methodName,
+                $this->negated ? 'not()->toBeCalled()' : 'toBeCalled()',
                 $this->negated ? 'not()->toHaveBeenCalled()' : 'toHaveBeenCalled()',
             ));
         }
@@ -161,8 +160,7 @@ final class Expectation extends BaseExpectation
         $argPattern = $method->arguments;
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
-        // The calls it checks are claimed; a failing check names every call
-        // the method received, so none of them is refused again.
+        // A failing check names every call to the method, so it claims them all.
         $made = $calls->countCallsToWithArgs($methodName, $argPattern) >= 1;
         HeldCalls::claim($double, $methodName, $made === $this->negated ? null : $argPattern);
 

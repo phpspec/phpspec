@@ -135,7 +135,7 @@ suite folders, or the folder of a path the run was given:
 
 ```
 App\Stock::reserve("tea", 2) was called but not expected, at src/App/Checkout.php:8.
-Declare the call with allow() or expect(), check it with toHaveBeenCalled() after the act, or make the double a dummy() if its calls do not matter.
+Declare it with allow() or expect(), check it with toHaveBeenCalled(), or use a dummy() if its calls do not matter.
 ```
 
 A call is declared by the arguments it was written with, read as PHP reads
@@ -226,8 +226,7 @@ it('saves the user', function (UserRepository $repo) {
 ```
 
 Negated, it asks that the call was not made: `expect($repo->save($other))->not()->toHaveBeenCalled()`.
-A check that fails names every call the method received, and claims them, so
-none is refused again when the example ends.
+A check that fails names every call the method received.
 
 
 ### Counting calls

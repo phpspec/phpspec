@@ -540,7 +540,7 @@ final class Run extends Command implements InternalOptions
         }
 
         if ($this->onlySelectors($given)) {
-            return ['No example at ' . implode(', ', $given), 'Point at a line inside an it() or a Scenario, or at an example by the id a run reported, or give the file alone to run all of it.'];
+            return ['No example at ' . implode(', ', $given), 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.'];
         }
 
         return [sprintf('No example or scenario in %s.', implode(', ', $given)), 'Name a spec, a feature or a directory holding them, or give none to run the configured suite.'];

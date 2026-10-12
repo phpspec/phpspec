@@ -230,6 +230,5 @@ Feature: An expectation judges its subject on the line it is written
     Then the exit code should be 1
     And the report should have 2 entries
     And every reported entry should carry a message
-    And the output should contain "was already called when toBeCalled() was written"
-    And the output should contain "check a call already made with toHaveBeenCalled()"
-    And the output should contain "check a call already made with not()->toHaveBeenCalled()"
+    And the output should contain "::notify() was already called: toBeCalled() goes before the act, toHaveBeenCalled() after."
+    And the output should contain "not()->toBeCalled() goes before the act, not()->toHaveBeenCalled() after."

@@ -186,7 +186,7 @@ describe(Expectation::class, function() {
         $service->store('foo', 42);
 
         expect(fn() => expect($service->store('foo', 42))->toBeCalled())
-            ->toThrow(\LogicException::class, 'ExpectationSpecService::store() was already called when toBeCalled() was written: toBeCalled() declares a call to come, before the act; check a call already made with toHaveBeenCalled().');
+            ->toThrow(\LogicException::class, 'ExpectationSpecService::store() was already called: toBeCalled() goes before the act, toHaveBeenCalled() after.');
     });
 
     it("checks a call made before with toHaveBeenCalled", function(ExpectationSpecService $service) {

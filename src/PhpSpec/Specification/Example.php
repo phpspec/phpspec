@@ -340,8 +340,7 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
-            // A call nothing declared came first, and the default it was
-            // answered with may be what this broke on.
+            // An undeclared call came first; its default answer may be what broke.
             $e = HeldCalls::take() ?? $e;
             DispatcherRegistry::dispatcher()->dispatch(
                 new ExampleErrored($this->getTitle(), new ExampleError($e->getMessage(), $e)),

@@ -69,9 +69,7 @@ final class Client implements Browser
                 'method' => strtoupper($method),
                 'header' => implode("\r\n", $headerLines),
                 'ignore_errors' => true,
-                // The response the server sent, a redirect included: following
-                // it would hide the 3xx toRedirectTo() is about and mix in the
-                // headers of every hop.
+                // A redirect is a response under spec, for toRedirectTo().
                 'follow_location' => 0,
             ],
         ];
