@@ -889,7 +889,7 @@ class Expectation
             $originalMatch = $match;
             $match = fn($expected) => !$originalMatch($expected);
             if (is_string($message[0])) {
-                $message[0] = str_replace(' to ', ' not to ', $message[0]);
+                $message[0] = (string) preg_replace('/ to /', ' not to ', $message[0], 1);
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }

@@ -175,7 +175,7 @@ final class Expectation extends BaseExpectation
         if ($this->negated) {
             $originalMatch = $match;
             $match = fn(): bool => !$originalMatch();
-            $message = str_replace(' to ', ' not to ', $message);
+            $message = (string) preg_replace('/ to /', ' not to ', $message, 1);
         }
 
         $result = match (true) {

@@ -404,6 +404,12 @@ describe(Expectation::class, function() {
             return $captured[0];
         };
 
+        it("negates the verb of a message alone, whatever else in it reads 'to'", function() use ($failureOf) {
+            expect($failureOf(fn() => (new Expectation(5, __FILE__, __LINE__))->not()->toBeGreaterThanOrEqualTo(3))->getMessage())->toBe('Expected 5 not to be greater than or equal to 3');
+            expect($failureOf(fn() => (new Expectation(1.0, __FILE__, __LINE__))->not()->toBeCloseTo(1.0))->getMessage())->toStartWith('Expected 1.0 not to be close to 1.0');
+            expect($failureOf(fn() => (new Expectation(new ArrayObject(), __FILE__, __LINE__))->not()->toRespondTo('count'))->getMessage())->toBe('Expected ArrayObject not to respond to "count"');
+        });
+
         it("states the target a matcher only names in prose", function() use ($failureOf) {
             $failure = $failureOf(fn() => (new Expectation(false, __FILE__, __LINE__))->toBeTrue());
 
