@@ -22,6 +22,7 @@ use PhpSpec\EventDispatcher\Event\ContextRan;
 use PhpSpec\EventDispatcher\Event\ContextStarted;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
+use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Results;
@@ -273,6 +274,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
         // its body printed, not to the terminal between two results.
         $setup = new CapturedOutput();
         $teardown = new CapturedOutput();
+        HeldCalls::forget();
 
         try {
             try {
@@ -300,6 +302,13 @@ class Context implements ExampleRegistry, Rebindable, Titled
                 $result = $example->failedInHook(new ExampleError((new LateSignal($late, 'afterEach', 'the example', 'beforeEach or in the example'))->sentence(), $late));
             } catch (Throwable $e) {
                 $result = $example->failedInHook(new ExampleError($e->getMessage(), $e));
+            }
+
+            // A call the afterEach hooks made that nothing declared.
+            $refused = HeldCalls::take();
+
+            if ($refused !== null && !$result->isError()) {
+                $result = $example->failedInHook(new ExampleError($refused->getMessage(), $refused));
             }
         } catch (Throwable $e) {
             $coverage?->endExample($example->getTitle());

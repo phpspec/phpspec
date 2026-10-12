@@ -826,6 +826,100 @@ Feature: Mocking
     When I run phpspec run
     Then all examples should pass
 
+  Scenario: toHaveBeenCalled() checks a call after the act with nothing declared before it, a call made in beforeEach too
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('reserves what is ordered, and nothing else', function (Stock $stock) {
+              (new Checkout($stock))->order('tea');
+
+              expect($stock->reserve('tea', 2))->toHaveBeenCalled();
+              expect($stock->reserve('coffee', 2))->not()->toHaveBeenCalled();
+          });
+
+          context('when an order was placed while setting up', function () {
+              beforeEach(function (Stock $stock) {
+                  (new Checkout($stock))->order('cake');
+              });
+
+              it('reserved it', function (Stock $stock) {
+                  expect($stock->reserve('cake', 2))->toHaveBeenCalled();
+              });
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
+  Scenario: A call a failing toHaveBeenCalled() names is reported there, and refused nowhere else
+    Given an interface "src/App/Stock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Stock {
+          public function reserve(string $item, int $quantity): bool;
+      }
+      """
+    And a class "src/App/Checkout.php":
+      """
+      <?php
+      namespace App;
+
+      class Checkout {
+          public function __construct(private Stock $stock) {}
+          public function order(string $item): bool
+          {
+              return $this->stock->reserve($item, 2);
+          }
+      }
+      """
+    And a spec file "spec/App/Checkout.spec.php":
+      """
+      <?php
+      use App\Checkout;
+      use App\Stock;
+
+      describe('Checkout', function () {
+          it('orders coffee', function (Stock $stock) {
+              (new Checkout($stock))->order('tea');
+
+              expect($stock->reserve('coffee', 1))->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "to have been called"
+    And the output should contain "tea"
+    And the output should not contain "was called but not expected"
+    And the exit code should be 1
+
   Scenario: toHaveBeenCalled() fails after the act naming the calls the method did receive
     Given an interface "src/App/Stock.php":
       """

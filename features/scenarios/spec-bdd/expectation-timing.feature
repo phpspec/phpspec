@@ -168,7 +168,6 @@ Feature: An expectation judges its subject on the line it is written
           });
 
           it('finds the call that came', function (App\Notifier $notifier) {
-              allow($notifier->notify('Ann'));
               (new App\Greeter($notifier))->greet('Ann');
               expect($notifier->notify('Ann'))->toHaveBeenCalled();
           });
@@ -182,5 +181,5 @@ Feature: An expectation judges its subject on the line it is written
     When I run phpspec run with option "--format=agent"
     Then the exit code should be 1
     And the report should have 1 entry
-    And the reported entry should be "failing" at "spec/App/Greeter.spec.php:15"
+    And the reported entry should be "failing" at "spec/App/Greeter.spec.php:14"
     And the output should contain "to have been called"

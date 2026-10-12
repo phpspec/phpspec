@@ -171,14 +171,14 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
         (\$this->______phpspec_declared ??= new \PhpSpec\Mock\Declarations())->add(\$method, \$args);
     }
 
-    private function ______PhpSpecUnexpectedUnlessArranging(string \$method, array \$args, array \$frame): void {
+    private function ______PhpSpecHoldUnlessExpected(string \$method, array \$args, array \$frame): void {
         if (\$this->______phpspec_lenient
             || (\$this->______phpspec_declared?->cover(\$method, \$args) ?? false)
             || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')) {
             return;
         }
 
-        throw \PhpSpec\Mock\UnexpectedCallException::to('$prefixedClass', \$method, \$args, \$frame['file'] ?? '', \$frame['line'] ?? 0);
+        \PhpSpec\Mock\HeldCalls::hold(\$this, \$method, \$args, \PhpSpec\Mock\UnexpectedCallException::to('$prefixedClass', \$method, \$args, \$frame['file'] ?? '', \$frame['line'] ?? 0));
     }
 
     private function ______PhpSpecStubs(): \PhpSpec\Mock\Stubs {
@@ -905,7 +905,7 @@ PHP;
 
             $guard = '';
             if ($depth === 0 && $simpleReturnName !== 'never') {
-                $guard = "if (\$__match === null) { \$this->______PhpSpecUnexpectedUnlessArranging('$methodName', \$__args, \$__frame); }";
+                $guard = "if (\$__match === null) { \$this->______PhpSpecHoldUnlessExpected('$methodName', \$__args, \$__frame); }";
             }
 
             $stubCheck = '';

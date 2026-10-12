@@ -419,7 +419,7 @@ Declared before the act, judged when the example ends: the method was called at 
 
 ### `toHaveBeenCalled()`
 
-Asked after the act, judged at once from the calls recorded so far. The call needs an `allow()` before the act.
+Asked after the act, judged at once from the calls recorded so far, with nothing declared before the act: the call is held until the check claims it.
 
 ### Counting calls
 

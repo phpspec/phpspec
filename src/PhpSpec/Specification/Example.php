@@ -26,6 +26,7 @@ use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber;
 use PhpSpec\ExampleId;
 use PhpSpec\Mock\Double;
+use PhpSpec\Mock\HeldCalls;
 use PhpSpec\OwnCode;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ExampleResultRegistry;
@@ -339,8 +340,20 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
+            // A call nothing declared came first, and the default it was
+            // answered with may be what this broke on.
+            $e = HeldCalls::take() ?? $e;
             DispatcherRegistry::dispatcher()->dispatch(
                 new ExampleErrored($this->getTitle(), new ExampleError($e->getMessage(), $e)),
+                ExampleErrored::NAME,
+            );
+        }
+
+        $refused = HeldCalls::take();
+
+        if ($refused !== null) {
+            DispatcherRegistry::dispatcher()->dispatch(
+                new ExampleErrored($this->getTitle(), new ExampleError($refused->getMessage(), $refused)),
                 ExampleErrored::NAME,
             );
         }

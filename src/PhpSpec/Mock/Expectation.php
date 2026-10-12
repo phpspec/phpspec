@@ -109,6 +109,7 @@ final class Expectation extends BaseExpectation
         $methodName = $method->method;
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+        HeldCalls::claim($double, $methodName, $method->arguments);
 
         $trace = debug_backtrace()[0];
 
@@ -125,9 +126,10 @@ final class Expectation extends BaseExpectation
 
     /**
      * Judges now, from the calls recorded so far, that the call expect() was
-     * handed has been made: the past tense, for after the act. The arguments
-     * it was written with are part of the question. toBeCalled() is the
-     * future tense, declared before the act and judged when the example ends.
+     * handed has been made: the past tense, for after the act, which needs
+     * nothing declared before it. The arguments it was written with are part
+     * of the question. toBeCalled() is the future tense, declared before the
+     * act and judged when the example ends.
      */
     public function toHaveBeenCalled(): static
     {
@@ -144,6 +146,11 @@ final class Expectation extends BaseExpectation
         $method->unCall();
         $argPattern = $method->arguments;
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+
+        // The calls it checks are claimed; a failing check names every call
+        // the method received, so none of them is refused again.
+        $made = $calls->countCallsToWithArgs($methodName, $argPattern) >= 1;
+        HeldCalls::claim($double, $methodName, $made === $this->negated ? null : $argPattern);
 
         return $this->should(
             fn(): bool => $calls->countCallsToWithArgs($methodName, $argPattern) >= 1,
