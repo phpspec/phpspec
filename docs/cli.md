@@ -154,7 +154,7 @@ vendor/bin/phpspec describe <class> [options]
 **Options:**
 - `-e`, `--exemplify=METHOD` -- Include an example for the specified method.
 - `-r`, `--run` -- Run the spec just generated, not the whole suite.
-- `--agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
+- `-f`, `--format=agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
 
 **Examples:**
 
@@ -162,7 +162,7 @@ vendor/bin/phpspec describe <class> [options]
 vendor/bin/phpspec describe App/Calculator
 vendor/bin/phpspec describe App/Console/Command/Run
 vendor/bin/phpspec describe App/Calculator -e add          # with "add" method example
-vendor/bin/phpspec describe App/Calculator --agent          # JSON receipt (see Coding Agents)
+vendor/bin/phpspec describe App/Calculator --format=agent   # JSON receipt (see Coding Agents)
 ```
 
 ### `exemplify`
@@ -178,14 +178,14 @@ vendor/bin/phpspec exemplify <class> <method> [options]
 - `method` -- The method to add an example for.
 
 **Options:**
-- `--agent` -- Emit a machine-readable JSON receipt instead of prose.
+- `-f`, `--format=agent` -- Emit a machine-readable JSON receipt instead of prose.
 
 ```bash
 vendor/bin/phpspec exemplify App/Calculator add
-vendor/bin/phpspec exemplify App/Calculator add --agent
+vendor/bin/phpspec exemplify App/Calculator add --format=agent
 ```
 
-See [Coding Agents](agent.md) for the `--agent` receipts and
+See [Coding Agents](agent.md) for the JSON receipts and
 [Code Generation](code-generation.md) for the generated templates.
 
 ## Run Options
@@ -396,6 +396,16 @@ reaches no example at all stops the run with `No example at <path:LINE>` and
 exit code 1: an explicit line is a precise ask, and running nothing is not an
 answer to it. The pretty and dot formatters then show the seven lines around
 the target, its number in bold, since most misses are off by a line or two.
+
+An `it()` in a loop declares several examples on one line, and its line runs
+them all. To run one of them, append `@ID` to the spec path instead, with the
+id the agent format reports for it:
+
+```bash
+vendor/bin/phpspec run spec/App/Calculator.spec.php@6fd046add251
+```
+
+An id that names no example in the file stops the run as a line does.
 
 Several selectors run each addressed block once, whether they name lines of
 one file or of many, so the `rerun` command an agent summary carries can be

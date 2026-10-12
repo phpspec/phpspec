@@ -78,6 +78,11 @@ final class Expectation extends BaseExpectation
         return $this;
     }
 
+    public function andReturn(mixed $value): static
+    {
+        return $this->toReturn($value);
+    }
+
     /**
      * Configures the mock method to throw an exception when called: the very
      * instance given, or one built from a class name and a message.
@@ -93,9 +98,9 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Asserts that the mock method was called at least once.
-     * Returns a CallCountExpectation for fluent count chaining
-     * (once(), twice(), exactly(N)->times(), etc.).
+     * Declares, before the act, that the method will be called at least once
+     * by the end of the example. Returns a CallCountExpectation for fluent
+     * count chaining (once(), twice(), exactly(N)->times(), etc.).
      */
     public function toBeCalled(): CallCountExpectation
     {
@@ -109,6 +114,17 @@ final class Expectation extends BaseExpectation
         $methodName = $method->method;
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+
+        if ($calls->countCallsToWithArgs($methodName, $method->arguments) > 0) {
+            HeldCalls::claim($double, $methodName, null);
+
+            throw new \LogicException(sprintf(
+                '%s::%s() was already called before %s.',
+                ltrim($class, '\\'),
+                $methodName,
+                $this->negated ? 'not()->toBeCalled()' : 'toBeCalled()',
+            ));
+        }
 
         $trace = debug_backtrace()[0];
 
@@ -125,9 +141,10 @@ final class Expectation extends BaseExpectation
 
     /**
      * Judges now, from the calls recorded so far, that the call expect() was
-     * handed has been made: the past tense, for after the act. The arguments
-     * it was written with are part of the question. toBeCalled() is the
-     * future tense, declared before the act and judged when the example ends.
+     * handed has been made: the past tense, for after the act, which needs
+     * nothing declared before it. The arguments it was written with are part
+     * of the question. toBeCalled() is the future tense, declared before the
+     * act and judged when the example ends.
      */
     public function toHaveBeenCalled(): static
     {
@@ -144,6 +161,10 @@ final class Expectation extends BaseExpectation
         $method->unCall();
         $argPattern = $method->arguments;
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+
+        // A failing check names every call to the method, so it claims them all.
+        $made = $calls->countCallsToWithArgs($methodName, $argPattern) >= 1;
+        HeldCalls::claim($double, $methodName, $made === $this->negated ? null : $argPattern);
 
         return $this->should(
             fn(): bool => $calls->countCallsToWithArgs($methodName, $argPattern) >= 1,
@@ -175,7 +196,7 @@ final class Expectation extends BaseExpectation
         if ($this->negated) {
             $originalMatch = $match;
             $match = fn(): bool => !$originalMatch();
-            $message = str_replace(' to ', ' not to ', $message);
+            $message = (string) preg_replace('/ to /', ' not to ', $message, 1);
         }
 
         $result = match (true) {

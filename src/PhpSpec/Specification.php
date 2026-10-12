@@ -18,8 +18,12 @@ use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\SpecificationFinished;
 use PhpSpec\EventDispatcher\Event\SpecificationStarted;
+use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Specification\Context;
+use PhpSpec\Specification\DeclaredLines;
+use PhpSpec\Specification\Example;
 use PhpSpec\Specification\ExampleError;
 use PhpSpec\Specification\ExampleRegistry;
 use PhpSpec\Specification\Rebindable;
@@ -67,11 +71,14 @@ class Specification implements ExampleRegistry, SpecBlock
         // and judge them a second time.
         $subscribers = DispatcherRegistry::dispatcher()->snapshot();
 
+        $declaredLines = new DeclaredLines();
+
         try {
             $blockResults = [];
 
             try {
                 $subject = $this->loadSubject();
+                $this->placeBlocks($declaredLines);
             } catch (\Throwable $e) {
                 // A file that does not parse, or declares what cannot load, is
                 // one errored example of its own: the run goes on to the rest.
@@ -97,6 +104,7 @@ class Specification implements ExampleRegistry, SpecBlock
             DispatcherRegistry::dispatcher()->restore($subscribers);
         }
 
+        $this->markSharedLines($blockResults, $declaredLines);
         $result = new SpecificationResult($this->getTitle(), $blockResults, $this->path);
         DispatcherRegistry::dispatcher()->dispatch(new SpecificationFinished($this->getTitle()), SpecificationFinished::NAME);
         return $result;
@@ -143,16 +151,56 @@ class Specification implements ExampleRegistry, SpecBlock
     private function targetedSpecBlocks(): array
     {
         $lines = LineTargetRegistry::currentTargets();
+        $ids = LineTargetRegistry::currentIds();
 
-        if ($lines === []) {
+        if ($lines === [] && $ids === []) {
             return $this->specBlocks;
         }
 
         return array_values(array_filter(
             $this->specBlocks,
-            fn(SpecBlock $block) => ($block instanceof Specification\Context || $block instanceof Specification\Example)
-                && array_filter($lines, $block->containsLine(...)) !== [],
+            fn(SpecBlock $block) => ($block instanceof Context || $block instanceof Example)
+                && (array_filter($lines, $block->containsLine(...)) !== []
+                    || ($block instanceof Context && $ids !== [])
+                    || ($block instanceof Example && in_array($block->id(), $ids, true))),
         ));
+    }
+
+    /**
+     * Tells every top-level block the file's title, which leads every id in
+     * it, and counts the lines its top-level examples are declared on.
+     */
+    private function placeBlocks(DeclaredLines $declaredLines): void
+    {
+        foreach ($this->specBlocks as $block) {
+            if ($block instanceof Context) {
+                $block->under([$this->getTitle()], $declaredLines);
+            } elseif ($block instanceof Example) {
+                $block->under([$this->getTitle()]);
+                $declaration = $block->declaration();
+
+                if ($declaration !== null) {
+                    $declaredLines->note(...$declaration);
+                }
+            }
+        }
+    }
+
+    /**
+     * Marks the results of examples declared on a line that declares others
+     * too, which a rerun tells apart by id rather than by line.
+     *
+     * @param array<Results> $results
+     */
+    private function markSharedLines(array $results, DeclaredLines $declaredLines): void
+    {
+        foreach ($results as $result) {
+            if ($result instanceof ContextResult) {
+                $this->markSharedLines($result->getResults(), $declaredLines);
+            } elseif ($result instanceof ExampleResult && $result->getFile() !== null && $result->getLine() !== null && $declaredLines->shared($result->getFile(), $result->getLine())) {
+                $result->markSharingItsLine();
+            }
+        }
     }
 
     /**

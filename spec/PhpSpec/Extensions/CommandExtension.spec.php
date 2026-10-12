@@ -34,6 +34,6 @@ describe(CommandExtension::class, function () {
 
     it('executes and returns exit code', function (InputInterface $input, OutputInterface $output) {
         expect($this->command->execute($input, $output))->toBe(0);
-        expect($output->writeln('Hello!'))->toBeCalled();
+        expect($output->writeln('Hello!'))->toHaveBeenCalled();
     });
 });

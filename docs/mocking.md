@@ -21,7 +21,8 @@ This generates a dynamic subclass (or implementation, for interfaces) that:
 ### Using `dummy()`
 
 A double from `mock()` is strict: a call to it that the spec never declared,
-made from the code under spec, fails the example at once. `dummy()` makes a
+made from the code under spec, fails the example unless a `toHaveBeenCalled()`
+after the act checks it. `dummy()` makes a
 lenient double for a collaborator whose calls do not matter, a logger passed
 along for instance. It answers every call with a default for the return type
 and still takes stubs:
@@ -64,6 +65,8 @@ it('returns user data', function (UserRepository $repo) {
     expect($result)->toBe(['name' => 'Alice']);
 });
 ```
+
+`andReturn()` is another name for `toReturn()`.
 
 The value has to be one the real method could return, held strictly: a method
 returning `int` is not given `'42'`, and one returning `void` is not given
@@ -124,14 +127,13 @@ instance of it built without its constructor, for `allow()` to replace; a
 ## Calls the spec never declared
 
 A double is strict towards the code under spec. A call that no `allow()` or
-`expect()` declared, made from anywhere outside the spec code, fails the
-example at once. The spec code is every file PhpSpec loaded as a spec, step or
+`expect()` declared and no `toHaveBeenCalled()` checks, made from anywhere
+outside the spec code, fails the example. The spec code is every file PhpSpec loaded as a spec, step or
 support file, wherever it sits, and whatever sits in the spec, features and
 suite folders, or the folder of a path the run was given:
 
 ```
 App\Stock::reserve("tea", 2) was called but not expected, at src/App/Checkout.php:8.
-Declare the call with allow() or expect(), or make the double a dummy() if its calls do not matter.
 ```
 
 A call is declared by the arguments it was written with, read as PHP reads
@@ -206,14 +208,11 @@ it('saves something', function (UserRepository $repo) {
 
 ### `toHaveBeenCalled()`
 
-Asked after the act, judged at once from the calls recorded so far. The call
-has to be declared before the act, with `allow()`, or the code under spec is
-refused when it makes it:
+Asked after the act, judged at once from the calls made so far. Nothing needs
+declaring before the act.
 
 ```php
 it('saves the user', function (UserRepository $repo) {
-    allow($repo->save($user));
-
     (new Registration($repo))->register($user);
 
     expect($repo->save($user))->toHaveBeenCalled();

@@ -52,7 +52,6 @@ final class Exemplify extends Command
                 new Argument('class', Argument::REQUIRED, 'Class to add the example to'),
                 new Argument('method', Argument::REQUIRED, 'Method to exemplify'),
             ])
-            ->addOption('agent', null, Option::VALUE_NONE, 'Deprecated alias of --format=agent')
             ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty')
             ->setDescription('Add an example for a method to a spec file');
     }
@@ -61,7 +60,7 @@ final class Exemplify extends Command
     {
         $class = (string) $input->getArgument('class');
         $method = (string) $input->getArgument('method');
-        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent || $input->getOption('agent');
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
 
         // Both names are judged before either is written: an invalid method must
         // not leave a spec file behind as a souvenir of a refused command.

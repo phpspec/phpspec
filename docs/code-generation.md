@@ -86,14 +86,14 @@ vendor/bin/phpspec exemplify App/Calculator add
 Both `describe -e` and `exemplify` are idempotent -- an example for a method that
 is already present is not duplicated.
 
-## Machine-Readable Receipts (`--agent`)
+## Machine-Readable Receipts (`--format=agent`)
 
-`describe` and `exemplify` accept an `--agent` flag that replaces their prose
+`describe` and `exemplify` accept `--format=agent`, which replaces their prose
 with a one-line JSON receipt, so a coding agent can scaffold without parsing
 English:
 
 ```bash
-vendor/bin/phpspec describe App/Calculator --agent
+vendor/bin/phpspec describe App/Calculator --format=agent
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Calculator","spec":"spec/App/Calculator.spec.php","created":true}

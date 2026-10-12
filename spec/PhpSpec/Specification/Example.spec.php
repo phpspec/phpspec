@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\ExampleId;
 use PhpSpec\Specification\Example;
 use PhpSpec\Specification\ExampleError;
 use PhpSpec\Specification\PendingException;
@@ -312,4 +313,11 @@ describe(Example::class, function() {
         expect($result->getLine())->toBe($line);
     });
 
+    it("is known by the id a run reports it under: its file and the titles above it, then its own", function() {
+        $example = new Example('adds', fn() => null);
+        $example->declaredAt(__FILE__, 7);
+        $example->under(['Calc', 'App\\Calc', 'when empty']);
+
+        expect($example->id())->toBe(ExampleId::of('Calc > App\\Calc > when empty > adds', __FILE__));
+    });
 });

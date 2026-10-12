@@ -37,6 +37,8 @@ interface MatchableDouble
      */
     public function toReturn(mixed $value): static;
 
+    public function andReturn(mixed $value): static;
+
     /**
      * Configures the mock method to throw an exception.
      */

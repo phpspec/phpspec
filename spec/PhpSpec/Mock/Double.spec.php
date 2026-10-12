@@ -2,6 +2,7 @@
 
 use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
+use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Mock\UnexpectedCallException;
 
 interface DoubleSpecContract {
@@ -393,21 +394,24 @@ describe(Double::class, function() {
             ArrangingCode::under(...$this->saved);
         });
 
-        it("fails at once when nothing declared the call, naming the call and where it came from", function () {
+        it("holds a call nothing declared, answered with the type's default, and refuses it naming the call and where it came from", function () {
             $stock = Double::getInstance(DoubleSpecStock::class);
 
-            try {
-                double_spec_outsider_reserves($stock);
-            } catch (UnexpectedCallException $e) {
-                expect($e->getMessage())->toContain('DoubleSpecStock::reserve("tea", 2) was called but not expected');
-                expect($e->getMessage())->toContain(str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER)) . ':2');
-                expect($e->getMessage())->toContain('allow()');
-                expect($e->getMessage())->toContain('dummy()');
+            expect(double_spec_outsider_reserves($stock))->toBeFalse();
 
-                return;
-            }
+            $refusal = HeldCalls::take();
+            expect($refusal)->toBeAnInstanceOf(UnexpectedCallException::class);
+            expect($refusal?->getMessage())->toContain('DoubleSpecStock::reserve("tea", 2) was called but not expected');
+            expect($refusal?->getMessage())->toContain(str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER)) . ':2');
+        });
 
-            expect(false)->toBeTrue();
+        it("lets toHaveBeenCalled() after the act claim the call it checks", function () {
+            $stock = Double::getInstance(DoubleSpecStock::class);
+
+            double_spec_outsider_reserves($stock);
+            expect($stock->reserve('tea', 2))->toHaveBeenCalled();
+
+            expect(HeldCalls::take())->toBeNull();
         });
 
         it("answers a call that allow() declared", function () {
@@ -422,7 +426,7 @@ describe(Double::class, function() {
             allow($stock->reserve('tea', 2));
 
             expect(double_spec_outsider_reserves($stock))->toBeFalse();
-            expect($stock->reserve('tea', 2))->toBeCalled()->once();
+            expect($stock->reserve('tea', 2))->toHaveBeenCalled();
         });
 
         it("answers a call that expect() declared before the act", function () {
@@ -436,15 +440,9 @@ describe(Double::class, function() {
             $stock = Double::getInstance(DoubleSpecStock::class);
             allow($stock->reserve('coffee', 1))->toReturn(true);
 
-            try {
-                double_spec_outsider_reserves($stock);
-            } catch (UnexpectedCallException $e) {
-                expect($e->getMessage())->toContain('reserve("tea", 2)');
+            double_spec_outsider_reserves($stock);
 
-                return;
-            }
-
-            expect(false)->toBeTrue();
+            expect(HeldCalls::take()?->getMessage())->toContain('reserve("tea", 2)');
         });
 
         it("answers the rest with defaults once a stub ends in ignoreOthers()", function () {
@@ -957,7 +955,8 @@ describe(Double::class, function() {
 
             expect(double_spec_outsider_pays($till, 10, 'EUR'))->toBe(1);
             expect(double_spec_outsider_pays($till, 20))->toBe(2);
-            expect(fn() => double_spec_outsider_pays($till, 10, 'USD'))->toThrow(UnexpectedCallException::class);
+            double_spec_outsider_pays($till, 10, 'USD');
+            expect(HeldCalls::take())->toBeAnInstanceOf(UnexpectedCallException::class);
         });
 
         it("answers no stub to a call written with a matcher, which declares a call and is not one", function () {

@@ -65,7 +65,6 @@ final class Describe extends Command
             ])
             ->addOption('exemplify', 'e', Option::VALUE_REQUIRED, 'Add an example for a method')
             ->addOption('run', 'r', Option::VALUE_NONE, 'Run the spec after generating it')
-            ->addOption('agent', null, Option::VALUE_NONE, 'Deprecated alias of --format=agent')
             ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty')
             ->setDescription('Generate spec for a class');
     }
@@ -82,7 +81,7 @@ final class Describe extends Command
     {
         $class = (string) $input->getArgument('class');
         $method = (string) $input->getOption('exemplify');
-        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent || $input->getOption('agent');
+        $forAgent = ReceiptFormat::of($input) === ReceiptFormat::Agent;
 
         // Refused before anything is written: a spec named after something PHP
         // cannot parse is not a bad spec, it is a file that stops the suite

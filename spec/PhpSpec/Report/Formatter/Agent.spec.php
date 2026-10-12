@@ -89,6 +89,19 @@ describe(Agent::class, function () {
         expect($summary['actionable'])->toBe(0);
     });
 
+    it("addresses an example its line shares with others by its file and id, to rerun alone", function () {
+        $looped = new ExampleResult("handles 2", [MatchResult::failed(2, 0, 'no', getcwd() . '/spec/App/Handles.spec.php', 3)]);
+        $looped->declaredAt(getcwd() . '/spec/App/Handles.spec.php', 3);
+        $looped->markSharingItsLine();
+        $output = new BufferedOutput();
+
+        (new Agent($output))->format(new SuiteResult([new SpecificationResult("Handles", [$looped])]));
+        $entry = json_decode(explode("\n", trim($output->fetch()))[1], true);
+
+        expect($entry['rerun'])->toBe('run spec/App/Handles.spec.php@' . $entry['id']);
+        expect($entry['spec'])->toBe('spec/App/Handles.spec.php:3');
+    });
+
     it("addresses a pending or skipped example by the line that declares it, to rerun alone", function () {
         $pending = new ExampleResult("is pending", [], isPending: true);
         $pending->declaredAt(__FILE__, 14);

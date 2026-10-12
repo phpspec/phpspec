@@ -22,6 +22,8 @@ use PhpSpec\Browser\Response;
 use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\ObjectName;
 use Psr\Http\Message\ResponseInterface;
+use ReflectionClass;
+use ReflectionObject;
 use Throwable;
 use Traversable;
 
@@ -97,7 +99,7 @@ class Expectation
                 $method = 'has' . substr($name, 6);
                 $prefix = 'have';
             }
-            if ($method !== null && method_exists($this->subject, $method)) {
+            if ($method !== null && method_exists($this->subject, $method) && is_callable([$this->subject, $method])) {
                 $humanized = strtolower(ltrim((string) preg_replace('/[A-Z]/', ' $0', substr($name, $prefix === 'be' ? 4 : 6))));
                 return $this->match(
                     fn($expected) => (bool) $expected->$method(...$arguments),
@@ -410,7 +412,8 @@ class Expectation
     }
 
     /**
-     * Asserts that the subject object has the given property.
+     * Asserts that the subject object has the given public property: declared
+     * or added, set or not yet.
      *
      * @param string $property property name
      * @return static
@@ -418,7 +421,7 @@ class Expectation
     public function toHaveProperty(string $property): static
     {
         return $this->match(
-            fn($expected) => property_exists($expected, $property),
+            fn($subject) => self::hasPublicProperty($subject, $property),
             'Expected %s to have property %s',
             $this->subject,
             $property,
@@ -602,7 +605,8 @@ class Expectation
     }
 
     /**
-     * Asserts that the subject object responds to the given method.
+     * Asserts that the given method can be called on the subject from outside
+     * it: a public method, or any name when the object has __call().
      *
      * @param string $method method name
      * @return static
@@ -610,7 +614,7 @@ class Expectation
     public function toRespondTo(string $method): static
     {
         return $this->match(
-            fn($expected) => is_object($expected) && method_exists($expected, $method),
+            fn($subject) => is_object($subject) && is_callable([$subject, $method]),
             'Expected %s to respond to %s',
             $this->subject,
             $method,
@@ -720,7 +724,8 @@ class Expectation
 
     /**
      * Asserts that the subject response has a given header, optionally matching a value.
-     * Works with Browser\Response and PSR-7 ResponseInterface.
+     * The name is found in any case, as HTTP names are. Works with Browser\Response
+     * and PSR-7 ResponseInterface.
      *
      * @param string $name header name (e.g. 'Content-Type')
      * @param string|null $value expected header value (null = just check existence)
@@ -728,22 +733,23 @@ class Expectation
      */
     public function toHaveHeader(string $name, ?string $value = null): static
     {
+        $key = strtolower($name);
         $data = self::extractResponseData($this->subject);
-        $actual = $data['headers'][$name] ?? null;
+        $actual = $data['headers'][$key] ?? null;
         return $this->match(
-            function ($expected) use ($name, $value) {
+            function ($expected) use ($key, $value) {
                 $d = self::extractResponseData($expected);
-                if ($d === null || !array_key_exists($name, $d['headers'])) {
+                if ($d === null || !array_key_exists($key, $d['headers'])) {
                     return false;
                 }
-                if ($value !== null && $d['headers'][$name] !== $value) {
+                if ($value !== null && $d['headers'][$key] !== $value) {
                     return false;
                 }
                 return true;
             },
             $value !== null
-                ? 'Expected header "%s" to be %s, got %s'
-                : 'Expected response to have header "%s"',
+                ? 'Expected header %s to be %s, got %s'
+                : 'Expected response to have header %s',
             $name,
             ...($value !== null ? [$value, $actual ?? 'missing'] : []),
         );
@@ -770,14 +776,14 @@ class Expectation
                 if ($status < 300 || $status >= 400) {
                     return false;
                 }
-                $location = $d['headers']['Location'] ?? null;
+                $location = $d['headers']['location'] ?? null;
                 return $location === $url;
             },
             'Expected redirect to %s, got %s (status %s)',
             $url,
-            $data['headers']['Location'] ?? 'no Location header',
+            $data['headers']['location'] ?? 'no Location header',
             $data['status'] ?? 'non-Response',
-            ['__expected' => $url, '__actual' => fn() => $data['headers']['Location'] ?? 'No Location header'],
+            ['__expected' => $url, '__actual' => fn() => $data['headers']['location'] ?? 'No Location header'],
         );
     }
 
@@ -883,7 +889,7 @@ class Expectation
             $originalMatch = $match;
             $match = fn($expected) => !$originalMatch($expected);
             if (is_string($message[0])) {
-                $message[0] = str_replace(' to ', ' not to ', $message[0]);
+                $message[0] = (string) preg_replace('/ to /', ' not to ', $message[0], 1);
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
@@ -1008,6 +1014,17 @@ class Expectation
         };
     }
 
+    private static function hasPublicProperty(mixed $subject, string $property): bool
+    {
+        $class = match (true) {
+            is_object($subject) => new ReflectionObject($subject),
+            is_string($subject) && class_exists($subject) => new ReflectionClass($subject),
+            default => null,
+        };
+
+        return $class !== null && $class->hasProperty($property) && $class->getProperty($property)->isPublic();
+    }
+
     private static function holdsNothing(mixed $subject): bool
     {
         return match (true) {
@@ -1028,7 +1045,8 @@ class Expectation
     }
 
     /**
-     * Extracts status, body, headers, and json from a response object.
+     * Extracts status, body, headers, and json from a response object, the
+     * header names lowered so they are looked up in any case, as HTTP names are.
      * Supports Browser\Response and PSR-7 ResponseInterface (when available).
      *
      * @return array{status: int, body: string, headers: array<string, string>, json: array<string, mixed>}|null
@@ -1039,7 +1057,7 @@ class Expectation
             return [
                 'status' => $subject->status,
                 'body' => $subject->body,
-                'headers' => $subject->headers,
+                'headers' => array_change_key_case($subject->headers),
                 'json' => $subject->json,
             ];
         }
@@ -1049,7 +1067,7 @@ class Expectation
             return [
                 'status' => $subject->getStatusCode(),
                 'body' => $body,
-                'headers' => array_map(fn(array $v) => implode(', ', $v), $subject->getHeaders()),
+                'headers' => array_change_key_case(array_map(fn(array $v) => implode(', ', $v), $subject->getHeaders())),
                 'json' => json_decode($body, true) ?? [],
             ];
         }

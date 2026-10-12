@@ -145,6 +145,22 @@ describe(Expectation::class, function() {
             $obj->name = "test";
             expect($obj)->toHaveProperty("name");
         });
+
+        it("finds a public property, declared, still unset, or added later, and no other", function() {
+            $account = new #[\AllowDynamicProperties] class {
+                public string $owner;
+                public int $balance = 0;
+                protected string $branch = 'north';
+                private string $pin = '1234';
+            };
+            $account->{'note'} = 'added';
+
+            expect($account)->toHaveProperty('owner');
+            expect($account)->toHaveProperty('balance');
+            expect($account)->toHaveProperty('note');
+            expect($account)->not()->toHaveProperty('branch');
+            expect($account)->not()->toHaveProperty('pin');
+        });
     });
 
     context("callable matcher", function() {
@@ -243,6 +259,22 @@ describe(Expectation::class, function() {
         it("passes toRespondTo for existing method", fn() => expect(new \ArrayObject())->toRespondTo("append"));
         it("passes toRespondTo for ArrayObject method", fn() => expect(new \ArrayObject())->toRespondTo("count"));
         it("passes not()->toRespondTo() for missing method", fn() => expect(new \stdClass())->not()->toRespondTo("nonExistentMethod"));
+
+        it("responds to what can be called from outside the object, and to nothing kept inside it", function() {
+            $till = new class {
+                public function total(): int { return 0; }
+                protected function audit(): void {}
+                private function drawer(): void {}
+            };
+            $proxy = new class {
+                public function __call(string $name, array $arguments): mixed { return null; }
+            };
+
+            expect($till)->toRespondTo('total');
+            expect($till)->not()->toRespondTo('audit');
+            expect($till)->not()->toRespondTo('drawer');
+            expect($proxy)->toRespondTo('anything');
+        });
     });
 
     context("predicate matchers", function() {
@@ -282,6 +314,14 @@ describe(Expectation::class, function() {
 
         it("falls through to error for non-objects", function() {
             expect(fn() => expect(42)->toBeClosed())->toThrow(\BadMethodCallException::class);
+        });
+
+        it("takes no predicate the object keeps to itself", function() {
+            $ticket = new class {
+                private function isArchived(): bool { return true; }
+            };
+
+            expect(fn() => expect($ticket)->toBeArchived())->toThrow(\BadMethodCallException::class);
         });
 
         it("falls through to error when method does not exist", function() {
@@ -363,6 +403,12 @@ describe(Expectation::class, function() {
 
             return $captured[0];
         };
+
+        it("negates the verb of a message alone, whatever else in it reads 'to'", function() use ($failureOf) {
+            expect($failureOf(fn() => (new Expectation(5, __FILE__, __LINE__))->not()->toBeGreaterThanOrEqualTo(3))->getMessage())->toBe('Expected 5 not to be greater than or equal to 3');
+            expect($failureOf(fn() => (new Expectation(1.0, __FILE__, __LINE__))->not()->toBeCloseTo(1.0))->getMessage())->toStartWith('Expected 1.0 not to be close to 1.0');
+            expect($failureOf(fn() => (new Expectation(new ArrayObject(), __FILE__, __LINE__))->not()->toRespondTo('count'))->getMessage())->toBe('Expected ArrayObject not to respond to "count"');
+        });
 
         it("states the target a matcher only names in prose", function() use ($failureOf) {
             $failure = $failureOf(fn() => (new Expectation(false, __FILE__, __LINE__))->toBeTrue());

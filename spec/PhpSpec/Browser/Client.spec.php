@@ -28,6 +28,20 @@ describe(Client::class, function () {
     });
 
 
+    it('hands back the response the server sent, a redirect included, rather than following it', function () {
+        $client = new Client('http://fake-host', function (string $url, $context) use (&$options) {
+            $options = stream_context_get_options($context);
+
+            return ['body' => '', 'headers' => ['HTTP/1.1 302 Found', 'location: /new']];
+        });
+
+        $response = $client->request('GET', '/old');
+
+        expect($options['http']['follow_location'] ?? null)->toBe(0);
+        expect($response->status)->toBe(302);
+        expect($response)->toRedirectTo('/new');
+    });
+
     it('sends JSON body on POST', function () {
         $capturedContext = null;
 

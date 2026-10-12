@@ -143,13 +143,13 @@ describe(Describe::class, function() {
         expect($output->fetch())->not()->toContain("Example for method");
     });
 
-    it("emits a JSON receipt with --agent instead of prose", function(Filesystem $fs) {
+    it("emits a JSON receipt with --format=agent instead of prose", function(Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
         allow($fs->mkdir(any()));
         allow($fs->write(cetera()));
 
         $output = new BufferedOutput();
-        $this->describe->run(new ArrayInput(['class' => 'App/Basket', '--agent' => true]), $output);
+        $this->describe->run(new ArrayInput(['class' => 'App/Basket', '--format' => 'agent']), $output);
 
         $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
         expect($doc)->toBe([
@@ -190,13 +190,13 @@ describe(Describe::class, function() {
         allow($fs->exists(any()))->toReturn(true);
 
         $output = new BufferedOutput();
-        $this->describe->run(new ArrayInput(['class' => 'App/Basket', '--agent' => true]), $output);
+        $this->describe->run(new ArrayInput(['class' => 'App/Basket', '--format' => 'agent']), $output);
 
         $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
         expect($doc['created'])->toBe(false);
     });
 
-    it("includes the example receipt when --agent is combined with -e", function(Filesystem $fs) {
+    it("includes the example receipt when --format=agent is combined with -e", function(Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
@@ -209,7 +209,7 @@ describe(Describe::class, function() {
 
         $output = new BufferedOutput();
         $this->describe->run(
-            new ArrayInput(['class' => 'App/Basket', '--agent' => true, '--exemplify' => 'checkout']),
+            new ArrayInput(['class' => 'App/Basket', '--format' => 'agent', '--exemplify' => 'checkout']),
             $output
         );
 

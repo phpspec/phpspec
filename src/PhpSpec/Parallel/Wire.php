@@ -148,6 +148,7 @@ final class Wire
             'reason' => $example->getReason(),
             'file' => $example->getFile(),
             'line' => $example->getLine(),
+            'sharesItsLine' => $example->sharesItsLine(),
             'duration' => $example->getDuration(),
             'output' => $example->getOutput(),
             'attachments' => $example->getAttachments(),
@@ -370,6 +371,10 @@ final class Wire
 
         if ($node['leftOutByFocus'] ?? false) {
             $example->markLeftOutByFocus();
+        }
+
+        if ($node['sharesItsLine'] ?? false) {
+            $example->markSharingItsLine();
         }
 
         $example->setDuration((float) ($node['duration'] ?? 0.0));

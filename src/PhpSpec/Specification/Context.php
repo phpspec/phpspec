@@ -22,6 +22,7 @@ use PhpSpec\EventDispatcher\Event\ContextRan;
 use PhpSpec\EventDispatcher\Event\ContextStarted;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
+use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Results;
@@ -45,6 +46,11 @@ class Context implements ExampleRegistry, Rebindable, Titled
 
     /** @var bool whether a line target already asks for this context whole, so no other line narrows it */
     private bool $keptWhole = false;
+
+    /** @var list<string> the titles above this context, the spec file's first */
+    private array $titles = [];
+
+    private ?DeclaredLines $declaredLines = null;
 
     private ?Namesakes $namesakes = null;
 
@@ -177,6 +183,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
             ($this->specBlock)();
             DispatcherRegistry::dispatcher()->popScope();
 
+            $this->placeChildren();
             $this->resolveFocus();
             $this->applyTitleFilter();
             $this->applyLineFilter();
@@ -267,6 +274,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
         // its body printed, not to the terminal between two results.
         $setup = new CapturedOutput();
         $teardown = new CapturedOutput();
+        HeldCalls::forget();
 
         try {
             try {
@@ -294,6 +302,13 @@ class Context implements ExampleRegistry, Rebindable, Titled
                 $result = $example->failedInHook(new ExampleError((new LateSignal($late, 'afterEach', 'the example', 'beforeEach or in the example'))->sentence(), $late));
             } catch (Throwable $e) {
                 $result = $example->failedInHook(new ExampleError($e->getMessage(), $e));
+            }
+
+            // A call the afterEach hooks made that nothing declared.
+            $refused = HeldCalls::take();
+
+            if ($refused !== null && !$result->isError()) {
+                $result = $example->failedInHook(new ExampleError($refused->getMessage(), $refused));
             }
         } catch (Throwable $e) {
             $coverage?->endExample($example->getTitle());
@@ -491,17 +506,19 @@ class Context implements ExampleRegistry, Rebindable, Titled
     }
 
     /**
-     * Reduces this context to the blocks at the targeted lines, when some are
-     * set for the running spec file. A line in this context but in none of
-     * its children asks for the context whole: every child runs, and every
-     * nested context runs whole too, whatever other lines are asked for.
-     * Otherwise only the children spanning a line are kept.
+     * Reduces this context to the blocks the running spec file's targets
+     * ask for, when it has some. A line in this context but in none of its
+     * children asks for the context whole: every child runs, and every nested
+     * context runs whole too, whatever else is asked for. Otherwise the
+     * children spanning a line are kept, and the examples an id names; a
+     * nested context is kept to look for an id in.
      */
     private function applyLineFilter(): void
     {
         $lines = LineTargetRegistry::currentTargets();
+        $ids = LineTargetRegistry::currentIds();
 
-        if ($lines === []) {
+        if ($lines === [] && $ids === []) {
             return;
         }
 
@@ -515,14 +532,48 @@ class Context implements ExampleRegistry, Rebindable, Titled
             return;
         }
 
-        $containing = array_values(array_filter(
+        $this->specBlocks = array_values(array_filter(
             $this->specBlocks,
             fn(SpecBlock $block) => ($block instanceof Example || $block instanceof Context)
-                && array_filter($lines, $block->containsLine(...)) !== [],
+                && (array_filter($lines, $block->containsLine(...)) !== []
+                    || ($block instanceof Context && $ids !== [])
+                    || ($block instanceof Example && in_array($block->id(), $ids, true))),
         ));
+    }
 
-        if ($containing !== []) {
-            $this->specBlocks = $containing;
+    /**
+     * Tells the context the titles above it, and the count of the lines its
+     * spec file declares examples on.
+     *
+     * @param list<string> $titles the spec file's title first, then every enclosing describe and context
+     */
+    public function under(array $titles, DeclaredLines $declaredLines): void
+    {
+        $this->titles = $titles;
+        $this->declaredLines = $declaredLines;
+    }
+
+    /**
+     * Tells every block this context collected the titles above it, and
+     * counts the lines its examples are declared on, before anything prunes
+     * them.
+     */
+    private function placeChildren(): void
+    {
+        $titles = [...$this->titles, $this->numberedTitle()];
+        $declaredLines = $this->declaredLines ?? new DeclaredLines();
+
+        foreach ($this->specBlocks as $block) {
+            if ($block instanceof self) {
+                $block->under($titles, $declaredLines);
+            } elseif ($block instanceof Example) {
+                $block->under($titles);
+                $declaration = $block->declaration();
+
+                if ($declaration !== null) {
+                    $declaredLines->note(...$declaration);
+                }
+            }
         }
     }
 

@@ -267,7 +267,7 @@ expect(3.14159)->toBeCloseTo(3.14, 0.01);
 
 ### `toHaveProperty(string $property)`
 
-Asserts the object has a public property with the given name.
+Asserts the object has a public property with the given name: declared or added, set or not yet. A protected or private property does not count.
 
 ```php
 $obj = new stdClass();
@@ -277,7 +277,7 @@ expect($obj)->toHaveProperty('name');
 
 ### `toRespondTo(string $method)`
 
-Asserts the object has (responds to) the given method.
+Asserts the given method can be called on the object from outside it: a public method, or any name when the object has `__call()`. A protected or private method does not count.
 
 ```php
 expect(new Calculator())->toRespondTo('add');
@@ -357,7 +357,7 @@ expect($response)->toHavePath('data.user.name', 'Alice');
 
 ### `toHaveHeader(string $name, ?string $value = null)`
 
-Asserts the response has the given header — optionally matching a value.
+Asserts the response has the given header, its name in any case, optionally matching a value.
 
 ```php
 expect($response)->toHaveHeader('Content-Type');
@@ -419,7 +419,7 @@ Declared before the act, judged when the example ends: the method was called at 
 
 ### `toHaveBeenCalled()`
 
-Asked after the act, judged at once from the calls recorded so far. The call needs an `allow()` before the act.
+Asked after the act, judged at once from the calls made so far. Nothing needs declaring before the act.
 
 ### Counting calls
 

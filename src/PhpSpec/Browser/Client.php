@@ -69,6 +69,8 @@ final class Client implements Browser
                 'method' => strtoupper($method),
                 'header' => implode("\r\n", $headerLines),
                 'ignore_errors' => true,
+                // A redirect is a response under spec, for toRedirectTo().
+                'follow_location' => 0,
             ],
         ];
 

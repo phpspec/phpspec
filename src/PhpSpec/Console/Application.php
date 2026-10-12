@@ -144,7 +144,7 @@ final class Application extends BaseApplication
      */
     private function answersAnAgent(InputInterface $input): bool
     {
-        return $input->getParameterOption(['--format', '-f'], 'pretty', true) === 'agent' || $input->hasParameterOption('--agent', true);
+        return $input->getParameterOption(['--format', '-f'], 'pretty', true) === 'agent';
     }
 
     /**

@@ -65,6 +65,8 @@ describe('User API', function () {
 | `patch(string $path, array $options = [])` | PATCH request |
 | `delete(string $path, array $options = [])` | DELETE request |
 
+A redirect is not followed: the response is the one the server sent, its 3xx status and `Location` header included, so `toRedirectTo()` can check it. Visit the `Location` to check the page it leads to.
+
 ### Request Options
 
 The `$options` array supports:
@@ -85,7 +87,7 @@ All functions return a `Response` with the following properties:
 | `$response->status` | `int` | HTTP status code |
 | `$response->body` | `string` | Raw response body |
 | `$response->json` | `array` | Body decoded as JSON (lazy, `json_decode(..., true)`) |
-| `$response->headers` | `array` | Response headers (`name => value`) |
+| `$response->headers` | `array` | Response headers (`name => value`), named as the server sent them; `toHaveHeader()` finds a name in any case |
 
 ## Response Matchers
 
@@ -125,7 +127,7 @@ expect($response)->toHavePath('meta.total', 42);
 
 ### `toHaveHeader(string $name, ?string $value = null)`
 
-Asserts the response has a header. Optionally checks its value.
+Asserts the response has a header, its name in any case, as HTTP names are. Optionally checks its value.
 
 ```php
 expect($response)->toHaveHeader('Content-Type');
@@ -156,9 +158,8 @@ expect($response->json)->toHaveKey('name');
 expect($response->json)->toContain('Chuck Norris');
 expect($response->json['items'])->toHaveCount(3);
 
-// Headers
-expect($response->headers)->toHaveKey('Content-Type');
-expect($response->headers)->toContain('application/json');
+// Headers, by name in any case
+expect($response)->toHaveHeader('Content-Type', 'application/json');
 
 // Direct value access
 expect($response->json['name'])->toBe('Chuck Norris');

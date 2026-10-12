@@ -168,7 +168,6 @@ Feature: An expectation judges its subject on the line it is written
           });
 
           it('finds the call that came', function (App\Notifier $notifier) {
-              allow($notifier->notify('Ann'));
               (new App\Greeter($notifier))->greet('Ann');
               expect($notifier->notify('Ann'))->toHaveBeenCalled();
           });
@@ -182,5 +181,54 @@ Feature: An expectation judges its subject on the line it is written
     When I run phpspec run with option "--format=agent"
     Then the exit code should be 1
     And the report should have 1 entry
-    And the reported entry should be "failing" at "spec/App/Greeter.spec.php:15"
+    And the reported entry should be "failing" at "spec/App/Greeter.spec.php:14"
     And the output should contain "to have been called"
+
+  Scenario: toBeCalled() written after the call was made is refused
+    Given an interface "src/App/Notifier.php":
+      """
+      <?php
+      namespace App;
+
+      interface Notifier
+      {
+          public function notify(string $who): void;
+      }
+      """
+    And a class "src/App/Greeter.php":
+      """
+      <?php
+      namespace App;
+
+      class Greeter
+      {
+          public function __construct(private Notifier $notifier) {}
+
+          public function greet(string $who): void
+          {
+              $this->notifier->notify($who);
+          }
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+      describe(App\Greeter::class, function () {
+          it('mocks after the act', function (App\Notifier $notifier) {
+              (new App\Greeter($notifier))->greet('Ann');
+              expect($notifier->notify('Ann'))->toBeCalled();
+          });
+
+          it('mocks a call that must not come, after it came', function (App\Notifier $notifier) {
+              allow($notifier->notify(any()));
+              (new App\Greeter($notifier))->greet('Ann');
+              expect($notifier->notify('Ann'))->not()->toBeCalled();
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the exit code should be 1
+    And the report should have 2 entries
+    And every reported entry should carry a message
+    And the output should contain "::notify() was already called before toBeCalled()."
+    And the output should contain "::notify() was already called before not()->toBeCalled()."

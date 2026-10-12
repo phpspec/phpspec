@@ -29,7 +29,7 @@ final class UnexpectedCallException extends LogicException
     public static function to(string $class, string $method, array $arguments, string $file, int $line): self
     {
         return new self(sprintf(
-            '%s::%s(%s) was called but not expected, at %s:%d. Declare the call with allow() or expect(), or make the double a dummy() if its calls do not matter.',
+            '%s::%s(%s) was called but not expected, at %s:%d.',
             ltrim($class, '\\'),
             $method,
             self::describeAll($arguments),

@@ -49,6 +49,11 @@ trait MatchableDoubleBehaviour
         return $this;
     }
 
+    public function andReturn(mixed $value): static
+    {
+        return $this->toReturn($value);
+    }
+
     public function toReturnUsing(callable $callback): static
     {
         $this->______PhpSpecAsWritten()->toReturnUsing($callback);

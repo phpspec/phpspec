@@ -185,6 +185,48 @@ Feature: Browser testing
     When I run the spec
     Then all examples should pass
 
+  Scenario: A header is found whatever case the server named it in, and a missing one is named once
+    Given a local HTTP server responding with:
+      """
+      <?php
+      header('x-request-id: abc');
+      header('content-type: application/json');
+      echo '{}';
+      """
+    And a spec with example:
+      """
+      $response = visit('/');
+      expect($response)->toHaveHeader('X-Request-Id', 'abc');
+      expect($response)->toHaveHeader('Content-Type', 'application/json');
+      expect($response)->toHaveHeader('X-Debug');
+      """
+    When I run the spec
+    Then the output should contain:
+      """
+      Expected response to have header "X-Debug"
+      """
+    And the output should not contain "Expected header"
+
+  Scenario: visit() hands back the redirect the server sent, with its own headers
+    Given a local HTTP server responding with:
+      """
+      <?php
+      if ($_SERVER['REQUEST_URI'] === '/old') {
+          header('location: /new', true, 302);
+          exit;
+      }
+      echo 'the new page';
+      """
+    And a spec with example:
+      """
+      expect(visit('/old'))->toRedirectTo('/new');
+      expect(visit('/old'))->toHaveStatus(302);
+      expect(visit('/new'))->toBeOk();
+      expect(visit('/new'))->not()->toHaveHeader('Location');
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: get() returns JSON and headers
     Given a local HTTP server responding with:
       """

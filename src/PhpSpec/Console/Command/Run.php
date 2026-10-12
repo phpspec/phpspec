@@ -349,7 +349,7 @@ final class Run extends Command implements InternalOptions
         if ($emptied !== null) {
             $status = $this->stopped($prose, $formatter, ...$emptied);
 
-            if ($this->onlyLines($given) && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
+            if ($this->onlySelectors($given) && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
                 $this->showCodeAround($prose, $given);
             }
 
@@ -539,7 +539,7 @@ final class Run extends Command implements InternalOptions
             return null;
         }
 
-        if ($this->onlyLines($given)) {
+        if ($this->onlySelectors($given)) {
             return ['No example at ' . implode(', ', $given), 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.'];
         }
 
@@ -547,13 +547,22 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
-     * Whether every path given is a "file:LINE" selector.
+     * Whether every path given selects examples in a file: a "file:LINE", or
+     * a "file@ID" for one of several examples a line declares.
      *
      * @param list<string> $given the paths as given on the command line
      */
-    private function onlyLines(array $given): bool
+    private function onlySelectors(array $given): bool
     {
-        return $given !== [] && array_filter($given, static fn(string $path): bool => preg_match('/:\d+$/', $path) !== 1) === [];
+        return $given !== [] && array_filter($given, static fn(string $path): bool => self::fileOf($path) === $path) === [];
+    }
+
+    /**
+     * The file a path names, with any ":LINE" or "@ID" selector left off.
+     */
+    private static function fileOf(string $path): string
+    {
+        return (string) preg_replace('/(?::\d+|@[0-9a-f]{12})$/', '', $path);
     }
 
     private function ranAnything(Results $results): bool
@@ -813,7 +822,7 @@ final class Run extends Command implements InternalOptions
     private static function missingPath(array $given): ?string
     {
         foreach ($given as $path) {
-            if (!file_exists((string) preg_replace('/:\d+$/', '', $path))) {
+            if (!file_exists(self::fileOf($path))) {
                 return $path;
             }
         }
@@ -851,7 +860,7 @@ final class Run extends Command implements InternalOptions
     private function unrunnablePath(array $given): ?string
     {
         foreach ($given as $path) {
-            $file = (string) preg_replace('/:\d+$/', '', $path);
+            $file = self::fileOf($path);
 
             if (is_file($file) && !str_ends_with($file, $this->config->getSpecSuffix()) && !str_ends_with($file, '.feature')) {
                 return $path;
@@ -909,7 +918,7 @@ final class Run extends Command implements InternalOptions
         }
 
         foreach (array_map('trim', explode(',', $files)) as $given) {
-            $path = preg_replace('/(:\d+)+$/', '', $given) ?? $given;
+            $path = self::fileOf($given);
             $roots[] = is_file($path) ? dirname($path) : $path;
         }
 

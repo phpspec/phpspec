@@ -64,11 +64,12 @@ final class Loader
 
         $blocks = [];
 
-        foreach ($this->targets($files) as $path => $lines) {
+        foreach ($this->targets($files) as $path => ['lines' => $lines, 'ids' => $ids]) {
             if ($this->runsAsFeatures($path)) {
                 $blocks = array_merge($blocks, $this->loadFeatures($path, $lines));
             } else {
                 LineTargetRegistry::add($path, ...$lines);
+                LineTargetRegistry::addIds($path, ...$ids);
                 $blocks = array_merge($blocks, $this->loadSuite($path));
             }
         }
@@ -126,11 +127,11 @@ final class Loader
 
     /**
      * The paths to load, each with the lines its "path:LINE" selectors
-     * target. A path asked for whole has no lines, and a selector on it does
-     * not narrow it.
+     * target and the example ids its "path@ID" selectors name. A path asked
+     * for whole has neither, and a selector on it does not narrow it.
      *
      * @param string $files the comma-separated paths
-     * @return array<string, list<int>>
+     * @return array<string, array{lines: list<int>, ids: list<string>}>
      */
     private function targets(string $files): array
     {
@@ -142,17 +143,23 @@ final class Loader
                 continue;
             }
 
-            if (preg_match('/^(.+):(\d+)$/', $path, $matches) !== 1
+            if (preg_match('/^(.+)(?::(\d+)|@([0-9a-f]{12}))$/', $path, $matches) !== 1
                 || (!str_ends_with($matches[1], '.feature') && !str_ends_with($matches[1], $this->specSuffix))
             ) {
                 $whole[$path] = true;
-                $targets[$path] = [];
+                $targets[$path] = ['lines' => [], 'ids' => []];
 
                 continue;
             }
 
             if (!isset($whole[$matches[1]])) {
-                $targets[$matches[1]][] = (int) $matches[2];
+                $targets[$matches[1]] ??= ['lines' => [], 'ids' => []];
+
+                if (($matches[3] ?? '') !== '') {
+                    $targets[$matches[1]]['ids'][] = $matches[3];
+                } else {
+                    $targets[$matches[1]]['lines'][] = (int) ($matches[2] ?? 0);
+                }
             }
         }
 

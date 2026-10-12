@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\StoryBDD\Feature;
+use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
 use PhpSpec\Filesystem;
 use PhpSpec\Suite;
@@ -401,6 +402,24 @@ describe(Loader::class, function () {
         $suite = (new Loader($fs))->load('./spec/Picky.spec.php:3,./spec/Picky.spec.php:9');
 
         expect($suite->getSpecifications())->toHaveCount(1);
+    });
+
+    it("targets an example by the id a run reported, on a spec file@ID path, beside its lines", function (Filesystem $fs) {
+        allow($fs->isFile(any()))->toReturnUsing(fn(string $p) => $p === './spec/Picky.spec.php');
+        allow($fs->isDir(any()))->toReturn(false);
+
+        LineTargetRegistry::reset();
+
+        try {
+            $suite = (new Loader($fs))->load('./spec/Picky.spec.php@6fd046add251,./spec/Picky.spec.php:9');
+            LineTargetRegistry::beginSpec('./spec/Picky.spec.php');
+
+            expect($suite->getSpecifications())->toHaveCount(1);
+            expect(LineTargetRegistry::currentIds())->toBe(['6fd046add251']);
+            expect(LineTargetRegistry::currentTargets())->toBe([9]);
+        } finally {
+            LineTargetRegistry::reset();
+        }
     });
 
     it("loads a file whole when it is asked for whole as well as by a line", function (Filesystem $fs) {

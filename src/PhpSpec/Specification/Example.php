@@ -24,7 +24,9 @@ use PhpSpec\EventDispatcher\Event\ExampleErrored;
 use PhpSpec\EventDispatcher\Event\ExampleRunned;
 use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber;
+use PhpSpec\ExampleId;
 use PhpSpec\Mock\Double;
+use PhpSpec\Mock\HeldCalls;
 use PhpSpec\OwnCode;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ExampleResultRegistry;
@@ -65,6 +67,9 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
 
     /** @var int its place among the siblings that share its title, 1 for the first */
     private int $ordinal = 1;
+
+    /** @var list<string> the titles above this example, the spec file's first */
+    private array $titles = [];
 
     /**
      * @param string $title descriptive label for the example
@@ -154,6 +159,43 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
      * Where the spec declared this example, for one declared by its title
      * alone: there is no closure of its own to read the line off.
      */
+    /**
+     * Tells the example the titles above it, which its id is made of.
+     *
+     * @param list<string> $titles the spec file's title first, then every describe and context
+     */
+    public function under(array $titles): void
+    {
+        $this->titles = $titles;
+    }
+
+    /**
+     * The id a run reports this example under, which a rerun addresses it by
+     * where its line declares others too.
+     */
+    public function id(): string
+    {
+        return ExampleId::of(implode(' > ', [...$this->titles, $this->getTitle()]), $this->declaration()[0] ?? null);
+    }
+
+    /**
+     * Where the example is declared: the it() call, else its closure.
+     *
+     * @return array{0: string, 1: int}|null
+     */
+    public function declaration(): ?array
+    {
+        if ($this->declaration !== null) {
+            return $this->declaration;
+        }
+
+        $reflection = new ReflectionFunction($this->example);
+        $file = $reflection->getFileName();
+        $line = $reflection->getStartLine();
+
+        return $file !== false && $line !== false ? [$file, $line] : null;
+    }
+
     public function declaredAt(string $file, int $line): void
     {
         $this->declaration = [$file, $line];
@@ -201,18 +243,10 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
 
     private function declared(ExampleResult $result): ExampleResult
     {
-        if ($this->declaration !== null) {
-            $result->declaredAt(...$this->declaration);
+        $declaration = $this->declaration();
 
-            return $result;
-        }
-
-        $reflection = new ReflectionFunction($this->example);
-        $file = $reflection->getFileName();
-        $line = $reflection->getStartLine();
-
-        if ($file !== false && $line !== false) {
-            $result->declaredAt($file, $line);
+        if ($declaration !== null) {
+            $result->declaredAt(...$declaration);
         }
 
         return $result;
@@ -306,8 +340,19 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
+            // An undeclared call came first; its default answer may be what broke.
+            $e = HeldCalls::take() ?? $e;
             DispatcherRegistry::dispatcher()->dispatch(
                 new ExampleErrored($this->getTitle(), new ExampleError($e->getMessage(), $e)),
+                ExampleErrored::NAME,
+            );
+        }
+
+        $refused = HeldCalls::take();
+
+        if ($refused !== null) {
+            DispatcherRegistry::dispatcher()->dispatch(
+                new ExampleErrored($this->getTitle(), new ExampleError($refused->getMessage(), $refused)),
                 ExampleErrored::NAME,
             );
         }

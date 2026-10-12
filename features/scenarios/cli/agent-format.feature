@@ -1210,7 +1210,7 @@ Feature: Agent output format
 
     Examples:
       | command line                                      | culprit                 |
-      | describe App/Basket --agent --no-such-option      | --no-such-option        |
+      | describe App/Basket --format=agent --no-such-option | --no-such-option      |
       | describe App/Basket App/Other --format=agent      | Too many arguments      |
       | generate --format=agent --no-such-option a spec   | --no-such-option        |
       | rnu --format=agent                                | is not defined          |
@@ -1220,7 +1220,7 @@ Feature: Agent output format
       """
       ai: yes
       """
-    When I run phpspec command "describe App/Basket --agent"
+    When I run phpspec command "describe App/Basket --format=agent"
     Then the exit code should be 1
     And the output should be valid JSON
     And the output should contain "ai expects a map"
@@ -1366,3 +1366,56 @@ Feature: Agent output format
       """
     When I run the rerun the reported entry hands over
     Then the replay should report the failure the run reported
+
+  Scenario: Examples a loop declares on one line rerun one at a time, by id
+    Given a spec file "spec/App/Handles.spec.php":
+      """
+      <?php
+      foreach ([1, 2, 3] as $value) {
+          it("handles $value", fn () => expect($value)->toBe(0));
+      }
+      """
+    When I run phpspec run in a fresh process with option "spec/App/Handles.spec.php --format=agent"
+    Then the report should have 3 entries
+    And the failing entries should have distinct ids
+    And each reported entry should rerun its spec file at its id
+    When I run the rerun the reported entry hands over
+    Then the report should have 1 entry
+    And the replay should report the failure the run reported
+    And each reported entry should rerun its spec file at its id
+
+  Scenario: An example alone on its line keeps its line, beside examples a loop shares one with
+    Given a spec file "spec/App/Doubler.spec.php":
+      """
+      <?php
+      describe('Doubler', function () {
+          foreach ([1, 2] as $value) {
+              it("doubles $value", fn () => expect($value * 2)->toBe(5));
+          }
+          it('doubles zero', fn () => expect(0)->toBe(1));
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/App/Doubler.spec.php --format=agent"
+    Then the report should have 3 entries
+    And the entry "Doubler > Doubler > doubles zero" should rerun as "run spec/App/Doubler.spec.php:6"
+    And the entry "Doubler > Doubler > doubles 1" should rerun its spec file at its id
+    And the entry "Doubler > Doubler > doubles 2" should rerun its spec file at its id
+
+  Scenario: Examples that contexts made in a loop share a line, and rerun one at a time, by id
+    Given a spec file "spec/App/Cases.spec.php":
+      """
+      <?php
+      describe('Cases', function () {
+          foreach (['a', 'b'] as $case) {
+              context("with $case", function () use ($case) {
+                  it('works', fn () => expect($case)->toBe('z'));
+              });
+          }
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/App/Cases.spec.php --format=agent"
+    Then the report should have 2 entries
+    And each reported entry should rerun its spec file at its id
+    When I run the rerun the reported entry hands over
+    Then the report should have 1 entry
+    And the replay should report the failure the run reported

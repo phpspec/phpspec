@@ -16,6 +16,7 @@ namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\CommandLine;
 use PhpSpec\Coverage\CoverageVerdict;
+use PhpSpec\ExampleId;
 use PhpSpec\Guard\Verdict as GuardVerdict;
 use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
@@ -916,7 +917,7 @@ final class Agent extends AbstractFormatter
      */
     private function identify(string $name, ?string $file): string
     {
-        return substr(sha1(($file === null ? '' : ProjectRoot::here()->relative($file) . "\n") . $name), 0, 12);
+        return ExampleId::of($name, $file);
     }
 
     /**
@@ -936,7 +937,24 @@ final class Agent extends AbstractFormatter
         $declared = $this->location($example->getFile(), $example->getLine());
         $site = $declared === null || $file === $example->getFile() ? $this->location($file, $line) : null;
 
-        $this->addLocation($entry, $site ?? $declared, $declared ?? $site);
+        $this->addLocation($entry, $site ?? $declared, $this->byId($example, $entry) ?? $declared ?? $site);
+    }
+
+    /**
+     * Addresses an example its declaring line does not single out, one of
+     * several an it() in a loop declares, by its file and its id.
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function byId(ExampleResult $example, array $entry): ?string
+    {
+        $file = $example->getFile();
+
+        if (!$example->sharesItsLine() || $file === null || !is_string($entry['id'] ?? null)) {
+            return null;
+        }
+
+        return ProjectRoot::here()->relative($file) . '@' . $entry['id'];
     }
 
     /**
