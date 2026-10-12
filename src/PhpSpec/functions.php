@@ -126,7 +126,8 @@ namespace {
     }
 
     /**
-     * Defines shared state on the current context's world (Subject).
+     * Declares a value on $this for the examples of the current context, built
+     * the first time an example reads it, once for that example.
      *
      * Accepts either a property name + setter closure, or a single closure whose
      * type-hinted parameters are auto-resolved as mock doubles.

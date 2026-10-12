@@ -99,6 +99,30 @@ Feature: Writing specs
     When I run phpspec run
     Then all examples should pass
 
+  Scenario: A let read in a beforeEach is built before the example, still once for it and afresh for the next
+    Given a spec file "spec/App/Ledger.spec.php":
+      """
+      <?php
+      describe('Ledger', function () {
+          let('entries', fn () => new ArrayObject(['opened']));
+
+          beforeEach(function () {
+              $this->entries->append('set up');
+          });
+
+          it('finds what the hook did to the one value built for it', function () {
+              expect($this->entries->getArrayCopy())->toBe(['opened', 'set up']);
+          });
+
+          it('starts from a value of its own', function () {
+              expect($this->entries->getArrayCopy())->toBe(['opened', 'set up']);
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+    And the output should contain "2 examples (2 passed)"
+
   Scenario: A let is built when an example first reads it, after the hooks, so a hook can arrange what it consumes
     Given an interface "src/App/Menu.php":
       """

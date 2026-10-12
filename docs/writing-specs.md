@@ -60,7 +60,7 @@ it('sends notifications', function (Mailer $mailer) {
 
 ## `let(string $property, Closure $setter)`
 
-Defines a lazily-evaluated property on the spec's **World** (the `$this` context shared across examples within a describe/context block).
+Declares a property on `$this` for the examples of the block it is in, nested blocks included. The value is built lazily: the closure runs the first time an example reads the property, once for that example, and the example keeps that value. The next example gets a value of its own. A let no example reads is never built.
 
 ```php
 describe(Calculator::class, function() {
@@ -71,7 +71,14 @@ describe(Calculator::class, function() {
 });
 ```
 
-The closure is called afresh before each example, and the result is assigned to `$this->calculator`. This works because the `Subject` object (which is the `$this` inside spec closures) uses `#[AllowDynamicProperties]`. A closure that throws fails the example it was preparing, reported as that example's error; the other examples still run.
+When the example is the first to read it, the `beforeEach` hooks have run by then: a hook can arrange a double the let consumes, and a let may read another declared after it. A closure that throws fails the example that read it, reported as that example's error; the other examples still run.
+
+To build a value before the example starts, because the example relies on what building it does (a server started, a file written), read it in a `beforeEach`. It is still built once for that example:
+
+```php
+let('server', fn () => TestServer::start());
+beforeEach(fn () => $this->server);
+```
 
 `let()` also supports type-hinted mock injection:
 
@@ -210,7 +217,7 @@ When any focused block exists in a context, only focused blocks are executed. Th
 
 ## How `$this` Works
 
-Each spec file is loaded via a `Subject` object. The `Subject` class has `#[AllowDynamicProperties]`, so `let()` calls dynamically set properties on it. Inside `it()` closures, `$this` refers to this shared Subject, giving all examples access to the `let`-defined properties.
+Each spec file is loaded via a `Subject` object, which is `$this` inside spec closures. The `Subject` class has `#[AllowDynamicProperties]`, so a let's value lands on it as a property when an example first reads it. Let values are forgotten before the next example starts, so no example sees another's.
 
 ## Nesting Structure
 
