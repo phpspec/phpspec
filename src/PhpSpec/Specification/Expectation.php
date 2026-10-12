@@ -22,6 +22,8 @@ use PhpSpec\Browser\Response;
 use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\ObjectName;
 use Psr\Http\Message\ResponseInterface;
+use ReflectionClass;
+use ReflectionObject;
 use Throwable;
 use Traversable;
 
@@ -97,7 +99,7 @@ class Expectation
                 $method = 'has' . substr($name, 6);
                 $prefix = 'have';
             }
-            if ($method !== null && method_exists($this->subject, $method)) {
+            if ($method !== null && method_exists($this->subject, $method) && is_callable([$this->subject, $method])) {
                 $humanized = strtolower(ltrim((string) preg_replace('/[A-Z]/', ' $0', substr($name, $prefix === 'be' ? 4 : 6))));
                 return $this->match(
                     fn($expected) => (bool) $expected->$method(...$arguments),
@@ -410,7 +412,8 @@ class Expectation
     }
 
     /**
-     * Asserts that the subject object has the given property.
+     * Asserts that the subject object has the given public property: declared
+     * or added, set or not yet.
      *
      * @param string $property property name
      * @return static
@@ -418,7 +421,7 @@ class Expectation
     public function toHaveProperty(string $property): static
     {
         return $this->match(
-            fn($expected) => property_exists($expected, $property),
+            fn($subject) => self::hasPublicProperty($subject, $property),
             'Expected %s to have property %s',
             $this->subject,
             $property,
@@ -602,7 +605,8 @@ class Expectation
     }
 
     /**
-     * Asserts that the subject object responds to the given method.
+     * Asserts that the given method can be called on the subject from outside
+     * it: a public method, or any name when the object has __call().
      *
      * @param string $method method name
      * @return static
@@ -610,7 +614,7 @@ class Expectation
     public function toRespondTo(string $method): static
     {
         return $this->match(
-            fn($expected) => is_object($expected) && method_exists($expected, $method),
+            fn($subject) => is_object($subject) && is_callable([$subject, $method]),
             'Expected %s to respond to %s',
             $this->subject,
             $method,
@@ -1008,6 +1012,17 @@ class Expectation
             is_bool($subject) => false,
             default => null,
         };
+    }
+
+    private static function hasPublicProperty(mixed $subject, string $property): bool
+    {
+        $class = match (true) {
+            is_object($subject) => new ReflectionObject($subject),
+            is_string($subject) && class_exists($subject) => new ReflectionClass($subject),
+            default => null,
+        };
+
+        return $class !== null && $class->hasProperty($property) && $class->getProperty($property)->isPublic();
     }
 
     private static function holdsNothing(mixed $subject): bool
