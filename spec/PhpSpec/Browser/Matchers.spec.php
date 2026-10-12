@@ -129,6 +129,12 @@ describe('Response matchers', function () {
             $response = new Response(200, '', ['Content-Type' => 'text/html']);
             expect($response)->not()->toHaveHeader('Content-Type', 'application/xml');
         });
+
+        it('finds a header whatever case the server named it in', function () {
+            $response = new Response(200, '', ['content-type' => 'application/json', 'X-REQUEST-ID' => 'abc']);
+            expect($response)->toHaveHeader('Content-Type', 'application/json');
+            expect($response)->toHaveHeader('x-request-id');
+        });
     });
 
     context('toRedirectTo()', function () {
@@ -140,6 +146,11 @@ describe('Response matchers', function () {
         it('passes for 302 with matching Location', function () {
             $response = new Response(302, '', ['Location' => '/login']);
             expect($response)->toRedirectTo('/login');
+        });
+
+        it('reads a Location header whatever case the server named it in', function () {
+            $response = new Response(302, '', ['location' => '/new']);
+            expect($response)->toRedirectTo('/new');
         });
 
         it('passes for 307 temporary redirect', function () {

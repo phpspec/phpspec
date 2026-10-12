@@ -357,7 +357,7 @@ expect($response)->toHavePath('data.user.name', 'Alice');
 
 ### `toHaveHeader(string $name, ?string $value = null)`
 
-Asserts the response has the given header — optionally matching a value.
+Asserts the response has the given header, its name in any case, optionally matching a value.
 
 ```php
 expect($response)->toHaveHeader('Content-Type');

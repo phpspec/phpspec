@@ -720,7 +720,8 @@ class Expectation
 
     /**
      * Asserts that the subject response has a given header, optionally matching a value.
-     * Works with Browser\Response and PSR-7 ResponseInterface.
+     * The name is found in any case, as HTTP names are. Works with Browser\Response
+     * and PSR-7 ResponseInterface.
      *
      * @param string $name header name (e.g. 'Content-Type')
      * @param string|null $value expected header value (null = just check existence)
@@ -728,22 +729,23 @@ class Expectation
      */
     public function toHaveHeader(string $name, ?string $value = null): static
     {
+        $key = strtolower($name);
         $data = self::extractResponseData($this->subject);
-        $actual = $data['headers'][$name] ?? null;
+        $actual = $data['headers'][$key] ?? null;
         return $this->match(
-            function ($expected) use ($name, $value) {
+            function ($expected) use ($key, $value) {
                 $d = self::extractResponseData($expected);
-                if ($d === null || !array_key_exists($name, $d['headers'])) {
+                if ($d === null || !array_key_exists($key, $d['headers'])) {
                     return false;
                 }
-                if ($value !== null && $d['headers'][$name] !== $value) {
+                if ($value !== null && $d['headers'][$key] !== $value) {
                     return false;
                 }
                 return true;
             },
             $value !== null
-                ? 'Expected header "%s" to be %s, got %s'
-                : 'Expected response to have header "%s"',
+                ? 'Expected header %s to be %s, got %s'
+                : 'Expected response to have header %s',
             $name,
             ...($value !== null ? [$value, $actual ?? 'missing'] : []),
         );
@@ -770,14 +772,14 @@ class Expectation
                 if ($status < 300 || $status >= 400) {
                     return false;
                 }
-                $location = $d['headers']['Location'] ?? null;
+                $location = $d['headers']['location'] ?? null;
                 return $location === $url;
             },
             'Expected redirect to %s, got %s (status %s)',
             $url,
-            $data['headers']['Location'] ?? 'no Location header',
+            $data['headers']['location'] ?? 'no Location header',
             $data['status'] ?? 'non-Response',
-            ['__expected' => $url, '__actual' => fn() => $data['headers']['Location'] ?? 'No Location header'],
+            ['__expected' => $url, '__actual' => fn() => $data['headers']['location'] ?? 'No Location header'],
         );
     }
 
@@ -1028,7 +1030,8 @@ class Expectation
     }
 
     /**
-     * Extracts status, body, headers, and json from a response object.
+     * Extracts status, body, headers, and json from a response object, the
+     * header names lowered so they are looked up in any case, as HTTP names are.
      * Supports Browser\Response and PSR-7 ResponseInterface (when available).
      *
      * @return array{status: int, body: string, headers: array<string, string>, json: array<string, mixed>}|null
@@ -1039,7 +1042,7 @@ class Expectation
             return [
                 'status' => $subject->status,
                 'body' => $subject->body,
-                'headers' => $subject->headers,
+                'headers' => array_change_key_case($subject->headers),
                 'json' => $subject->json,
             ];
         }
@@ -1049,7 +1052,7 @@ class Expectation
             return [
                 'status' => $subject->getStatusCode(),
                 'body' => $body,
-                'headers' => array_map(fn(array $v) => implode(', ', $v), $subject->getHeaders()),
+                'headers' => array_change_key_case(array_map(fn(array $v) => implode(', ', $v), $subject->getHeaders())),
                 'json' => json_decode($body, true) ?? [],
             ];
         }
