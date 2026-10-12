@@ -52,7 +52,7 @@ describe(Exemplify::class, function () {
         expect($output->fetch())->toBe(PHP_EOL . "\e[32mExample for \e[39m\e[33mAcme\\Calculator::add\e[39m\e[32m added.\e[39m" . PHP_EOL);
     });
 
-    it('emits a JSON receipt with --agent instead of prose', function (Filesystem $fs) {
+    it('emits a JSON receipt with --format=agent instead of prose', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn(<<<'PHP'
         <?php
@@ -65,7 +65,7 @@ describe(Exemplify::class, function () {
 
         $output = new BufferedOutput();
         $this->exemplify->run(
-            new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add', '--agent' => true]),
+            new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add', '--format' => 'agent']),
             $output
         );
 
@@ -107,7 +107,7 @@ describe(Exemplify::class, function () {
 
         $output = new BufferedOutput();
         $this->exemplify->run(
-            new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add', '--agent' => true]),
+            new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add', '--format' => 'agent']),
             $output
         );
 

@@ -55,7 +55,7 @@ describe(Application::class, function() {
     it("answers a receipt command's agent a command line it cannot read with an error receipt", function () {
         $output = new BufferedOutput();
 
-        $exit = $this->application->doRun(new ArgvInput(['phpspec', 'describe', 'App/Basket', '--agent', '--no-such-option']), $output);
+        $exit = $this->application->doRun(new ArgvInput(['phpspec', 'describe', 'App/Basket', '--format=agent', '--no-such-option']), $output);
 
         expect($exit)->toBe(1);
         expect(json_decode(trim($output->fetch()), true))->toBe(['v' => 2, 'action' => 'describe', 'error' => 'The "--no-such-option" option does not exist.']);

@@ -6,21 +6,21 @@ Feature: Agent scaffolding commands
   Background:
     Given a PSR-4 project with "spec" and "src" directories
 
-  Scenario: describe --agent scaffolds a spec and emits a JSON receipt
-    When I run phpspec command "describe App/Basket --agent"
+  Scenario: describe --format=agent scaffolds a spec and emits a JSON receipt
+    When I run phpspec command "describe App/Basket --format=agent"
     Then the output should be valid JSON
     And the output should contain "action"
     And the output should contain "created"
     And a spec file "spec/App/Basket.spec.php" should be generated
 
-  Scenario: describe --agent is idempotent and reports it in the receipt
-    When I run phpspec command "describe App/Basket --agent"
-    And I run phpspec command "describe App/Basket --agent"
+  Scenario: describe --format=agent is idempotent and reports it in the receipt
+    When I run phpspec command "describe App/Basket --format=agent"
+    And I run phpspec command "describe App/Basket --format=agent"
     Then the output should be valid JSON
     And the output should contain "false"
 
-  Scenario: exemplify --agent adds an example and emits a JSON receipt
-    When I run phpspec command "exemplify App/Basket checkout --agent"
+  Scenario: exemplify --format=agent adds an example and emits a JSON receipt
+    When I run phpspec command "exemplify App/Basket checkout --format=agent"
     Then the output should be valid JSON
     And the output should contain "exemplify"
     And the output should contain "added"
@@ -28,17 +28,15 @@ Feature: Agent scaffolding commands
     And a spec file "spec/App/Basket.spec.php" should be generated
     And the spec file should contain an example for "checkout"
 
-  Scenario: describe accepts --format=agent as the canonical spelling of --agent
-    When I run phpspec command "describe App/Cart --format=agent"
-    Then the output should be valid JSON
-    And the output should contain "describe"
-    And a spec file "spec/App/Cart.spec.php" should be generated
+  Scenario Outline: The scaffolding commands answer an agent through --format alone
+    When I run phpspec command "<command> --help"
+    Then the output should contain "--format"
+    And the output should not contain "--agent"
 
-  Scenario: exemplify accepts --format=agent too
-    When I run phpspec command "describe App/Cart --format=agent"
-    And I run phpspec command "exemplify App/Cart total --format=agent"
-    Then the output should be valid JSON
-    And the output should contain "total"
+    Examples:
+      | command   |
+      | describe  |
+      | exemplify |
 
   Scenario: generate emits the agent document with applied receipts under --format=agent
     Given a phpspec.yaml config:

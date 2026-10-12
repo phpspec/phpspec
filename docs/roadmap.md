@@ -41,7 +41,7 @@ PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.2+. It su
 
 #### CLI & Reporting
 - Pretty, Dot, TAP, JUnit XML, HTML, and Agent (JSON) formatters
-- Machine-readable agent workflow (`--format=agent`, `describe/exemplify --agent`)
+- Machine-readable agent workflow (`--format=agent` on `run`, `describe`, `exemplify` and the AI commands)
 - Parallel execution (`--parallel[=N]`)
 - Verbose mode (`-v`) with per-example timing
 - Quiet mode (`-q`)

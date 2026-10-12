@@ -154,7 +154,7 @@ vendor/bin/phpspec describe <class> [options]
 **Options:**
 - `-e`, `--exemplify=METHOD` -- Include an example for the specified method.
 - `-r`, `--run` -- Run the spec just generated, not the whole suite.
-- `--agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
+- `-f`, `--format=agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
 
 **Examples:**
 
@@ -162,7 +162,7 @@ vendor/bin/phpspec describe <class> [options]
 vendor/bin/phpspec describe App/Calculator
 vendor/bin/phpspec describe App/Console/Command/Run
 vendor/bin/phpspec describe App/Calculator -e add          # with "add" method example
-vendor/bin/phpspec describe App/Calculator --agent          # JSON receipt (see Coding Agents)
+vendor/bin/phpspec describe App/Calculator --format=agent   # JSON receipt (see Coding Agents)
 ```
 
 ### `exemplify`
@@ -178,14 +178,14 @@ vendor/bin/phpspec exemplify <class> <method> [options]
 - `method` -- The method to add an example for.
 
 **Options:**
-- `--agent` -- Emit a machine-readable JSON receipt instead of prose.
+- `-f`, `--format=agent` -- Emit a machine-readable JSON receipt instead of prose.
 
 ```bash
 vendor/bin/phpspec exemplify App/Calculator add
-vendor/bin/phpspec exemplify App/Calculator add --agent
+vendor/bin/phpspec exemplify App/Calculator add --format=agent
 ```
 
-See [Coding Agents](agent.md) for the `--agent` receipts and
+See [Coding Agents](agent.md) for the JSON receipts and
 [Code Generation](code-generation.md) for the generated templates.
 
 ## Run Options

@@ -7,8 +7,8 @@ Lines**: one self-contained event per line, written as it happens, where **the
 failure itself is the payload**: everything an agent needs to decide its next
 move, without re-reading the project.
 
-The same idea runs through the scaffolding commands: `describe --agent` and
-`exemplify --agent` return JSON receipts instead of prose, and `--accept-offers`
+The same idea runs through the scaffolding commands: `describe --format=agent` and
+`exemplify --format=agent` return JSON receipts instead of prose, and `--accept-offers`
 applies PhpSpec's code-generation offers non-interactively. Together they let an
 agent drive the whole spec → red → green loop through the CLI, never guessing at
 output and never hand-editing what PhpSpec can generate.
@@ -394,12 +394,12 @@ reported.
 
 ## Scaffolding with JSON receipts
 
-`describe` and `exemplify` take an `--agent` flag that swaps their prose for a
+`describe` and `exemplify` take `--format=agent`, which swaps their prose for a
 one-line JSON receipt, so an agent can scaffold without parsing English. No file
 content is returned; the agent reads the file itself.
 
 ```bash
-vendor/bin/phpspec describe App/Basket --agent
+vendor/bin/phpspec describe App/Basket --format=agent
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":true}
@@ -416,20 +416,20 @@ to put it under, is refused with the remedy, exit code 1:
 ```
 
 `created` is `false` when the spec already existed (both commands are
-idempotent). Combine `describe --agent` with `-e` to also add a method example:
+idempotent). Combine `describe --format=agent` with `-e` to also add a method example:
 
 ```bash
-vendor/bin/phpspec describe App/Basket --agent -e checkout
+vendor/bin/phpspec describe App/Basket --format=agent -e checkout
 ```
 ```json
 {"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":false,"example":{"method":"checkout","added":true}}
 ```
 
-`exemplify --agent` adds a single method example to a spec (creating the spec
+`exemplify --format=agent` adds a single method example to a spec (creating the spec
 first if needed):
 
 ```bash
-vendor/bin/phpspec exemplify App/Basket checkout --agent
+vendor/bin/phpspec exemplify App/Basket checkout --format=agent
 ```
 ```json
 {"v":2,"action":"exemplify","class":"App\\Basket","method":"checkout","spec":"spec/App/Basket.spec.php","added":true}
@@ -476,8 +476,8 @@ the specs are not green; it exits `1`:
 
 Putting it together, an agent drives the full cycle through the CLI:
 
-1. **Scaffold**: `describe App/Basket --agent` (and `exemplify … --agent` per
-   method) to lay down specs.
+1. **Scaffold**: `describe App/Basket --format=agent` (and `exemplify … --format=agent`
+   per method) to lay down specs.
 2. **Read**: `run --format=agent`; act on each `example` line as it arrives,
    and branch on the `summary` line's `actionable`.
 3. **Generate**: for `create_*` offers, either write the code or run
@@ -576,8 +576,8 @@ helper is the only thing that knows why it gave up.
 
 Prefer letting PhpSpec generate boilerplate over writing it by hand:
 
-- Scaffold a spec: `vendor/bin/phpspec describe App/Basket --agent`
-- Add a method example: `vendor/bin/phpspec exemplify App/Basket checkout --agent`
+- Scaffold a spec: `vendor/bin/phpspec describe App/Basket --format=agent`
+- Add a method example: `vendor/bin/phpspec exemplify App/Basket checkout --format=agent`
 - Apply all pending offers (missing classes/interfaces/methods/steps):
   `vendor/bin/phpspec run --accept-offers`
 - Also fill empty methods with their spec'd return values (fast first green):

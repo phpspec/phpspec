@@ -1210,7 +1210,7 @@ Feature: Agent output format
 
     Examples:
       | command line                                      | culprit                 |
-      | describe App/Basket --agent --no-such-option      | --no-such-option        |
+      | describe App/Basket --format=agent --no-such-option | --no-such-option      |
       | describe App/Basket App/Other --format=agent      | Too many arguments      |
       | generate --format=agent --no-such-option a spec   | --no-such-option        |
       | rnu --format=agent                                | is not defined          |
@@ -1220,7 +1220,7 @@ Feature: Agent output format
       """
       ai: yes
       """
-    When I run phpspec command "describe App/Basket --agent"
+    When I run phpspec command "describe App/Basket --format=agent"
     Then the exit code should be 1
     And the output should be valid JSON
     And the output should contain "ai expects a map"
