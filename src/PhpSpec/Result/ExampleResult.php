@@ -48,6 +48,8 @@ final class ExampleResult implements Results
 
     private bool $leftOutByFocus = false;
 
+    private bool $sharesItsLine = false;
+
     /**
      * @param string $title the example description
      * @param array<MatchResult> $matchResults array of MatchResult instances from this example
@@ -91,6 +93,20 @@ final class ExampleResult implements Results
     {
         $this->file = $file;
         $this->line = $line;
+    }
+
+    /**
+     * Records that the line the example is declared on declares others too,
+     * as an it() in a loop does.
+     */
+    public function markSharingItsLine(): void
+    {
+        $this->sharesItsLine = true;
+    }
+
+    public function sharesItsLine(): bool
+    {
+        return $this->sharesItsLine;
     }
 
     /**

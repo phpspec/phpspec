@@ -29,6 +29,12 @@ final class LineTargetRegistry
     /** @var list<int> */
     private static array $current = [];
 
+    /** @var array<string, list<string>> targeted example ids keyed by normalised spec path */
+    private static array $ids = [];
+
+    /** @var list<string> */
+    private static array $currentIds = [];
+
     /**
      * Registers line targets for a spec file.
      *
@@ -49,6 +55,29 @@ final class LineTargetRegistry
     public static function beginSpec(string $path): void
     {
         self::$current = self::$targets[self::normalise($path)] ?? [];
+        self::$currentIds = self::$ids[self::normalise($path)] ?? [];
+    }
+
+    /**
+     * Registers example ids for a spec file, from "file.spec.php@ID" run paths.
+     *
+     * @param string $path the spec file path as given on the command line
+     * @param string ...$ids the targeted example ids
+     */
+    public static function addIds(string $path, string ...$ids): void
+    {
+        $key = self::normalise($path);
+        self::$ids[$key] = array_merge(self::$ids[$key] ?? [], array_values($ids));
+    }
+
+    /**
+     * The example ids the currently running spec is targeted by.
+     *
+     * @return list<string>
+     */
+    public static function currentIds(): array
+    {
+        return self::$currentIds;
     }
 
     /**
@@ -68,6 +97,8 @@ final class LineTargetRegistry
     {
         self::$targets = [];
         self::$current = [];
+        self::$ids = [];
+        self::$currentIds = [];
     }
 
     /**

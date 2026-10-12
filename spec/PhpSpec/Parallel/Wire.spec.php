@@ -41,8 +41,11 @@ describe(Wire::class, function () {
         ], 'spec/App/Basket.spec.php');
         $risky->markRisky();
         $leftOut->markLeftOutByFocus();
+        $risky->markSharingItsLine();
 
         $back = $roundTrip($spec);
+        $examples = $back->getResults();
+        expect(array_map(fn($example) => $example->sharesItsLine(), $examples))->toBe([false, false, false, false, false, true, false]);
 
         expect($back->getTitle())->toBe('Basket');
         expect($back->getPath())->toBe('spec/App/Basket.spec.php');

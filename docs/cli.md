@@ -397,6 +397,16 @@ exit code 1: an explicit line is a precise ask, and running nothing is not an
 answer to it. The pretty and dot formatters then show the seven lines around
 the target, its number in bold, since most misses are off by a line or two.
 
+An `it()` in a loop declares several examples on one line, and its line runs
+them all. To run one of them, append `@ID` to the spec path instead, with the
+id the agent format reports for it:
+
+```bash
+vendor/bin/phpspec run spec/App/Calculator.spec.php@6fd046add251
+```
+
+An id that names no example in the file stops the run as a line does.
+
 Several selectors run each addressed block once, whether they name lines of
 one file or of many, so the `rerun` command an agent summary carries can be
 pasted back as it is:

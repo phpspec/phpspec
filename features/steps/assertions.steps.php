@@ -295,6 +295,41 @@ then('the summary should rerun with the arguments:', function (string $arguments
     expect((end($stream) ?: [])['rerun_argv'] ?? null)->toBe(preg_split('/\R/', $arguments));
 });
 
+// An example that shares its declaring line with others is addressed by its
+// id, the one thing that tells it from them.
+$rerunsById = static function (array $entry): void {
+    $file = explode(':', (string) ($entry['spec'] ?? ''))[0];
+
+    expect($entry['rerun'] ?? null)->toBe('run ' . $file . '@' . ($entry['id'] ?? ''));
+    expect($entry['rerun_argv'][1] ?? null)->toBe($file . '@' . ($entry['id'] ?? ''));
+};
+
+$entryNamed = static function (array $entries, string $name): array {
+    $named = array_values(array_filter($entries, fn(array $entry) => ($entry['example'] ?? null) === $name));
+
+    expect($named)->toHaveLength(1);
+
+    return $named[0];
+};
+
+then('each reported entry should rerun its spec file at its id', function () use ($events, $entries, $rerunsById) {
+    $reported = $entries($events($this->stdout ?? $this->output));
+
+    expect($reported)->not()->toBe([]);
+
+    foreach ($reported as $entry) {
+        $rerunsById($entry);
+    }
+});
+
+then('the entry {string} should rerun its spec file at its id', function (string $name) use ($events, $entries, $rerunsById, $entryNamed) {
+    $rerunsById($entryNamed($entries($events($this->stdout ?? $this->output)), $name));
+});
+
+then('the entry {string} should rerun as {string}', function (string $name, string $line) use ($events, $entries, $entryNamed) {
+    expect($entryNamed($entries($events($this->stdout ?? $this->output)), $name)['rerun'] ?? null)->toBe($line);
+});
+
 // A rerun reproduces a failure when it reports the same example failing the
 // same way, not merely failing.
 then('the replay should report the failure the run reported', function () use ($events, $entries) {

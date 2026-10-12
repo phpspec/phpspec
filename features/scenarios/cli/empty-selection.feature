@@ -48,6 +48,7 @@ Feature: A run narrowed to nothing fails
       | spec/Empty                         | No example or scenario in spec/Empty       |
       | spec/Empty features/steps          | No example or scenario in spec/Empty, features/steps |
       | --paths-from paths/none.txt        | Paths file lists no path: paths/none.txt   |
+      | spec/App/Calc.spec.php@0123456789ab | No example at spec/App/Calc.spec.php@0123456789ab |
 
   Scenario Outline: A run narrowed to nothing answers a coding agent with a fatal
     When I run phpspec run with option "<narrowing> --format=agent"
