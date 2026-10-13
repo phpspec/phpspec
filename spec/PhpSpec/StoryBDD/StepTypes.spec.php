@@ -39,10 +39,16 @@ describe(StepTypes::class, function () {
     let('types', fn() => StepTypes::of(new ReflectionFunction('step_types_spec_book'), new ReflectionFunction('step_types_spec_json')));
 
     context('found', function () {
-        it('finds the functions the code declared with a type attribute', function () {
-            $arguments = StepTypes::declared()->arguments(fn(StepTypesSpecBook $book) => null, ['Ann', '123'], null, null);
+        it('finds the functions declared with a type attribute in the files it is given', function () {
+            $arguments = StepTypes::declaredIn(__FILE__)->arguments(fn(StepTypesSpecBook $book) => null, ['Ann', '123'], null, null);
 
             expect($arguments[0])->toBeLike(new StepTypesSpecBook('Ann', '123'));
+        });
+
+        it('leaves out a function declared in any other file', function () {
+            $arguments = StepTypes::declaredIn(__DIR__ . '/elsewhere.php')->arguments(fn(StepTypesSpecBook $book) => null, ['Ann', '123'], null, null);
+
+            expect($arguments)->toBe(['Ann', '123']);
         });
 
         it('refuses two functions that make one class', function () {

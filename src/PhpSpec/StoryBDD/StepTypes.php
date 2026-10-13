@@ -37,13 +37,15 @@ final readonly class StepTypes
     ) {}
 
     /**
-     * The types every function the code has declared so far stands for.
+     * The types the functions declared in the given files stand for.
      */
-    public static function declared(): self
+    public static function declaredIn(string ...$files): self
     {
-        return self::of(...array_map(
-            static fn(string $function): ReflectionFunction => new ReflectionFunction($function),
-            get_defined_functions()['user'],
+        $files = array_flip(array_map(self::plainly(...), $files));
+
+        return self::of(...array_filter(
+            array_map(static fn(string $function): ReflectionFunction => new ReflectionFunction($function), get_defined_functions()['user']),
+            static fn(ReflectionFunction $function): bool => isset($files[self::plainly((string) $function->getFileName())]),
         ));
     }
 
@@ -132,6 +134,11 @@ final readonly class StepTypes
         }
 
         return $arguments;
+    }
+
+    private static function plainly(string $file): string
+    {
+        return realpath($file) ?: $file;
     }
 
     private function parameterTypeOf(ReflectionParameter $parameter): ?ReflectionFunction

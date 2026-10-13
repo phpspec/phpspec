@@ -305,7 +305,7 @@ final class Loader
 
         // Helper classes for steps, the Cucumber way: everything under
         // <features>/support loads before any step file needs it.
-        $this->loadSupport($featuresRoot);
+        $supportFiles = $this->loadSupport($featuresRoot);
 
         // Fresh registry so prior spec execution can't pollute step definitions
         StoryBDDRegistry::init();
@@ -325,7 +325,7 @@ final class Loader
             $this->requireFile($stepFile, false);
         }
 
-        $types = StepTypes::declared();
+        $types = StepTypes::declaredIn(...$supportFiles);
         $features = [];
         foreach ($featureFiles as $featureFile) {
             $content = $this->fs->read($featureFile);
@@ -356,17 +356,23 @@ final class Loader
     /**
      * Requires every PHP file under <features>/support, once per process:
      * support files define classes, and a class cannot be declared twice.
+     *
+     * @return list<string> the files it required
      */
-    private function loadSupport(string $featuresRoot): void
+    private function loadSupport(string $featuresRoot): array
     {
         $supportDir = $featuresRoot . '/support';
         if (!$this->fs->isDir($supportDir)) {
-            return;
+            return [];
         }
 
-        foreach ($this->collectPhpFiles($supportDir) as $file) {
+        $files = $this->collectPhpFiles($supportDir);
+
+        foreach ($files as $file) {
             $this->requireFile($file, true);
         }
+
+        return $files;
     }
 
     /**
