@@ -1,8 +1,8 @@
 #!/usr/bin/env php
 <?php
 
-if (PHP_VERSION_ID < 80200) {
-    fwrite(STDERR, sprintf('phpspec 9 needs PHP 8.2 or newer; this is PHP %s.%s', PHP_VERSION, PHP_EOL));
+if (PHP_VERSION_ID < 80300) {
+    fwrite(STDERR, sprintf('phpspec 9 needs PHP 8.3 or newer; this is PHP %s.%s', PHP_VERSION, PHP_EOL));
     exit(1);
 }
 
