@@ -10,6 +10,11 @@ final class StepTypesSpecBook
     public function __construct(public string $author, public string $isbn) {}
 }
 
+final class StepTypesSpecShelf
+{
+    public string $name = 'fiction';
+}
+
 if (!function_exists('step_types_spec_book')) {
     #[ParameterType]
     function step_types_spec_book(string $author, string $isbn): StepTypesSpecBook
@@ -21,6 +26,12 @@ if (!function_exists('step_types_spec_book')) {
     function step_types_spec_json(string $text): array
     {
         return json_decode($text, true);
+    }
+
+    #[ParameterType]
+    function step_types_spec_shelf(): StepTypesSpecShelf
+    {
+        return new StepTypesSpecShelf();
     }
 }
 
@@ -36,7 +47,7 @@ describe(StepTypes::class, function () {
         return null;
     });
 
-    this('types', fn() => StepTypes::of(new ReflectionFunction('step_types_spec_book'), new ReflectionFunction('step_types_spec_json')));
+    this('types', fn() => StepTypes::of(new ReflectionFunction('step_types_spec_book'), new ReflectionFunction('step_types_spec_json'), new ReflectionFunction('step_types_spec_shelf')));
 
     context('found', function () {
         it('finds the functions declared with a type attribute in the files it is given', function () {
@@ -85,6 +96,11 @@ describe(StepTypes::class, function () {
             $arguments = $this->types->arguments(fn(StepTypesSpecBook $book, int $price) => null, ['Ann', '123', '9'], null, null);
 
             expect($arguments)->toBeLike([new StepTypesSpecBook('Ann', '123'), '9']);
+        });
+
+        it('makes a typed parameter whose function takes no capture, with none left and after the last one', function () {
+            expect($this->types->arguments(fn(StepTypesSpecShelf $shelf) => null, [], null, null))->toBeLike([new StepTypesSpecShelf()]);
+            expect($this->types->arguments(fn(string $who, StepTypesSpecShelf $shelf) => null, ['Ann'], null, null))->toBeLike(['Ann', new StepTypesSpecShelf()]);
         });
 
         it('passes captures no parameter takes, and those a variadic takes, as they are', function () {

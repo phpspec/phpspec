@@ -564,6 +564,42 @@ Feature: Story BDD with Gherkin
     Then the exit code should be 0
     And the output should contain "2 steps (2 passed)"
 
+  Scenario: A parameter type whose function takes no capture makes the object a step asks for
+    Given a feature file "features/library.feature":
+      """
+      Feature: Library
+        Scenario: The default book
+          Given the default book exists
+      """
+    And a file "features/support/types.php":
+      """
+      <?php
+
+      use PhpSpec\StoryBDD\ParameterType;
+
+      final class DefaultBook
+      {
+          public string $author = 'Ada';
+      }
+
+      #[ParameterType]
+      function defaultBook(): DefaultBook
+      {
+          return new DefaultBook();
+      }
+      """
+    And a step file "features/steps/library.steps.php":
+      """
+      <?php
+
+      given('the default book exists', function (DefaultBook $book) {
+          expect($book->author)->toBe('Ada');
+      });
+      """
+    When I run phpspec run in a fresh process with option "features/library.feature"
+    Then the exit code should be 0
+    And the output should contain "1 step (1 passed)"
+
   Scenario: Parallel workers make the objects the parameter types declare, each loading the support files itself
     Given a feature file "features/library.feature":
       """

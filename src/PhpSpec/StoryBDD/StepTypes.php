@@ -83,9 +83,9 @@ final readonly class StepTypes
 
     /**
      * The arguments a step closure is called with: each parameter a type makes
-     * takes as many captures as its function does, any other the next capture
-     * as it is, and the doc string goes through the type its parameter is
-     * named after; the table comes last.
+     * takes as many captures as its function does, none included, any other
+     * the next capture as it is, and the doc string goes through the type its
+     * parameter is named after; the table comes last.
      *
      * @param list<string> $captures
      * @return list<mixed>
@@ -99,13 +99,17 @@ final readonly class StepTypes
         $next = 0;
 
         foreach ($parameters as $parameter) {
-            if ($next >= count($captures) || $parameter->isVariadic()) {
+            if ($parameter->isVariadic()) {
                 break;
             }
 
             $make = $this->parameterTypeOf($parameter);
 
             if ($make === null) {
+                if ($next >= count($captures)) {
+                    break;
+                }
+
                 $arguments[] = $captures[$next++];
 
                 continue;
