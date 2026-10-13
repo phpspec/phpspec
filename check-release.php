@@ -9,7 +9,7 @@
 
 // Get the version reported by bin/phpspec
 $binary = file_get_contents('bin/phpspec');
-if ($binary === false || !preg_match_all('/(?<major>[5-9])\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)/', $binary, $matches) || count($matches[0]) !== 1) {
+if ($binary === false || !preg_match_all('/(?<major>[5-9])\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<suffix>-[0-9A-Za-z.]+)?/', $binary, $matches) || count($matches[0]) !== 1) {
     echo "👎 could not read version from binary file\n";
     exit(1);
 }
@@ -37,14 +37,14 @@ if (!preg_match("/$major\.$minor\.x-dev/", $composer, $matches)) {
 
 echo "👍 composer.json contains branch alias {$matches[0]}\n";
 
-// Check CHANGES.md heading
+// Check CHANGES.md heading: the version the binary reports, pre-release suffix included
 $changelog = file_get_contents('CHANGES.md');
 if ($changelog === false) {
     echo "👎 could not read CHANGES.md\n";
     exit(1);
 }
 
-if (!preg_match("/## \[$major\.$minor\.$patch\]/", $changelog, $matches)) {
+if (!preg_match('/## \[' . preg_quote($version, '/') . '\]/', $changelog, $matches)) {
     echo "👎 CHANGES.md does not contain matching heading\n";
     exit(1);
 }
@@ -59,7 +59,7 @@ if (!file_exists('phpstan.neon')) {
 
 echo "👍 phpstan.neon exists\n";
 
-// Check spec suite passes (dry run — just verify the binary works)
+// Check spec suite passes (a dry run: just verify the binary works)
 $specOutput = [];
 $specExit = 0;
 exec('php bin/phpspec run --format=dot 2>&1', $specOutput, $specExit);
