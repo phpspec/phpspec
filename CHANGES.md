@@ -4,22 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [8.3.1]
-### Fixed
-- Bump `phpspec/prophecy` constraint to `^1.26.1` to fix compatibility issues that were breaking CI and had prevented the PHAR from being published with the 8.3.0 release
+## [9.0.0-rc.1]
 
-## [8.3.0]
 ### Added
-- Support `sebastian/exporter` 8.x to be compatible with PHPUnit 13 [@Jean85](https://github.com/Jean85)
+ - Support for PHP 8.6
 
-## [8.2.0](https://github.com/phpspec/phpspec/compare/8.1.0...8.2.0)
-### Added
-- PHP 8.5 compatibility
+## [9.0.0-beta]
 
-## [8.1.0](https://github.com/phpspec/phpspec/compare/8.0.0...8.1.0)
 ### Added
-- Symfony 8 compatibility
-
-## [8.0.0](https://github.com/phpspec/phpspec/compare/7.6.0...8.0.0)
-### Added
-- PHP 8.4 compatibility [@jrfnl](https://github.com/jrfnl) [@andypost](https://github.com/andypost)
+ - AI support: agent formatter, pair programming, refactor/next/generate commands, AI console/repl
+ - Story BDD: given/when/then + browser testing
+ - Parallel runner
+ - Support for pcov
+ - More code generation: interfaces from mocks, spec new methods, --fake

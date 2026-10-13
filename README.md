@@ -30,7 +30,7 @@ Write your spec in `spec/App/Calculator.spec.php`:
 use App\Calculator;
 
 describe(Calculator::class, function () {
-    let('calculator', fn () => new Calculator());
+    this('calculator', fn () => new Calculator());
 
     it('adds two numbers', function () {
         expect($this->calculator->add(2, 3))->toBe(5);
@@ -63,7 +63,7 @@ Finished in 0.0042 seconds
 
 ## Features
 
-- **Jasmine/RSpec-style DSL**: `describe`, `context`, `it`, `let`, `expect`
+- **Jasmine/RSpec-style DSL**: `describe`, `context`, `it`, `this`, `expect`
 - **30+ built-in matchers**: `toBe`, `toBeTrue`, `toContain`, `toThrow`, `toMatch`, `toHaveProperty`, and more
 - **Negation**: `expect($x)->not()->toBe($y)`
 - **Custom matchers**: `addMatcher('toBePrime', fn ($n) => isPrime($n), 'Expected %s to be prime')`

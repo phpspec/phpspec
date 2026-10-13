@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(Exemplify::class, function () {
 
-    let('exemplify', fn(Filesystem $fs) => new Exemplify(new SpecGenerator('spec', $fs)));
+    this('exemplify', fn(Filesystem $fs) => new Exemplify(new SpecGenerator('spec', $fs)));
 
     it('instantiates', fn() => expect($this->exemplify)->toBeAnInstanceOf(Exemplify::class));
 

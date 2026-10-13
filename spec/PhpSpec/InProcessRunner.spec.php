@@ -8,7 +8,7 @@ use PhpSpec\InProcessResult;
 use PhpSpec\InProcessRunner;
 
 describe(InProcessRunner::class, function () {
-    let("inProcessRunner", fn() => new InProcessRunner());
+    this("inProcessRunner", fn() => new InProcessRunner());
 
     it("leaves the shell verbosity as it found it after a quiet inner run", function () {
         $project = sys_get_temp_dir() . '/phpspec_quiet_' . uniqid();
@@ -32,7 +32,7 @@ describe(InProcessRunner::class, function () {
         expect($this->inProcessRunner)->toBeAnInstanceOf(InProcessRunner::class));
 
     describe('::parseArgs', function () {
-        let('parseArgs', function () {
+        this('parseArgs', function () {
             $ref = new ReflectionMethod(InProcessRunner::class, 'parseArgs');
             return $ref->getClosure();
         });
@@ -156,7 +156,7 @@ describe(InProcessRunner::class, function () {
     });
 
     describe('::checkForClassConflicts', function () {
-        let('checkForClassConflicts', function () {
+        this('checkForClassConflicts', function () {
             $ref = new ReflectionMethod(InProcessRunner::class, 'checkForClassConflicts');
             return $ref->getClosure();
         });

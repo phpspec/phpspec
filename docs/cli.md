@@ -129,8 +129,10 @@ pre-commit hooks. See [Guard](guard.md).
 
 Describes the spec-writing API from the code itself: every DSL function and
 matcher with its real signature and summary, the mock and story functions, and
-the timing rules nothing can introspect (expectations are judged at the end of
-the example; `toThrow()` runs its callable where it is written).
+the timing rules nothing can introspect (a value expectation is judged on the
+line it is written; `toBeCalled()` is declared before the act and judged over
+the whole example, `toHaveBeenCalled()` on its line, after the act; `toThrow()`
+runs its callable where it is written).
 
 ```bash
 vendor/bin/phpspec api                   # as prose
@@ -564,7 +566,7 @@ change while the integration is being finalised.
   at example granularity. All paths are relative to the project root.
 - **`time`** is the example's wall-clock duration in seconds and **`memory`**
   its peak memory usage in bytes, both measured across the example *and* its
-  `let`/`beforeEach`/`afterEach` hooks, so setup code counts as covered by the
+  `this`/`beforeEach`/`afterEach` hooks, so setup code counts as covered by the
   example that ran it.
 - **`checksum`**/**`spec_checksum`** are MD5 hashes of the file contents,
   letting consumers detect stale coverage data.

@@ -4,7 +4,7 @@ use PhpSpec\Console\Command\Run\SourceAnalyser;
 
 describe(SourceAnalyser::class, function () {
 
-    let('analyser', fn() => new SourceAnalyser());
+    this('analyser', fn() => new SourceAnalyser());
 
     context('countArguments', function () {
 
@@ -158,11 +158,11 @@ describe(SourceAnalyser::class, function () {
             expect($result)->toBe('App\\Calculator');
         });
 
-        it('resolves variable from let() binding', function () {
+        it('resolves variable from this() binding', function () {
             $lines = [
                 "use App\\Calculator;\n",
                 "describe(Calculator::class, function() {\n",
-                "    let(\"calc\", fn() => new Calculator());\n",
+                "    this(\"calc\", fn() => new Calculator());\n",
                 "    it(\"adds\", fn() => expect(\$this->calc->add(1,2))->toBe(3));\n",
             ];
 
@@ -170,10 +170,10 @@ describe(SourceAnalyser::class, function () {
             expect($result)->toBe('App\\Calculator');
         });
 
-        it('resolves short name via use import from let()', function () {
+        it('resolves short name via use import from this()', function () {
             $lines = [
                 "use Rafael\\Duarte;\n",
-                "let(\"duarte\", fn() => new Duarte());\n",
+                "this(\"duarte\", fn() => new Duarte());\n",
                 "expect(\$this->duarte->greet())->toBe(\"hi\");\n",
             ];
 

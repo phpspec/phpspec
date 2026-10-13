@@ -564,6 +564,56 @@ Feature: Story BDD with Gherkin
     Then the exit code should be 0
     And the output should contain "2 steps (2 passed)"
 
+  Scenario: Parallel workers make the objects the parameter types declare, each loading the support files itself
+    Given a feature file "features/library.feature":
+      """
+      Feature: Library
+        Scenario: Pricing a book
+          Given a book by "Ann" with isbn "123" costing 9
+          Then the book is "Ann, 123" at 9
+      """
+    And a feature file "features/shelf.feature":
+      """
+      Feature: Shelf
+        Scenario: Shelving a book
+          Given a book by "Bob" with isbn "456" costing 7
+          Then the book is "Bob, 456" at 7
+      """
+    And a file "features/support/types.php":
+      """
+      <?php
+
+      use PhpSpec\StoryBDD\ParameterType;
+
+      final class Book
+      {
+          public function __construct(public string $author, public string $isbn) {}
+      }
+
+      #[ParameterType]
+      function book(string $author, string $isbn): Book
+      {
+          return new Book($author, $isbn);
+      }
+      """
+    And a step file "features/steps/library.steps.php":
+      """
+      <?php
+
+      given('a book by {string} with isbn {string} costing {int}', function (Book $book, int $price) {
+          $this->book = $book;
+          $this->price = $price;
+      });
+
+      then('the book is {string} at {int}', function (string $book, int $price) {
+          expect($this->book->author . ', ' . $this->book->isbn)->toBe($book);
+          expect($this->price)->toBe($price);
+      });
+      """
+    When I run phpspec run in a fresh process with option "features --parallel=2"
+    Then the exit code should be 0
+    And the output should contain "4 steps (4 passed)"
+
   Scenario: A doc string type turns the doc string for the parameter named after it
     Given a feature file "features/settings.feature":
       """

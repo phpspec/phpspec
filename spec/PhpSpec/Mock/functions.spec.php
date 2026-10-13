@@ -75,10 +75,10 @@ describe("Mock global functions", function () {
         expect($m)->toBeAnInstanceOf(ArgumentMatcher::class);
     });
 
-    context("injection-style let", function () {
-        let(fn(\JsonSerializable $serializer) => null);
+    context("injection-style this()", function () {
+        this(fn(\JsonSerializable $serializer) => null);
 
-        it("injects mocks into let closure parameters", function (\JsonSerializable $serializer) {
+        it("injects mocks into this() closure parameters", function (\JsonSerializable $serializer) {
             expect($serializer)->toBeAnInstanceOf(\JsonSerializable::class);
         });
     });

@@ -307,7 +307,7 @@ Feature: AI-powered refactoring
     Then the exit code should be 1
     And the output should contain "Checking the specs..."
     And the output should contain "Specs must pass before refactoring"
-    And the output should contain "spec/App/Till.spec.php:6  Till > App\Till > rings up: Expected true to be false"
+    And the output should contain "spec/App/Till.spec.php:6  App\Till > rings up: Expected true to be false"
 
   Scenario: With no argument and no source, refactor says there is none
     Given a phpspec.yaml config:
@@ -435,7 +435,7 @@ Feature: AI-powered refactoring
       """
     And the output should contain:
       """
-      spec/App/Broken.spec.php:6  Broken > App\\Broken > fails: Expected true to be false
+      spec/App/Broken.spec.php:6  App\\Broken > fails: Expected true to be false
       """
     And the output should not contain "Checking the specs"
 

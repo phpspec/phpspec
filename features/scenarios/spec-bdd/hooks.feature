@@ -25,7 +25,7 @@ Feature: Lifecycle hooks
       """
       <?php
       describe('AfterHooks', function () {
-          let('log', fn() => []);
+          this('log', fn() => []);
 
           afterEach(function () {
               $this->log[] = 'cleaned';
@@ -65,7 +65,7 @@ Feature: Lifecycle hooks
       """
       <?php
       describe('NestedHooks', function () {
-          let('trace', fn() => []);
+          this('trace', fn() => []);
 
           beforeEach(function () {
               $this->trace[] = 'outer';

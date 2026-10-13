@@ -33,12 +33,12 @@ $logger = dummy(Logger::class);
 
 ### Type-Hinted Mock Injection
 
-Both `it()` and `let()` closures support type-hinted parameters that are automatically resolved as mocks:
+Both `it()` and `this()` closures support type-hinted parameters that are automatically resolved as mocks:
 
 ```php
 describe(UserService::class, function () {
-    // Injected via let()
-    let('service', fn (UserRepository $repo) => new UserService($repo));
+    // Injected via this()
+    this('service', fn (UserRepository $repo) => new UserService($repo));
 
     // Injected via it()
     it('finds a user', function (UserRepository $repo) {
@@ -221,6 +221,13 @@ it('saves the user', function (UserRepository $repo) {
 
 Negated, it asks that the call was not made: `expect($repo->save($other))->not()->toHaveBeenCalled()`.
 
+A count follows it, judged from the same calls: `->once()`, `->twice()`,
+`->exactly(3)->times()`, `->atLeast(2)->times()` or `->atMost(2)->times()`.
+
+```php
+expect($mailer->send(any()))->toHaveBeenCalled()->twice();
+```
+
 
 ### Counting calls
 
@@ -319,12 +326,12 @@ expect($repo->delete(1))->not()->toBeCalled();
 expect($logger->log('other'))->not()->toBeCalled();
 ```
 
-## Using Mocks with `let()`
+## Using Mocks with `this()`
 
 ```php
 describe(Notifier::class, function () {
-    let('mailer', fn () => mock(Mailer::class));
-    let('notifier', fn () => new Notifier($this->mailer));
+    this('mailer', fn () => mock(Mailer::class));
+    this('notifier', fn () => new Notifier($this->mailer));
 
     it('sends an email', function () {
         expect($this->mailer->send('hello'))->toBeCalled();
@@ -333,14 +340,14 @@ describe(Notifier::class, function () {
 });
 ```
 
-Or using type-hinted injection in `let()`:
+Or using type-hinted injection in `this()`:
 
 ```php
 describe(Notifier::class, function () {
-    let('notifier', fn (Mailer $mailer) => new Notifier($mailer));
+    this('notifier', fn (Mailer $mailer) => new Notifier($mailer));
 
     it('sends an email', function () {
-        // $this->mailer is available from let() injection
+        // $this->mailer is available from this() injection
     });
 });
 ```
@@ -361,6 +368,7 @@ so a `not()->toBeCalled()` can never pass for a call that could not happen.
 | `$repo->save($user)->shouldBeCalledTimes(2)` | `expect($repo->save($user))->toBeCalled()->exactly(2)->times()` |
 | `$repo->save(Argument::cetera())->shouldNotBeCalled()` | `expect($repo->save(cetera()))->not()->toBeCalled()` |
 | `$repo->save($user)->shouldHaveBeenCalled()` | `expect($repo->save($user))->toHaveBeenCalled()` |
+| `$repo->save($user)->shouldHaveBeenCalledTimes(2)` | `expect($repo->save($user))->toHaveBeenCalled()->twice()` |
 | `Argument::any()`, `Argument::cetera()` | `any()`, `cetera()` |
 | `Argument::type('string')` | `type('string')` |
 | `Argument::that(fn ($user) => ...)` | `satisfy(fn ($user) => ...)` |

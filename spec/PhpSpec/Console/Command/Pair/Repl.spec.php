@@ -31,9 +31,9 @@ describe(Repl::class, function () {
         allow($fs->scandir(any()))->toReturn([]);
     });
 
-    let('buffer', fn() => new BufferedOutput());
-    let('pairOutput', fn() => new PairOutput($this->buffer));
-    let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
+    this('buffer', fn() => new BufferedOutput());
+    this('pairOutput', fn() => new PairOutput($this->buffer));
+    this('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),
         new ClassGenerator(SourceLayout::under('src'), $fs),
         new Configuration(),

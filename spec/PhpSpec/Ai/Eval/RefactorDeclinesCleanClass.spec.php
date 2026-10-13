@@ -71,9 +71,9 @@ describe('E15 refactor: a clean class is declined, replayed from a live session'
             use Brew\Till;
 
             describe(Till::class, function () {
-                let('menu', fn () => mock(Menu::class));
-                let('discount', fn () => mock(Discount::class));
-                let('till', fn () => new Till($this->menu, $this->discount));
+                this('menu', fn () => mock(Menu::class));
+                this('discount', fn () => mock(Discount::class));
+                this('till', fn () => new Till($this->menu, $this->discount));
 
                 beforeEach(function () {
                     allow($this->menu->priceOf('espresso'))->toReturn(new Money(220));

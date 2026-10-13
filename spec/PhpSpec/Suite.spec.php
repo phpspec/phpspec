@@ -14,7 +14,7 @@ use PhpSpec\Suite;
 
 describe(Suite::class, function() {
 
-    let("suite", fn() => new Suite([]));
+    this("suite", fn() => new Suite([]));
 
     it("instantiates", fn() => expect($this->suite)->toBeAnInstanceOf(Suite::class));
 

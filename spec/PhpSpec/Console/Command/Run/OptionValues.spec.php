@@ -9,7 +9,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 
 describe(OptionValues::class, function () {
 
-    let('values', fn() => fn(array $options): OptionValues => new OptionValues(new ArrayInput($options, (new Run(new Loader(), new Runner(), new Configuration()))->getDefinition())));
+    this('values', fn() => fn(array $options): OptionValues => new OptionValues(new ArrayInput($options, (new Run(new Loader(), new Runner(), new Configuration()))->getDefinition())));
 
     it('takes a run given no values at all', function () {
         expect(($this->values)([])->problem())->toBeNull();

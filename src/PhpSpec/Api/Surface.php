@@ -49,7 +49,7 @@ use ReflectionParameter;
 final readonly class Surface
 {
     private const DSL = [
-        'describe', 'context', 'it', 'its', 'let', 'expect',
+        'describe', 'context', 'it', 'its', 'this', 'expect',
         'beforeAll', 'beforeEach', 'afterEach', 'afterAll',
         'pending', 'skip', 'PhpSpec\attach', 'addMatcher',
         'xdescribe', 'xcontext', 'xit', 'fdescribe', 'fcontext', 'fit',
@@ -71,8 +71,8 @@ final readonly class Surface
         'An expectation is judged on the line it is written, on its subject as it stands there: what the example does to an object afterwards changes neither the verdict nor what a failure reports.',
         'A failed expectation does not stop the example: every expectation is judged, in the order written, and the failure detail shows the first that did not hold.',
         'toThrow() runs its callable where the expectation is written, so what follows sees what it did.',
-        'toBeCalled() and its counts are declared before the act and judge the calls made during the whole example; toHaveBeenCalled() is asked after the act and judges the calls made so far.',
-        'let() values are built the first time an example reads them, once for that example; a let() no example reads never runs, one read in a beforeEach is built before the example, and one whose closure throws fails that example alone.',
+        'toBeCalled() and its counts are declared before the act and judge the calls made during the whole example; toHaveBeenCalled() is asked after the act and judges the calls made so far, as does a count that follows it.',
+        'this() values are built the first time an example reads them, once for that example; a this() no example reads never runs, one read in a beforeEach is built before the example, and one whose closure throws fails that example alone.',
     ];
 
     private const DOCS = [

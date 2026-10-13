@@ -138,7 +138,7 @@ final class SourceAnalyser
 
     /**
      * Searches backward from a given line to find a "new ClassName" assignment for a variable.
-     * Also matches let("varName", fn() => new ClassName()) and $this->varName patterns.
+     * Also matches this("varName", fn() => new ClassName()) and $this->varName patterns.
      *
      * @param array<string> $lines the source file lines
      * @param int $beforeLine the line index to search backward from
@@ -155,8 +155,8 @@ final class SourceAnalyser
                 $shortName = $m[1];
                 break;
             }
-            // Match: let("var", fn() => new ClassName(...))
-            if (preg_match('/let\s*\(\s*["\']' . preg_quote($varName, '/') . '["\']\s*,\s*fn\s*\(.*?\)\s*=>\s*new\s+([A-Za-z0-9_\\\\]+)/', $lines[$i], $m)) {
+            // Match: this("var", fn() => new ClassName(...))
+            if (preg_match('/this\s*\(\s*["\']' . preg_quote($varName, '/') . '["\']\s*,\s*fn\s*\(.*?\)\s*=>\s*new\s+([A-Za-z0-9_\\\\]+)/', $lines[$i], $m)) {
                 $shortName = $m[1];
                 break;
             }

@@ -6,7 +6,7 @@ use PhpSpec\Filesystem;
 
 describe(InterfaceGenerator::class, function () {
 
-    let('generator', fn(Filesystem $fs) => new InterfaceGenerator(SourceLayout::under('src'), $fs));
+    this('generator', fn(Filesystem $fs) => new InterfaceGenerator(SourceLayout::under('src'), $fs));
 
     it("instantiates", function () {
         expect($this->generator)->toBeAnInstanceOf(InterfaceGenerator::class);

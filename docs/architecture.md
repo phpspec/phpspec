@@ -64,7 +64,7 @@ Represents a single `.spec.php` file. On `run()`:
 
 ### 7. Subject: `Subject`
 
-A dynamic-property object (`#[AllowDynamicProperties]`) that serves as `$this` inside spec closures. Loading the spec file triggers `describe()`/`it()`/`let()` calls, which build the spec tree via the scope stack.
+A dynamic-property object (`#[AllowDynamicProperties]`) that serves as `$this` inside spec closures. Loading the spec file triggers `describe()`/`it()`/`this()` calls, which build the spec tree via the scope stack.
 
 ### 8. Context: `Context`
 
@@ -86,7 +86,7 @@ Represents an `it` block. On `run()`:
 
 ## Event Dispatcher
 
-The `Dispatcher` uses a **scope stack** for structure building. DSL functions (`describe`, `it`, `let`) add blocks to `Dispatcher::currentScope()` rather than broadcasting events.
+The `Dispatcher` uses a **scope stack** for structure building. DSL functions (`describe`, `it`, `this`) add blocks to `Dispatcher::currentScope()` rather than broadcasting events.
 
 ### Events
 
@@ -97,7 +97,7 @@ The `Dispatcher` uses a **scope stack** for structure building. DSL functions (`
 | `SpecificationFinished` | A spec file finishes running |
 | `ContextCreated` | `describe()`/`context()` is called |
 | `ContextStarted` | A context block begins execution |
-| `ContextModified` | `let()` is called |
+| `ContextModified` | `this()` is called |
 | `ContextRan` | A context block finishes |
 | `ExampleCreated` | `it()`/`its()` is called |
 | `ExampleStarted` | An example begins execution |

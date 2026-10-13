@@ -59,6 +59,49 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A count on toHaveBeenCalled() is judged at once from the calls made so far
+    Given an interface "src/App/Logger.php":
+      """
+      <?php
+      namespace App;
+
+      interface Logger {
+          public function log(string $message): void;
+      }
+      """
+    And a spec with example:
+      """
+      $logger = mock(App\Logger::class);
+      $logger->log('hello');
+      $logger->log('hello');
+      expect($logger->log('hello'))->toHaveBeenCalled()->twice();
+      expect($logger->log('hello'))->toHaveBeenCalled()->atLeast(1)->times();
+      expect($logger->log(any()))->toHaveBeenCalled()->exactly(2)->times();
+      """
+    When I run the spec
+    Then all examples should pass
+
+  Scenario: A count the calls made so far do not meet fails on its line, naming the count received
+    Given an interface "src/App/Logger.php":
+      """
+      <?php
+      namespace App;
+
+      interface Logger {
+          public function log(string $message): void;
+      }
+      """
+    And a spec with example:
+      """
+      $logger = mock(App\Logger::class);
+      $logger->log('hello');
+      $logger->log('hello');
+      expect($logger->log('hello'))->toHaveBeenCalled()->once();
+      """
+    When I run the spec
+    Then the output should contain "Expected App\Logger::log() to have been called exactly 1 time(s), but was called 2 time(s)"
+    And the exit code should be 1
+
   Scenario: toHaveBeenCalled() judges the calls made before it was written
     Given an interface "src/App/Logger.php":
       """
@@ -161,7 +204,7 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
-  Scenario: A mock injected into a let is there as a property, as the docs show
+  Scenario: A mock injected into a this() is there as a property, as the docs show
     Given an interface "src/App/Mailer.php":
       """
       <?php
@@ -185,7 +228,7 @@ Feature: Mocking
       """
       <?php
       describe('App\Notifier', function () {
-          let('notifier', fn (App\Mailer $mailer) => new App\Notifier($mailer));
+          this('notifier', fn (App\Mailer $mailer) => new App\Notifier($mailer));
 
           it('sends an email', function () {
               expect($this->mailer->send('hello'))->toBeCalled();
@@ -710,7 +753,7 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
-  Scenario: let() values are fresh per example
+  Scenario: this() values are fresh per example
     Given an interface "src/App/Counter.php":
       """
       <?php
@@ -722,8 +765,8 @@ Feature: Mocking
     And a spec file "spec/App/LetResetSpec.spec.php":
       """
       <?php
-      describe('let reset', function() {
-          let('counter', fn(App\Counter $counter) => $counter);
+      describe('this() reset', function() {
+          this('counter', fn(App\Counter $counter) => $counter);
 
           it('first example calls increment', function() {
               expect($this->counter->increment())->toBeCalled()->once();

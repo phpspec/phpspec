@@ -3,7 +3,7 @@
 use PhpSpec\Mock\CallingFile;
 
 describe(CallingFile::class, function () {
-    let('written', fn() => function (string $code): string {
+    this('written', fn() => function (string $code): string {
         $path = tempnam(sys_get_temp_dir(), 'phpspec_calling_file_');
         file_put_contents($path, $code);
 

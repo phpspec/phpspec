@@ -8,7 +8,7 @@ describe(HeldCalls::class, function () {
     beforeEach(fn () => HeldCalls::forget());
     afterEach(fn () => HeldCalls::forget());
 
-    let('refusal', fn () => fn (string $call): UnexpectedCallException => new UnexpectedCallException($call));
+    this('refusal', fn () => fn (string $call): UnexpectedCallException => new UnexpectedCallException($call));
 
     it('gives back the refusal of the first call no check claimed, and holds nothing after', function () {
         $double = new stdClass();

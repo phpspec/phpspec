@@ -59,7 +59,7 @@ describe(ClassGenerator::class, function () {
         expect($written)->toContain("<?php\n\nclass TimeoutException extends Exception\n{\n}\n");
         expect($written)->not()->toContain('use Exception;');
     });
-    let('generator', fn(Filesystem $fs) => new ClassGenerator(SourceLayout::under('src'), $fs));
+    this('generator', fn(Filesystem $fs) => new ClassGenerator(SourceLayout::under('src'), $fs));
 
     it("instantiates", function () {
         expect($this->generator)->toBeAnInstanceOf(ClassGenerator::class);

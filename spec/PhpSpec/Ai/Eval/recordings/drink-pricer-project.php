@@ -64,7 +64,7 @@ return [
         use Brew\Money;
 
         describe(DrinkPricer::class, function () {
-            let('pricer', fn () => new DrinkPricer());
+            this('pricer', fn () => new DrinkPricer());
 
             it('prices a drink by its size', function () {
                 expect($this->pricer->priceOf('small', 'dairy', 1))->toBeLike(new Money(250));

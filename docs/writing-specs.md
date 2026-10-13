@@ -1,6 +1,6 @@
 # Writing Specs
 
-PhpSpec uses a Jasmine/RSpec-style DSL built on global functions: `describe`, `context`, `it`, `its`, `let`, and `expect`.
+PhpSpec uses a Jasmine/RSpec-style DSL built on global functions: `describe`, `context`, `it`, `its`, `this`, and `expect`.
 
 ## `describe(string $title, Closure $examples)`
 
@@ -58,33 +58,33 @@ it('sends notifications', function (Mailer $mailer) {
 });
 ```
 
-## `let(string $property, Closure $setter)`
+## `this(string $property, Closure $setter)`
 
-Declares a property on `$this` for the examples of the block it is in, nested blocks included. The value is built lazily: the closure runs the first time an example reads the property, once for that example, and the example keeps that value. The next example gets a value of its own. A let no example reads is never built.
+Declares a property on `$this` for the examples of the block it is in, nested blocks included. The value is built lazily: the closure runs the first time an example reads the property, once for that example, and the example keeps that value. The next example gets a value of its own. A this() no example reads is never built.
 
 ```php
 describe(Calculator::class, function() {
-    let("calculator", fn() => new Calculator());
+    this("calculator", fn() => new Calculator());
 
     it("instantiates", fn() =>
         expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
 });
 ```
 
-When the example is the first to read it, the `beforeEach` hooks have run by then: a hook can arrange a double the let consumes, and a let may read another declared after it. A closure that throws fails the example that read it, reported as that example's error; the other examples still run.
+When the example is the first to read it, the `beforeEach` hooks have run by then: a hook can arrange a double the this() consumes, and a this() may read another declared after it. A closure that throws fails the example that read it, reported as that example's error; the other examples still run.
 
 To build a value before the example starts, because the example relies on what building it does (a server started, a file written), read it in a `beforeEach`. It is still built once for that example:
 
 ```php
-let('server', fn () => TestServer::start());
+this('server', fn () => TestServer::start());
 beforeEach(fn () => $this->server);
 ```
 
-`let()` also supports type-hinted mock injection:
+`this()` also supports type-hinted mock injection:
 
 ```php
-let("generator", fn () => mock(SpecGenerator::class));
-let("service", fn (UserRepository $repo) => new UserService($repo));
+this("generator", fn () => mock(SpecGenerator::class));
+this("service", fn (UserRepository $repo) => new UserService($repo));
 ```
 
 ## `expect(mixed $subject)`

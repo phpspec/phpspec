@@ -23,7 +23,7 @@ describe(Request::class, function () {
         });
     });
 
-    let('profile', fn() => new CommandProfile(name: 'generate', body: 'THE-BODY'));
+    this('profile', fn() => new CommandProfile(name: 'generate', body: 'THE-BODY'));
 
     it('composes system as body, then the shared cycle, then the step instruction', function (Filesystem $fs) {
         $step = new Step(Phase::WriteSteps, null, 'features/adding.feature', 'steps are undefined');

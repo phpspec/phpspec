@@ -105,7 +105,7 @@ final class Expectation extends BaseExpectation
     public function toBeCalled(): CallCountExpectation
     {
         $double = $this->getGeneratedDouble();
-        $class = $double->______PhpSpecNameOfClassDoubled();
+        $class = ltrim($double->______PhpSpecNameOfClassDoubled(), '\\');
         $calls = $double->______PhpSpecGetStubbedCalls();
         $method = $calls->peek();
         if ($method === null) {
@@ -144,12 +144,13 @@ final class Expectation extends BaseExpectation
      * handed has been made: the past tense, for after the act, which needs
      * nothing declared before it. The arguments it was written with are part
      * of the question. toBeCalled() is the future tense, declared before the
-     * act and judged when the example ends.
+     * act and judged when the example ends. A count may follow, judged from
+     * the same calls.
      */
-    public function toHaveBeenCalled(): static
+    public function toHaveBeenCalled(): CallsMade
     {
         $double = $this->getGeneratedDouble();
-        $class = $double->______PhpSpecNameOfClassDoubled();
+        $class = ltrim($double->______PhpSpecNameOfClassDoubled(), '\\');
         $calls = $double->______PhpSpecGetStubbedCalls();
         $method = $calls->peek();
 
@@ -166,12 +167,34 @@ final class Expectation extends BaseExpectation
         $made = $calls->countCallsToWithArgs($methodName, $argPattern) >= 1;
         HeldCalls::claim($double, $methodName, $made === $this->negated ? null : $argPattern);
 
-        return $this->should(
+        $this->should(
             fn(): bool => $calls->countCallsToWithArgs($methodName, $argPattern) >= 1,
             "Expected $class::$methodName() to have been called",
             new CallComparison($class, $methodName, $argPattern, 'at least 1', $calls),
             'toHaveBeenCalled',
         );
+
+        return new CallsMade(function (string $constraint, int $count, string $file, int $line) use ($class, $methodName, $argPattern, $calls): void {
+            $label = match ($constraint) {
+                'exactly' => "exactly $count",
+                'atLeast' => "at least $count",
+                default => "at most $count",
+            };
+            $actual = $calls->countCallsToWithArgs($methodName, $argPattern);
+
+            $this->judged(
+                fn(): bool => match ($constraint) {
+                    'exactly' => $actual === $count,
+                    'atLeast' => $actual >= $count,
+                    default => $actual <= $count,
+                },
+                "Expected $class::$methodName() to have been called $label time(s), but was called $actual time(s)",
+                new CallComparison($class, $methodName, $argPattern, $label, $calls),
+                'toHaveBeenCalled',
+                $file,
+                $line,
+            );
+        });
     }
 
 
@@ -190,8 +213,18 @@ final class Expectation extends BaseExpectation
     private function should(Closure $match, string $message, CallComparison $comparison, string $matcher): static
     {
         $trace = debug_backtrace()[1];
-        $file = $trace['file'] ?? 'unknown';
-        $line = $trace['line'] ?? 0;
+
+        return $this->judged($match, $message, $comparison, $matcher, (string) ($trace['file'] ?? 'unknown'), (int) ($trace['line'] ?? 0));
+    }
+
+    /**
+     * Judges a mock verification now, at the file and line the reader wrote it.
+     *
+     * @param Closure(): bool $match whether the calls received satisfy the expectation
+     * @return $this
+     */
+    private function judged(Closure $match, string $message, CallComparison $comparison, string $matcher, string $file, int $line): static
+    {
 
         if ($this->negated) {
             $originalMatch = $match;

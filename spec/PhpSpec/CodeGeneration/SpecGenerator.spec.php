@@ -5,7 +5,7 @@ use PhpSpec\Filesystem;
 
 describe(SpecGenerator::class, function () {
 
-    let('generator', fn(Filesystem $fs) => new SpecGenerator('spec', $fs));
+    this('generator', fn(Filesystem $fs) => new SpecGenerator('spec', $fs));
 
     it("instantiates", function () {
         expect($this->generator)->toBeAnInstanceOf(SpecGenerator::class);
@@ -78,7 +78,7 @@ describe(SpecGenerator::class, function () {
         <?php
 
         describe(Calculator::class, function() {
-            let("calculator", fn() => new Calculator());
+            this("calculator", fn() => new Calculator());
             it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
         });
         PHP);
@@ -96,7 +96,7 @@ describe(SpecGenerator::class, function () {
         <?php
 
         describe(Calculator::class, function() {
-            let("calculator", fn() => new Calculator());
+            this("calculator", fn() => new Calculator());
             it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
         });
         PHP);
@@ -120,7 +120,7 @@ describe(SpecGenerator::class, function () {
         <?php
 
         describe(Calculator::class, function() {
-            let("calculator", fn() => new Calculator());
+            this("calculator", fn() => new Calculator());
             it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
         });
         PHP);
@@ -136,7 +136,7 @@ describe(SpecGenerator::class, function () {
         <?php
 
         describe(Calculator::class, function() {
-            let("calculator", fn() => new Calculator());
+            this("calculator", fn() => new Calculator());
             it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
 
             it("should add", fn() => expect($this->calculator->add())->toBe(null));
@@ -181,7 +181,7 @@ describe(SpecGenerator::class, function () {
 
         expect($content)->toContain('use App\\Basket;');
         expect($content)->toContain('describe(Basket::class');
-        expect($content)->toContain('let("basket"');
+        expect($content)->toContain('this("basket"');
         expect($content)->toContain('it("instantiates"');
     });
 

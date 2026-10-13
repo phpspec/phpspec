@@ -33,7 +33,6 @@ use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ScenarioResult;
-use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
@@ -457,16 +456,18 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * The origin one level into a result: a spec or feature adds its title (and
-     * a feature the file it lives in), a scenario adds its title and the line
-     * that re-runs it. Anything else passes the origin through untouched.
+     * The origin one level into a result: a context or feature adds its title
+     * (and a feature the file it lives in), a scenario adds its title and the
+     * line that re-runs it. A spec file adds nothing: an entry is named by the
+     * describes and contexts it sits in, the path a --filter selects by, and
+     * `spec` already says which file. Anything else passes the origin through.
      */
     private function within(Origin $origin, Results $result): Origin
     {
         return match (true) {
             $result instanceof FeatureResult => $origin->within($result->getTitle(), $result->getPath()),
             $result instanceof ScenarioResult => $origin->within($result->getTitle(), line: $result->getLine()),
-            $result instanceof SpecificationResult, $result instanceof ContextResult => $origin->within($result->getTitle()),
+            $result instanceof ContextResult => $origin->within($result->getTitle()),
             default => $origin,
         };
     }
@@ -922,7 +923,7 @@ final class Agent extends AbstractFormatter
 
     /**
      * Addresses an example, always in its own spec file: `spec` is the site of
-     * what went wrong when that site is in the file (the expect() line, a let
+     * what went wrong when that site is in the file (the expect() line, a this()
      * binding that threw), else the line that declares the example; `rerun`
      * targets the declaring line, which phpspec resolves to this example and
      * no other. An error thrown inside the code under test, or an expectation

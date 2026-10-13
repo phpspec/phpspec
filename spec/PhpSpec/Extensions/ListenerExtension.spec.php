@@ -4,7 +4,7 @@ use PhpSpec\Extensions\ListenerExtension;
 
 describe(ListenerExtension::class, function () {
 
-    let('listener', fn() => new class extends ListenerExtension {
+    this('listener', fn() => new class extends ListenerExtension {
         public array $log = [];
 
         public function beforeSuite(): void

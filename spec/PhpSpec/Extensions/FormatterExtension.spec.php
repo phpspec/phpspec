@@ -4,7 +4,7 @@ use PhpSpec\Extensions\FormatterExtension;
 
 describe(FormatterExtension::class, function () {
 
-    let('formatter', fn() => new class extends FormatterExtension {
+    this('formatter', fn() => new class extends FormatterExtension {
         public function getName(): string
         {
             return 'test';

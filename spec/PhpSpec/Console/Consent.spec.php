@@ -9,8 +9,8 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(Consent::class, function () {
 
-    let('output', fn() => new BufferedOutput());
-    let('answering', fn() => function (Prompt $prompt, string ...$answers): Prompt {
+    this('output', fn() => new BufferedOutput());
+    this('answering', fn() => function (Prompt $prompt, string ...$answers): Prompt {
         allow($prompt->ask(any()))->toReturnUsing(function () use (&$answers): ?string {
             return array_shift($answers);
         });

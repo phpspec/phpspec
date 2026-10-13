@@ -4,7 +4,7 @@ use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\Filesystem;
 
 describe(FeatureLayout::class, function () {
-    let('layout', fn() => new FeatureLayout());
+    this('layout', fn() => new FeatureLayout());
 
     it('finds the features under features/scenarios when that directory exists, and the steps under features/steps', function (Filesystem $fs) {
         $base = getcwd() . '/features';

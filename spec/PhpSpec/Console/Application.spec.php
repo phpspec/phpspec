@@ -9,7 +9,7 @@ use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(Application::class, function() {
-    let("application", fn() => new Application());
+    this("application", fn() => new Application());
     it("instantiates", fn() => expect($this->application)->toBeAnInstanceOf(Application::class));
 
     it("is named phpspec and carries the version it was given as its version", function () {

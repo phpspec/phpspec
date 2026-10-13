@@ -27,7 +27,7 @@ This creates `spec/App/Calculator.spec.php`:
 use App\Calculator;
 
 describe(Calculator::class, function() {
-    let("calculator", fn() => new Calculator());
+    this("calculator", fn() => new Calculator());
     it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
 });
 ```

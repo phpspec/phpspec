@@ -4,455 +4,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [9.0.0-rc.1](https://github.com/phpspec/phpspec/compare/8.3.1...9.0.0-rc.1)
 
-### Added
- - PhpSpec runs on PHP 8.6
- - Coverage is collected with PCOV when it is enabled, else with Xdebug in coverage mode; `coverage_adapter: pcov` or `xdebug` in the config names one. A run that cannot collect says which engine it needs and the command that switches it on; under PCOV, a source directory outside `pcov.directory` is refused naming the directory to set
- - A file named `steps.php` holds step definitions as any `*.steps.php` does, wherever step files are looked for
- - A `{float}` step placeholder captures a decimal such as `4.5`, and a generated step definition takes a decimal in its text as `{float}` with a `float` parameter, where it used to read `{int}.{int}`
- - A line target that reaches no example shows, under the pretty and dot formatters, the seven lines around it with the target number in bold, so an off-by-one line can be corrected by sight
- - A run focused with `fit()` or `fdescribe()` says how many examples it left out, each pending with "left out by focus" as the reason; without a terminal, as in CI, the run fails on a focus, except under `--format=agent`, where the summary carries `focused` instead
- - An example that runs to the end without making an expectation is reported as risky: `!` in pretty, `R` in dot, a `Risky:` section, a `risky` count and an agent entry with state `risky`; the exit code is unchanged, nothing is red
- - `--tags` runs the scenarios a Cucumber tag expression selects (`@smoke and not @wip`, `(@a or @b) and not @c`), a feature's tags counting for every scenario in it; tags used to be parsed and nothing could select by them. `--filter` and `--tags` reach every `--parallel` worker, which used to run every example of a file the filter had let through
- - `it("title")` with no body declares a pending example, as `xit()` does, instead of an argument-count error that takes the whole context down
- - `--stop-on-pending`, and `stop_on_pending` in the config, halt the run at the first pending example; `--stop-on-problems` stops on one too
- - `describe` asks which mapped namespace a name under none of them belongs to, or keeps it as written; `default_namespace` in the config answers for every such name, in `describe` and `exemplify`; with nobody to answer and no default the name is refused with a remedy, exit code 1
- - `dummy()` makes a lenient double for a collaborator whose calls do not matter: it answers every call with a default and still takes stubs
- - `allow()` on its own declares a call as expected, a stub being optional: `allow($stock->reserve('tea', 2));`
- - A stub ending in `->ignoreOthers()` leaves the rest of the double lenient, for a double injected by type hint that `dummy()` cannot make
- - A stubbed method can be told to throw an exception instance, `allow($repo->find(999))->toThrow(new RuntimeException('Not found'))`, as the mocking docs showed; a class name and a message still build one at the call
- - The browser behind visit() is an extension point: put your own implementation of the Browser contract behind the DSL with `extensions: {browser: ...}`
- - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
- - Helper classes under features/support load before step definitions, the Cucumber way
- - A step records how long it ran, shown under `-v` as an example's already was, and its warnings are shown under it
- - When nothing in the phpspec config lays out the source tree, generated classes follow the first PSR-4 mapping in composer.json instead of assuming `src/` plus every namespace segment
- - The summary of a `--accept-offers` run carries `applied`: what was written, under the ids the offers carried, the files changed, and that nothing has verified it; a person sees the generation notes on the console instead of nothing
- - `phpspec api` describes the spec-writing API from the code itself: DSL, matchers, mocks, story steps and the timing rules; `--format=agent` gives it to a coding agent as one JSON object
- - An agent entry's `expectation` carries `diff` when both sides are strings or arrays of one shape: the byte offset, or the key path, where they part, with a window of each from there
- - An agent entry and the summary carry `rerun_argv`, the re-run as an argument list ending in `--format=agent`, next to the `rerun` string
- - The agent header says which PHP ran, whether coverage is collected and whether guard is on or off, so a reader knows upfront which verdicts will follow
- - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
- - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
- - `--format=agent` reports an example or scenario that passed but raised a PHP warning, deprecation or notice, each note on the entry or the step that raised it with the line that raised it, and the summary counts `warnings`, `deprecations` and `notices`; none counts in `actionable`
- - `refactor` takes a short class name (`refactor Calculator`, the one modified last under `src_path`), a slashed one (`App/Calculator`), a source file, or no target, meaning the source file modified last; `/refactor` in pair takes the same. A name no class answers to is refused with the `describe` command that gives it one
- - `refactor --format=agent` answers with the plan as one JSON receipt, offered once and whole, or the model's reason to decline; `accept` carries the plan out unattended and names the files written, or where it stopped
-### Changed
- - `run` refuses a value an option cannot take before anything runs, naming the option and what it takes, where it ran as something else: an unknown `--order` as the default, a `--seed` of `abc` as 0, a `--coverage-min` of `abc` as 0% (so the gate passed), a `--profile` or `--parallel` of 0, and an empty `--filter`, coverage path or `--out` (which crashed)
- - `--seed` on its own shuffles the run by that seed, where it was ignored without `--order random`; with `--order default` it is refused
- - A run narrowed with `--filter`, `--tags`, paths or `--paths-from` that selects nothing at all fails, exit 1, saying what selected nothing (an agent gets it as a `fatal` with a remedy, `actionable: 1`), where it passed with nothing run; a `--paths-from` file that lists no path is refused, where it ran the whole suite; a plain run of a project with nothing to run yet still passes
- - Matchers take their arguments by the names the docs give them: `toBe(expected:)`, `toBeLike(expected:)`, `toBeAnInstanceOf(class:)`, `toHaveCount(count:)` (an `int`), `toContain(needle:)`
- - `toThrow()`'s first parameter is named `$exception`, as it takes an exception or its class; a call that named `exceptionClass:` names `exception:`
- - `generate` and `next` under `--format=agent` answer with the receipt every other command gives, `{"v":2,"action":"generate",...}`, where they nested it under `command`; a model that does not answer is refused as an `error`, exit 1, where it read as a suggestion or as nothing generated
- - `generate the steps`, and pair's `generate_steps`, append to `steps.php` or a steps file named for what the steps do, never a file named after the feature; the AI context finds a feature's steps by what they define, whatever their file is called, and pair refuses steps content that drops a definition the file already holds
- - Undefined steps are offered once per run, all of them, for one steps file: `features/steps/steps.php` (or `steps_path`) when there is none yet, otherwise the steps file you pick or a new one you name. A steps file is no longer made per feature; `--accept-offers` and `accept` append to `steps.php`, and the agent document carries one `create_steps` offer targeting it
- - The file phpspec names, and writes, when a project has no configuration is `phpspec.yml`, the name the docs use; the lookup order of the four formats is unchanged
- - `--filter` matches the path of titles an example or scenario sits under, joined by `>`: a context title selects everything in it, `when empty > starts` one example; a context the filter empties is no longer printed
- - A class a spec needs but does not describe is offered spec first, then the class, the way a class missing from a step always was; the class question names its file relative to the project
- - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; specs and examples share one line, `193 specs, 2300 examples (2300 passed)`, as features, scenarios and steps do; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec
- - Guard refuses to run when no coverage driver is available, with the remedy and exit code 1, instead of standing down and letting the run pass unjudged; the agent header's `guard` is `on` or `off`
- - `Configuration` is built from values and touches no disk; `Configuration::load()` reads what a project states, its config file and the PSR-4 mappings of composer.json, as the console does
- - A `let` value is built the first time an example reads it, once per example, instead of before the hooks: a `beforeEach` can arrange a double the let consumes, a let may read one declared after it, and a let nobody reads never runs; the doubles a let asks for are still on `$this` from the start
- - A double is strict towards the code under spec: a call that no `allow()` or `expect()` declared, made from outside the spec code, fails the example at once naming the call and where it came from, instead of answering with a default; the spec code is every file PhpSpec loaded as a spec, step or support file, wherever it sits, and whatever sits in the spec, features and suite folders or in the folder of a path the run was given, which is how `allow()` and `expect()` reach the call they declare
- - `toHaveBeenCalled()` is asked after the act and judged at once from the calls recorded so far, while `toBeCalled()` stays declared before the act and judged when the example ends
- - A failure's pair shows values typed: a string in quotes, a number bare, a float at full precision, null as null, an object with its properties when its name tells nothing; two long strings meant to be equal are shown around their first difference and the offset is named
- - A stub or a verification written with an object argument matches an equal object, not only the very instance: `applyTo(new Money(900))` is met by any `Money(900)`; scalars stay strict
- - An undefined step fails the run with exit code 1: the scenario was never checked; a `pending()` step still leaves it at 0
- - A call to a double is declared, stubbed and verified by the arguments it was written with, read as PHP reads the call: `$fs->exists()` is a call with no arguments, refused where the method requires some with what to write instead, `any()` standing for one argument and `cetera()` for the rest; it used to cover any arguments. A call that leaves out an argument with a default is the call with that default, and the code under spec calling a double with too few arguments, or an argument of a type the method does not take, fails as it would on the real object, coerced or held strictly as its file declares
- - The pretty formatter reports an example and a step the same way: one set of glyphs (✓ ✘ ○ - ?), the title in the outcome's colour, and a spec headed `Spec:` as a feature is headed `Feature:`
- - A spec describing a class that does not exist yet is met with a sentence saying so and the offer to generate it, in place of a tree, an Errors section and a count; the generated-file message and diff name the file from the project root
- - A class whose file exists but could not be autoloaded is said to be a PSR-4 problem, instead of being passed over in silence
- - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
- - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
- - The console counts each warning, deprecation and notice raised, not the examples that raised them, and counts a step's on the steps line; notices are listed in a `Notices:` section by pretty and dot alike
- - The HTML report counts the run in the console's words, the stories on a line of their own and the specs named, and counts warnings, deprecations and notices in its header, footer and group bars; an example or step that raised one unfolds to each, with the line that raised it
- - A deprecation a library raises for another library's code calling it is no longer reported; one it raises because the project called something deprecated still is, through `trigger_error()` or `trigger_deprecation()`
- - `refactor` works through a plan: the model names the technique, says why and lists baby steps; you approve the plan, then each step as its diffs are shown, and `--no-interaction` carries it out without asking. A new collaborator is described by its own spec first and reached through a double. The whole spec suite runs before the plan and after every step; a step may leave red only the spec it just wrote, and may not leave fewer examples running. A step that breaks anything else gets one fix, then is undone, and however the run stops (a No, Ctrl-C, a model that does not answer) it stops green, undoing the steps since the specs last passed. A class with no spec is refused with the `describe` command that gives it one; when the model declines it says `Nothing to refactor in App\Till:` and why
- - Stubs answer in the order they were declared: each call the code under spec makes uses up the first matching stub that has not answered, the last one answering on, so two `allow()`s of the same call answer one call after the other; a later stub replaced an earlier one, and one that throws beat the others. The spec's own calls use no stub up, and a stub's exception shows to them only through `toThrow()`, so writing the next `allow()` of the call declares it
+PhpSpec 9 is a rewrite. This is what it brings over PhpSpec 8.
 
-### Removed
- - PHP 8.2: the floor is PHP 8.3
- - `toBeCalledWith()`: the arguments are written in the call, matchers included, `expect($logger->log(any()))->toBeCalled()`
- - `toBeCalledTimes()` and `toBeCalled()->never()`: a count follows `toBeCalled()`, as `->once()`, `->twice()` or `->exactly(3)->times()`, and a call that must not happen is `not()->toBeCalled()`
- - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`
+### Breaking changes
+ - Specs are closures: `describe()`, `context()`, `it()`, `this()` and `expect()` are global functions, and a spec file ends in `.spec.php`. `ObjectBehavior`, the `$this->shouldReturn()` style and the Prophecy doubles are gone
+ - Test doubles are built in: the dependencies on Prophecy, symfony/event-dispatcher, symfony/process, symfony/finder, doctrine/instantiator, sebastian/exporter and phpspec/php-diff are gone
+ - PHP 8.3 or newer
 
-### Fixed
- - A command PhpSpec suggests (what `next` proposes and its `Run:` line, the `describe` a `refactor` refusal points to, the `guard` a guard refusal names) names the binary as it was invoked and carries the `--config` it was named, where they dropped the config and named the binary three ways: `phpspec`, `bin/phpspec`, or as typed
- - `--parallel` workers load the `--bootstrap` the run was given, where they ran without it
- - A `run` in a `pair` session started with `--config` reads that config, as do `next` when it checks the suite and the pair's own spec runs, where they read the one found in the working directory
- - Under `--format=agent` (or `--agent`), a command line PhpSpec cannot read, such as an option the command does not take, an option missing its value or a command that does not exist, answers in JSON: a run's `fatal` and `summary` with `actionable: 1`, or a command's error receipt, where it printed prose to the error stream and nothing to standard output
- - An agent `rerun` and `rerun_argv` carry the `--config` the run was named and the `--bootstrap` it was given, where they dropped both and re-ran against another setup; the line to paste single-quotes a path a shell would split
- - `toBeEmpty()` takes a `Countable` by its count, as documented, where an empty `ArrayObject` failed and its negation passed, and a failure on one wants `[]`; a string is empty only with no characters, so `'0'`, which PHP's `empty()` calls empty, is not; an iterator that is not `Countable` is refused rather than advanced
- - `toHaveKey()` takes an integer key in a spec that declares strict types, as documented, where it threw a TypeError
- - Line selectors add up: a line that runs a whole context keeps every example in it, nested contexts included, where another selector inside one of its examples narrowed it to that one; an example at the top of a file runs by its line, where it ran nothing
- - `--fake` writes each value exactly as the spec wrote it, where a string holding a double quote or a NUL byte, a float such as `90.0` or `0.1 + 0.2`, and `PHP_INT_MIN` came back changed; it fills a method called on a subject built inline, `expect((new Greeter())->greet())`, which it passed over
- - Two examples of one title in one context, or two scenarios of one title in one feature, are numbered, `returns the total #2`, in every formatter and in the agent id; they shared one name and one id
- - An agent entry is named by every `describe` and `context` it sits in, as the other formatters name it, and its `id` hashes its file with that name: examples of one title in different contexts, classes of one name in different namespaces, and specs or features that share every title in different files shared one id
- - A path runs as features when it is a `.feature` file or lies inside `features_path`, and as specs otherwise: a spec under `spec/features/`, or one whose name holds the word, ran as features and found nothing, and a `features_path` of another name ran nothing under `--story`, `--all` or by its path
- - A double's method returning `true`, `false` or `parent` answers a call nobody stubbed, where even arranging the call threw; one returning `self` or `parent` takes a stub of the class it stands for, where it took only the double's own class
- - A stub is held strictly to what the real method returns: a value it could never return is refused where the spec sets it, and a `toReturnUsing()` callback's answer when the call is made, naming the real method; it failed only at the call, naming the double's generated class, and `toReturn()` on a `void` method was ignored
- - A call to a double written with a matcher declares a call and is answered by no stub, where it ran a stub's callback with the matcher; an error a stub's callback raises goes through, where an `ArgumentCountError` was swallowed and the call answered with a default
- - `cetera()` followed by another argument is refused, where what followed was ignored
- - A stub set through `expect()`, or on the call itself, answers only the call it was written with: `expect($m->pay(1))->toReturn(9)`, its `->toThrow()` and `$m->pay(1)->toReturn(9)` answered `pay(2)` too
- - A JUnit failure or error says, as PHPUnit's does, what failed and where, under its message, where it carried the message alone
- - An AI command without an `ai` section answers a coding agent with the problem as `error` and the section to add as `remedy`, where the example sat inside the error
- - Pair names the file a change would make from the project root, where it showed the absolute path
- - A `--filter` that matches nothing says so, where the run pointed at features run with `--story`
- - An empty `api_key` is refused as a missing one is, where it went to the provider and came back 403
- - A run a stop option cut short says which option stopped it and that what came after did not run, and the agent summary carries it as `stopped_by`, where it read as a complete run
- - `pair --prompt` exits `1` when its line failed (a red run, a command that refused, an unknown command), where it always exited `0`; a pair session whose output is not a terminal prints plain lines, where it wrote the screen layout's escapes into the pipe
- - `fake_method` is offered only for a method whose body is empty, where a method with an answer of its own was offered and accepting it applied nothing
- - TAP reports each scenario of a story run as a test point, failed by the first step that failed, errored or is undefined, where it reported none; JUnit counts the tests, failures, errors and skipped steps of each feature and scenario, and fails an undefined step, which fails the run, where it skipped it
- - A configuration that cannot be taken answers a coding agent in JSON, a `fatal` and the summary for `run`, an `error` receipt for the other commands, where it printed prose into the stream
- - A pending or skipped example under `--format=agent` carries its `spec` and `rerun`, as a failing one does
- - `run` given a file that is neither a spec nor a feature says so and what it takes, where it died with a TypeError after a summary saying nothing was left to do
- - `generate` places a new class it is given by its bare name under the project's namespace, the default one the config names or the one it maps, as `describe` does: `a spec for a Coupon` in a `Brew\` project writes `spec/Brew/Coupon.spec.php`, where it wrote `spec/Coupon.spec.php`
- - `accept` tells a person why an offer was not applied, as it tells an agent; an offer accepted once is refused as already accepted, where it read as changed since; a stale offer's refusal says how to get a fresh one; and `accept` with no id refuses on the reader's channel
- - A file phpspec cannot write is refused in a sentence naming it, where a read-only directory printed PHP warnings and the command carried on as if it had written
- - `describe`, `exemplify`, `generate`, `next`, `refactor`, `accept` and `api` refuse a `--format` they do not speak, as `run` does, where they answered in prose
- - A question nobody answers, because the input ended, writes nothing in pair, `generate` and `next`, as in `run` and `refactor`: `generate` offers the change under an id and `next` prints the command to run. `yes` and `no` are taken as words at every question, and an answer the pair chooser does not know is a no
- - A diff, in `refactor`, `generate`, the run's offers and pair, numbers the lines of the file as it will be and leaves a removed line unnumbered; a removed line carried its number in the old file, so a stretch could read 5, 6, 5, 6
- - Pair's `/run`, its greeting and `next` collect coverage when guard is on or a `--coverage` option asks for it; `/run --coverage` said coverage needs Xdebug
- - A story hook that throws, or calls `skip()` or `pending()`, no longer ends the whole run with only its message: a before hook's signal leaves the feature, scenario or step it wraps skipped or pending with the reason, an after hook's signal is an error saying it came too late, and any other error errors the step it affects, naming the hook, while the rest of the run goes on
- - `skip()` or `pending()` in `beforeEach` or `beforeAll` leaves the examples it wraps skipped or pending with the reason, the matching after-hook still running, where it errored them and failed the run; in `afterEach` or `afterAll` it is an error that says it came after the example ran
- - The HTML report words its counts as the console does, `1 example (1 failed)`, `6 examples (1 passed, 1 risky, 1 failed, 1 errored, 1 pending, 1 skipped)`, where it said `1 pass` and `2 failures` and left risky examples out; its header counts an errored step among the failed, where it counted none
- - A run of specs and features counts pending steps and pending examples apart: a pending example no longer shows in the steps line, nor a pending step in the examples line, the HTML footer or the suite state the AI commands read
- - A step two features share is generated once; it used to land in a steps file per feature, and the second definition failed the next run at load
- - A checkout resolves its dependencies for PHP 8.2, the floor, whatever PHP runs composer (`config.platform.php`), so a `vendor/` built under a newer PHP no longer carries Symfony 8 into a run on 8.2; `bin/phpspec` refuses PHP older than 8.2 with a sentence instead of a parse error
- - The offer to create an interface names its file relative to the project, as the class offer does
- - `run --help` no longer lists `--coverage-partial`, which only the parallel workers pass; the option still works
- - Pair mode's `/help` lines its descriptions up in one column and lists `/generate` once; the application list below it used to repeat it
- - `--profile` names each slow example by its path of titles, as the detail sections do, instead of the bare example title; the dot formatter fits its lines to the terminal while results stream in, where it used to size them only once the run was over
- - Every generation receipt names its file relative to the project, unquoted: `Method add() generated in src/App/Calculator.php`, `Spec for App\Greeter created in spec/App/Greeter.spec.php`, the feature a pair tool wrote; the method receipt used to quote an absolute path and the spec made from a step named no file
- - `describe --run` runs the spec it just wrote, where it used to run the whole suite
- - A generated class whose name ends in `Exception` extends `Exception`, imported with a `use` line, where it used to extend nothing and could not be thrown
- - A call on a double that nothing declared names the file it came from relative to the project with forward slashes, as the other messages do, instead of the absolute path spelled the platform's way
- - A class, interface, spec or feature generated from a phpspec checked out with CRLF line endings, as git does on Windows, is written with line feeds alone, as PSR-12 asks and as generated methods and steps already were
- - A generated step definition takes the table or doc string its step carries, as `DataTable $table` or `string $docString` after its pattern's parameters, with the `DataTable` import added once; it used to take neither, and that a doc string arrives as a string is now documented
- - A method generated on an interface a double stands for takes the arguments the spec called it with, as one generated on a class does; the call was looked for in the double's generated code instead of at the spec line. A generated class or interface no longer opens with an empty line, and its first method sits right under the brace
- - An offer stays on the table for twenty minutes from when it was last made; `accept` refuses an older one as expired, saying when it was made (to an agent as an `error`), instead of applying a decision taken about an earlier session or an earlier project in the same directory
- - A step that breaks the same way in several scenarios, as a failing `Background` step does, is reported once under `Errors:` or `Failures:`, naming the scenarios it took down, instead of one identical block per scenario
- - An AI command run without an `ai` section says which config file to add it to and shows one in that file's notation, instead of "your phpspec config"; `generate` and `next` refuse in JSON under `--format=agent`. The docs no longer suggest `generate` runs without the `ai` section
- - JUnit names each testcase's class after its file, its describe and the contexts around it (`HappyHour > HappyHour > at 5pm`, as the pretty sections do), so one title in two contexts reads apart, and each step's after its feature and scenario; every testcase and testsuite carries `time` in seconds
- - A failure's pair means the same whatever the matcher: the sentence that says what went wrong, then the value the matcher wanted under `expected` and the value the code produced under `got`, in the pretty and dot output and in the HTML report, which had the two the other way round; a mock verification reads as the call wanted and the calls received instead of the arrays that carry them
- - A `--parallel` run reports what a single process does: a failure's two values, matcher, code and re-run line, an error's site and frames, what an example printed and handed over, its warnings, pending apart from skipped with the reason, and a scenario's steps whole; workers used to report through JUnit, which carried the outcome and the message and nothing else. A worker that dies is reported as an error on the file it was running, naming its exit code, instead of that file vanishing from the count
- - The reason given to `pending()` or `skip()` is shown, in an example and in a story step alike: beside the example or step and under `Pending:` or `Skipped:` at the end in the pretty and dot formatters, as `message` in the agent entry and on the agent's step, in the TAP `SKIP` directive and the JUnit `skipped` element; TAP and JUnit used to report a skipped example as a plain pass
- - A config file with a mistyped key (one a known key is near), a value of the wrong kind or a syntax error stops every command in one line naming the file and the key meant, instead of being taken in silence or boxed as a parser exception; a key none of PhpSpec's own is near stays the project's
- - A run that finds no specs says where the features are and that `--story` or `--all` runs them; `--story` with no features says "No features found" and `--all` with neither says so, instead of "No specs found" for every case
- - `describe` says a spec already exists instead of "created" when it wrote nothing, and `exemplify` says an example already exists instead of "added"
- - `expect()` verifies a call to a method whose return type allows null, which used to fall out of the mock routing
- - A generated class, interface or method lands in the directory its own namespace is mapped to, by `composer.json` or the `autoload` map, the longest prefix winning, instead of the first mapping's directory for every class; a class under no mapping keeps its whole name under the source path, where the next run finds it
- - A method returning a final class can be stubbed: `allow()` receives an instance of the class built without its constructor and replaces it, where the call used to be refused
- - An unstubbed double method returns a usable default for a return type no double can stand in for: an empty `iterable`, a `Closure`, an empty `Generator`, itself for `static`; a method returning a final class says so plainly instead of failing with a type error
- - A spec file that does not parse is reported as one errored example and the other files still run, instead of PHP dying with exit 255 and no summary; a step or support file that cannot load stops the run naming the file and the reason, with a remedy, instead of a stack trace
- - `--fake` writes no return it cannot express as a literal, an object or an array holding one used to come out as a `__set_state()` call, and fakes no method whose result the expectation went on to call something on
- - An error thrown inside PhpSpec itself, in a double or in a vendor library is shown at the spec line that led there, with that line's code around it, instead of PhpSpec's own source; and reading a double's generated code as a file no longer prints a warning
- - A type-hinted mock of an interface that does not exist yet is offered for generation like one made with `mock()`; the two paths used to word the error differently and only one was recognised
- - A mock injected into a `let()` closure by type hint is there on `$this` under the parameter's name, as the mocking docs showed, so it can be stubbed and verified
- - A call that was stubbed can still be verified: `allow($x->name())->toReturn('winter')` followed by `expect($x->name())->toBeCalled()` works, in either order; the stubbed value used to turn the second expect into an ordinary one that knew no `toBeCalled`
- - An agent entry whose value is a float JSON cannot hold (`INF`, `NAN`), or whose value or printed output holds a byte that is not UTF-8, arrives whole: the float is named, the byte replaced, and an event is never written as `{}`
- - `phpspec api` names the docs by their absolute path inside the installed package, and the package ships `docs/`; it used to name paths relative to a checkout that a Composer install did not have
- - A `file:LINE` selector that reaches no example or scenario stops the run with `No example at ...` and exit 1, with a remedy, instead of running nothing and exiting 0
- - `describe -r` under `--format=agent` runs the new spec after its receipt, in the agent format and with the describe's interactivity, and exits with the run's code; it used to stop at the receipt
- - An error that came back from a `--parallel` worker carries no site, so the agent entry has no `spec` or `rerun` for it and the human formatters show no code around it; it used to name a line inside PhpSpec itself. The JUnit report carries the error's type, so the entry names it
- - A `let()` binding, a `beforeEach` or an `afterEach` hook that throws fails the example it wraps and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
- - What `beforeEach` and `afterEach` print rides in the example's `output`, and under `--format=agent` anything printed outside an example goes to standard error; hook output used to land between two events and break the stream
- - An agent entry's `rerun` targets the `it()` line that declares the example, whatever line `spec` points at inside the file
- - A failed mock expectation reports the call the spec wanted and the calls the double received, arguments included, under the matcher's name; the pair used to read `1` against `PhpSpec\Mock\LastCallDouble`
- - A method called on a double that its type does not define fails naming the type, `Call to undefined method App\Clock::now()`, as PHP would on the real object; the error, the agent entry's offer and the summary's offer agree, where the entry used to name the generated double and a double of a class got no offer at all
- - PhpSpec's own autoloader finds a class at the path the layout maps its namespace to, where the generator writes it; under a PSR-4 prefix it looked for the full namespace path, so a generated class was not found by the next run unless Composer knew the mapping
- - A generation that could not be applied says so: the `accept` receipt and the `applied` block of an `--accept-offers` summary carry `applied: false` and the `reason`, and `accept` exits 1; the receipt used to read `applied: true` with no files, and the summary said nothing
- - A method is generated into the file its class was loaded from, so a composer mapping that disagrees with where the file sits no longer sends the stub to a path that does not exist; a vendor or internal class is still never written to
- - An agent entry's `spec` and `rerun` stay in the spec file: an error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it, with `exception.at` keeping the throw site; `rerun` used to name a line of `src/`
- - A method the spec calls statically is generated as a static method, with as many arguments as the call passes; it used to come out as an instance method taking none, and the next run failed on it
- - The `accept` receipt names each offer's `target` and the `files` it wrote; its `path` had carried a class or method name for generated code
- - `run --help` names `agent` among the formats
- - The console application is named phpspec and carries its version as a version, so `--version` reads `phpspec 9.0.0-beta.21` and a command can ask which version it runs in
- - `toThrow()` runs its callable where the expectation is written, so a `finally` cleanup or a later assertion sees what it did; only the verdict waits for the end of the example
- - A `--stop-on-*` flag halts the run at the example or scenario that meets it, instead of finishing that file first, under `--parallel` too; a step that threw now stops a `--stop-on-error` run as an example that threw does
- - Several `path:LINE` selectors on one file run each addressed example or scenario once, so the `rerun` command in an agent summary can be pasted back as it is
- - A path given to `run` that does not exist stops the run and is named, instead of finding no specs and exiting 0
- - A generated class, interface or spec ends with a newline
- - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree
- - The loader no longer plants a permanent subscriber per spec file; a specification resets itself when it runs
- - A step's deprecations and notices were marked and listed as warnings; a note raised before `pending()` was filed as a warning whatever its kind, and one raised before `skip()` was lost
- - `--stop-on-warning`, `--stop-on-deprecation` and `--stop-on-notice` stop at a note a step raised, as they did at an example's
- - `--stop-on-pending` stops at a pending or undefined step and `--stop-on-skipped` at a step that skipped itself, as they did at an example; `--stop-on-problems` stops at them too
- - `toThrow(new RuntimeException('boom'))` expects that class and that message; it read the exception as a class name and never matched
- - A command delegated from the pair prompt lost the backslashes typed into its arguments: `/refactor App\Till` reached refactor as `AppTill`
+### Spec BDD
+ - `describe()`, `context()`, `it()` and `this()`, a value built the first time an example reads it, once per example; `beforeAll`, `beforeEach`, `afterEach` and `afterAll` hooks; `xit()` and `xdescribe()` for pending, `fit()` and `fdescribe()` for focus, which a run without a terminal fails on; `pending()` and `skip()` with a reason; `it("title")` with no body is pending
+ - `expect($value)` with over thirty matchers, negated by `not()`, chainable, each judged on the line it is written; `toThrow()` runs its callable where it is written; an example that makes no expectation is reported as risky
+ - Custom matchers through `addMatcher()`, and extensions that add formatters, matchers, commands and listeners
+ - A failure shows the value wanted and the value produced, typed, and two long strings around their first difference
 
-## [9.0.0-beta.20](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.20)
+### Test doubles
+ - `mock()` makes a strict double: a call nothing declared fails the example naming the call and where it came from. `dummy()` makes a lenient one, and a stub ending in `->ignoreOthers()` leaves the rest of a double lenient
+ - `allow($double->method($args))` with `->toReturn()`, `->andReturn()`, `->toReturnUsing()` and `->toThrow()`, answering in declaration order and held to the real method's return type; `allow()` alone declares a call as expected
+ - Mocks: `expect($double->method($args))->toBeCalled()` before the act, with `->once()`, `->twice()`, `->exactly(N)->times()`, `->atLeast(N)->times()` and `->atMost(N)->times()`, or `not()->toBeCalled()`. Spies: `toHaveBeenCalled()` after the act, judged at once, with the same counts
+ - A call is read as PHP reads it, arguments and matchers included: `any()`, `type()`, `anInstanceOf()`, `arrayIncluding()`, `satisfy()`, `callback()`, `startWith()` and `cetera()`; an object argument matches an equal object
+ - A double is injected by type hint into an example or a `this()` closure, and sits on `$this` under the parameter's name
 
-### Added
- - `phpspec guard` turns on a TDD guard: `run` refuses a change whose new logic no example reaches, naming the member and showing the lines
- - `phpspec guard --check --hash=<sha> --coverage=<file>` asks the same question on demand, after the suite, for CI and pre-commit
- - Guard says when it cannot judge instead of passing in silence: `run` names the reason and carries on, `guard --check` refuses, and a guard config it cannot read stops both
- - Guard asks for more of an example that reaches part of a change, instead of repeating its request for a first one
- - `guard --check` refuses a coverage report describing code that has changed since it was written
- - A guard violation rides in the agent summary as `guard`, counting toward `actionable`; `judged` and `reason` say when guard reached no conclusion
- - The JSON coverage report records the executable lines of each source alongside the ones that ran, so a line nothing reached can be told from a line that was never code
- - The JSON coverage report records where each method of a source starts and ends, so a mutation testing tool can locate one without parsing the source again
- - Every offer PhpSpec makes carries an id, and `phpspec accept <id>` applies exactly what was reported, refusing an offer whose file has since changed
- - A failing story step reports the values it expected and got, on the step and on the entry, instead of only the sentence about them
- - What a spec or step printed is captured and reported as the entry's output, in the agent stream and under the failure in the human formatters
- - `toThrow()` takes no argument, asserting only that something was thrown
- - `PhpSpec\attach()` hands over context PhpSpec cannot see, reported as the entry's attachments and under the failure in the human formatters; a closure is read at the end and before any teardown, and never on a green run
- - The browser client attaches the request and the response body, so an assertion about a status is read next to what the server said
+### Story BDD
+ - Gherkin `.feature` files run by PhpSpec itself, with no Behat: `given()`, `when()`, `then()`, `step_and()` and `step_but()` definitions under `features/steps/`; the placeholders `{string}`, `{int}`, `{float}`, `{word}` and `{*}`; Scenario Outlines, data tables (`DataTable`, `asClass()`), doc strings, `Background`, tags selected with `--tags`, and hooks before and after features, scenarios and steps
+ - Helper classes under `features/support/`; a `#[ParameterType]` function makes the object a step asks for from its captures, and a `#[DocStringType]` function turns a doc string for the parameter named after it
+ - Undefined steps are generated on offer, all of them into one steps file; `PhpSpec\attach()` hands over context to report with a failure
 
-### Changed
- - `--format=agent` answers in JSON Lines (protocol v2): one event per line as it happens, so a failure arrives before the suite ends
- - A failing entry carries one `expectation` block naming both sides (`matcher`, `expected`, `actual`, `negated`), replacing the split `expected`/`actual` fields the unreleased v2 stream had
- - A matcher that names its target only in prose now states it as a value, so `toBeTrue()` reports expecting `true` instead of `null`, and emptiness expects the empty form of what it was given
- - A matcher with no target at all, such as a predicate, says so with `"N/A"` instead of reporting a null one, and the human formatters stop printing the empty pair
- - `toThrow` reports the exception that was actually thrown, or "No exception", against the one it was asked for, instead of reporting the callable it was handed
- - An exception carrying no message reads as `RuntimeException` rather than `RuntimeException("")`
- - Objects in a failure detail are named by what they are rather than by instance id, as the agent format already did
- - The agent summary omits offers when the run found nothing to generate, as it already did for rerun and coverage
- - generate no longer writes when there is nobody to ask: it offers the change under an id, and `run --accept-offers` stays as the bulk shortcut for a run's own offers
- - An offer to create a class or an interface names the file it would write, so a path derived from the source root and the namespace can be refused before it is used
+### Running
+ - `run` takes spec files, directories, feature files, `file:LINE` and `file@ID`; `--filter` matches the path of titles, `--tags` a tag expression; `--story`, `--all`, `--paths-from`, `--order=random` with `--seed`, `--profile`, and `--stop-on-failure`, `-error`, `-warning`, `-deprecation`, `-notice`, `-pending`, `-skipped` and `-problems`. A value an option cannot take is refused before anything runs, and a run that selects nothing fails
+ - `--parallel[=N]` runs files in worker processes that report everything a single process does
+ - Formatters: pretty, dot, TAP, JUnit, HTML, and `--format=agent`, a JSON Lines stream for coding agents: ids and names, a re-run command per entry, both sides of a failed expectation with a diff, the code generation on offer, warnings, deprecations and notices, and a `fatal` with a remedy. `--accept-offers` and `phpspec accept <id>` apply what a run offered
+ - PHP warnings, deprecations and notices are reported on the example or step that raised them, and counted
+ - Configuration in `phpspec.yml`, `.yaml`, `.json` or `.php`, or the file `--config` names: paths, suites, `autoload`, `default_namespace`, `bootstrap`, `format`, the stop options, `steps_path`, `features_path`, `coverage_adapter`, `guard`, `ai` and `extensions`; a mistyped key is refused naming the file
 
-### Fixed
- - Paths are named relative to the project however the platform spells its root, so on Windows guard no longer calls covered code untested, the JSON coverage report no longer keys sources absolutely, and a rerun command stays relative
- - A parallel run no longer reports `run :0` as an entry's rerun, nor a comparison of nothing with nothing: a failure that came back without its site now reports its message alone
- - An array holding an object no longer makes the failure detail emit a PHP warning of its own
- - The response matchers reported the two sides the wrong way round, so `toHaveStatus(201)` against a 500 said it expected 500
- - Printed and attached text is capped in the terminal as it already was in the agent document, so a large body cannot scroll the failure off screen
- - describe and exemplify refuse a name PHP could not parse instead of writing a spec that breaks the suite, and describe says what it needs when given nothing
- - accept resolves paths through the configuration the run was given, so `-c` is honoured
- - A run nobody can answer no longer takes silence for a yes and writes generated code into the source tree: it names what was on offer and how to accept it
+### Coverage and guard
+ - Text, HTML, Clover and JSON coverage reports from PCOV or Xdebug, whichever is on (`coverage_adapter` names one), `--coverage-min` as a gate and `--coverage-src` to scope; the JSON report attributes lines to examples, with timing and checksums, for mutation testing
+ - `phpspec guard`: a run refuses a change whose new logic no example reaches, and `guard --check` asks the same question in CI
 
-## [9.0.0-beta.18](https://github.com/phpspec/phpspec/compare/9.0.0-beta.17...9.0.0-beta.18)
+### Code generation
+ - `describe` and `exemplify` write specs; a run offers the classes, interfaces, methods, specs and steps it finds missing, and writes nothing without an answer; `--fake` fills a method with the value its spec expects; generated code lands where Composer maps its namespace
 
-### Added
- - The agent document reports the coverage verdict, and a missed --coverage-min gate now counts as actionable
- - The agent summary carries one rerun command covering every failure
- - A failing Story BDD scenario carries its own spec location and rerun command, in parallel runs too
- - The agent document reports a story run one entry per scenario, with the steps that did not pass inside it, and counts scenarios alongside steps
- - Each row of a Scenario Outline is named by its values, so two rows are told apart wherever scenarios are reported
+### AI pair programming
+ - `pair`, `next`, `generate` and `refactor` work with a configured provider: a navigator or driver in a REPL with slash commands, the next TDD step from the suite's real state, a spec or implementation from an instruction shown as a diff, and refactoring through a plan of steps that keeps the suite green; every prompt is an editable file, and every command speaks `--format=agent`
+ - `phpspec api` describes the DSL, the matchers and the timing rules from the code itself
 
-### Fixed
- - --format=agent keeps standard output to the document alone: the seed line, profile table, coverage lines and error text no longer break it
- - A run that cannot start, or that dies partway, still emits an agent document naming what stopped it
- - toHaveLength failures now say what length the subject actually has
- - Agent entries are named as a path (App\Basket > totals the prices), and no two entries in a document share an id
- - An errored entry carries its message in the same field a failure does
- - Failure values keep a float's fraction and name an object by what it is (an enum case, a stringable's string, else its class) instead of by a per-run object id
- - A directory argument with a trailing slash no longer doubles the separator in reported paths
- - A suite configured without paths of its own reports the spec path instead of nothing
- - Notes typed on any pair question now reach the assistant, not just the ones the AI asked
- - /next no longer overrides the pairing role's own prompt, so the navigator offers a change instead of asking permission to offer it
-
-### Changed
- - papi-ai 0.15 is pulled in, so a configured ai.effort now maps to each provider's native thinking controls (older papi installs keep working; effort stays inert there)
-
-## [9.0.0-beta.17](https://github.com/phpspec/phpspec/compare/9.0.0-beta.16...9.0.0-beta.17)
-
-### Changed
- - Pair's conversation runs through the one `Agent::chat()` pipeline: a persistent Transcript carries the history, the PairToolExecutor runs the tools live, and pair's own provider loop is deleted
- - Navigator and driver are command manifests (`commands/navigator.txt`, `commands/driver.txt`): each role's tool surface, temperature, and turn ceiling are project-overridable data, and the live tool descriptions (run_specs, inspect_symbol, ask_user, read_file, list_files) are editable prompt files
- - Pair turns are step-grounded: the situation report carries the resolved TDD step, and pair's suggest_next speaks the unified seven-type vocabulary, with steps and implement suggestions getting /generate ghosts
- - Pair model and token settings resolve through the unified config-beats-manifest precedence, and a provider failure surfaces as readable prose instead of an error banner
-
-### Added
- - Pair conversations are recorded: every exchange lands in .phpspec/ai/last-request.json and the whole session accumulates in last-session.json, so a live pair session can be promoted straight to a replayable eval
-
-### Fixed
- - A step whose code throws reports under Errors with its type, code excerpt, and location, and tallies as "N errored"; only a failed expectation reads as a Failure
- - PHP warnings raised inside a step land in the Warnings section with their location instead of leaking raw to the terminal
- - The ai section is validated as documented: unknown or misspelled keys get a did-you-mean, hyphenated spellings are accepted, wrong-typed values are named instead of silently dropped, and a missing key is named precisely, never reported as a missing section
- - Forgetting the ai provider names the installed papi package as the answer, instead of silently assuming openai and then blaming a missing composer package
- - An ollama config works without api_key and its base_url reaches the provider; all six providers (google, anthropic, openai, grok, deepseek, ollama) are documented
-
-## [9.0.0-beta.16](https://github.com/phpspec/phpspec/compare/9.0.0-beta.15...9.0.0-beta.16)
-
-### Added
- - Any AI prompt can be overridden per project under .phpspec/prompts/; prose-only command overrides inherit the shipped tools and params, and the capture log marks overridden names
- - `--format=agent` on every command: `next` emits its suggestion with the exact command that acts on it, `generate` applies and emits receipts, `describe`/`exemplify` accept it as the canonical spelling of `--agent` (now a deprecated alias)
-
-### Changed
- - The pipeline's one verb is `Agent::chat(command, instruction)`; commands pass a name and the agent resolves the manifest through its own prompt library
- - End-of-run detail is grouped into Failures, Errors, Warnings, Deprecations, and Skipped sections, and the dot formatter tells the same detailed story as pretty
- - A failure reads as an aligned pair labeled by its matcher (expected / to contain), long multiline values capped head[...]tail with newlines escaped
- - Offered-code diffs show three unchanged lines around each change with one elision line between distant stretches, never the whole file
-
-### Fixed
- - The pretty formatter reports only the failed expectation; passing ones before it no longer print a bogus sentinel Failure line
- - Failure headlines clip multiline or overlong values to a first-line excerpt; the full value appears once, under expected/got
- - Two step definitions sharing a title now error at load, naming both locations; matching is keyword-blind, so the duplicate could only shadow silently
- - A step used twice in a scenario generates one definition, not two
- - AI-written steps respect the vocabulary too: content redefining a title another steps file owns is rejected with a pointer to reuse it, and scaffolds skip titles defined elsewhere
- - The run agent document reports the real random seed and what was run, never `seed: null` and `suite: "default"` placeholders
-
-## [9.0.0-beta.15](https://github.com/phpspec/phpspec/compare/9.0.0-beta.14...9.0.0-beta.15)
-
-### Added
- - Applied refactorings are journalled (.phpspec/ai/journal.jsonl); reversing one demands a stated rationale
-
-### Changed
- - The navigator offers directly; the chooser is the question, never "shall I offer?"
- - `refactor` shows the change and asks before applying; non-interactive runs keep auto-apply
- - `next` reads the journal: a polished, unchanged class is never re-suggested, and the model proposes the next scenario or feature instead
- - A generated feature carries real model-written scenarios; the skeleton stands in when the model cannot be reached, with the failure shown beside it
- - Every `next` suggestion offers to act (example, steps, implement, and refactor included), and the model can suggest steps and implement too
- - A feature whose step bodies are pending reads as the working story: `next` steers to finishing it, never to a new feature
- - When the working story is red, `next` shows the model its actual files, so the advice names the real gap
-
-### Fixed
- - Accepting a feature suggestion from `next` runs `generate`, so it writes the feature instead of describing a spec at the project root
- - Determined steps offer too: `next` asks before writing the steps or implementing the failing class, instead of printing advice and exiting
- - An accepted example or implement offer forwards the suggestion's reason, so `generate` makes the change the suggestion meant
- - A named class with spec wording routes as a spec ask even when the sentence also says "feature"
- - A degenerate failure whose subject matches its example is named once, not twice
- - A failing expectation on a list of objects reports the failure instead of crashing the message formatter
- - Auto-verify runs the whole suite when the change touches a feature or steps file
- - A verified change ends the turn; no fresh suggestion rides on its back
- - `refactor` runs its baseline with the installed phpspec, wherever it lives (vendor installs failed to launch it and blamed the specs)
- - Standalone hints name the binary you invoked, never a hardcoded bin/phpspec
-
-## [9.0.0-beta.14](https://github.com/phpspec/phpspec/compare/9.0.0-beta.13...9.0.0-beta.14)
-
-### Added
- - On a green suite, `next` can recommend refactoring, pointing at (or ghosting) `refactor` with the target
-
-### Fixed
- - One-shot AI commands declare their tools on the wire again (they were sent as zero declarations, so the model answered empty)
- - Composer now refuses papi-ai packages older than 0.13
- - `generate` places a bare filename under its configured directory (features, spec, or src), never the project root
- - Asking `generate` for step bodies (or to grow an existing feature) consults the model instead of re-emitting a no-op scaffold
- - A `/generate` chooser note now runs a follow-up round with that note as the instruction
- - Pair delegates commands with their arguments actually bound, so `/refactor App/TodoList` runs
-
-## [9.0.0-beta.13](https://github.com/phpspec/phpspec/compare/9.0.0-beta.12...9.0.0-beta.13)
-
-### Added
- - Pair commands work as plain English, with or without the slash
- - Choice menu accepts a typed amendment on Tab, and the AI reads it
-
-### Fixed
- - The navigator is capped at one offer and one suggestion per turn
- - Options on pair `/run` (e.g. `--all`) now reach the runner
-
-## [9.0.0-beta.12](https://github.com/phpspec/phpspec/compare/9.0.0-beta.11...9.0.0-beta.12)
-
-### Added
- - The pair navigator can OFFER a concrete change: the human sees it as a diff and accepts or declines through the numbered chooser (1. Yes / 2. Always / 3. No), the accepted change lands through the shared write gate and auto-verifies, and unbidden writes stay forbidden. Spec offers must grow the spec, exactly like writes.
- - Pair `/next` pre-fills the prompt with a matching `/generate` ghost built from the suggestion the AI registers (via `suggest_next`), so acting on the advice is Tab and Enter, never retyping it.
-
-## [9.0.0-beta.11](https://github.com/phpspec/phpspec/compare/9.0.0-beta.10...9.0.0-beta.11)
-
-### Fixed
- - The google default model is `gemini-3.1-pro-preview`: its predecessor `gemini-3-pro-preview` was retired from the API and answered every request with a 404. Set `ai.model` to choose differently.
- - `generate` resolves a bare class name against the project tree ("the TodoList spec" finds `App\TodoList`), so the model is shown the real current file and the proposal updates it in place instead of creating a flat sibling.
- - `generate` grounds the model in a labelled, deeper file listing (a namespaced project no longer renders as a bare `App/`), and one-shot commands default to a 16384 output-token ceiling so a reasoning model's thinking cannot come back as an empty answer.
- - A failed pair `/generate` points back to plain English, which holds the conversation context the one-shot does not.
-
-## [9.0.0-beta.10](https://github.com/phpspec/phpspec/compare/9.0.0-beta.9...9.0.0-beta.10)
-
-### Added
- - One agent pipeline behind every AI command: the current TDD step is resolved deterministically from the instruction and the suite state, fully determined artifacts are generated without a model call (`generate the steps` writes the step definitions for the last-touched feature, offline), and every exchange is captured to `.phpspec/ai/last-request.json` for debugging.
- - Prompts are editable files: command manifests (`commands/*.txt` with the tools, answer channel, and model params in YAML frontmatter), per-step instructions, shared syntax primers composed with a one-line `@include` directive, and every pair write-tool description.
- - `ai.effort` passes a reasoning effort through to the provider; `ai.model` and `ai.max_tokens` always beat the shipped defaults.
- - The pair status bar shows the resolved model next to the provider.
- - The tool answer channel is enforced at the provider (`toolChoice`, papi-core/google 0.13); a single corrective re-ask remains as the fallback.
-
-### Changed
- - `next` answers with a `suggest_next` tool call instead of JSON parsed out of prose, and suggests the determined step directly (no model call) when the suite state determines it: undefined steps, a failing example, or a pending gap.
- - Every AI write, pair mode included, is a proposal applied through one write gate after confirmation, and all spec-content guards share one ObjectBehavior detector.
- - Default models refreshed per provider: `gemini-3-pro-preview`, `claude-sonnet-5`, `gpt-5.1`, `grok-4`.
-
-### Fixed
- - A live provider failure (a bad key, an HTTP error) surfaces as a message instead of crashing `generate` and `next`.
- - Pair mode's project context honours a configured `features_path`.
-
-## [9.0.0-beta.9](https://github.com/phpspec/phpspec/compare/9.0.0-beta.8...9.0.0-beta.9)
-
-### Fixed
- - `generate` honours a file path named in the instruction and picks the artifact from its extension (a `.feature` request is written as Gherkin, never a spec), and infers a feature, spec, or code target from the wording when no path is given.
- - `generate` rejects a spec the model wrote in phpspec-8 ObjectBehavior syntax instead of writing invalid DSL.
- - Pair `/next` no longer leaks the machine-readable `{type, target, reason}` suggestion JSON into its conversational reply.
-
-## [9.0.0-beta.8](https://github.com/phpspec/phpspec/compare/9.0.0-beta.7...9.0.0-beta.8)
-
-### Added
- - `--format=agent` machine-readable JSON for coding agents; with `describe --agent`, `exemplify --agent`, and `--accept-offers`
- - Slash commands in pair mode: `/describe`, `/exemplify`, `/run`, `/next`, `/generate`, `/clear` (joining `/swap`, `/help`, `/quit`)
- - Generate command and `/generate` to turn a plain-English instruction into a spec example or code
- - Ghost-text next step, the prompt pre-fills a dim suggestion of the next command (Right-arrow/Tab accepts)
- - `next` follows outside-in, feature-first TDD: favours story tests and advises the next baby step from real suite state; works without AI.
-
-### Fixed
- - Native PHP 8.4/8.5 deprecations in mock generation (nullable `?object` constructor param; dropped `setAccessible()`).
- - Pair `ai:` status reflects whether the provider actually started (`ai: on` / `ai: unavailable` / `ai: off`)
-
-## [9.0.0-beta.7](https://github.com/phpspec/phpspec/compare/9.0.0-beta.6...9.0.0-beta.7)
-
-### Added
- - Roles & /swap: you drive or the AI drives (one artifact per turn); the navigator never writes files.
- - Grounded & self-verifying: it sees the suite's real red/green each turn and auto-runs specs after its own change, instead of guessing.
- - Designs in conversation: clarify → plan → confirm → make the change → present the diff.
- - Grows specs, never overwrites: describe + add_example; drops-examples or phpspec 8 ObjectBehavior writes are rejected.
- - Plus: inspect_symbol, bounded long sessions, a suite-state greeting, real generated-code diffs, unified chooser, ai.max_tokens.
-
-### Fixed
- - next no longer loops on an existing spec; code generation won't offer to create a class/spec that already exists.
-
-## [9.0.0-beta.6](https://github.com/phpspec/phpspec/compare/9.0.0-beta.5...9.0.0-beta.6)
-
-### Fixed
- - Pair mode picks up code generated earlier in the session by running each `run` in a fresh subprocess
- - Generated `And`/`But` step definitions use the keyword of the step they follow (`when()`/`then()`), not always `given()`
-
-## [9.0.0-beta.5](https://github.com/phpspec/phpspec/compare/9.0.0-beta.4...9.0.0-beta.5)
-
-### Added
- - Pair-mode code-generation prompts (create class/method/interface, generate steps, run specs) now use the same numbered chooser as the rest of pair mode
- - Fix: running specs more than once in a single pair session no longer loses output or crashes on specs that declare a top-level class/interface
-
-## [9.0.0-beta.4](https://github.com/phpspec/phpspec/compare/9.0.0-beta.3...9.0.0-beta.4)
-
-### Added
-- Improved pair mode capture of user input
-
-## [9.0.0-beta.3](https://github.com/phpspec/phpspec/compare/9.0.0-beta...9.0.0-beta.3)
-
-### Added
-- After hooks
-- Ability to run single scenarios given a line (some_feature.feature:42)
-- Native `--coverage-json` report (per-example line coverage, per-test timing/memory, source/spec checksums), for Infection
-- `--coverage-src=DIR` to scope coverage without a config file
-- `--paths-from=FILE` (ARG_MAX-safe spec list)
-- Re-add `--config=FILE` (explicit path; not CWD)
-
-## 9.0.0-beta
-
-### Breaking Changes
-- Complete rewrite with Jasmine/RSpec-style syntax
-- Removed Prophecy dependency: built-in mock system
-- Removed ObjectBehavior base class: closures everywhere
-- Removed dependency on symfony/event-dispatcher, symfony/process, symfony/finder, doctrine/instantiator, sebastian/exporter, phpspec/php-diff
-- Spec files now use `.spec.php` suffix
-
-### Added
-- `describe()`, `context()`, `it()`, `let()` DSL (global functions)
-- `expect($value)->toBe()` assertion style
-- Built-in mock system with type-hinted parameter injection
-- `allow($mock->method())->toReturn(val)` stubbing
-- `toBeCalled()`, `toBeCalledWith()`, `toBeCalledTimes()` verification
-- Argument matchers: `any()`, `type()`, `callback()`, `noArgs()`, `cetera()`
-- Fluent call count: `->once()`, `->twice()`, `->never()`, `->exactly(N)->times()`
-- Negation via `expect($x)->not()->toBe($y)`
-- Custom matchers via `addMatcher()`
-- Pending/focused/skipped: `xit()`, `xdescribe()`, `fit()`, `fdescribe()`
-- Story BDD with Gherkin `.feature` files (built-in, no Behat)
-- `given()`, `when()`, `then()` step definitions
-- Scenario Outline with Examples tables
-- DataTable support with `asClass()` hydration
-- Parallel test execution via Fibers
-- Code generation: specs, classes, interfaces, method stubs
-- `--fake` flag for generating method bodies from spec expectations
-- `--story` flag for running only feature scenarios
-- AI-assisted pair programming (`pair`, `next`, `refactor` commands)
-- Formatters: Pretty, Dot, TAP, JUnit XML
-- `--stop-on-failure`, `--stop-on-error`, `--filter`, `--order=random`, `--profile`
-- Per-example timing and suite duration reporting
-- 90%+ code coverage enforcement
+### Browser testing
+ - `visit()`, `get()`, `post()`, `put()`, `patch()` and `delete()` with response matchers such as `toBeOk()`, `toHaveStatus()` and `toHavePath()`, which take any PSR-7 response; the browser behind them is an extension point

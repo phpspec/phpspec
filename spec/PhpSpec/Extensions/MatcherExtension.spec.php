@@ -4,7 +4,7 @@ use PhpSpec\Extensions\MatcherExtension;
 
 describe(MatcherExtension::class, function () {
 
-    let('matcher', fn() => new class extends MatcherExtension {
+    this('matcher', fn() => new class extends MatcherExtension {
         public function getName(): string
         {
             return 'toBePositive';

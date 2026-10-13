@@ -93,7 +93,7 @@ describe(Agent::class, function () {
         });
     });
 
-    let('config', fn() => new Configuration());
+    this('config', fn() => new Configuration());
 
     it('consults the model for a named new feature and keeps the derived path over its content', function (Filesystem $fs) {
         $replay = new ReplayProvider([

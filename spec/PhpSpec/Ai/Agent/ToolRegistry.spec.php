@@ -15,9 +15,9 @@ use PhpSpec\Filesystem;
 // determines the artifact, the model is never consulted.
 describe(ToolRegistry::class, function () {
 
-    let('config', fn(Filesystem $fs) => new Configuration());
-    let('registry', fn(Filesystem $fs) => new ToolRegistry($this->config, $fs));
-    let('genProfile', fn() => new CommandProfile(name: 'generate', body: '', tools: ['write_feature', 'write_steps', 'propose_edit']));
+    this('config', fn(Filesystem $fs) => new Configuration());
+    this('registry', fn(Filesystem $fs) => new ToolRegistry($this->config, $fs));
+    this('genProfile', fn() => new CommandProfile(name: 'generate', body: '', tools: ['write_feature', 'write_steps', 'propose_edit']));
 
     context('definitions', function () {
 

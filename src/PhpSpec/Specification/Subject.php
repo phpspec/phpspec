@@ -17,29 +17,29 @@ namespace PhpSpec\Specification;
 /**
  * @internal
  * Dynamic-property object serving as $this inside spec closures. Holds shared
- * state set by let() bindings; a fresh Subject is the world for each run.
+ * state set by this() bindings; a fresh Subject is the world for each run.
  */
 #[\AllowDynamicProperties]
 final class Subject implements World
 {
-    /** @var array<string, object> mocks created by let() parameter injection */
-    public array $__phpspec_let_mocks = [];
+    /** @var array<string, object> mocks created by this() parameter injection */
+    public array $__phpspec_injected_mocks = [];
 
-    /** @var array<string, \Closure(): mixed> let values not built yet, by property, each built when first read */
-    public array $__phpspec_pending_lets = [];
+    /** @var array<string, \Closure(): mixed> this() values not built yet, by property, each built when first read */
+    public array $__phpspec_pending_bindings = [];
 
     /**
-     * A let value is built the first time an example reads it, so the hooks
-     * have run by then and a let may read one declared after it. By
+     * A this() value is built the first time an example reads it, so the hooks
+     * have run by then and a this() may read one declared after it. By
      * reference, so `$this->trace[] = 'x'` writes into the value. A name no
-     * let owns comes into being as null, as a dynamic property written to
+     * this() owns comes into being as null, as a dynamic property written to
      * would have.
      */
     public function &__get(string $name): mixed
     {
-        if (isset($this->__phpspec_pending_lets[$name])) {
-            $build = $this->__phpspec_pending_lets[$name];
-            unset($this->__phpspec_pending_lets[$name]);
+        if (isset($this->__phpspec_pending_bindings[$name])) {
+            $build = $this->__phpspec_pending_bindings[$name];
+            unset($this->__phpspec_pending_bindings[$name]);
             $this->$name = $build();
         } else {
             $this->$name = null;
@@ -50,7 +50,7 @@ final class Subject implements World
 
     public function __isset(string $name): bool
     {
-        return isset($this->__phpspec_pending_lets[$name]);
+        return isset($this->__phpspec_pending_bindings[$name]);
     }
 
     /**

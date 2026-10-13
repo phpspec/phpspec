@@ -7,7 +7,7 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
 
 describe(SuiteNarrator::class, function () {
 
-    let('narrator', fn() => new SuiteNarrator());
+    this('narrator', fn() => new SuiteNarrator());
 
     // The observation (red/green/pending) is drawn from suite state and is the
     // same whether or not an AI provider is configured.

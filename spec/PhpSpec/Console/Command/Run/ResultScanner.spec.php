@@ -19,7 +19,7 @@ interface ResultScannerTestInterface {
 
 describe(ResultScanner::class, function () {
 
-    let('scanner', fn() => new ResultScanner(new SourceAnalyser()));
+    this('scanner', fn() => new ResultScanner(new SourceAnalyser()));
 
     context('collectMissingMockTypes', function () {
 
@@ -416,7 +416,7 @@ describe(ResultScanner::class, function () {
             file_put_contents($tmpFile, implode("\n", [
                 '<?php',
                 'use App\\Calculator;',
-                'let("calc", fn() => new Calculator());',
+                'this("calc", fn() => new Calculator());',
                 'expect($this->calc->add(1, 2))->toBe(3);',
             ]));
 

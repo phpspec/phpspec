@@ -17,12 +17,12 @@ require_once __DIR__ . '/../../../Ai/ReplayProvider.php';
 
 describe(RefactorModel::class, function () {
 
-    let('files', fn() => new ArrayObject([
+    this('files', fn() => new ArrayObject([
         '/proj/src/App/Checkout/CheckoutService.php' => "<?php\nnamespace App\\Checkout;\n\nuse App\\Pricing\\Rates;\n\nfinal class CheckoutService {}\n",
         '/proj/spec/App/Checkout/CheckoutService.spec.php' => "<?php\ndescribe('App\\Checkout\\CheckoutService', function () {});\n",
         '/proj/src/App/Pricing/Rates.php' => "<?php\nnamespace App\\Pricing;\n\nfinal class Rates {}\n",
     ]));
-    let('filesystem', function (Filesystem $fs) {
+    this('filesystem', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($this->files[$path]));
         allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $this->files[$path] ?? '');
         allow($fs->mkdir(any()));
@@ -32,8 +32,8 @@ describe(RefactorModel::class, function () {
 
         return $fs;
     });
-    let('target', fn() => new RefactorTarget('App\\Checkout\\CheckoutService', '/proj/src/App/Checkout/CheckoutService.php', '/proj/spec/App/Checkout/CheckoutService.spec.php'));
-    let('plan', fn() => new Response('', [new ToolCall('p1', 'propose_plan', [
+    this('target', fn() => new RefactorTarget('App\\Checkout\\CheckoutService', '/proj/src/App/Checkout/CheckoutService.php', '/proj/spec/App/Checkout/CheckoutService.spec.php'));
+    this('plan', fn() => new Response('', [new ToolCall('p1', 'propose_plan', [
         'technique' => 'Replace Conditional with Polymorphism',
         'rationale' => "CheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule.",
         'steps' => [
@@ -41,8 +41,8 @@ describe(RefactorModel::class, function () {
             'Describe LoyaltyDiscount',
         ],
     ])], 1200));
-    let('replay', fn() => new ReplayProvider([]));
-    let('model', fn() => function (Response|Throwable ...$responses): RefactorModel {
+    this('replay', fn() => new ReplayProvider([]));
+    this('model', fn() => function (Response|Throwable ...$responses): RefactorModel {
         $this->replay = new ReplayProvider($responses);
 
         return new RefactorModel($this->replay, new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]), $this->filesystem, '/proj', new PromptLibrary($this->filesystem));

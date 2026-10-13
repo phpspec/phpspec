@@ -3,7 +3,7 @@
 use PhpSpec\Console\Command\Pair\InputParser;
 
 describe(InputParser::class, function () {
-    let('parser', fn() => new InputParser());
+    this('parser', fn() => new InputParser());
 
     it('instantiates', fn() => expect($this->parser)->toBeAnInstanceOf(InputParser::class));
 

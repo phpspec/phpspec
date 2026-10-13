@@ -8,7 +8,7 @@ PhpSpec lets you write expressive, readable specs using `describe`, `context`, `
 
 0. [Introduction](introduction.md): Philosophy, the BDD cycle, what's new in 9.0
 1. [Getting Started](getting-started.md): Installation, first spec, running specs
-2. [Writing Specs](writing-specs.md): `describe`, `context`, `it`, `let`, `expect`, pending, focused
+2. [Writing Specs](writing-specs.md): `describe`, `context`, `it`, `this`, `expect`, pending, focused
 3. [Matchers](matchers.md): All 30+ matchers and how they work
 4. [Mocking](mocking.md): Test doubles with `mock()`, `allow()`, and mock expectations
 5. [Hooks](hooks.md): `beforeEach`, `afterEach`, `beforeAll`, `afterAll`
@@ -31,7 +31,7 @@ PhpSpec lets you write expressive, readable specs using `describe`, `context`, `
 use App\Calculator;
 
 describe(Calculator::class, function() {
-    let("calculator", fn() => new Calculator());
+    this("calculator", fn() => new Calculator());
 
     it("instantiates", fn() =>
         expect($this->calculator)->toBeAnInstanceOf(Calculator::class));

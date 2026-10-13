@@ -253,7 +253,7 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
     }
 
     /**
-     * The result of an example whose hook (a let binding, a beforeEach, an
+     * The result of an example whose hook (a this() binding, a beforeEach, an
      * afterEach) threw: an error of its own, declared where it is, so the
      * examples beside it still run and the count holds.
      */
@@ -486,7 +486,7 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
     }
 
     /**
-     * Resolves type-hinted closure parameters to let-created mocks, world properties,
+     * Resolves type-hinted closure parameters to injected mocks, world properties,
      * or new mock doubles.
      *
      * @param Closure $closure example closure whose parameters to resolve
@@ -497,16 +497,16 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
     {
         $ref = new ReflectionFunction($closure);
         $world = $ref->getClosureThis();
-        $letMocks = ($world !== null && isset($world->__phpspec_let_mocks))
-            ? $world->__phpspec_let_mocks : [];
+        $injectedMocks = ($world !== null && isset($world->__phpspec_injected_mocks))
+            ? $world->__phpspec_injected_mocks : [];
         $args = [];
         foreach ($ref->getParameters() as $param) {
             $type = $param->getType();
             if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                 $name = $param->getName();
                 $className = $type->getName();
-                if (isset($letMocks[$name]) && $letMocks[$name] instanceof $className) {
-                    $args[] = $letMocks[$name];
+                if (isset($injectedMocks[$name]) && $injectedMocks[$name] instanceof $className) {
+                    $args[] = $injectedMocks[$name];
                 } elseif ($world !== null && isset($world->$name) && $world->$name instanceof $className) {
                     $args[] = $world->$name;
                 } else {

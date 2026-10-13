@@ -5,7 +5,7 @@ use PhpSpec\Mock\MockedMethod;
 
 describe(MethodCallsStack::class, function() {
 
-    let("stack", fn() => new MethodCallsStack());
+    this("stack", fn() => new MethodCallsStack());
 
     it("instantiates", fn() => expect($this->stack)->toBeAnInstanceOf(MethodCallsStack::class));
 

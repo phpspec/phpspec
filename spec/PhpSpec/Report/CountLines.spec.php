@@ -12,7 +12,7 @@ use PhpSpec\Result\SuiteResult;
 
 describe(CountLines::class, function () {
 
-    let('lines', fn() => fn(array $results): array => (new CountLines((new Counts(new SuiteResult($results)))->toArray()))->lines());
+    this('lines', fn() => fn(array $results): array => (new CountLines((new Counts(new SuiteResult($results)))->toArray()))->lines());
 
     it('counts the stories on one line and the specs on another, each outcome with its tone', function () {
         $noted = new StepResult('Given the old API', 'passed');

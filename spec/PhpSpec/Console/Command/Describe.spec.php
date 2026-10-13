@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\NullOutput;
 
 describe(Describe::class, function() {
 
-    let("describe", fn(Filesystem $fs) => new Describe(new SpecGenerator('spec', $fs)));
+    this("describe", fn(Filesystem $fs) => new Describe(new SpecGenerator('spec', $fs)));
 
     it("instantiates", fn() => expect($this->describe)->toBeAnInstanceOf(Describe::class));
 
