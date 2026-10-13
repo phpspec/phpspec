@@ -49,6 +49,7 @@ final readonly class Feature implements SpecBlock
         private FeatureNode $featureNode,
         private StepRegistry $registry,
         private HookRegistry $hooks,
+        private StepTypes $types = new StepTypes(),
     ) {}
 
     /**
@@ -102,7 +103,7 @@ final readonly class Feature implements SpecBlock
             $this->featureNode->tags,
         );
 
-        return new self($this->path, $featureNode, $this->registry, $this->hooks);
+        return new self($this->path, $featureNode, $this->registry, $this->hooks, $this->types);
     }
 
     /**
@@ -356,13 +357,7 @@ final readonly class Feature implements SpecBlock
     private function outcomeOf(StepNode $step, string $title, StepMatch $match, object $world, StepMatchCollector $collector, CapturedOutput $printed): StepResult
     {
         try {
-            $args = $match->args;
-            if ($step->docString !== null) {
-                $args[] = $step->docString;
-            }
-            if ($step->table !== null) {
-                $args[] = $step->table;
-            }
+            $args = $this->types->arguments($match->callback, $match->args, $step->docString, $step->table);
             $printed->around(fn() => $match->callback->call($world, ...$args));
         } catch (PendingException $e) {
             return new StepResult($title, 'pending', $e->getMessage());

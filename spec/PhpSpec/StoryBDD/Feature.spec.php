@@ -11,11 +11,19 @@ use PhpSpec\StoryBDD\BackgroundNode;
 use PhpSpec\StoryBDD\StepRegistry;
 use PhpSpec\StoryBDD\HookRegistry;
 use PhpSpec\StoryBDD\DataTable;
+use PhpSpec\StoryBDD\DocStringType;
+use PhpSpec\StoryBDD\ParameterType;
+use PhpSpec\StoryBDD\StepTypes;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\StopConditions;
 use PhpSpec\StopRegistry;
+
+final class FeatureSpecMoney
+{
+    public function __construct(public int $pence) {}
+}
 
 describe(Feature::class, function () {
 
@@ -655,6 +663,31 @@ describe(Feature::class, function () {
         $steps = $result->getResults()[0]->getResults();
         expect($steps[0]->isPassed())->toBeTrue();
         expect($receivedDoc)->toBe('{"name": "Alice"}');
+    });
+
+    it("makes a step's typed parameters through the types it was given", function () {
+        $registry = new StepRegistry();
+        $received = [];
+        $registry->addStep('a stamp worth {int} pence', function (FeatureSpecMoney $value) use (&$received) {
+            $received[] = $value;
+        });
+        $registry->addStep('the settings:', function (array $json) use (&$received) {
+            $received[] = $json;
+        });
+        $types = StepTypes::of(
+            new ReflectionFunction(#[ParameterType] fn(string $pence): FeatureSpecMoney => new FeatureSpecMoney((int) $pence)),
+            new ReflectionFunction(#[DocStringType('json')] fn(string $text): array => json_decode($text, true)),
+        );
+
+        $feature = new Feature('test.feature', new FeatureNode('Types', '', null, [
+            new ScenarioNode('Typed', [
+                new StepNode('Given', 'a stamp worth 85 pence'),
+                new StepNode('And', 'the settings:', null, '{"debug": true}'),
+            ]),
+        ]), $registry, new HookRegistry(), $types);
+
+        expect($feature->run()->getResults()[0]->getResults()[1]->isPassed())->toBeTrue();
+        expect($received)->toBeLike([new FeatureSpecMoney(85), ['debug' => true]]);
     });
 
     it("passes both doc string and data table to step callback", function () {
