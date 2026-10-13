@@ -1,6 +1,6 @@
 # PhpSpec Documentation
 
-A specification-oriented BDD framework for PHP 8.2+, inspired by RSpec and Jasmine.
+A specification-oriented BDD framework for PHP 8.3+, inspired by RSpec and Jasmine.
 
 PhpSpec lets you write expressive, readable specs using `describe`, `context`, `it`, and `expect`, bringing the best of Ruby and JavaScript testing to PHP. Version 9.0 is a ground-up rewrite that unifies Story BDD and Spec BDD in a single tool and adds AI-native features for the modern development workflow, including a machine-readable [`--format=agent`](agent.md) for coding agents.
 

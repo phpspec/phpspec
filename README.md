@@ -1,8 +1,8 @@
 # PhpSpec
 
-Specification-oriented BDD framework for PHP 8.2+, inspired by RSpec and Jasmine.
+Specification-oriented BDD framework for PHP 8.3+, inspired by RSpec and Jasmine.
 
-**License:** MIT | **PHP:** ^8.2
+**License:** MIT | **PHP:** ^8.3
 
 ## Installation
 

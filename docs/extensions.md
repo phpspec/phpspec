@@ -317,7 +317,7 @@ acme/phpspec-nyan-formatter/
     "description": "Nyan cat formatter for PhpSpec",
     "type": "phpspec-extension",
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "phpspec/phpspec": "^9.0"
     },
     "autoload": {

@@ -2,7 +2,7 @@
 
 ## Current State
 
-PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.2+. It supports a Jasmine/RSpec-style DSL, built-in mocking, code generation, Gherkin feature files, code coverage, and multiple output formatters.
+PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.3+. It supports a Jasmine/RSpec-style DSL, built-in mocking, code generation, Gherkin feature files, code coverage, and multiple output formatters.
 
 ### What Works
 

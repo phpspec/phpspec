@@ -584,7 +584,7 @@ change while the integration is being finalised.
 ## Dependencies
 
 PhpSpec depends on:
-- `php` ^8.2 with `ext-mbstring`, `ext-tokenizer` and `ext-sockets`
+- `php` ^8.3 with `ext-mbstring`, `ext-tokenizer` and `ext-sockets`
 - `symfony/console` and `symfony/yaml` ^7.0 || ^8.0
 - `cucumber/gherkin` ^39
 
