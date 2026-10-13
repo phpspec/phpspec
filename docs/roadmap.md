@@ -98,5 +98,5 @@ PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.2+. It su
 - [ ] Watch mode (re-run on file change)
 
 ### Internal / Technical Debt
-- [ ] Static `Dispatcher` -- consider instance-based dispatcher for isolation
-- [ ] Subscriber accumulation -- subscribers are never removed, events from inner examples can leak to outer subscribers
+- [ ] Static `Dispatcher`: consider instance-based dispatcher for isolation
+- [ ] Subscriber accumulation: subscribers are never removed, events from inner examples can leak to outer subscribers

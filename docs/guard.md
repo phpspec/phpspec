@@ -244,5 +244,5 @@ pass:
 
 ## See also
 
-- [CLI Reference](cli.md) -- every `run` option, including coverage.
-- [Coding Agents](agent.md) -- the agent stream guard reports into.
+- [CLI Reference](cli.md): every `run` option, including coverage.
+- [Coding Agents](agent.md): the agent stream guard reports into.

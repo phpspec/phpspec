@@ -1,6 +1,6 @@
 # Mocking
 
-PhpSpec includes a built-in mocking system -- no external libraries required. It generates test doubles at runtime using reflection and `eval()`.
+PhpSpec includes a built-in mocking system, no external libraries required. It generates test doubles at runtime using reflection and `eval()`.
 
 ## Creating Doubles
 
@@ -369,13 +369,13 @@ so a `not()->toBeCalled()` can never pass for a call that could not happen.
 
 The mock system handles:
 
-- **Classes** -- generates a subclass
-- **Interfaces** -- generates an implementation
-- **Nullable types** (`?Foo`) -- wraps return with null handling
-- **Union types** (`Foo|Bar`) -- uses the first mockable type
-- **Intersection types** (`Foo&Bar`) -- creates a combined implementation
-- **Enum types** -- returns the first case as default
-- **Scalar return types** (`string`, `int`, `float`, `bool`, `array`) -- returns type-appropriate defaults
+- **Classes**: generates a subclass
+- **Interfaces**: generates an implementation
+- **Nullable types** (`?Foo`): wraps return with null handling
+- **Union types** (`Foo|Bar`): uses the first mockable type
+- **Intersection types** (`Foo&Bar`): creates a combined implementation
+- **Enum types**: returns the first case as default
+- **Scalar return types** (`string`, `int`, `float`, `bool`, `array`): returns type-appropriate defaults
 
 ## Limitations
 

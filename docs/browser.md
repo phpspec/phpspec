@@ -146,7 +146,7 @@ expect($response)->toRedirectTo('https://example.com/login');
 
 ## Existing Matchers That Work on Response Properties
 
-You don't need special matchers for everything — use the ones you already know:
+You don't need special matchers for everything. Use the ones you already know:
 
 ```php
 // Body
@@ -168,7 +168,7 @@ expect($response->status)->toBeGreaterThan(199);
 
 ## PSR-7 Support
 
-The response matchers (`toBeOk`, `toBeBad`, `toHaveStatus`, `toHavePath`) also work with any PSR-7 `ResponseInterface`. No hard dependency is required — install `psr/http-message` and the matchers detect it automatically:
+The response matchers (`toBeOk`, `toBeBad`, `toHaveStatus`, `toHavePath`) also work with any PSR-7 `ResponseInterface`. No hard dependency is required: install `psr/http-message` and the matchers detect it automatically:
 
 ```bash
 composer require psr/http-message

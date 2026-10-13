@@ -13,7 +13,7 @@ expect($items)->toHaveCount(1);
 
 A failed expectation does not stop the example: every expectation is judged, in the order written, and the report leads with the first that did not hold. Call expectations on doubles differ by design: `toBeCalled()` is declared before the act and judged when the example ends (see [`toBeCalled()`](#tobecalled)).
 
-All matchers are chainable -- they return the `Expectation` instance, so you can write `expect($x)->toBe(1)->toBeLike('1')`.
+All matchers are chainable: they return the `Expectation` instance, so you can write `expect($x)->toBe(1)->toBeLike('1')`.
 
 ## Identity & Equality
 
@@ -255,7 +255,7 @@ expect(5)->toBeBetween(1, 10);
 
 ### `toBeCloseTo(float $value, float $delta = 0.00001)`
 
-Asserts the subject is within `$delta` of the given float — for comparing
+Asserts the subject is within `$delta` of the given float, for comparing
 floating-point numbers without exact-equality surprises.
 
 ```php
@@ -285,7 +285,7 @@ expect(new Calculator())->toRespondTo('add');
 
 ### `toSatisfy(callable $predicate)`
 
-Asserts the subject satisfies a custom predicate — a callback that receives the
+Asserts the subject satisfies a custom predicate: a callback that receives the
 subject and returns `true` (pass) or `false` (fail). Handy for one-off checks
 that don't warrant a named custom matcher.
 

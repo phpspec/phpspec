@@ -231,6 +231,7 @@ autoload:
 
 With this, `describe Thing` describes `Brew\Acme\Thing` in
 `spec/Brew/Acme/Thing.spec.php`, and `describe Another/Acme/Thing` stays as it is.
+
 ### `base_url`
 
 Base URL for browser testing. Default: `null`.
@@ -241,7 +242,7 @@ base_url: http://localhost:8080
 
 ## Named Suites
 
-Group specs into named suites, each with its own paths and source directory. When no explicit paths are passed to `phpspec run`, all suite paths are loaded.
+Group specs into named suites, each with its own paths and source directory. When no explicit paths are passed to `vendor/bin/phpspec run`, all suite paths are loaded.
 
 ```yaml
 suites:
@@ -285,11 +286,11 @@ suites:
 
 ### Running a specific suite's paths
 
-Pass paths directly to `phpspec run`:
+Pass paths directly to `vendor/bin/phpspec run`:
 
 ```bash
-phpspec run spec/Unit
-phpspec run spec/Unit spec/Integration
+vendor/bin/phpspec run spec/Unit
+vendor/bin/phpspec run spec/Unit spec/Integration
 ```
 
 ## Auto-Detection
@@ -325,11 +326,11 @@ CLI flags take priority over configuration file values:
 | `stop_on_skipped` | `--stop-on-skipped` |
 | `spec_path` | Pass path as argument to `run` |
 
-Config and CLI flags are merged — if either is enabled, the condition is active. For example, `stop_on_error: true` in config combined with `--stop-on-warning` on the CLI will stop on both errors and warnings.
+Config and CLI flags are merged: if either is enabled, the condition is active. For example, `stop_on_error: true` in config combined with `--stop-on-warning` on the CLI will stop on both errors and warnings.
 
 ## AI Assistant
 
-The `ai` section enables the AI assistant in pair mode (`phpspec pair`) and the refactor command (`phpspec refactor`). When configured, any input that doesn't match a built-in command is sent to the LLM, which can generate specs, features, step definitions, run specs, and answer questions about your codebase.
+The `ai` section enables the AI assistant in pair mode (`vendor/bin/phpspec pair`) and the refactor command (`vendor/bin/phpspec refactor`). When configured, any input that doesn't match a built-in command is sent to the LLM, which can generate specs, features, step definitions, run specs, and answer questions about your codebase.
 
 ```yaml
 ai:

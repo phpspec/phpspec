@@ -24,21 +24,21 @@ CLI (Symfony Console)
 
 ## Core Pipeline
 
-### 1. Entry Point -- `bin/phpspec`
+### 1. Entry Point: `bin/phpspec`
 
 Bootstraps autoloading, registers the custom class autoloader, and runs the Symfony Console `Application`.
 
-### 2. Application -- `Console\Application`
+### 2. Application: `Console\Application`
 
 Extends Symfony's `Application`. Registers six commands:
-- `run` -- load and execute specs
-- `describe` -- generate a spec file for a class
-- `exemplify` -- add a method example to a spec
-- `pair` -- interactive pair-programming REPL with an AI assistant
-- `next` -- AI suggests what to describe or specify next
-- `refactor` -- AI-powered, behaviour-preserving refactoring
+- `run`: load and execute specs
+- `describe`: generate a spec file for a class
+- `exemplify`: add a method example to a spec
+- `pair`: interactive pair-programming REPL with an AI assistant
+- `next`: AI suggests what to describe or specify next
+- `refactor`: AI-powered, behaviour-preserving refactoring
 
-### 3. Run Command -- `Console\Command\Run`
+### 3. Run Command: `Console\Command\Run`
 
 Receives a `Loader`, `Runner`, and `Report`. On execute:
 1. Parses CLI options (format, filter, coverage, etc.)
@@ -46,15 +46,15 @@ Receives a `Loader`, `Runner`, and `Report`. On execute:
 3. `Runner::run()` executes the suite
 4. `Report::print()` renders results via the selected formatter
 
-### 4. Loader -- `Loader`
+### 4. Loader: `Loader`
 
 Recursively scans the `spec/` directory (or a given path) for `*.spec.php` and `*.feature` files. Each spec file becomes a `Specification`. Each feature file is parsed by `GherkinParser` into a `Feature`. Returns a `Suite` containing all specifications and features.
 
-### 5. Suite -- `Suite`
+### 5. Suite: `Suite`
 
 Holds an array of `Specification` and `Feature` objects (both implement a common interface). Calls `run()` on each and collects results into a `SuiteResult`. Supports `stopOnFailure` to halt after the first failing spec.
 
-### 6. Specification -- `Specification`
+### 6. Specification: `Specification`
 
 Represents a single `.spec.php` file. On `run()`:
 1. Dispatches `SpecificationStarted` event
@@ -62,11 +62,11 @@ Represents a single `.spec.php` file. On `run()`:
 3. Runs each collected `SpecBlock` (Context or Example)
 4. Returns a `SpecificationResult`
 
-### 7. Subject -- `Subject`
+### 7. Subject: `Subject`
 
 A dynamic-property object (`#[AllowDynamicProperties]`) that serves as `$this` inside spec closures. Loading the spec file triggers `describe()`/`it()`/`let()` calls, which build the spec tree via the scope stack.
 
-### 8. Context -- `Context`
+### 8. Context: `Context`
 
 Represents a `describe` or `context` block. Holds child `SpecBlock`s and lifecycle hooks. On `run()`:
 1. Dispatches `ContextStarted`
@@ -75,7 +75,7 @@ Represents a `describe` or `context` block. Holds child `SpecBlock`s and lifecyc
 4. Runs `beforeAll` hooks, then each child with `beforeEach`/`afterEach` wrapping, then `afterAll` hooks
 5. Returns a `ContextResult`
 
-### 9. Example -- `Example`
+### 9. Example: `Example`
 
 Represents an `it` block. On `run()`:
 1. Dispatches `ExampleStarted`
@@ -115,12 +115,12 @@ The `Dispatcher` uses a **scope stack** for structure building. DSL functions (`
 
 Subscribers (in `EventDispatcher/Subscriber/`) react to events:
 
-- **`SpecificationSubscriber`** -- Resets the subscribed `Specification` on `SpecificationStarted`, so each spec file builds its tree from a clean slate.
-- **`ExampleSubscriber`** -- Collects `MatchCreated` closures, executes them on `ExampleRunned`, and builds the `ExampleResult`. Handles `ExampleErrored`.
+- **`SpecificationSubscriber`**: Resets the subscribed `Specification` on `SpecificationStarted`, so each spec file builds its tree from a clean slate.
+- **`ExampleSubscriber`**: Collects `MatchCreated` closures, executes them on `ExampleRunned`, and builds the `ExampleResult`. Handles `ExampleErrored`.
 
 ### Listeners
 
-- **`LogListener`** -- Logs all `Loggable` events with timestamps. Useful for debugging.
+- **`LogListener`**: Logs all `Loggable` events with timestamps. Useful for debugging.
 
 ## Story BDD Pipeline
 
@@ -171,7 +171,7 @@ SuiteResult
             +-- StepResult (per step)
 ```
 
-- `MatchResult::passed()` / `MatchResult::failed()` -- factory methods
+- `MatchResult::passed()` / `MatchResult::failed()`: factory methods
 - `Detail\Failed` carries expected/actual values, message, file, line, surrounding code
 - `Counts` traverses the tree to produce summary stats (specs, examples, passes, failures, errors, pending)
 
@@ -190,7 +190,7 @@ The `Report` interface delegates to a `Formatter`. Available formatters:
 
 ### Pretty Formatter
 
-Rendering lives in `Report/Formatter/Pretty/PrettyViews.php` -- a class of static
+Rendering lives in `Report/Formatter/Pretty/PrettyViews.php`, a class of static
 methods, one per node type, each writing colorized output through the Symfony
 Console `OutputInterface`:
 
@@ -208,18 +208,18 @@ Console `OutputInterface`:
 
 When coverage is enabled (via `--coverage` flags), the `CoverageCollector` uses xdebug to collect line-level coverage data. Three report formats are available:
 
-- `TextReport` -- renders coverage percentages to the terminal
-- `HtmlReport` -- generates an HTML report with color-coded source views
-- `CloverReport` -- outputs Clover XML for CI tool integration
+- `TextReport`: renders coverage percentages to the terminal
+- `HtmlReport`: generates an HTML report with color-coded source views
+- `CloverReport`: outputs Clover XML for CI tool integration
 
 ## Code Generation
 
 The autoloader (`CodeGeneration\Autoloader`) intercepts class-not-found errors and offers interactive generation:
 
-- `ClassGenerator` -- generates PHP class files
-- `InterfaceGenerator` -- generates PHP interface files (from mock errors)
-- `SpecGenerator` -- generates `.spec.php` files
-- `MethodStubGenerator` -- adds method stubs to existing classes/interfaces
-- `StepGenerator` -- appends pending definitions for undefined steps to one steps file, `steps.php` by default
+- `ClassGenerator`: generates PHP class files
+- `InterfaceGenerator`: generates PHP interface files (from mock errors)
+- `SpecGenerator`: generates `.spec.php` files
+- `MethodStubGenerator`: adds method stubs to existing classes/interfaces
+- `StepGenerator`: appends pending definitions for undefined steps to one steps file, `steps.php` by default
 
 The `--fake` flag enhances `MethodStubGenerator` to fill in return values from spec expectations.

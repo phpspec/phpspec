@@ -454,7 +454,7 @@ describe(CodeGenerator::class, function () {
 
             expect($out)->not()->toContain('[Y/n]');
             expect($out)->toContain('1. Yes');
-            expect($out)->toContain("2. Yes, and don't ask again — always create methods");
+            expect($out)->toContain("2. Yes, and don't ask again: always create methods");
             expect($out)->toContain('3. No');
             expect($out)->toContain('[MODIFIED]');
             expect($out)->toContain('public function spin');
@@ -664,7 +664,7 @@ describe(CodeGenerator::class, function () {
             $generator->apply($this->output, $this->candidates, false);
 
             $out = $this->output->fetch();
-            expect($out)->toContain("2. Yes, and don't ask again — always append them to features/steps/steps.php");
+            expect($out)->toContain("2. Yes, and don't ask again: always append them to features/steps/steps.php");
             expect($out)->not()->toContain('[0] No, skip');
             expect((string) file_get_contents($this->root . '/features/steps/steps.php'))->toContain('a user named {string}');
         });

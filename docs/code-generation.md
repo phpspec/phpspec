@@ -74,6 +74,7 @@ both mapped, `App\Legacy\Order` goes where `App\Legacy\` points. A class
 under no mapping goes below `src_path` (`src` by default) with its whole name
 as directories: `Acme\Thing` in `src/Acme/Thing.php`. The next run finds a
 class at either place without a composer dump.
+
 ## The `exemplify` Command
 
 Add an example for a single method to a spec (creating the spec first if it
@@ -83,7 +84,7 @@ doesn't exist):
 vendor/bin/phpspec exemplify App/Calculator add
 ```
 
-Both `describe -e` and `exemplify` are idempotent -- an example for a method that
+Both `describe -e` and `exemplify` are idempotent: an example for a method that
 is already present is not duplicated.
 
 ## Machine-Readable Receipts (`--format=agent`)
@@ -243,18 +244,18 @@ vendor/bin/phpspec run --accept-offers            # generate all missing code, n
 vendor/bin/phpspec run --accept-offers --fake     # ...and fill empty methods with spec'd returns
 ```
 
-This is the scripted counterpart to the prompts -- built for
+This is the scripted counterpart to the prompts, built for
 `--format=agent` consumers and CI, where an agent reads the run's `offers` and
 then has PhpSpec generate them. See [Coding Agents](agent.md) for the offer
 format and the full loop.
 
 ## Generating From an Instruction (`generate`)
 
-The generators above are deterministic — they emit fixed stubs (`toBe(null)`, empty
+The generators above are deterministic: they emit fixed stubs (`toBe(null)`, empty
 method bodies). When a spec is red because an existing method needs *real behaviour*
 (not because a class or method is missing), the `generate` command turns a
-natural-language instruction into one file edit — a spec example or a piece of
-implementation code — authored by the AI, shown as a diff, and written after you confirm:
+natural-language instruction into one file edit (a spec example or a piece of
+implementation code) authored by the AI, shown as a diff, and written after you confirm:
 
 ```bash
 vendor/bin/phpspec generate an example for App/Calculator add where it sums two numbers
@@ -304,12 +305,12 @@ See [Story BDD](story-bdd.md) for more on step definitions.
 
 PhpSpec's code generation creates a natural BDD workflow:
 
-1. **Write a spec** -- `vendor/bin/phpspec describe App/Calculator`
-2. **Run specs** -- PhpSpec prompts to generate the missing class
-3. **Add examples** -- write `expect($calc->add(2, 3))->toBe(5)`
-4. **Run again** -- PhpSpec offers to generate the `add()` method
-5. **Implement** -- fill in the real logic (or use `--fake` for a quick pass)
-6. **Repeat** -- add more examples, drive the design through specs
+1. **Write a spec**: `vendor/bin/phpspec describe App/Calculator`
+2. **Run specs**: PhpSpec prompts to generate the missing class
+3. **Add examples**: write `expect($calc->add(2, 3))->toBe(5)`
+4. **Run again**: PhpSpec offers to generate the `add()` method
+5. **Implement**: fill in the real logic (or use `--fake` for a quick pass)
+6. **Repeat**: add more examples, drive the design through specs
 
 The autoloader is registered in `vendor/bin/phpspec`:
 

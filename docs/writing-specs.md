@@ -32,7 +32,7 @@ Contexts can be nested to any depth, and the output will indent accordingly.
 
 ## `it(string $title, ?Closure $example = null)` / `its(...)`
 
-Defines a single example (test case). The title should read like a sentence -- "it does something".
+Defines a single example (test case). The title should read like a sentence: "it does something".
 
 ```php
 it("returns the sum of two numbers", function() {

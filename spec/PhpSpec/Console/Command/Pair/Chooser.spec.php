@@ -27,7 +27,7 @@ describe(Chooser::class, function () {
         $text = $this->buffer->fetch();
         expect($text)->toContain('Do you want me to create class');
         expect($text)->toContain('1. Yes');
-        expect($text)->toContain("2. Yes, and don't ask again — always create classes");
+        expect($text)->toContain("2. Yes, and don't ask again: always create classes");
         expect($text)->toContain('3. No');
     });
 
