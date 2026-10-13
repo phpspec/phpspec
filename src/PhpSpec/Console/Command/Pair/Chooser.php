@@ -23,7 +23,7 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
  * AI CLI assistants:
  *
  *   ▸ 1. Yes
- *     2. Yes, and don't ask again — always <action>
+ *     2. Yes, and don't ask again: always <action>
  *     3. No
  *
  * On a TTY a single keypress decides (1/2/3, y for yes, a for always, n or
@@ -335,7 +335,7 @@ final class Chooser
 
         $labels = [
             1 => 'Yes',
-            2 => "Yes, and don't ask again — always $action",
+            2 => "Yes, and don't ask again: always $action",
             3 => $this->noLabel,
         ];
 

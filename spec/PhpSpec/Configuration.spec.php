@@ -2,6 +2,7 @@
 
 use PhpSpec\Configuration;
 use PhpSpec\ConfigurationException;
+use PhpSpec\Coverage\CoverageAdapter;
 use PhpSpec\Filesystem;
 use PhpSpec\StopConditions;
 
@@ -34,6 +35,15 @@ describe(Configuration::class, function () {
             expect(fn() => Configuration::load('/app', $fs))->toThrow(
                 ConfigurationException::class,
                 '/app/phpspec.yaml: stop_on_failure expects true or false, "maybe" given.',
+            );
+        });
+
+        it('refuses a coverage adapter it does not have, naming the two it has', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "coverage_adapter: pcv\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: coverage_adapter expects pcov or xdebug, "pcv" given.',
             );
         });
 
@@ -852,6 +862,17 @@ describe(Configuration::class, function () {
         $config = Configuration::load('/app', $fs);
 
         expect($config->getStepsPath())->toBe('acceptance_steps');
+    });
+
+    context('coverage adapter', function () {
+        it('names none when the config says nothing', function () {
+            expect((new Configuration())->coverageAdapter())->toBeNull();
+        });
+
+        it('names the adapter the config states', function () {
+            expect((new Configuration(['coverage_adapter' => 'pcov']))->coverageAdapter())->toBe(CoverageAdapter::Pcov);
+            expect((new Configuration(['coverage_adapter' => 'xdebug']))->coverageAdapter())->toBe(CoverageAdapter::Xdebug);
+        });
     });
 
 });

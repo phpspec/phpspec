@@ -34,6 +34,7 @@ use PhpSpec\Console\Command\Next;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Refactor;
 use PhpSpec\Console\Command\Run;
+use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Loader;
 use PhpSpec\Report\Formatter\Agent;
@@ -172,6 +173,7 @@ final class Application extends BaseApplication
             new Runner(),
             $config,
             $extensionLoader,
+            engines: CoverageEngines::of($config, $this->argv),
         );
         $defaultCommands[] = new Describe(
             new SpecGenerator($config->specDir(), specSuffix: $specSuffix),

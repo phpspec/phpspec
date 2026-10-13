@@ -568,7 +568,7 @@ Feature: Guard
       """
     When I run phpspec guard
     And I run phpspec run in a fresh process
-    Then the output should contain "Guard is on but no coverage driver is available"
+    Then the output should contain "Guard is on but cannot judge this run"
     And the output should not contain "stands down"
     And the exit code should be 1
 
@@ -587,4 +587,4 @@ Feature: Guard
     And I run phpspec run in a fresh process with option "--format=agent"
     Then the header should state "guard" as "on"
     And the header should state "coverage" as "false"
-    And the output should contain "Guard is on but no coverage driver is available"
+    And the output should contain "Guard is on but cannot judge this run"

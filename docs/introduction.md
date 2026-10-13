@@ -104,7 +104,7 @@ PhpSpec 9.0 is a ground-up rewrite. The major changes from earlier versions:
   via a formal plugin API
 - **HTTP testing**: `visit()`, `get()`, `post()` helpers with response
   matchers for browser-level assertions
-- **Code coverage**: Text, HTML, and Clover XML reports via xdebug, with
+- **Code coverage**: Text, HTML, and Clover XML reports via PCOV or Xdebug, with
   minimum threshold enforcement
 - **Configuration**: YAML, JSON, or PHP config files with named suites,
   stop conditions, and code generation settings

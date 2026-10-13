@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- PHP 8.2 or higher
+- PHP 8.3 or higher
 - Composer
 
 ## Installation
@@ -103,12 +103,12 @@ Or an HTML report:
 vendor/bin/phpspec run --coverage-html coverage/
 ```
 
-Requires the xdebug extension with `xdebug.mode=coverage`.
+Requires PCOV enabled, or Xdebug in coverage mode (`xdebug.mode=coverage`).
 
 ## Next Steps
 
-- [Writing Specs](writing-specs.md) -- DSL functions, hooks, pending/focused
-- [Matchers](matchers.md) -- All 30+ available matchers
-- [Mocking](mocking.md) -- Test doubles with `mock()` and `allow()`
-- [CLI Reference](cli.md) -- All commands and options
-- [Configuration](configuration.md) -- `phpspec.json` reference
+- [Writing Specs](writing-specs.md): DSL functions, hooks, pending/focused
+- [Matchers](matchers.md): All 30+ available matchers
+- [Mocking](mocking.md): Test doubles with `mock()` and `allow()`
+- [CLI Reference](cli.md): All commands and options
+- [Configuration](configuration.md): `phpspec.json` reference

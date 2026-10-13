@@ -11,7 +11,7 @@ vendor/bin/phpspec run [files] [options]
 ```
 
 **Arguments:**
-- `files` (optional) -- Path to a spec file, directory, or feature file. Defaults to `./spec`.
+- `files` (optional): Path to a spec file, directory, or feature file. Defaults to `./spec`.
 
 **Examples:**
 
@@ -38,7 +38,7 @@ See [Pair Programming & AI](pair.md) for full documentation.
 
 ### `next`
 
-Coaches the single next step in outside-in, feature-first TDD — favouring story tests, grounded in the real suite state.
+Coaches the single next step in outside-in, feature-first TDD, favouring story tests, grounded in the real suite state.
 
 ```bash
 vendor/bin/phpspec next
@@ -149,12 +149,12 @@ vendor/bin/phpspec describe <class> [options]
 ```
 
 **Arguments:**
-- `class` -- The class path using `/` as namespace separator. A name under none of the mapped namespaces is asked about, or put under `default_namespace`; see [Code Generation](code-generation.md#a-class-under-none-of-the-mapped-namespaces).
+- `class`: The class path using `/` as namespace separator. A name under none of the mapped namespaces is asked about, or put under `default_namespace`; see [Code Generation](code-generation.md#a-class-under-none-of-the-mapped-namespaces).
 
 **Options:**
-- `-e`, `--exemplify=METHOD` -- Include an example for the specified method.
-- `-r`, `--run` -- Run the spec just generated, not the whole suite.
-- `-f`, `--format=agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
+- `-e`, `--exemplify=METHOD`: Include an example for the specified method.
+- `-r`, `--run`: Run the spec just generated, not the whole suite.
+- `-f`, `--format=agent`: Emit a machine-readable JSON receipt instead of prose (for coding agents).
 
 **Examples:**
 
@@ -174,11 +174,11 @@ vendor/bin/phpspec exemplify <class> <method> [options]
 ```
 
 **Arguments:**
-- `class` -- The class path using `/` as namespace separator.
-- `method` -- The method to add an example for.
+- `class`: The class path using `/` as namespace separator.
+- `method`: The method to add an example for.
 
 **Options:**
-- `-f`, `--format=agent` -- Emit a machine-readable JSON receipt instead of prose.
+- `-f`, `--format=agent`: Emit a machine-readable JSON receipt instead of prose.
 
 ```bash
 vendor/bin/phpspec exemplify App/Calculator add
@@ -196,8 +196,8 @@ See [Coding Agents](agent.md) for the JSON receipts and
 |---|---|
 | `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit`, `html`, `agent`. Repeatable; pair each with `-o` |
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
-| `-v` | Verbose mode -- shows the duration of each example and step; `--format=agent` reports the passing entries too |
-| `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
+| `-v` | Verbose mode: shows the duration of each example and step; `--format=agent` reports the passing entries too |
+| `-q` | Quiet mode: suppresses all output, exit code still reflects pass/fail |
 | `--profile[=N]` | Show the N slowest examples, each by its path of titles (default: 10) |
 
 #### Pretty Formatter (default)
@@ -297,7 +297,7 @@ See [Coding Agents](agent.md) for the full contract, the `--accept-offers` /
 
 Every formatter writes to standard output, so a single format is best saved
 with shell redirection as above. To produce report files *in addition to* the
-console output — or several formats in one run — repeat `--format`/`-f` and
+console output (or several formats in one run), repeat `--format`/`-f` and
 pair each occurrence with an `--out`/`-o` destination. Outs pair with formats
 by position (Behat style), and `std` names the console:
 
@@ -317,7 +317,7 @@ rejected with an error rather than silently falling back.
 | `--filter=PATTERN` | Only run specs/scenarios whose file path, or whose path of titles (`describe > context > example`, `Feature > Scenario`), contains PATTERN |
 | `--tags=EXPRESSION` | Only run the scenarios a Cucumber tag expression selects: `@smoke`, `@smoke and not @wip`, `(@a or @b) and not @c`. A feature's tags count for every scenario in it; a spec has no tags and does not run |
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
-| `--all` | Run all suites -- both specs and features |
+| `--all` | Run all suites, both specs and features |
 | `--story` | Run only features (Story BDD) |
 | `--order=ORDER` | Run order: `default` or `random` |
 | `--seed=SEED` | Shuffle by this whole number, as a random run prints it, to reproduce that order; implies `--order random` |
@@ -468,7 +468,7 @@ spec or feature); the parent renders them as they arrive, in whichever format
 was asked for, with everything a single process would show: a failure's values
 and code, an error's site, what an example printed. A worker that dies is
 reported as an error on the file it was running, naming its exit code. Coverage
-(`--coverage*`) composes with `--parallel` -- workers collect per-example
+(`--coverage*`) composes with `--parallel`: workers collect per-example
 coverage and the parent merges it. `--format=agent` is parallel-safe too: the
 parent emits each event as a worker reports it, so entries arrive in completion
 order rather than file order.
@@ -487,7 +487,7 @@ vendor/bin/phpspec run --fake
 ```
 
 `--accept-offers` applies every pending offer (missing classes, interfaces,
-methods, feature steps) in one non-interactive pass and exits `0` -- the
+methods, feature steps) in one non-interactive pass and exits `0`, the
 scripted counterpart to the interactive "shall I create this?" prompts. Combine
 it with `--fake` to also fill empty method bodies:
 
@@ -518,14 +518,19 @@ vendor/bin/phpspec run --coverage-min 90                # Fail below 90%
 vendor/bin/phpspec run --coverage --coverage-src lib    # Scope the report to lib/
 ```
 
-Coverage requires the xdebug extension with `xdebug.mode=coverage`. Coverage
-options can be combined with `--parallel`: workers collect coverage per example
-and the parent process merges their results before rendering the reports.
+Coverage needs an engine: PCOV enabled (`pcov.enabled=1`), or Xdebug in
+coverage mode (`xdebug.mode=coverage`). With nothing named in the config, the
+run takes PCOV when it is enabled, else Xdebug;
+[`coverage_adapter`](configuration.md#coverage_adapter) names one. A run that
+cannot collect says which engine it needs and the command that switches it on.
+Coverage options can be combined with `--parallel`: workers collect coverage
+per example and the parent process merges their results before rendering the
+reports.
 
 #### JSON Coverage Report (experimental)
 
 The JSON report is designed for tools that need to know **which example covers
-which source line** — most notably mutation testing frameworks such as
+which source line**, most notably mutation testing frameworks such as
 [Infection](https://infection.github.io/). Its schema is experimental and may
 change while the integration is being finalised.
 
@@ -578,15 +583,15 @@ change while the integration is being finalised.
 
 ## Exit Codes
 
-- `0` -- All examples passed
-- `1` -- One or more examples failed or errored
+- `0`: All examples passed
+- `1`: One or more examples failed or errored
 
 ## Dependencies
 
 PhpSpec depends on:
-- `php` ^8.2 with `ext-mbstring`, `ext-tokenizer` and `ext-sockets`
+- `php` ^8.3 with `ext-mbstring`, `ext-tokenizer` and `ext-sockets`
 - `symfony/console` and `symfony/yaml` ^7.0 || ^8.0
 - `cucumber/gherkin` ^39
 
 The mocking system is built in. The AI commands (`pair`, `next`, `generate`,
-`refactor`) need the `papi-ai` packages, installed separately; see `pair.md`.
+`refactor`) need the `papi-ai` packages, installed separately; see [Pair Programming & AI](pair.md).

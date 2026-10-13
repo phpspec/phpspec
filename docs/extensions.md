@@ -232,8 +232,8 @@ Available events:
 
 | Event | Arguments |
 |---|---|
-| `beforeSuite()` | -- |
-| `afterSuite()` | -- |
+| `beforeSuite()` | none |
+| `afterSuite()` | none |
 | `beforeSpec(string $title)` | Spec file title |
 | `afterSpec(string $title)` | Spec file title |
 | `beforeExample(string $title)` | Example title |
@@ -317,8 +317,8 @@ acme/phpspec-nyan-formatter/
     "description": "Nyan cat formatter for PhpSpec",
     "type": "phpspec-extension",
     "require": {
-        "php": "^8.2",
-        "phpspec/phpspec": "^1.0"
+        "php": "^8.3",
+        "phpspec/phpspec": "^9.0"
     },
     "autoload": {
         "psr-4": {
@@ -406,4 +406,4 @@ extensions:
 - **Composer-native.** Extensions are regular Composer packages with PSR-4 autoloading. No custom loaders, no file paths in config.
 - **Config-driven.** Registration happens in `phpspec.yml` by FQCN. Auto-discovery via `composer.json` `extra` is optional.
 - **Minimal interfaces.** Base classes have sensible defaults. Override only what you need.
-- **No magic.** Extensions don't modify PhpSpec internals. They plug into defined extension points -- formatters, matchers, commands, and event listeners.
+- **No magic.** Extensions don't modify PhpSpec internals. They plug into defined extension points: formatters, matchers, commands, and event listeners.

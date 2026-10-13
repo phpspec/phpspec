@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - PhpSpec runs on PHP 8.6
+ - Coverage is collected with PCOV when it is enabled, else with Xdebug in coverage mode; `coverage_adapter: pcov` or `xdebug` in the config names one. A run that cannot collect says which engine it needs and the command that switches it on; under PCOV, a source directory outside `pcov.directory` is refused naming the directory to set
  - A file named `steps.php` holds step definitions as any `*.steps.php` does, wherever step files are looked for
  - A `{float}` step placeholder captures a decimal such as `4.5`, and a generated step definition takes a decimal in its text as `{float}` with a `float` parameter, where it used to read `{int}.{int}`
  - A line target that reaches no example shows, under the pretty and dot formatters, the seven lines around it with the target number in bold, so an off-by-one line can be corrected by sight
@@ -69,6 +71,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Stubs answer in the order they were declared: each call the code under spec makes uses up the first matching stub that has not answered, the last one answering on, so two `allow()`s of the same call answer one call after the other; a later stub replaced an earlier one, and one that throws beat the others. The spec's own calls use no stub up, and a stub's exception shows to them only through `toThrow()`, so writing the next `allow()` of the call declares it
 
 ### Removed
+ - PHP 8.2: the floor is PHP 8.3
  - `toBeCalledWith()`: the arguments are written in the call, matchers included, `expect($logger->log(any()))->toBeCalled()`
  - `toBeCalledTimes()` and `toBeCalled()->never()`: a count follows `toBeCalled()`, as `->once()`, `->twice()` or `->exactly(3)->times()`, and a call that must not happen is `not()->toBeCalled()`
  - `noArgs()`: a call written with no arguments is a call with none, `$service->flush()`

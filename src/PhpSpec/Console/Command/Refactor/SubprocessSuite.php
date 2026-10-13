@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Refactor;
 
 use PhpSpec\Configuration;
+use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Parallel\ParallelRunner;
 
 /**
@@ -27,17 +28,22 @@ use PhpSpec\Parallel\ParallelRunner;
  */
 final readonly class SubprocessSuite implements SpecSuite
 {
+    private CoverageEngines $engines;
+
     public function __construct(
         private string $directory,
         private Configuration $config,
         private int $timeoutSeconds = 300,
-    ) {}
+        ?CoverageEngines $engines = null,
+    ) {
+        $this->engines = $engines ?? CoverageEngines::of($config);
+    }
 
     public function check(): SuiteCheck
     {
         $command = [
             PHP_BINARY,
-            '-d', 'xdebug.mode=' . ($this->config->guardIsOn() ? 'coverage' : 'off'),
+            ...$this->engines->switches($this->config->guardIsOn() ? $this->engines->forChildren() : null),
             ParallelRunner::findPhpspecBin(),
             'run', '--format=agent', '--suite-check', '--no-interaction', '--no-ansi',
             ...$this->config->childOptions(),

@@ -53,15 +53,13 @@ then('I should see {string}', function (string $expected) {
 | `step_but(pattern, closure)` | Register a But step |
 | `PhpSpec\attach(name, text\|closure)` | Hand over context to report with a failure (namespaced: `use function PhpSpec\attach;`) |
 
-All keywords register into the same step registry -- the keyword is for readability only, matching is pattern-based.
+All keywords register into the same step registry; the keyword is for readability only, matching is pattern-based.
 
 ## Support Files
 
 Helper classes for your steps live under `features/support/`, the Cucumber
 way: every PHP file in it (and its subdirectories) is loaded before any step
 definition, with no autoload configuration:
-A support or step file that cannot load, a syntax error or a class built on a
-type that does not exist yet, stops the run naming the file and the reason.
 
 ```
 features/
@@ -70,6 +68,9 @@ features/
   steps/
     steps.php       # use Acme\Support\Server;
 ```
+
+A support or step file that cannot load, a syntax error or a class built on a
+type that does not exist yet, stops the run naming the file and the reason.
 
 [Parameter types](#parameter-types) and [doc string types](#doc-string-types) are functions declared there.
 
@@ -376,7 +377,7 @@ How steps are grouped is yours to decide; grouping them by what they do keeps
 them reusable across features, where a steps file per feature would not. A step
 already defined in any steps file is never generated again. With nobody to
 answer (`--no-interaction`) nothing is written; `--accept-offers` and
-`phpspec accept` append to `steps.php`. The steps go to `steps_path` when it is
+`vendor/bin/phpspec accept` append to `steps.php`. The steps go to `steps_path` when it is
 configured.
 
 Generated steps include `pending()` calls so they show as pending until implemented:
@@ -396,11 +397,11 @@ given("a user named {string}", function (string $arg1) {
 Story BDD and Spec BDD form a full development cycle:
 
 1. Write a `.feature` file describing desired behavior
-2. Run `vendor/bin/phpspec run features/` -- steps are undefined
+2. Run `vendor/bin/phpspec run features/`: steps are undefined
 3. Generate step definitions, implement them
-4. Steps reference classes that don't exist -- PhpSpec offers to generate specs and classes
+4. Steps reference classes that don't exist: PhpSpec offers to generate specs and classes
 5. Switch to Spec BDD: write specs, generate classes, implement
-6. Return to features -- steps now pass
+6. Return to features: steps now pass
 
 ```
 Feature (acceptance) -> Steps -> Specs (unit) -> Classes -> Green

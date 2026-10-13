@@ -463,6 +463,13 @@ then('the file {string} should record the method {string} spanning lines {int} t
     expect($methods[$method])->toBe(['start' => $start, 'end' => $end]);
 });
 
+then('the file {string} should attribute line {int} of {string} to {string} only', function (string $path, int $line, string $source, string $test) {
+    $report = json_decode((string) file_get_contents($this->projectDir . '/' . $path), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($report['sources'])->toHaveKey($source);
+    expect($report['sources'][$source]['lines'][$line] ?? [])->toBe([$test]);
+});
+
 then('the file {string} should contain:', function (string $path, string $text) {
     $content = file_get_contents($this->projectDir . '/' . $path);
     expect($content)->toContain($text);

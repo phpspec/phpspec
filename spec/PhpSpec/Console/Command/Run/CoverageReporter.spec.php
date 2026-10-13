@@ -1,58 +1,68 @@
 <?php
 
 use PhpSpec\Console\Command\Run\CoverageReporter;
+use PhpSpec\Coverage\CoverageAdapter;
 use PhpSpec\Coverage\CoverageCollector;
 use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
+use PhpSpec\Coverage\CoverageRefusal;
 use PhpSpec\Coverage\CoverageRegistry;
+use PhpSpec\Coverage\LivePhpRuntime;
 use PhpSpec\Coverage\PerExampleCollector;
+use PhpSpec\Coverage\PhpRuntime;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(CoverageReporter::class, function () {
 
     context('start', function () {
 
-        if (CoverageCollector::isAvailable()) {
+        $runtime = function (PhpRuntime $php, array $enabled): void {
+            allow($php->loaded(any()))->toReturnUsing(fn(CoverageAdapter $adapter) => in_array($adapter, $enabled, true));
+            allow($php->enabled(any()))->toReturnUsing(fn(CoverageAdapter $adapter) => in_array($adapter, $enabled, true));
+            allow($php->traces(any()))->toReturn(true);
+        };
 
-            // Starting/stopping a real collection would clobber a live
-            // whole-suite collection (xdebug coverage state is process-global).
-            if (!CoverageCollector::isCollecting()) {
+        it('passes on the refusal when no engine can collect, and names no engine', function (PhpRuntime $php) use ($runtime) {
+            $runtime($php, []);
+            $reporter = new CoverageReporter(new CoverageEngines(null, $php, 'vendor/bin/phpspec run --coverage'));
 
-                it('starts with nothing to report when Xdebug coverage is available', function () {
-                    $output = new BufferedOutput();
-                    $reporter = new CoverageReporter();
+            $refusal = $reporter->start(['src']);
 
-                    expect($reporter->start())->toBeNull();
+            expect($refusal)->toBeAnInstanceOf(CoverageRefusal::class);
+            expect($refusal->reason)->toBe('Code coverage requires PCOV or Xdebug in coverage mode');
+            expect($reporter->adapter())->toBeNull();
+        });
 
-                    // Stop the collection so no state leaks into later examples
-                    $reporter->report($output, new CoverageOptions(srcPath: 'src'));
-                    expect(CoverageCollector::isCollecting())->toBeFalse();
-                });
+        it("activates the per-example registry with the engine's driver, asking the engine nothing yet", function (PhpRuntime $php) use ($runtime) {
+            $runtime($php, [CoverageAdapter::Pcov]);
+            $reporter = new CoverageReporter(new CoverageEngines(null, $php, ''));
 
+            try {
+                expect($reporter->start(['src'], perExample: true))->toBeNull();
+                expect(CoverageRegistry::collector())->toBeAnInstanceOf(PerExampleCollector::class);
+                expect($reporter->adapter())->toBe(CoverageAdapter::Pcov);
+            } finally {
+                CoverageRegistry::reset();
             }
+        });
 
-            it('activates the per-example coverage registry in per-example mode', function () {
+        // A whole-suite collection asks the engine itself, so this runs under
+        // the engine this process has, and never beside a live collection.
+        $live = new LivePhpRuntime();
+
+        if ((new CoverageEngines(null, $live, ''))->inThisProcess(['src']) instanceof CoverageAdapter && !CoverageCollector::isCollecting()) {
+
+            it('starts a whole-suite collection with the engine this process has', function () use ($live) {
                 $output = new BufferedOutput();
-                $reporter = new CoverageReporter();
+                $reporter = new CoverageReporter(new CoverageEngines(null, $live, ''));
 
-                try {
-                    expect($reporter->start(perExample: true))->toBeNull();
-                    expect(CoverageRegistry::collector())->toBeAnInstanceOf(PerExampleCollector::class);
-                } finally {
-                    CoverageRegistry::reset();
-                }
-            });
+                expect($reporter->start(['src']))->toBeNull();
+                expect($reporter->adapter())->toBeAnInstanceOf(CoverageAdapter::class);
+                expect(CoverageCollector::isCollecting())->toBeTrue();
 
-        } else {
-
-            it('returns the reason when Xdebug coverage is not available', function () {
-                $reporter = new CoverageReporter();
-                expect($reporter->start())->toContain('Code coverage requires Xdebug');
-            });
-
-            it('returns the reason in per-example mode when Xdebug coverage is not available', function () {
-                $reporter = new CoverageReporter();
-                expect($reporter->start(perExample: true))->toContain('Code coverage requires Xdebug');
+                $reporter->report($output, new CoverageOptions(srcPath: 'src'));
+                expect(CoverageCollector::isCollecting())->toBeFalse();
             });
 
         }
@@ -61,9 +71,13 @@ describe(CoverageReporter::class, function () {
 
     context('report', function () {
 
+        beforeEach(function (PhpRuntime $php) {
+            $this->reporter = new CoverageReporter(new CoverageEngines(null, $php, ''));
+        });
+
         it('reports nothing when collection was never started', function () {
             $output = new BufferedOutput();
-            $reporter = new CoverageReporter();
+            $reporter = $this->reporter;
             $options = new CoverageOptions(srcPath: 'src');
 
             expect($reporter->report($output, $options))->toBeNull();
@@ -82,7 +96,7 @@ describe(CoverageReporter::class, function () {
 
             $dir = sys_get_temp_dir() . '/phpspec_reports_' . uniqid();
             $output = new BufferedOutput();
-            $reporter = new CoverageReporter();
+            $reporter = $this->reporter;
 
             try {
                 $verdict = $reporter->report($output, new CoverageOptions(
@@ -125,7 +139,7 @@ describe(CoverageReporter::class, function () {
             CoverageRegistry::activate($collector);
 
             $output = new BufferedOutput();
-            $reporter = new CoverageReporter();
+            $reporter = $this->reporter;
 
             try {
                 $verdict = $reporter->report($output, new CoverageOptions(
@@ -153,7 +167,7 @@ describe(CoverageReporter::class, function () {
 
             $partialPath = sys_get_temp_dir() . '/phpspec_partial_' . uniqid() . '.json';
             $output = new BufferedOutput();
-            $reporter = new CoverageReporter();
+            $reporter = $this->reporter;
 
             try {
                 $exitCode = $reporter->report($output, new CoverageOptions(srcPath: 'src', partialPath: $partialPath));
@@ -183,7 +197,7 @@ describe(CoverageReporter::class, function () {
             file_put_contents($partialPath, json_encode($workerCollector->toArray()));
 
             CoverageRegistry::activate(new PerExampleCollector($driver));
-            $reporter = new CoverageReporter();
+            $reporter = $this->reporter;
 
             try {
                 $reporter->mergePartials([$partialPath]);

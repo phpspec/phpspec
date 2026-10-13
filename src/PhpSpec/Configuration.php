@@ -14,8 +14,10 @@
 
 namespace PhpSpec;
 
+use BackedEnum;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\SourceLayout;
+use PhpSpec\Coverage\CoverageAdapter;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -25,7 +27,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class Configuration
 {
-    /** @var array<string, string> every key a config file may state, and the kind of value it takes */
+    /** @var array<string, 'bool'|'string'|'array'|class-string<BackedEnum>> every key a config file may state, and the kind of value it takes: a scalar kind, a map, or the enum of the values it may hold */
     private const KNOWN_KEYS = [
         'spec_path' => 'string',
         'src_path' => 'string',
@@ -37,6 +39,7 @@ final class Configuration
         'bootstrap' => 'string',
         'base_url' => 'string',
         'default_namespace' => 'string',
+        'coverage_adapter' => CoverageAdapter::class,
         'stop_on_failure' => 'bool',
         'stop_on_error' => 'bool',
         'stop_on_warning' => 'bool',
@@ -169,38 +172,49 @@ final class Configuration
         }
 
         foreach ($settings as $key => $value) {
-            $expected = self::KNOWN_KEYS[$key] ?? null;
-
-            if ($expected === null) {
-                $nearest = self::nearestOf((string) $key, array_keys(self::KNOWN_KEYS));
-
-                if ($nearest !== null) {
-                    throw new ConfigurationException(sprintf('%s: unknown key "%s". Did you mean "%s"?', $path, $key, $nearest));
-                }
-
-                continue;
-            }
-
-            $wellTyped = match ($expected) {
-                'bool' => is_bool($value),
-                'string' => is_string($value),
-                default => is_array($value),
-            };
-
-            if (!$wellTyped) {
-                throw new ConfigurationException(sprintf(
-                    '%s: %s expects %s, %s given.',
-                    $path,
-                    $key,
-                    match ($expected) {
-                        'bool' => 'true or false', 'string' => 'a string', default => 'a map'
-                    },
-                    is_scalar($value) ? '"' . $value . '"' : get_debug_type($value),
-                ));
-            }
+            self::checkSetting($path, (string) $key, $value);
         }
 
         return $settings;
+    }
+
+    private static function checkSetting(string $path, string $key, mixed $value): void
+    {
+        $expected = self::KNOWN_KEYS[$key] ?? null;
+
+        if ($expected === null) {
+            $nearest = self::nearestOf($key, array_keys(self::KNOWN_KEYS));
+
+            if ($nearest !== null) {
+                throw new ConfigurationException(sprintf('%s: unknown key "%s". Did you mean "%s"?', $path, $key, $nearest));
+            }
+
+            return;
+        }
+
+        $wellTyped = match ($expected) {
+            'bool' => is_bool($value),
+            'string' => is_string($value),
+            'array' => is_array($value),
+            default => is_string($value) && $expected::tryFrom($value) !== null,
+        };
+
+        if ($wellTyped) {
+            return;
+        }
+
+        throw new ConfigurationException(sprintf(
+            '%s: %s expects %s, %s given.',
+            $path,
+            $key,
+            match ($expected) {
+                'bool' => 'true or false',
+                'string' => 'a string',
+                'array' => 'a map',
+                default => implode(' or ', array_map(static fn(BackedEnum $case): string => (string) $case->value, $expected::cases())),
+            },
+            is_scalar($value) ? '"' . $value . '"' : get_debug_type($value),
+        ));
     }
 
     /**
@@ -643,6 +657,17 @@ final class Configuration
     public function childOptions(): array
     {
         return $this->named && $this->settingsFile !== null ? ['--config=' . $this->settingsFile] : [];
+    }
+
+    /**
+     * The coverage engine the project named, or null when the run takes
+     * whichever is enabled.
+     */
+    public function coverageAdapter(): ?CoverageAdapter
+    {
+        $named = $this->config['coverage_adapter'] ?? null;
+
+        return is_string($named) ? CoverageAdapter::from($named) : null;
     }
 
     /**

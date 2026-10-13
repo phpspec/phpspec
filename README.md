@@ -1,8 +1,8 @@
 # PhpSpec
 
-Specification-oriented BDD framework for PHP 8.2+, inspired by RSpec and Jasmine.
+Specification-oriented BDD framework for PHP 8.3+, inspired by RSpec and Jasmine.
 
-**License:** MIT | **PHP:** ^8.2
+**License:** MIT | **PHP:** ^8.3
 
 ## Installation
 
@@ -12,7 +12,7 @@ composer require phpspec/phpspec --dev
 
 ## Philosophy
 
-PhpSpec 9.0 unifies Story BDD and Spec BDD in a single tool — no more juggling phpspec and Behat separately. Write Gherkin feature scenarios to clarify *what* you're building, then drop into specs to drive *how* it's built, class by class. With AI-powered pair programming (`pair`, `next`, `refactor`), the BDD cycle becomes the contract that keeps both human and AI-generated code honest. Read the full [Introduction](docs/introduction.md) for the vision behind 9.0.
+PhpSpec 9.0 unifies Story BDD and Spec BDD in a single tool: no more juggling phpspec and Behat separately. Write Gherkin feature scenarios to clarify *what* you're building, then drop into specs to drive *how* it's built, class by class. With AI-powered pair programming (`pair`, `next`, `refactor`), the BDD cycle becomes the contract that keeps both human and AI-generated code honest. Read the full [Introduction](docs/introduction.md) for the vision behind 9.0.
 
 ## Quick Start
 
@@ -78,7 +78,7 @@ Finished in 0.0042 seconds
 - **Code generation**: specs, classes, interfaces, method stubs, step definitions
 - **`--fake` mode**: auto-generates method bodies with hardcoded return values from specs
 - **Multiple formatters**: pretty (default), dot, TAP, JUnit XML, HTML, agent JSON
-- **Code coverage**: text, Clover XML, and HTML reports via xdebug
+- **Code coverage**: text, Clover XML, and HTML reports via PCOV or Xdebug
 - **Configuration**: `phpspec.yml` or `phpspec.json` with spec paths, autoload, formatter, bootstrap
 - **CLI options**: `--stop-on-failure`, `--filter`, `--order=random`, `--seed`, `--profile`, `--bootstrap`, `-v`, `-q`
 
@@ -167,18 +167,18 @@ Run features: `vendor/bin/phpspec run features/`
 
 See the [docs/](docs/) directory for detailed documentation:
 
-0. [Introduction](docs/introduction.md) -- Philosophy, BDD cycle, what's new in 9.0
-1. [Getting Started](docs/getting-started.md) -- Installation, first spec
-2. [Writing Specs](docs/writing-specs.md) -- DSL functions, hooks, pending/focused
-3. [Matchers](docs/matchers.md) -- All 30+ matchers
-4. [Mocking](docs/mocking.md) -- Test doubles, stubbing, verification
-5. [Hooks](docs/hooks.md) -- Lifecycle hooks
-6. [Story BDD](docs/story-bdd.md) -- Gherkin features and step definitions
-7. [Code Generation](docs/code-generation.md) -- Spec, class, interface, method stub generation
-8. [CLI Reference](docs/cli.md) -- Commands and options
-9. [Configuration](docs/configuration.md) -- phpspec.json reference
-10. [Architecture](docs/architecture.md) -- Internal design
-11. [Roadmap](docs/roadmap.md) -- Status and planned features
+0. [Introduction](docs/introduction.md): Philosophy, BDD cycle, what's new in 9.0
+1. [Getting Started](docs/getting-started.md): Installation, first spec
+2. [Writing Specs](docs/writing-specs.md): DSL functions, hooks, pending/focused
+3. [Matchers](docs/matchers.md): All 30+ matchers
+4. [Mocking](docs/mocking.md): Test doubles, stubbing, verification
+5. [Hooks](docs/hooks.md): Lifecycle hooks
+6. [Story BDD](docs/story-bdd.md): Gherkin features and step definitions
+7. [Code Generation](docs/code-generation.md): Spec, class, interface, method stub generation
+8. [CLI Reference](docs/cli.md): Commands and options
+9. [Configuration](docs/configuration.md): phpspec.json reference
+10. [Architecture](docs/architecture.md): Internal design
+11. [Roadmap](docs/roadmap.md): Status and planned features
 
 ## License
 

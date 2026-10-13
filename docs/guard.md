@@ -28,10 +28,11 @@ recorded under `.phpspec/guard/`: the current commit in a git repository, or a
 snapshot of your source files without one. That is the point in time everything
 is judged against, so add `.phpspec/` to your `.gitignore`.
 
-Guard reads coverage, so **Xdebug has to be in coverage mode**. Either set
-`xdebug.mode=coverage` in your `php.ini`, or run with
-`XDEBUG_MODE=coverage vendor/bin/phpspec run`. Xdebug's default mode is `develop`,
-which collects nothing, and guard will tell you it cannot judge.
+Guard reads coverage, so **a coverage engine has to be on**: PCOV enabled
+(`pcov.enabled=1`), or Xdebug in coverage mode (`xdebug.mode=coverage` in your
+`php.ini`, or `XDEBUG_MODE=coverage vendor/bin/phpspec run`). Xdebug's default
+mode is `develop`, which collects nothing; with neither engine on, guard tells
+you it cannot judge and names the command that would let it.
 
 Running `vendor/bin/phpspec guard` again re-records the baseline. In `mtime` mode that
 moves it to your files as they now stand, which forgives everything you have not
@@ -134,8 +135,8 @@ logic left unspecified.
 ## What counts as untested
 
 A changed line is a violation when it is **executable and nothing reached it**.
-Xdebug reports three states, not two, so a brace, a blank line, a `use`
-statement or a declaration is never a violation, however new it is.
+The engine tells executable lines from the rest, so a brace, a blank line, a
+`use` statement or a declaration is never a violation, however new it is.
 
 A file the run never loaded at all has no coverage to consult, which is the
 shape of a class written and never specified. Guard reads the source instead and
@@ -192,7 +193,7 @@ Whether that stops you depends on which command asked and why:
 | the `guard:` section cannot be read | refuses, exit `1` | refuses, exit `1` |
 | no baseline is recorded in this checkout | says so, exit `0` | refuses, exit `1` |
 | the baseline is unreadable, or its commit is not in this checkout | says so, exit `0` | refuses, exit `1` |
-| no coverage driver is available, or Xdebug is not in coverage mode | refuses, exit `1` | refuses, exit `1` |
+| no coverage engine is on: PCOV is not enabled and Xdebug is not in coverage mode | refuses, exit `1` | refuses, exit `1` |
 
 A misread config is the same in every checkout and one edit away from fixed, so
 refusing costs a moment and can never flap. The rest depend on where the code is
@@ -244,5 +245,5 @@ pass:
 
 ## See also
 
-- [CLI Reference](cli.md) -- every `run` option, including coverage.
-- [Coding Agents](agent.md) -- the agent stream guard reports into.
+- [CLI Reference](cli.md): every `run` option, including coverage.
+- [Coding Agents](agent.md): the agent stream guard reports into.

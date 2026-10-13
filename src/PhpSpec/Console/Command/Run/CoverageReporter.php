@@ -16,11 +16,13 @@ namespace PhpSpec\Console\Command\Run;
 
 use DOMException;
 use PhpSpec\Coverage\CloverReport;
+use PhpSpec\Coverage\CoverageAdapter;
 use PhpSpec\Coverage\CoverageCollector;
+use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
+use PhpSpec\Coverage\CoverageRefusal;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\CoverageVerdict;
-use PhpSpec\Coverage\Driver\XdebugDriver;
 use PhpSpec\Coverage\HtmlReport;
 use PhpSpec\Coverage\JsonReport;
 use PhpSpec\Coverage\JsonReportBuilder;
@@ -31,24 +33,29 @@ use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
  * @internal
- * Manages the complete code coverage lifecycle: availability check, collection
- * start/stop, report rendering (text, Clover XML, HTML, JSON), and minimum
- * threshold enforcement. Collection runs in one of two modes: whole-suite
- * (one aggregate collection around the entire run) or per-example (the runner
- * cycles collection around each example so coverage can be attributed to it).
+ * Manages the complete code coverage lifecycle: the choice of engine,
+ * collection start/stop, report rendering (text, Clover XML, HTML, JSON), and
+ * minimum threshold enforcement. Collection runs in one of two modes:
+ * whole-suite (one aggregate collection around the entire run) or per-example
+ * (the runner cycles collection around each example so coverage can be
+ * attributed to it).
  */
 final class CoverageReporter
 {
     private ?CoverageCollector $collector = null;
 
+    private ?CoverageAdapter $adapter = null;
+
     /** @var array<string, array<int, int>> the lines the last run exercised, by absolute path */
     private array $hits = [];
 
+    public function __construct(private readonly CoverageEngines $engines) {}
+
     /**
-     * The lines this run exercised, as Xdebug reports them: covered, executable
-     * but never reached, or not executable at all. Kept from the last report so
-     * guard asks the same data the percentage was worked out from, rather than
-     * collecting its own and risking a different answer.
+     * The lines this run exercised, as the engine reports them: covered,
+     * executable but never reached, or not executable at all. Kept from the
+     * last report so guard asks the same data the percentage was worked out
+     * from, rather than collecting its own and risking a different answer.
      *
      * @return array<string, array<int, int>> file path => line => hit value
      */
@@ -58,28 +65,41 @@ final class CoverageReporter
     }
 
     /**
-     * Checks Xdebug availability and starts coverage collection.
+     * The engine collecting, once started.
+     */
+    public function adapter(): ?CoverageAdapter
+    {
+        return $this->adapter;
+    }
+
+    /**
+     * Picks the engine and starts coverage collection.
      *
      * In per-example mode no collection is started here; instead a collector
      * is activated in the CoverageRegistry and the runner cycles it around
      * each example.
      *
+     * @param list<string> $traced the directories the run reports on
      * @param bool $perExample whether to collect coverage per example
-     * @return string|null null once collection started, or why it could not
+     * @return CoverageRefusal|null null once collection started, or why it could not
      */
-    public function start(bool $perExample = false): ?string
+    public function start(array $traced, bool $perExample = false): ?CoverageRefusal
     {
-        if (!CoverageCollector::isAvailable()) {
-            return 'Code coverage requires Xdebug with coverage mode enabled';
+        $adapter = $this->engines->inThisProcess($traced);
+
+        if ($adapter instanceof CoverageRefusal) {
+            return $adapter;
         }
 
+        $this->adapter = $adapter;
+
         if ($perExample) {
-            CoverageRegistry::activate(new PerExampleCollector(new XdebugDriver()));
+            CoverageRegistry::activate(new PerExampleCollector($adapter->driver()));
 
             return null;
         }
 
-        $this->collector = new CoverageCollector();
+        $this->collector = new CoverageCollector($adapter->driver());
         $this->collector->start();
 
         return null;
