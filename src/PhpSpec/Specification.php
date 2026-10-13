@@ -167,16 +167,17 @@ class Specification implements ExampleRegistry, SpecBlock
     }
 
     /**
-     * Tells every top-level block the file's title, which leads every id in
-     * it, and counts the lines its top-level examples are declared on.
+     * Places every top-level block at the head of its path of titles, which
+     * names it as a run reports it, and counts the lines its top-level
+     * examples are declared on.
      */
     private function placeBlocks(DeclaredLines $declaredLines): void
     {
         foreach ($this->specBlocks as $block) {
             if ($block instanceof Context) {
-                $block->under([$this->getTitle()], $declaredLines);
+                $block->under([], $declaredLines);
             } elseif ($block instanceof Example) {
-                $block->under([$this->getTitle()]);
+                $block->under([]);
                 $declaration = $block->declaration();
 
                 if ($declaration !== null) {

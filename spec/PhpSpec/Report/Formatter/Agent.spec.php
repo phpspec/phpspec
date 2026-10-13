@@ -278,9 +278,9 @@ describe(Agent::class, function () {
         $formatter = new Agent($output);
         $formatter->targets('./spec');
         $formatter->begin();
-        $formatter->printResult(new SpecificationResult('App\\Basket', [
+        $formatter->printResult(new SpecificationResult('Basket', [new ContextResult('App\\Basket', [
             new ExampleResult('holds products', [MatchResult::failed(1, 2, 'Expected 1 to be 2', getcwd() . '/spec/App/Basket.spec.php', 9, null, 'toBe')]),
-        ]));
+        ])]));
 
         // No end(): a fatal took the process before the last example.
         $formatter->publish();
@@ -484,7 +484,7 @@ describe(Agent::class, function () {
         $passing = new ExampleResult('holds products', [MatchResult::passed()]);
         $passing->declaredAt(getcwd() . '/spec/App/Basket.spec.php', 7);
 
-        $doc = $renderVerbose(new SuiteResult([new SpecificationResult('App\\Basket', [$passing])]));
+        $doc = $renderVerbose(new SuiteResult([new SpecificationResult('Basket', [new ContextResult('App\\Basket', [$passing])])]));
 
         expect($doc['examples'])->toBe([[
             'v' => 2,
@@ -621,11 +621,21 @@ describe(Agent::class, function () {
         expect($doc['result']['rerun'])->toBe("run 'spec/My App/Basket.spec.php:12' spec/App/Basket.spec.php:20 '--config=my conf/it'\\''s.yml'");
     });
 
+    it('names an entry by the describes and contexts it sits in and its title, never by the file', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('Basket', [new ContextResult('App\\Basket', [
+                new ExampleResult('holds products', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 3)]),
+            ])]),
+        ]));
+
+        expect($doc['examples'][0]['example'])->toBe('App\\Basket > holds products');
+    });
+
     it('keeps an entry whole when a compared value is a float JSON cannot hold', function () use ($render) {
         $match = MatchResult::failed(INF, 1.0, 'Expected INF to be 1.0', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe');
 
         $example = $render(new SuiteResult([
-            new SpecificationResult('App\\Basket', [new ExampleResult('reports infinity', [$match])]),
+            new SpecificationResult('Basket', [new ContextResult('App\\Basket', [new ExampleResult('reports infinity', [$match])])]),
         ]))['examples'][0];
 
         expect($example['example'])->toBe('App\\Basket > reports infinity');
@@ -685,9 +695,9 @@ describe(Agent::class, function () {
 
     it('derives a stable id from the full example name so an agent can recompute it', function () use ($render) {
         $example = $render(new SuiteResult([
-            new SpecificationResult('App\\Basket', [
+            new SpecificationResult('Basket', [new ContextResult('App\\Basket', [
                 new ExampleResult('totals the prices', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 3)]),
-            ]),
+            ])]),
         ]))['examples'][0];
 
         expect($example['id'])->toBe(substr(sha1('App\\Basket > totals the prices'), 0, 12));
@@ -982,12 +992,12 @@ describe(Agent::class, function () {
         ]));
 
         expect(array_column($doc['examples'], 'example'))->toBe([
-            'Total > App\\Total > when empty > returns the total',
-            'Total > App\\Total > when full > returns the total',
-            'Total > App\\Total > when empty > returns the total',
+            'App\\Total > when empty > returns the total',
+            'App\\Total > when full > returns the total',
+            'App\\Total > when empty > returns the total',
         ]);
         expect(array_unique(array_column($doc['examples'], 'id')))->toHaveLength(3);
-        expect($doc['examples'][0]['id'])->toBe(substr(sha1("spec/App/Total.spec.php\nTotal > App\\Total > when empty > returns the total"), 0, 12));
+        expect($doc['examples'][0]['id'])->toBe(substr(sha1("spec/App/Total.spec.php\nApp\\Total > when empty > returns the total"), 0, 12));
     });
 
     it('counts a story run in scenarios and steps, never in examples', function () use ($render) {

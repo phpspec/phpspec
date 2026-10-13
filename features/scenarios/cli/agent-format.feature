@@ -1397,9 +1397,9 @@ Feature: Agent output format
       """
     When I run phpspec run in a fresh process with option "spec/App/Doubler.spec.php --format=agent"
     Then the report should have 3 entries
-    And the entry "Doubler > Doubler > doubles zero" should rerun as "run spec/App/Doubler.spec.php:6"
-    And the entry "Doubler > Doubler > doubles 1" should rerun its spec file at its id
-    And the entry "Doubler > Doubler > doubles 2" should rerun its spec file at its id
+    And the entry "Doubler > doubles zero" should rerun as "run spec/App/Doubler.spec.php:6"
+    And the entry "Doubler > doubles 1" should rerun its spec file at its id
+    And the entry "Doubler > doubles 2" should rerun its spec file at its id
 
   Scenario: Examples that contexts made in a loop share a line, and rerun one at a time, by id
     Given a spec file "spec/App/Cases.spec.php":
@@ -1419,3 +1419,35 @@ Feature: Agent output format
     When I run the rerun the reported entry hands over
     Then the report should have 1 entry
     And the replay should report the failure the run reported
+
+  Scenario: An entry is named by its describes and its title, which is the path --filter selects by
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Ledger.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Ledger
+      {
+          public function total(array $entries): int
+          {
+              return array_sum($entries);
+          }
+      }
+      """
+    And a spec file "spec/App/Ledger.spec.php":
+      """
+      <?php
+      describe('App\Ledger', function () {
+          context('when it has entries', function () {
+              it('totals the entries', function () {
+                  expect((new App\Ledger())->total([1, 2]))->toBe(3);
+              });
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent -v"
+    Then the entry "App\Ledger > when it has entries > totals the entries" should rerun as "run spec/App/Ledger.spec.php:4"
+    When I run phpspec run with option "--filter 'App\Ledger > when it has entries > totals the entries'"
+    Then the output should contain "1 passed"
