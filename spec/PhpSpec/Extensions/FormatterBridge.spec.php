@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(FormatterBridge::class, function () {
 
-    let('extension', fn() => new class extends FormatterExtension {
+    this('extension', fn() => new class extends FormatterExtension {
         public function getName(): string
         {
             return 'test';

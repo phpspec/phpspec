@@ -23,8 +23,8 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(CodeGenerator::class, function () {
 
-    let('generator', fn() => new CodeGenerator(SourceLayout::under('src'), 'spec'));
-    let('output', fn() => new BufferedOutput());
+    this('generator', fn() => new CodeGenerator(SourceLayout::under('src'), 'spec'));
+    this('output', fn() => new BufferedOutput());
 
     context('generate with empty results', function () {
 
@@ -417,7 +417,7 @@ describe(CodeGenerator::class, function () {
 
     context('presents prompts through an injected chooser (pair mode)', function () {
 
-        let('pairOutput', fn() => new PairOutput($this->output));
+        this('pairOutput', fn() => new PairOutput($this->output));
 
         it('generates the method when the chooser accepts', function () {
             $relDir = '.tmp_codegen_chooser_test_' . getmypid();
@@ -514,7 +514,7 @@ describe(CodeGenerator::class, function () {
         });
     });
     context('undefined steps', function () {
-        let('root', function () {
+        this('root', function () {
             $root = sys_get_temp_dir() . '/phpspec_codegen_steps_' . uniqid();
             mkdir($root . '/features', 0777, true);
 
@@ -529,7 +529,7 @@ describe(CodeGenerator::class, function () {
             };
             $remove($this->root);
         });
-        let('candidates', fn() => new GenerationCandidates(
+        this('candidates', fn() => new GenerationCandidates(
             undefinedSteps: [
                 ['keyword' => 'Given', 'text' => 'a user named "Chuck Norris"'],
                 ['keyword' => 'When', 'text' => 'the user plays'],
@@ -537,21 +537,21 @@ describe(CodeGenerator::class, function () {
             ],
             stepsFile: 'features/steps/steps.php',
         ));
-        let('stepsFiles', function () {
+        this('stepsFiles', function () {
             mkdir($this->root . '/features/steps');
             file_put_contents($this->root . '/features/steps/web.steps.php', "<?php\n\ngiven(\"I visit {string}\", function (string \$arg1) {\n    pending();\n});\n");
             file_put_contents($this->root . '/features/steps/assertions.steps.php', "<?php\n\nthen(\"nothing else happens\", function () {\n    pending();\n});\n");
 
             return ['web' => $this->root . '/features/steps/web.steps.php', 'assertions' => $this->root . '/features/steps/assertions.steps.php'];
         });
-        let('answering', fn() => function (Prompt $prompt, string ...$answers): Prompt {
+        this('answering', fn() => function (Prompt $prompt, string ...$answers): Prompt {
             allow($prompt->ask(any()))->toReturnUsing(function () use (&$answers): ?string {
                 return array_shift($answers);
             });
 
             return $prompt;
         });
-        let('steps', fn() => new StepsHome(new Configuration(), new RealFilesystem(), $this->root));
+        this('steps', fn() => new StepsHome(new Configuration(), new RealFilesystem(), $this->root));
 
         it('asks once, Y/n, when there is no steps file, and writes every step to steps.php once', function (Prompt $prompt) {
             $generator = new CodeGenerator(SourceLayout::under('src'), 'spec', steps: $this->steps, prompt: ($this->answering)($prompt, ''));

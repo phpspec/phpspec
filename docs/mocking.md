@@ -33,12 +33,12 @@ $logger = dummy(Logger::class);
 
 ### Type-Hinted Mock Injection
 
-Both `it()` and `let()` closures support type-hinted parameters that are automatically resolved as mocks:
+Both `it()` and `this()` closures support type-hinted parameters that are automatically resolved as mocks:
 
 ```php
 describe(UserService::class, function () {
-    // Injected via let()
-    let('service', fn (UserRepository $repo) => new UserService($repo));
+    // Injected via this()
+    this('service', fn (UserRepository $repo) => new UserService($repo));
 
     // Injected via it()
     it('finds a user', function (UserRepository $repo) {
@@ -319,12 +319,12 @@ expect($repo->delete(1))->not()->toBeCalled();
 expect($logger->log('other'))->not()->toBeCalled();
 ```
 
-## Using Mocks with `let()`
+## Using Mocks with `this()`
 
 ```php
 describe(Notifier::class, function () {
-    let('mailer', fn () => mock(Mailer::class));
-    let('notifier', fn () => new Notifier($this->mailer));
+    this('mailer', fn () => mock(Mailer::class));
+    this('notifier', fn () => new Notifier($this->mailer));
 
     it('sends an email', function () {
         expect($this->mailer->send('hello'))->toBeCalled();
@@ -333,14 +333,14 @@ describe(Notifier::class, function () {
 });
 ```
 
-Or using type-hinted injection in `let()`:
+Or using type-hinted injection in `this()`:
 
 ```php
 describe(Notifier::class, function () {
-    let('notifier', fn (Mailer $mailer) => new Notifier($mailer));
+    this('notifier', fn (Mailer $mailer) => new Notifier($mailer));
 
     it('sends an email', function () {
-        // $this->mailer is available from let() injection
+        // $this->mailer is available from this() injection
     });
 });
 ```

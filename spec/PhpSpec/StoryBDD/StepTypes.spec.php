@@ -26,7 +26,7 @@ if (!function_exists('step_types_spec_book')) {
 
 describe(StepTypes::class, function () {
 
-    let('refusal', fn() => function (callable $make): ?string {
+    this('refusal', fn() => function (callable $make): ?string {
         try {
             $make();
         } catch (RuntimeException $e) {
@@ -36,7 +36,7 @@ describe(StepTypes::class, function () {
         return null;
     });
 
-    let('types', fn() => StepTypes::of(new ReflectionFunction('step_types_spec_book'), new ReflectionFunction('step_types_spec_json')));
+    this('types', fn() => StepTypes::of(new ReflectionFunction('step_types_spec_book'), new ReflectionFunction('step_types_spec_json')));
 
     context('found', function () {
         it('finds the functions declared with a type attribute in the files it is given', function () {

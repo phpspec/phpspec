@@ -10,7 +10,7 @@ describe(TargetResolver::class, function () {
 
     // A project with App\ under src/App and Acme\ under lib/Acme, whose files
     // are written at the times given.
-    let('project', fn() => new ArrayObject([
+    this('project', fn() => new ArrayObject([
         'files' => [
             '/proj/src/App/Basket.php' => ["<?php\nnamespace App;\n\nclass Basket\n{\n    public function total(): int\n    {\n        return 0;\n    }\n}\n", 100],
             '/proj/src/App/Till.php' => ["<?php\nnamespace App;\n\nclass Till {}\n", 200],
@@ -20,7 +20,7 @@ describe(TargetResolver::class, function () {
             '/proj/spec/Acme/Ledger.spec.php' => ["<?php\n", 50],
         ],
     ]));
-    let('resolver', function (Filesystem $fs) {
+    this('resolver', function (Filesystem $fs) {
         $files = fn(): array => $this->project['files'];
         $children = function (string $dir) use ($files): array {
             $entries = [];
@@ -40,7 +40,7 @@ describe(TargetResolver::class, function () {
 
         return new TargetResolver(new Configuration(['autoload' => ['App\\' => 'src/App', 'Acme\\' => 'lib/Acme']]), $fs, '/proj', $this->commandLine);
     });
-    let('commandLine', fn() => new CommandLine());
+    this('commandLine', fn() => new CommandLine());
 
     context('with no argument', function () {
 
@@ -62,7 +62,7 @@ describe(TargetResolver::class, function () {
         });
 
         context('in a phpspec started with a config of its own', function () {
-            let('commandLine', fn() => new CommandLine('vendor/bin/phpspec', ['--config=conf/qa.yml']));
+            this('commandLine', fn() => new CommandLine('vendor/bin/phpspec', ['--config=conf/qa.yml']));
 
             it('names the describe that gives the class a spec as this phpspec was started, with that config', function () {
                 $files = $this->project['files'];

@@ -5,7 +5,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 describe(Api::class, function () {
 
-    let('document', function () {
+    this('document', function () {
         $tester = new CommandTester(new Api());
         $tester->execute(['--format' => 'agent']);
 
@@ -25,7 +25,7 @@ describe(Api::class, function () {
         $byName = array_column($this->document['dsl'], null, 'name');
 
         expect($byName['it']['signature'])->toBe('it(string $title, ?Closure $example = null): void');
-        expect($byName['let']['signature'])->toBe('let(Closure|string $propertyOrSetter, ?Closure $setter = null): void');
+        expect($byName['this']['signature'])->toBe('this(Closure|string $propertyOrSetter, ?Closure $setter = null): void');
         expect($byName['attach']['signature'])->toBe('PhpSpec\attach(string $name, Closure|string $value): void');
         expect($byName['it']['summary'])->toBe('Registers a new example (test case) in the current context scope.');
     });

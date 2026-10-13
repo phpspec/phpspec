@@ -6,8 +6,8 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(LineEditor::class, function () {
 
-    let('buffer', fn() => new BufferedOutput());
-    let('pairOutput', fn() => new PairOutput($this->buffer));
+    this('buffer', fn() => new BufferedOutput());
+    this('pairOutput', fn() => new PairOutput($this->buffer));
 
     // Builds a LineEditor whose key reader replays a fixed token sequence.
     $keying = function (PairOutput $output, array $seq): LineEditor {

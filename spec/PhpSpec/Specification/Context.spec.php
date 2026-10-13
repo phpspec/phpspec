@@ -54,9 +54,9 @@ describe(Context::class, function() {
         expect($result->isError())->toBe(true);
     });
 
-    it("fails each example that reads a let whose binding throws, and leaves one that never reads it alone", function() {
-        $ctx = new Context("broken let", function() {
-            let('money', fn() => throw new \RuntimeException('not yet'));
+    it("fails each example that reads a this() whose binding throws, and leaves one that never reads it alone", function() {
+        $ctx = new Context("broken this()", function() {
+            this('money', fn() => throw new \RuntimeException('not yet'));
             it("one", function() { expect($this->money)->toBeNull(); });
             it("two", function() { expect($this->money)->toBeNull(); });
             it("three", function() { expect(true)->toBeTrue(); });
@@ -125,11 +125,11 @@ describe(Context::class, function() {
         expect($results[0]->getOutput())->toBe("setup body teardown");
     });
 
-    it("exposes a mock injected into a let on the world, under the parameter's name, for the example's duration", function() {
+    it("exposes a mock injected into a this() on the world, under the parameter's name, for the example's duration", function() {
         $world = new Subject();
         $seen = null;
-        $ctx = new Context("injected let", function() use ($world, &$seen) {
-            let('notifier', fn (ContextSpecMailer $mailer) => new \stdClass());
+        $ctx = new Context("injected this()", function() use ($world, &$seen) {
+            this('notifier', fn (ContextSpecMailer $mailer) => new \stdClass());
             it("reads the mailer", function() use ($world, &$seen) { $seen = $world->mailer; });
         });
         $ctx->setWorld($world);
@@ -143,7 +143,7 @@ describe(Context::class, function() {
     it("hands each example a mock of its own, never the previous example's", function() {
         $seen = [];
         $ctx = new Context("fresh mocks", function() use (&$seen) {
-            let('notifier', fn (ContextSpecMailer $mailer) => new \stdClass());
+            this('notifier', fn (ContextSpecMailer $mailer) => new \stdClass());
             beforeEach(function (ContextSpecMailer $mailer) use (&$seen) { $seen[] = $mailer; });
             it("one", function() {});
             it("two", function() {});
@@ -352,10 +352,10 @@ describe(Context::class, function() {
         expect($log)->toContain('parent-after');
     });
 
-    it("uses let to modify world properties", function() {
-        $ctx = new Context("let test", function() {
-            let("calculator", fn() => new \stdClass());
-            it("has the let value", function() {
+    it("uses this() to modify world properties", function() {
+        $ctx = new Context("this() test", function() {
+            this("calculator", fn() => new \stdClass());
+            it("has the this() value", function() {
                 expect($this->calculator)->toBeAnInstanceOf(\stdClass::class);
             });
         });
@@ -448,11 +448,11 @@ describe(Context::class, function() {
         expect($result->getResults()[0]->isSkipped())->toBe(true);
     });
 
-    it("nested contexts inherit let bindings", function() {
-        $ctx = new Context("let inheritance", function() {
-            let("value", fn() => 42);
+    it("nested contexts inherit this() bindings", function() {
+        $ctx = new Context("this() inheritance", function() {
+            this("value", fn() => 42);
             context("nested", function() {
-                it("has the let value", function() {
+                it("has the this() value", function() {
                     expect($this->value)->toBe(42);
                 });
             });
@@ -466,11 +466,11 @@ describe(Context::class, function() {
         expect($nestedCtx->getResults())->toHaveCount(1);
     });
 
-    it("builds a let when an example first reads it, once for that example, and afresh for the next", function() {
+    it("builds a this() when an example first reads it, once for that example, and afresh for the next", function() {
         $built = 0;
         $seen = [];
-        $ctx = new Context("lazy let", function() use (&$built, &$seen) {
-            let("val", function() use (&$built) {
+        $ctx = new Context("lazy this()", function() use (&$built, &$seen) {
+            this("val", function() use (&$built) {
                 return ++$built;
             });
             it("reads twice", function() use (&$seen) {
@@ -510,10 +510,10 @@ describe(Context::class, function() {
         expect(array_map(fn($match) => $match->isFailure(), $matches))->toBe([false, false, true]);
     });
 
-    it("leaves a let nobody reads unbuilt", function() {
+    it("leaves a this() nobody reads unbuilt", function() {
         $built = 0;
-        $ctx = new Context("unread let", function() use (&$built) {
-            let("val", function() use (&$built) {
+        $ctx = new Context("unread this()", function() use (&$built) {
+            this("val", function() use (&$built) {
                 return ++$built;
             });
             it("looks elsewhere", function() {
@@ -529,9 +529,9 @@ describe(Context::class, function() {
         expect($built)->toBe(0);
     });
 
-    it("lets a hook arrange what a let consumes, the let being built after the hooks ran", function() {
-        $ctx = new Context("hook before let", function() {
-            let("answer", fn() => $this->base + 2);
+    it("lets a hook arrange what a this() consumes, the this() being built after the hooks ran", function() {
+        $ctx = new Context("hook before this()", function() {
+            this("answer", fn() => $this->base + 2);
             beforeEach(function() {
                 $this->base = 40;
             });
@@ -549,10 +549,10 @@ describe(Context::class, function() {
         expect($results[0]->isFailure())->toBeFalse();
     });
 
-    it("re-evaluates let bindings for each example", function() {
+    it("re-evaluates this() bindings for each example", function() {
         $counter = 0;
-        $ctx = new Context("let re-eval", function() use (&$counter) {
-            let("val", function() use (&$counter) {
+        $ctx = new Context("this() re-eval", function() use (&$counter) {
+            this("val", function() use (&$counter) {
                 $counter++;
                 return $counter;
             });
@@ -594,10 +594,10 @@ describe(Context::class, function() {
         expect($result->isError())->toBe(false);
     });
 
-    it("resolves let mocks in beforeEach hooks", function() {
+    it("resolves this() mocks in beforeEach hooks", function() {
         $resolved = null;
-        $ctx = new Context("let mock resolve", function() use (&$resolved) {
-            let(fn(\JsonSerializable $serializer) => null);
+        $ctx = new Context("this() mock resolve", function() use (&$resolved) {
+            this(fn(\JsonSerializable $serializer) => null);
             beforeEach(function(\JsonSerializable $serializer) use (&$resolved) {
                 $resolved = $serializer;
             });

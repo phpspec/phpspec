@@ -24,14 +24,14 @@ describe(LegacySpecDetector::class, function () {
         expect(LegacySpecDetector::looksLegacy("<?php\ndescribe('Basket', function () { it('x', fn() => expect(\$this->total())->toBe(0)); });"))->toBe(true);
     });
 
-    it('passes a modern spec, including let-bound property access on $this', function () {
+    it('passes a modern spec, including property access on $this bound with this()', function () {
         $modern = <<<'SPEC'
         <?php
 
         use App\Basket;
 
         describe(Basket::class, function () {
-            let('basket', fn() => new Basket());
+            this('basket', fn() => new Basket());
 
             it('adds an item to the total', function () {
                 expect($this->basket->add(5)->total())->toBe(5);

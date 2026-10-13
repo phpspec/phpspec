@@ -12,9 +12,9 @@ use PhpSpec\Result\ExampleResult;
 
 describe(ListenerBridge::class, function () {
 
-    let('log', fn() => []);
+    this('log', fn() => []);
 
-    let('listener', function () {
+    this('listener', function () {
         return new class extends ListenerExtension {
             public array $log = [];
 

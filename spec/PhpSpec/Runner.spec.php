@@ -5,7 +5,7 @@ use PhpSpec\Suite;
 use PhpSpec\Result\SuiteResult;
 
 describe(Runner::class, function() {
-    let("runner", fn() => new Runner());
+    this("runner", fn() => new Runner());
 
     it("instantiates", fn() =>
         expect($this->runner)->toBeAnInstanceOf(Runner::class));

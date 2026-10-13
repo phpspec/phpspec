@@ -7,7 +7,7 @@ Spec files use a Jasmine/RSpec-style syntax:
 use App\Basket;
 
 describe(Basket::class, function () {
-    let('basket', fn() => new Basket());
+    this('basket', fn() => new Basket());
 
     it('starts empty', function () {
         expect($this->basket->total())->toBe(0);
@@ -25,7 +25,7 @@ describe(Basket::class, function () {
 });
 ```
 
-IMPORTANT: describe(), it(), let(), context(), expect() are GLOBAL functions.
+IMPORTANT: describe(), it(), this(), context(), expect() are GLOBAL functions.
 Do NOT add "use function" imports for them in spec files. Only `use` the class under test.
 
 NEVER write phpspec 8 ObjectBehavior specs: they are rejected. There are no spec

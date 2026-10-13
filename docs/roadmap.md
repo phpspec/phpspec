@@ -7,13 +7,13 @@ PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.3+. It su
 ### What Works
 
 #### Spec BDD
-- `describe` / `context` / `it` / `its` / `let` DSL
+- `describe` / `context` / `it` / `its` / `this` DSL
 - Nested contexts with proper indentation in output
 - 30+ matchers with negation and custom matcher support
 - Lifecycle hooks: `beforeEach`, `afterEach`, `beforeAll`, `afterAll`
 - Pending/skipped: `xit`, `xdescribe`, `xcontext`, `pending()`
 - Focused: `fit`, `fdescribe`, `fcontext` (per-context resolution)
-- Type-hinted mock injection in `it()` and `let()` closures
+- Type-hinted mock injection in `it()` and `this()` closures
 
 #### Mocking
 - Test doubles via `mock()` with auto-generated classes
@@ -91,7 +91,7 @@ PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.3+. It su
 - [x] Parallel spec execution (`--parallel[=N]`)
 
 ### Code Generation
-- [ ] Constructor argument detection from `let` usage
+- [ ] Constructor argument detection from `this()` usage
 - [ ] Template customisation
 
 ### Developer Experience

@@ -100,7 +100,7 @@ namespace {
      * Declares a describe block (context) grouping related examples.
      *
      * @param string $context description or class name for the group
-     * @param Closure $examples closure containing nested it()/describe()/let() calls
+     * @param Closure $examples closure containing nested it()/describe()/this() calls
      */
     function describe(string $context, Closure $examples): void
     {
@@ -135,7 +135,7 @@ namespace {
      * @param string|Closure $propertyOrSetter property name or injection closure
      * @param Closure|null $setter value factory when first arg is a property name
      */
-    function let(string|Closure $propertyOrSetter, ?Closure $setter = null): void
+    function this(string|Closure $propertyOrSetter, ?Closure $setter = null): void
     {
         $scope = DispatcherRegistry::dispatcher()->currentScope();
         if ($scope instanceof Context) {

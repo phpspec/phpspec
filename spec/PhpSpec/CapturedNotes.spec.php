@@ -51,7 +51,7 @@ if (!function_exists('CapturedNotesFixture\App\callsTheDeprecated')) {
 
 describe(CapturedNotes::class, function () {
 
-    let('project', fn() => new OwnCode(ProjectRoot::at(CAPTURED_NOTES_PROJECT), [ProjectRoot::at(CAPTURED_NOTES_PROJECT . '/vendor')]));
+    this('project', fn() => new OwnCode(ProjectRoot::at(CAPTURED_NOTES_PROJECT), [ProjectRoot::at(CAPTURED_NOTES_PROJECT . '/vendor')]));
 
     it('keeps every warning, deprecation and notice raised while it listens, with where it was raised', function () {
         $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));

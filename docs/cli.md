@@ -566,7 +566,7 @@ change while the integration is being finalised.
   at example granularity. All paths are relative to the project root.
 - **`time`** is the example's wall-clock duration in seconds and **`memory`**
   its peak memory usage in bytes, both measured across the example *and* its
-  `let`/`beforeEach`/`afterEach` hooks, so setup code counts as covered by the
+  `this`/`beforeEach`/`afterEach` hooks, so setup code counts as covered by the
   example that ran it.
 - **`checksum`**/**`spec_checksum`** are MD5 hashes of the file contents,
   letting consumers detect stale coverage data.

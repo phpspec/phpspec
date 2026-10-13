@@ -5,7 +5,7 @@ use PhpSpec\StoryBDD\StepMatch;
 
 describe(StepRegistry::class, function () {
 
-    let("registry", fn() => new StepRegistry());
+    this("registry", fn() => new StepRegistry());
 
     it("instantiates", function () {
         expect($this->registry)->toBeAnInstanceOf(StepRegistry::class);

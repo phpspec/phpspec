@@ -7,7 +7,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 describe(ReceiptFormat::class, function () {
 
-    let('input', fn() => fn(string $format): ArrayInput => new ArrayInput(['--format' => $format], new InputDefinition([new InputOption('format', 'f', InputOption::VALUE_REQUIRED, '', 'pretty')])));
+    this('input', fn() => fn(string $format): ArrayInput => new ArrayInput(['--format' => $format], new InputDefinition([new InputOption('format', 'f', InputOption::VALUE_REQUIRED, '', 'pretty')])));
 
     it('reads the format a command was asked for, pretty unless agent', function () {
         expect(ReceiptFormat::of(($this->input)('pretty')))->toBe(ReceiptFormat::Pretty);

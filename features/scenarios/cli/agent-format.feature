@@ -352,12 +352,12 @@ Feature: Agent output format
     And the output should contain "src/App/Money.php:6"
     And the output should not contain "run src/"
 
-  Scenario: A let binding that throws fails each example that reads it, and leaves one that never reads it alone
+  Scenario: A this() binding that throws fails each example that reads it, and leaves one that never reads it alone
     Given a spec file "spec/App/Money.spec.php":
       """
       <?php
       describe('App\Money', function () {
-          let('tenEuros', fn() => throw new RuntimeException('not yet'));
+          this('tenEuros', fn() => throw new RuntimeException('not yet'));
 
           it('one', function () { expect($this->tenEuros)->toBeNull(); });
           it('two', function () { expect($this->tenEuros)->toBeNull(); });
@@ -1078,7 +1078,7 @@ Feature: Agent output format
       use App\Calculator;
 
       describe(Calculator::class, function () {
-          let("calc", fn() => new Calculator());
+          this("calc", fn() => new Calculator());
           it("adds", function () {
               expect($this->calc->add(1, 2))->toBe(3);
           });
@@ -1108,7 +1108,7 @@ Feature: Agent output format
       use App\Calculator;
 
       describe(Calculator::class, function () {
-          let("calc", fn() => new Calculator());
+          this("calc", fn() => new Calculator());
           it("adds", function () {
               expect($this->calc->add(1, 2))->toBe(3);
           });

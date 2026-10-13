@@ -6,7 +6,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 describe(CommandExtension::class, function () {
 
-    let('command', fn() => new class extends CommandExtension {
+    this('command', fn() => new class extends CommandExtension {
         public function getName(): string
         {
             return 'greet';

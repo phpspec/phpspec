@@ -4,7 +4,7 @@ use PhpSpec\Mock\ArgumentMatcher;
 use PhpSpec\Mock\Stubs;
 
 describe(Stubs::class, function () {
-    let('stubs', fn() => new Stubs());
+    this('stubs', fn() => new Stubs());
 
     it('answers nothing where no stub matches the method or the arguments', function () {
         $this->stubs->add('find', [1], 'value', 'one');

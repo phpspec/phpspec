@@ -6,11 +6,11 @@ use PhpSpec\Filesystem;
 
 describe(StepsHome::class, function () {
 
-    let('tree', fn() => new ArrayObject([
+    this('tree', fn() => new ArrayObject([
         '/project/features' => ['steps', 'checkout.feature'],
         '/project/features/steps' => ['web.steps.php', 'steps.php', 'assertions.steps.php', 'helpers.php'],
     ]));
-    let('filesystem', function (Filesystem $fs) {
+    this('filesystem', function (Filesystem $fs) {
         allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => isset($this->tree[$p]));
         allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => isset($this->tree[$p]));
         allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => $this->tree[$p] ?? []);

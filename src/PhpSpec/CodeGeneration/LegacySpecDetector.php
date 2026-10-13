@@ -29,7 +29,7 @@ final class LegacySpecDetector
      * phpspec-9 functional DSL: an "ObjectBehavior" class, the old `spec\` file
      * namespace, `->shouldXxx()` matchers, or a method called directly on
      * `$this` (the subject). None of those are valid phpspec 9, where `$this`
-     * only carries let-bound values (property access, never a subject call).
+     * only carries values bound with this() (property access, never a subject call).
      */
     public static function looksLegacy(string $content): bool
     {

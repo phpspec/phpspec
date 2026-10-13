@@ -922,7 +922,7 @@ final class Agent extends AbstractFormatter
 
     /**
      * Addresses an example, always in its own spec file: `spec` is the site of
-     * what went wrong when that site is in the file (the expect() line, a let
+     * what went wrong when that site is in the file (the expect() line, a this()
      * binding that threw), else the line that declares the example; `rerun`
      * targets the declaring line, which phpspec resolves to this example and
      * no other. An error thrown inside the code under test, or an expectation

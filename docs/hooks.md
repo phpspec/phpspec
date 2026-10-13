@@ -89,14 +89,14 @@ describe('Outer', function () {
 });
 ```
 
-## `let(string $name, Closure $fn)`
+## `this(string $name, Closure $fn)`
 
-While not strictly a hook, `let` is the primary way to set up shared state. The closure runs the first time an example reads the value, once per example, so every example gets its own value and the hooks have run by then: a `beforeEach` can arrange a double the let consumes, and a let may read one declared after it. A let nobody reads never runs; one that throws fails that example alone. To build one before the example starts, read it in a `beforeEach`, as in `beforeEach(fn () => $this->server)`; it is still built once for that example:
+While not strictly a hook, `this()` is the primary way to set up shared state. The closure runs the first time an example reads the value, once per example, so every example gets its own value and the hooks have run by then: a `beforeEach` can arrange a double the this() consumes, and a this() may read one declared after it. A this() nobody reads never runs; one that throws fails that example alone. To build one before the example starts, read it in a `beforeEach`, as in `beforeEach(fn () => $this->server)`; it is still built once for that example:
 
 ```php
 describe(UserService::class, function () {
-    let('repo', fn () => mock(UserRepository::class));
-    let('service', fn () => new UserService($this->repo));
+    this('repo', fn () => mock(UserRepository::class));
+    this('service', fn () => new UserService($this->repo));
 
     it('finds users', function () {
         allow($this->repo->find(1))->toReturn(['name' => 'Alice']);
@@ -107,12 +107,12 @@ describe(UserService::class, function () {
 
 ## Type-Hinted Mock Injection
 
-Both `it()` and `let()` closures support type-hinted parameters that are automatically resolved as mocks:
+Both `it()` and `this()` closures support type-hinted parameters that are automatically resolved as mocks:
 
 ```php
 describe(Notifier::class, function () {
-    // Mock injected via let()
-    let('notifier', fn (Mailer $mailer) => new Notifier($mailer));
+    // Mock injected via this()
+    this('notifier', fn (Mailer $mailer) => new Notifier($mailer));
 
     // Mock injected via it()
     it('sends email', function (Mailer $mailer) {

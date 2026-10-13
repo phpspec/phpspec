@@ -6,7 +6,7 @@ use PhpSpec\Filesystem;
 
 describe(MethodStubGenerator::class, function () {
 
-    let('generator', fn(Filesystem $fs) => new MethodStubGenerator(SourceLayout::under('src'), $fs));
+    this('generator', fn(Filesystem $fs) => new MethodStubGenerator(SourceLayout::under('src'), $fs));
 
     it("instantiates", function () {
         expect($this->generator)->toBeAnInstanceOf(MethodStubGenerator::class);

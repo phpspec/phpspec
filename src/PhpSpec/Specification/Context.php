@@ -66,11 +66,11 @@ class Context implements ExampleRegistry, Rebindable, Titled
     /** @var array<Closure> hooks executed after each example */
     private array $afterEachHooks = [];
 
-    /** @var array<array{0: string, 1: ?string, 2: Closure}> stored let() bindings for per-example reset */
-    private array $letBindings = [];
+    /** @var array<array{0: string, 1: ?string, 2: Closure}> stored this() bindings for per-example reset */
+    private array $bindings = [];
 
-    /** @var array<string, object> mocks created by let() parameter injection, keyed by param name */
-    private array $letMocks = [];
+    /** @var array<string, object> mocks created by this() parameter injection, keyed by param name */
+    private array $injectedMocks = [];
 
     /** @var Subject shared state object accessible via $this in closures */
     private Subject $world;
@@ -95,7 +95,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
 
     /**
      * Returns a fresh, unrun copy of this context with its block closure bound
-     * to the given world. The nested it()/let()/hook closures the block defines
+     * to the given world. The nested it()/this()/hook closures the block defines
      * inherit that binding when the copy runs, so every run gets its own world
      * without re-parsing the spec file.
      *
@@ -207,7 +207,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
 
                 if ($block instanceof Context) {
                     $block->setWorld($this->world);
-                    $block->inheritHooks($this->beforeEachHooks, $this->afterEachHooks, $this->letBindings);
+                    $block->inheritHooks($this->beforeEachHooks, $this->afterEachHooks, $this->bindings);
                     if ($signal !== null) {
                         $block->leaveOutBy($signal);
                     }
@@ -257,7 +257,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
 
     /**
      * Runs a single example surrounded by its beforeEach/afterEach hooks and
-     * let bindings. When per-example coverage is active, the whole sequence
+     * this() bindings. When per-example coverage is active, the whole sequence
      * (setup, example, teardown) is collected and attributed to the example,
      * so that code exercised only during setup still counts as covered by it.
      *
@@ -279,11 +279,11 @@ class Context implements ExampleRegistry, Rebindable, Titled
         try {
             try {
                 $setup->around(function (): void {
-                    $this->reapplyLets();
+                    $this->reapplyBindings();
                     foreach ($this->beforeEachHooks as $hook) {
                         $hook(...$this->resolveClosureArgs($hook));
                     }
-                    $this->world->__phpspec_let_mocks = $this->letMocks;
+                    $this->world->__phpspec_injected_mocks = $this->injectedMocks;
                 });
 
                 $result = $example->run();
@@ -330,11 +330,11 @@ class Context implements ExampleRegistry, Rebindable, Titled
      */
     private function forgetInjectedMocks(): void
     {
-        foreach (array_keys($this->letMocks) as $name) {
+        foreach (array_keys($this->injectedMocks) as $name) {
             unset($this->world->$name);
         }
 
-        $this->world->__phpspec_pending_lets = [];
+        $this->world->__phpspec_pending_bindings = [];
     }
 
     private function printed(ExampleResult $result, string $before, string $after): ExampleResult
@@ -367,7 +367,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
     }
 
     /**
-     * Sets the shared world (Subject) for let() bindings and closure $this.
+     * Sets the shared world (Subject) for this() bindings and closure $this.
      *
      * @param Subject $world shared state container
      * @return void
@@ -443,19 +443,19 @@ class Context implements ExampleRegistry, Rebindable, Titled
     }
 
     /**
-     * Inherits beforeEach/afterEach hooks and let bindings from a parent context.
+     * Inherits beforeEach/afterEach hooks and this() bindings from a parent context.
      * Parent before hooks are prepended; parent after hooks are appended.
      *
      * @param array<Closure> $before parent's beforeEach hooks
      * @param array<Closure> $after parent's afterEach hooks
-     * @param array<array{0: string, 1: ?string, 2: Closure}> $letBindings parent's let() bindings
+     * @param array<array{0: string, 1: ?string, 2: Closure}> $bindings parent's this() bindings
      * @return void
      */
-    public function inheritHooks(array $before, array $after, array $letBindings = []): void
+    public function inheritHooks(array $before, array $after, array $bindings = []): void
     {
         $this->beforeEachHooks = array_merge($before, $this->beforeEachHooks);
         $this->afterEachHooks = array_merge($this->afterEachHooks, $after);
-        $this->letBindings = array_merge($letBindings, $this->letBindings);
+        $this->bindings = array_merge($bindings, $this->bindings);
     }
 
     /**
@@ -635,26 +635,26 @@ class Context implements ExampleRegistry, Rebindable, Titled
      */
     public function modify(string $property, Closure $setter): void
     {
-        $this->letBindings[] = ['named', $property, $setter];
+        $this->bindings[] = ['named', $property, $setter];
     }
 
     /**
      * Invokes a closure with auto-resolved mock doubles for its type-hinted parameters.
-     * Used by let() when called with a single closure argument.
+     * Used by this() when called with a single closure argument.
      *
      * @param Closure $setter injection closure
      * @return void
      */
     public function modifyWithInjection(Closure $setter): void
     {
-        $this->letBindings[] = ['injection', null, $setter];
+        $this->bindings[] = ['injection', null, $setter];
     }
 
 
     /**
-     * Evaluates an injection-style let binding, resolving type-hinted mock parameters.
+     * Evaluates an injection-style this() binding, resolving type-hinted mock parameters.
      */
-    private function evaluateInjectionLet(Closure $setter): void
+    private function evaluateInjection(Closure $setter): void
     {
         $args = $this->resolveClosureArgs($setter);
         if (!empty($args)) {
@@ -663,37 +663,37 @@ class Context implements ExampleRegistry, Rebindable, Titled
     }
 
     /**
-     * Forgets the previous example's let values and arranges this example's.
-     * A named let is built when the example first reads it, after the hooks;
+     * Forgets the previous example's this() values and arranges this example's.
+     * A named this() is built when the example first reads it, after the hooks;
      * the doubles it asks for are made now, so the hooks and the example find
-     * them on $this before the value exists. An injection let runs now, since
+     * them on $this before the value exists. An injection this() runs now, since
      * its doubles are all it is for.
      */
-    private function reapplyLets(): void
+    private function reapplyBindings(): void
     {
-        foreach ($this->letBindings as $binding) {
+        foreach ($this->bindings as $binding) {
             if ($binding[1] !== null) {
                 unset($this->world->{$binding[1]});
             }
         }
-        $this->letMocks = [];
-        $this->world->__phpspec_pending_lets = [];
+        $this->injectedMocks = [];
+        $this->world->__phpspec_pending_bindings = [];
 
-        foreach ($this->letBindings as [$kind, $property, $setter]) {
+        foreach ($this->bindings as [$kind, $property, $setter]) {
             if ($kind === 'named' && $property !== null) {
                 $args = $this->resolveClosureArgs($setter);
-                $this->world->__phpspec_pending_lets[$property] = static fn(): mixed => $setter(...$args);
+                $this->world->__phpspec_pending_bindings[$property] = static fn(): mixed => $setter(...$args);
             } else {
-                $this->evaluateInjectionLet($setter);
+                $this->evaluateInjection($setter);
             }
         }
 
-        $this->world->__phpspec_let_mocks = $this->letMocks;
+        $this->world->__phpspec_injected_mocks = $this->injectedMocks;
     }
 
     /**
-     * Resolves type-hinted closure parameters to existing letMocks, world properties,
-     * or new mock doubles. New mocks are stored in $letMocks only (not on World).
+     * Resolves type-hinted closure parameters to existing injected mocks, world properties,
+     * or new mock doubles. New mocks are stored in $injectedMocks only (not on World).
      *
      * @param Closure $closure closure whose parameters to resolve
      * @return array<mixed> resolved arguments
@@ -708,15 +708,15 @@ class Context implements ExampleRegistry, Rebindable, Titled
             if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                 $name = $param->getName();
                 $className = $type->getName();
-                if (isset($this->letMocks[$name]) && $this->letMocks[$name] instanceof $className) {
-                    $args[] = $this->letMocks[$name];
+                if (isset($this->injectedMocks[$name]) && $this->injectedMocks[$name] instanceof $className) {
+                    $args[] = $this->injectedMocks[$name];
                 } elseif (isset($this->world->$name) && $this->world->$name instanceof $className) {
                     $args[] = $this->world->$name;
                 } else {
                     // A mock made for a parameter is the example's to stub and
                     // verify too, under the parameter's name on $this.
                     $mock = \PhpSpec\Mock\Double::getInstance($className);
-                    $this->letMocks[$name] = $mock;
+                    $this->injectedMocks[$name] = $mock;
                     $this->world->$name = $mock;
                     $args[] = $mock;
                 }

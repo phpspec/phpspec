@@ -161,7 +161,7 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
-  Scenario: A mock injected into a let is there as a property, as the docs show
+  Scenario: A mock injected into a this() is there as a property, as the docs show
     Given an interface "src/App/Mailer.php":
       """
       <?php
@@ -185,7 +185,7 @@ Feature: Mocking
       """
       <?php
       describe('App\Notifier', function () {
-          let('notifier', fn (App\Mailer $mailer) => new App\Notifier($mailer));
+          this('notifier', fn (App\Mailer $mailer) => new App\Notifier($mailer));
 
           it('sends an email', function () {
               expect($this->mailer->send('hello'))->toBeCalled();
@@ -710,7 +710,7 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
-  Scenario: let() values are fresh per example
+  Scenario: this() values are fresh per example
     Given an interface "src/App/Counter.php":
       """
       <?php
@@ -722,8 +722,8 @@ Feature: Mocking
     And a spec file "spec/App/LetResetSpec.spec.php":
       """
       <?php
-      describe('let reset', function() {
-          let('counter', fn(App\Counter $counter) => $counter);
+      describe('this() reset', function() {
+          this('counter', fn(App\Counter $counter) => $counter);
 
           it('first example calls increment', function() {
               expect($this->counter->increment())->toBeCalled()->once();

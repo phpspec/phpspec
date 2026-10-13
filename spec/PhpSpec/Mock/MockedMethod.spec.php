@@ -4,8 +4,8 @@ use PhpSpec\Mock\MockedMethod;
 
 describe(MockedMethod::class, function() {
 
-    let("subject", fn() => new \stdClass());
-    let("method", fn() => new MockedMethod($this->subject, "doSomething", ["arg1"]));
+    this("subject", fn() => new \stdClass());
+    this("method", fn() => new MockedMethod($this->subject, "doSomething", ["arg1"]));
 
     it("instantiates", fn() => expect($this->method)->toBeAnInstanceOf(MockedMethod::class));
 

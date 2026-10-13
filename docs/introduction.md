@@ -88,7 +88,7 @@ spec decides what "correct" means.
 
 PhpSpec 9.0 is a ground-up rewrite. The major changes from earlier versions:
 
-- **Jasmine/RSpec-style DSL**: `describe`, `context`, `it`, `let`, `expect`
+- **Jasmine/RSpec-style DSL**: `describe`, `context`, `it`, `this`, `expect`
   replace the `ObjectBehavior` class-based approach
 - **Built-in mocking**: `mock()`, `allow()`, and mock expectations with no
   external dependencies (no Prophecy)

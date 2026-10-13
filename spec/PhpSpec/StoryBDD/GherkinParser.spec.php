@@ -15,7 +15,7 @@ describe(GherkinParser::class, function () {
         expect(array_map(fn(ScenarioNode $scenario) => $scenario->title, $feature->scenarios))->toBe(['Paying', 'Paying #2', 'Paying #3']);
     });
 
-    let("parser", fn() => new GherkinParser());
+    this("parser", fn() => new GherkinParser());
 
     it("parses a feature title", function () {
         $feature = $this->parser->parse("Feature: Greeting");

@@ -12,7 +12,7 @@
                 "name": "propose_edit",
                 "arguments": {
                     "path": "spec/TodoList.spec.php",
-                    "content": "<?php\n\nuse App\\TodoList;\n\ndescribe(TodoList::class, function () {\n    let('todoList', fn() => new TodoList());\n\n    it('keeps track of added tasks', function () {\n        $this->todoList->add('Buy milk');\n        expect($this->todoList->tasks())->toBe(['Buy milk']);\n    });\n});\n"
+                    "content": "<?php\n\nuse App\\TodoList;\n\ndescribe(TodoList::class, function () {\n    this('todoList', fn() => new TodoList());\n\n    it('keeps track of added tasks', function () {\n        $this->todoList->add('Buy milk');\n        expect($this->todoList->tasks())->toBe(['Buy milk']);\n    });\n});\n"
                 }
             }
         ]

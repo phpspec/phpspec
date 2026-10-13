@@ -18,7 +18,7 @@ Creates `spec/App/Calculator.spec.php` with a template:
 use App\Calculator;
 
 describe(Calculator::class, function() {
-    let("calculator", fn() => new Calculator());
+    this("calculator", fn() => new Calculator());
     it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
 });
 ```
@@ -204,7 +204,7 @@ public function add()
 The `--fake` flag works by extracting the expected values from matcher results (via `fakeExpression` metadata) and using them as return values. This creates a quick feedback loop: write spec, run with `--fake`, get passing tests immediately, then replace the faked implementation with real logic.
 
 The value comes back exactly as the spec wrote it: `90.0` stays a float and
-`'He said "hello"'` keeps its quotes. The call can be on a variable, a `let`,
+`'He said "hello"'` keeps its quotes. The call can be on a variable, a `this()`,
 or a subject built inline, `expect((new Greeter('Ann'))->greet())`.
 
 Two things are never faked: a return no literal expresses (an object, or an

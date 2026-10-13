@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The summary counts outcomes in one vocabulary that reads right in the singular, `1 example (1 passed)`, `3 examples (1 passed, 1 failed, 1 errored)`, the words the step counts already used; specs and examples share one line, `193 specs, 2300 examples (2300 passed)`, as features, scenarios and steps do; a run of features and specs prints the spec count too, and a feature is no longer counted as a spec
  - Guard refuses to run when no coverage driver is available, with the remedy and exit code 1, instead of standing down and letting the run pass unjudged; the agent header's `guard` is `on` or `off`
  - `Configuration` is built from values and touches no disk; `Configuration::load()` reads what a project states, its config file and the PSR-4 mappings of composer.json, as the console does
- - A `let` value is built the first time an example reads it, once per example, instead of before the hooks: a `beforeEach` can arrange a double the let consumes, a let may read one declared after it, and a let nobody reads never runs; the doubles a let asks for are still on `$this` from the start
+ - A `this()` value is built the first time an example reads it, once per example, instead of before the hooks: a `beforeEach` can arrange a double the this() consumes, a let may read one declared after it, and a let nobody reads never runs; the doubles a let asks for are still on `$this` from the start
  - A double is strict towards the code under spec: a call that no `allow()` or `expect()` declared, made from outside the spec code, fails the example at once naming the call and where it came from, instead of answering with a default; the spec code is every file PhpSpec loaded as a spec, step or support file, wherever it sits, and whatever sits in the spec, features and suite folders or in the folder of a path the run was given, which is how `allow()` and `expect()` reach the call they declare
  - `toHaveBeenCalled()` is asked after the act and judged at once from the calls recorded so far, while `toBeCalled()` stays declared before the act and judged when the example ends
  - A failure's pair shows values typed: a string in quotes, a number bare, a float at full precision, null as null, an object with its properties when its name tells nothing; two long strings meant to be equal are shown around their first difference and the offset is named
@@ -148,14 +148,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `--fake` writes no return it cannot express as a literal, an object or an array holding one used to come out as a `__set_state()` call, and fakes no method whose result the expectation went on to call something on
  - An error thrown inside PhpSpec itself, in a double or in a vendor library is shown at the spec line that led there, with that line's code around it, instead of PhpSpec's own source; and reading a double's generated code as a file no longer prints a warning
  - A type-hinted mock of an interface that does not exist yet is offered for generation like one made with `mock()`; the two paths used to word the error differently and only one was recognised
- - A mock injected into a `let()` closure by type hint is there on `$this` under the parameter's name, as the mocking docs showed, so it can be stubbed and verified
+ - A mock injected into a `this()` closure by type hint is there on `$this` under the parameter's name, as the mocking docs showed, so it can be stubbed and verified
  - A call that was stubbed can still be verified: `allow($x->name())->toReturn('winter')` followed by `expect($x->name())->toBeCalled()` works, in either order; the stubbed value used to turn the second expect into an ordinary one that knew no `toBeCalled`
  - An agent entry whose value is a float JSON cannot hold (`INF`, `NAN`), or whose value or printed output holds a byte that is not UTF-8, arrives whole: the float is named, the byte replaced, and an event is never written as `{}`
  - `phpspec api` names the docs by their absolute path inside the installed package, and the package ships `docs/`; it used to name paths relative to a checkout that a Composer install did not have
  - A `file:LINE` selector that reaches no example or scenario stops the run with `No example at ...` and exit 1, with a remedy, instead of running nothing and exiting 0
  - `describe -r` under `--format=agent` runs the new spec after its receipt, in the agent format and with the describe's interactivity, and exits with the run's code; it used to stop at the receipt
  - An error that came back from a `--parallel` worker carries no site, so the agent entry has no `spec` or `rerun` for it and the human formatters show no code around it; it used to name a line inside PhpSpec itself. The JUnit report carries the error's type, so the entry names it
- - A `let()` binding, a `beforeEach` or an `afterEach` hook that throws fails the example it wraps and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
+ - A `this()` binding, a `beforeEach` or an `afterEach` hook that throws fails the example it wraps and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
  - What `beforeEach` and `afterEach` print rides in the example's `output`, and under `--format=agent` anything printed outside an example goes to standard error; hook output used to land between two events and break the stream
  - An agent entry's `rerun` targets the `it()` line that declares the example, whatever line `spec` points at inside the file
  - A failed mock expectation reports the call the spec wanted and the calls the double received, arguments included, under the matcher's name; the pair used to read `1` against `PhpSpec\Mock\LastCallDouble`
@@ -433,7 +433,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Spec files now use `.spec.php` suffix
 
 ### Added
-- `describe()`, `context()`, `it()`, `let()` DSL (global functions)
+- `describe()`, `context()`, `it()`, `this()` DSL (global functions)
 - `expect($value)->toBe()` assertion style
 - Built-in mock system with type-hinted parameter injection
 - `allow($mock->method())->toReturn(val)` stubbing

@@ -6,8 +6,8 @@ use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(PairOutput::class, function () {
-    let('buffer', fn() => new BufferedOutput());
-    let('pairOutput', fn() => new PairOutput($this->buffer));
+    this('buffer', fn() => new BufferedOutput());
+    this('pairOutput', fn() => new PairOutput($this->buffer));
 
     it('instantiates', fn() => expect($this->pairOutput)->toBeAnInstanceOf(PairOutput::class));
 

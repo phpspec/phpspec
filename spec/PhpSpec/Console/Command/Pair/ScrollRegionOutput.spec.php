@@ -6,9 +6,9 @@ use PhpSpec\Console\Command\Pair\StatusBar;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(ScrollRegionOutput::class, function () {
-    let('inner', fn() => new BufferedOutput());
+    this('inner', fn() => new BufferedOutput());
     // scrollBottom=20, inputRow=23, dividerRow=22, width=40
-    let('output', fn() => new ScrollRegionOutput($this->inner, 20, 23, 22, 40));
+    this('output', fn() => new ScrollRegionOutput($this->inner, 20, 23, 22, 40));
 
     it('delegates write to inner output', function () {
         $this->output->write('hello');

@@ -20,31 +20,31 @@ require_once __DIR__ . '/Refactor/RefactorWorld.php';
 
 describe(Refactor::class, function () {
 
-    let('cwd', fn() => getcwd());
-    let('project', function () {
+    this('cwd', fn() => getcwd());
+    this('project', function () {
         $fs = new RefactorWorldFilesystem();
         $fs->write($this->cwd . '/src/App/Checkout/CheckoutService.php', "<?php\nnamespace App\\Checkout;\n\nfinal class CheckoutService {}\n");
         $fs->write($this->cwd . '/spec/App/Checkout/CheckoutService.spec.php', "<?php\ndescribe(App\\Checkout\\CheckoutService::class, function () {});\n");
 
         return $fs;
     });
-    let('green', fn() => SuiteCheck::fromStream('{"event":"summary","actionable":0}'));
+    this('green', fn() => SuiteCheck::fromStream('{"event":"summary","actionable":0}'));
     // The project's code, leaving out what phpspec keeps for itself under .phpspec.
-    let('code', fn() => fn(): array => array_filter($this->project->files, fn(string $path): bool => !str_contains($path, '/.phpspec/'), ARRAY_FILTER_USE_KEY));
-    let('redIn', fn() => fn(string $spec, string $said): SuiteCheck => SuiteCheck::fromStream(
+    this('code', fn() => fn(): array => array_filter($this->project->files, fn(string $path): bool => !str_contains($path, '/.phpspec/'), ARRAY_FILTER_USE_KEY));
+    this('redIn', fn() => fn(string $spec, string $said): SuiteCheck => SuiteCheck::fromStream(
         json_encode(['event' => 'example', 'state' => 'failing', 'spec' => $spec, 'message' => $said]) . "\n" . '{"event":"summary","actionable":1}',
     ));
-    let('plan', fn() => fn(string ...$titles): Response => new Response('', [new ToolCall('p', 'propose_plan', [
+    this('plan', fn() => fn(string ...$titles): Response => new Response('', [new ToolCall('p', 'propose_plan', [
         'technique' => 'Replace Conditional with Polymorphism',
         'rationale' => "CheckoutService decides every discount itself.\n\nA DiscountPolicy takes each rule:\n  - loyalty customers\n  - seasonal campaigns",
         'steps' => array_map(fn(string $title): array => ['title' => $title, 'doing' => 'Doing ' . $title], $titles),
     ])], 1200));
-    let('step', fn() => fn(array $files, bool $red = false): Response => new Response('', [new ToolCall('s', 'propose_step', [
+    this('step', fn() => fn(array $files, bool $red = false): Response => new Response('', [new ToolCall('s', 'propose_step', [
         'files' => array_map(fn(string $path, string $content): array => ['path' => $path, 'content' => $content], array_keys($files), $files),
         'red' => $red,
     ])], 900));
-    let('outage', fn() => new RuntimeException('Google API error (400): API key not valid.'));
-    let('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = [], bool $attended = true, array $settings = []): CommandTester {
+    this('outage', fn() => new RuntimeException('Google API error (400): API key not valid.'));
+    this('run', fn() => function (array $responses, array $checks, array $answers = [], bool $interactive = true, string $target = 'App\\Checkout\\CheckoutService', array $options = [], bool $attended = true, array $settings = []): CommandTester {
         $this->replay = new ReplayProvider($responses);
         $suite = new class ($checks) implements SpecSuite {
             public function __construct(private array $checks) {}
@@ -73,7 +73,7 @@ describe(Refactor::class, function () {
 
         return $tester;
     });
-    let('receipt', fn() => fn(CommandTester $tester): mixed => json_decode($tester->getDisplay(), true));
+    this('receipt', fn() => fn(CommandTester $tester): mixed => json_decode($tester->getDisplay(), true));
 
     context('a plan', function () {
 

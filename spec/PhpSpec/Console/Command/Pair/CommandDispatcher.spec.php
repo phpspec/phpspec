@@ -66,11 +66,11 @@ describe(CommandDispatcher::class, function () {
         allow($fs->mkdir(any()))->ignoreOthers();
     });
 
-    let('buffer', fn() => new BufferedOutput());
-    let('pairOutput', fn() => new PairOutput($this->buffer));
-    let('config', fn() => new Configuration());
-    let('specRunner', fn() => new CommandDispatcherFakeRunner());
-    let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
+    this('buffer', fn() => new BufferedOutput());
+    this('pairOutput', fn() => new PairOutput($this->buffer));
+    this('config', fn() => new Configuration());
+    this('specRunner', fn() => new CommandDispatcherFakeRunner());
+    this('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
         new SpecGenerator('spec', $fs),
         new ClassGenerator(SourceLayout::under('src'), $fs),
         $this->config,
@@ -889,7 +889,7 @@ describe(CommandDispatcher::class, function () {
     });
 
     context('delegated application commands', function () {
-        let('app', function () {
+        this('app', function () {
             $app = new Application('phpspec', '1.0');
             $app->setAutoExit(false);
             $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Next(new Configuration()));
@@ -897,7 +897,7 @@ describe(CommandDispatcher::class, function () {
             $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Generate(new Configuration()));
             return $app;
         });
-        let('appDispatcher', fn(Filesystem $fs) => new CommandDispatcher(
+        this('appDispatcher', fn(Filesystem $fs) => new CommandDispatcher(
             new SpecGenerator('spec', $fs),
             new ClassGenerator(SourceLayout::under('src'), $fs),
             $this->config,

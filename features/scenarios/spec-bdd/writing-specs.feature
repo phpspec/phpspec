@@ -80,18 +80,18 @@ Feature: Writing specs
     When I run phpspec run
     Then all examples should pass
 
-  Scenario: Sharing state with let
+  Scenario: Sharing state with this()
     Given a spec file "spec/App/SharedState.spec.php":
       """
       <?php
       describe('SharedState', function () {
-          let('items', fn() => [1, 2, 3]);
+          this('items', fn() => [1, 2, 3]);
 
-          it('has access to let values', function () {
+          it('has access to this() values', function () {
               expect($this->items)->toHaveCount(3);
           });
 
-          it('can use let values in assertions', function () {
+          it('can use this() values in assertions', function () {
               expect($this->items)->toContain(2);
           });
       });
@@ -99,12 +99,12 @@ Feature: Writing specs
     When I run phpspec run
     Then all examples should pass
 
-  Scenario: A let read in a beforeEach is built before the example, still once for it and afresh for the next
+  Scenario: A this() read in a beforeEach is built before the example, still once for it and afresh for the next
     Given a spec file "spec/App/Ledger.spec.php":
       """
       <?php
       describe('Ledger', function () {
-          let('entries', fn () => new ArrayObject(['opened']));
+          this('entries', fn () => new ArrayObject(['opened']));
 
           beforeEach(function () {
               $this->entries->append('set up');
@@ -123,7 +123,7 @@ Feature: Writing specs
     Then all examples should pass
     And the output should contain "2 examples (2 passed)"
 
-  Scenario: A let is built when an example first reads it, after the hooks, so a hook can arrange what it consumes
+  Scenario: A this() is built when an example first reads it, after the hooks, so a hook can arrange what it consumes
     Given an interface "src/App/Menu.php":
       """
       <?php
@@ -154,7 +154,7 @@ Feature: Writing specs
       """
       <?php
       describe('Till', function () {
-          let('till', fn (App\Menu $menu) => new App\Till($menu));
+          this('till', fn (App\Menu $menu) => new App\Till($menu));
 
           beforeEach(function (App\Menu $menu) {
               allow($menu->priceOf('tea'))->toReturn(3);
@@ -168,20 +168,20 @@ Feature: Writing specs
     When I run phpspec run
     Then all examples should pass
 
-  Scenario: A let nobody reads is never built, and a let may read one declared after it
+  Scenario: A this() nobody reads is never built, and a this() may read one declared after it
     Given a spec file "spec/App/Lazy.spec.php":
       """
       <?php
       describe('Lazy', function () {
-          let('noisy', function () {
+          this('noisy', function () {
               file_put_contents(getcwd() . '/noisy-was-built.txt', 'built');
 
               return 'noise';
           });
-          let('service', fn () => ['repo' => $this->repo]);
-          let('repo', fn () => 'the repo');
+          this('service', fn () => ['repo' => $this->repo]);
+          this('repo', fn () => 'the repo');
 
-          it('reads the later let through the earlier one', function () {
+          it('reads the later this() through the earlier one', function () {
               expect($this->service['repo'])->toBe('the repo');
           });
       });

@@ -64,7 +64,7 @@ describe(StepVocabulary::class, function () {
     });
 
     context('across several steps roots', function () {
-        let('vocabulary', function (Filesystem $fs) {
+        this('vocabulary', function (Filesystem $fs) {
             $files = [
                 '/project/features/steps/steps.php' => "<?php\ngiven('a user named {string}', function (string \$name) {});\nwhen('the user plays', function () {});\n",
                 '/project/features/steps/web.steps.php' => "<?php\ngiven('I visit {string}', function (string \$url) {});\n",

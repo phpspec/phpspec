@@ -47,7 +47,7 @@ describe(Offer::class, function () {
     });
 
     context('staleness', function () {
-        let('content', fn() => fn(array $files): Closure => fn(string $path): ?string => $files[$path] ?? null);
+        this('content', fn() => fn(array $files): Closure => fn(string $path): ?string => $files[$path] ?? null);
 
         it('stands while the file is as it was when offered', function () {
             $offer = Offer::write('src/App/Basket.php', '<?php new', false, 'the old content');
@@ -80,9 +80,9 @@ describe(Offer::class, function () {
     });
 
     context('a refactoring plan', function () {
-        let('plan', fn() => ['technique' => 'Extract Class', 'rationale' => 'Till prints its own receipt.', 'steps' => [['title' => 'Describe Printer', 'doing' => 'Describing Printer']]]);
-        let('read', fn() => ['src/App/Till.php' => sha1('<?php till'), 'spec/App/Till.spec.php' => sha1('<?php spec')]);
-        let('offer', fn() => Offer::refactor('App\\Till', $this->plan, $this->read));
+        this('plan', fn() => ['technique' => 'Extract Class', 'rationale' => 'Till prints its own receipt.', 'steps' => [['title' => 'Describe Printer', 'doing' => 'Describing Printer']]]);
+        this('read', fn() => ['src/App/Till.php' => sha1('<?php till'), 'spec/App/Till.spec.php' => sha1('<?php spec')]);
+        this('offer', fn() => Offer::refactor('App\\Till', $this->plan, $this->read));
 
         it('is offered under its target, identified by the plan', function () {
             $other = Offer::refactor('App\\Till', ['technique' => 'Inline Class'] + $this->plan, $this->read);

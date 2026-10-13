@@ -4,7 +4,7 @@ use PhpSpec\Console\Command\Refactor\SuiteCheck;
 
 describe(SuiteCheck::class, function () {
 
-    let('stream', fn() => fn(array ...$events): string => implode("\n", array_map(fn(array $event): string => json_encode(['v' => 2] + $event), $events)) . "\n");
+    this('stream', fn() => fn(array ...$events): string => implode("\n", array_map(fn(array $event): string => json_encode(['v' => 2] + $event), $events)) . "\n");
 
     it('is green when the summary leaves nothing to act on', function () {
         $check = SuiteCheck::fromStream(($this->stream)(
