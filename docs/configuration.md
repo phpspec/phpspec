@@ -240,6 +240,20 @@ Base URL for browser testing. Default: `null`.
 base_url: http://localhost:8080
 ```
 
+### `coverage_adapter`
+
+The engine that collects coverage: `pcov` or `xdebug`. Default: whichever is
+on, PCOV first.
+
+```yaml
+coverage_adapter: pcov
+```
+
+PCOV traces the files under `pcov.directory`, which it picks itself when it
+is not set: `src`, `lib` or `app` under the working directory, else all of it.
+A coverage run whose source directory lies outside it is refused, naming the
+directory to set. Xdebug needs `xdebug.mode=coverage`.
+
 ## Named Suites
 
 Group specs into named suites, each with its own paths and source directory. When no explicit paths are passed to `vendor/bin/phpspec run`, all suite paths are loaded.

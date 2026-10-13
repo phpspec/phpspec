@@ -16,8 +16,8 @@ namespace PhpSpec\Coverage;
 
 /**
  * @internal
- * Wraps Xdebug code coverage collection, providing start/stop lifecycle and source path filtering.
- * Requires Xdebug with coverage mode enabled.
+ * One collection around the whole run: start, stop, and the data filtered to
+ * the source path.
  */
 final class CoverageCollector
 {
@@ -27,21 +27,12 @@ final class CoverageCollector
     /** @var bool whether a whole-suite collection is currently in progress */
     private static bool $collecting = false;
 
-    /**
-     * Checks whether Xdebug is loaded with coverage mode enabled.
-     *
-     * @return bool true if code coverage collection is available
-     */
-    public static function isAvailable(): bool
-    {
-        return extension_loaded('xdebug')
-            && in_array('coverage', xdebug_info('mode'));
-    }
+    public function __construct(private readonly CoverageDriver $driver) {}
 
     /**
      * Checks whether a whole-suite collection is currently in progress.
-     * Xdebug coverage state is process-global, so cycling it (as the
-     * per-example driver does) would clobber a live whole-suite collection.
+     * An engine's coverage state is process-global, so cycling it (as the
+     * per-example collector does) would clobber a live whole-suite collection.
      *
      * @return bool true if a collection has been started and not yet stopped
      */
@@ -50,27 +41,20 @@ final class CoverageCollector
         return self::$collecting;
     }
 
-    /**
-     * Starts Xdebug code coverage collection with unused and dead code analysis.
-     */
     public function start(): void
     {
         self::$collecting = true;
-        xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+        $this->driver->start();
     }
 
-    /**
-     * Stops Xdebug coverage collection and stores the collected data.
-     */
     public function stop(): void
     {
-        $this->data = xdebug_get_code_coverage();
-        xdebug_stop_code_coverage();
+        $this->data = $this->driver->stop();
         self::$collecting = false;
     }
 
     /**
-     * Returns the raw coverage data collected by Xdebug.
+     * Returns the raw coverage data the engine collected.
      *
      * @return array<string, array<int, int>> file paths mapped to line-level hit counts
      */
@@ -119,7 +103,7 @@ final class CoverageCollector
     /**
      * Filters raw coverage data to only include files under the given source path.
      * Returns relative paths sorted alphabetically, using forward slashes on
-     * every platform (Xdebug and realpath() report backslash paths on Windows).
+     * every platform (an engine and realpath() report backslash paths on Windows).
      *
      * @param array<string, array<int, int>> $data raw coverage data keyed by absolute file path
      * @param string $srcPath the source directory path to filter by

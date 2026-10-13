@@ -17,6 +17,7 @@ namespace PhpSpec\Console\Command\Pair;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
+use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Parallel\ParallelRunner;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -34,10 +35,15 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class SubprocessRunner implements SpecRunner
 {
+    private readonly CoverageEngines $engines;
+
     /**
      * @param Configuration $config the configuration the session reads, which the run reads too, and whose guard judges a run by its coverage
      */
-    public function __construct(private readonly Configuration $config) {}
+    public function __construct(private readonly Configuration $config, ?CoverageEngines $engines = null)
+    {
+        $this->engines = $engines ?? CoverageEngines::of($config);
+    }
 
     public function run(string $argument, OutputInterface $output): ?RunOutcome
     {
@@ -47,7 +53,7 @@ final class SubprocessRunner implements SpecRunner
         try {
             $command = [
                 PHP_BINARY,
-                '-d', 'xdebug.mode=' . ($this->config->guardIsOn() || preg_match('/(^|\s)--coverage/', $argument) === 1 ? 'coverage' : 'off'),
+                ...$this->engines->switches($this->config->guardIsOn() || preg_match('/(^|\s)--coverage/', $argument) === 1 ? $this->engines->forChildren() : null),
                 ParallelRunner::findPhpspecBin(),
                 'run',
                 ...$this->config->childOptions(),

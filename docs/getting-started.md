@@ -103,7 +103,7 @@ Or an HTML report:
 vendor/bin/phpspec run --coverage-html coverage/
 ```
 
-Requires the xdebug extension with `xdebug.mode=coverage`.
+Requires PCOV enabled, or Xdebug in coverage mode (`xdebug.mode=coverage`).
 
 ## Next Steps
 

@@ -52,6 +52,7 @@ final class WorkerProcess
      * @param StopConditions $stop the conditions the worker halts on, as its parent does
      * @param string|null $filter the title filter the parent runs under, forwarded so a worker selects as it did
      * @param string|null $tags the tag expression the parent runs under, forwarded likewise
+     * @param list<string> $phpOptions the php options the worker runs under, which switch its coverage engine on or off
      */
     public function __construct(
         private readonly array $paths,
@@ -61,13 +62,14 @@ final class WorkerProcess
         private readonly StopConditions $stop = new StopConditions(),
         private readonly ?string $filter = null,
         private readonly ?string $tags = null,
+        private readonly array $phpOptions = [],
     ) {
         $this->wire = new Wire();
     }
 
     /**
-     * Builds the child process command line. Coverage-enabled workers run with
-     * xdebug coverage mode and dump their raw coverage state to the partial path.
+     * Builds the child process command line. Coverage-enabled workers dump
+     * their raw coverage state to the partial path.
      *
      * @return list<string> the command and its arguments
      */
@@ -75,7 +77,7 @@ final class WorkerProcess
     {
         $command = [
             PHP_BINARY,
-            '-d', 'xdebug.mode=' . ($this->coveragePartial !== null ? 'coverage' : 'off'),
+            ...$this->phpOptions,
             $this->phpspecBin,
             'run',
             ...$this->paths,

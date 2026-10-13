@@ -50,7 +50,8 @@
         "papi-ai/openai": "OpenAI GPT AI provider",
         "ext-curl": "Required for AI features (pair, next, refactor)",
         "ext-dom": "For JUnit XML and Clover coverage reports",
-        "ext-xdebug": "For code coverage reporting",
+        "ext-pcov": "For code coverage, or ext-xdebug",
+        "ext-xdebug": "For code coverage, or ext-pcov",
         "ext-posix": "For terminal width detection",
         "ext-readline": "For interactive pair mode"
     },

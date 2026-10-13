@@ -33,9 +33,14 @@ if (!function_exists('_phpspec_exec')) {
     /**
      * @param string|list<string> $args a command line, or the arguments as a process takes them
      */
-    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $xdebugMode = 'off', ?string $answers = null): void
+    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $engine = 'off', ?string $answers = null): void
     {
-        $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...(is_array($args) ? $args : \PhpSpec\InProcessRunner::argv($args))];
+        $switches = match ($engine) {
+            'xdebug' => ['-d', 'xdebug.mode=coverage', '-d', 'pcov.enabled=0'],
+            'pcov' => ['-d', 'pcov.enabled=1', '-d', 'xdebug.mode=off'],
+            default => ['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off'],
+        };
+        $cmd = [$world->phpBin, ...$switches, $world->phpspecBin, ...(is_array($args) ? $args : \PhpSpec\InProcessRunner::argv($args))];
 
         // The error stream goes to a file rather than a second pipe: reading
         // two pipes one after the other deadlocks once the child fills the one
@@ -182,13 +187,26 @@ when('I run phpspec guard with option {string}', function (string $options) {
     _phpspec_exec($this, 'guard ' . $options);
 });
 
-// -- Coverage runs (subprocess so xdebug.mode=coverage can be forced) ---
+// -- Coverage runs (subprocess so the engine can be switched on) ---------
 
 when('I run phpspec run with coverage options {string}', function (string $options) {
     if (!extension_loaded('xdebug')) {
         skip('Xdebug is not available');
     }
-    _phpspec_exec_subprocess($this, 'run ' . $options, xdebugMode: 'coverage');
+    _phpspec_exec_subprocess($this, 'run ' . $options, engine: 'xdebug');
+});
+
+given('PCOV is loaded', function () {
+    if (!extension_loaded('pcov')) {
+        skip('PCOV is not available');
+    }
+});
+
+when('I run phpspec run under PCOV with coverage options {string}', function (string $options) {
+    if (!extension_loaded('pcov')) {
+        skip('PCOV is not available');
+    }
+    _phpspec_exec_subprocess($this, 'run ' . $options, engine: 'pcov');
 });
 
 // -- Describe command --------------------------------------------------

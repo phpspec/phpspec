@@ -78,7 +78,7 @@ Finished in 0.0042 seconds
 - **Code generation**: specs, classes, interfaces, method stubs, step definitions
 - **`--fake` mode**: auto-generates method bodies with hardcoded return values from specs
 - **Multiple formatters**: pretty (default), dot, TAP, JUnit XML, HTML, agent JSON
-- **Code coverage**: text, Clover XML, and HTML reports via xdebug
+- **Code coverage**: text, Clover XML, and HTML reports via PCOV or Xdebug
 - **Configuration**: `phpspec.yml` or `phpspec.json` with spec paths, autoload, formatter, bootstrap
 - **CLI options**: `--stop-on-failure`, `--filter`, `--order=random`, `--seed`, `--profile`, `--bootstrap`, `-v`, `-q`
 

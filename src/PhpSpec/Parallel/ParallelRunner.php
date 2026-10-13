@@ -41,6 +41,7 @@ final class ParallelRunner
      * @param list<string> $childOptions the options the run was started with that set up the project, forwarded to every worker
      * @param string|null $filter the title filter to forward to workers
      * @param string|null $tags the tag expression to forward to workers
+     * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off
      */
     public function __construct(
         private readonly array $paths,
@@ -51,6 +52,7 @@ final class ParallelRunner
         private readonly array $childOptions = [],
         private readonly ?string $filter = null,
         private readonly ?string $tags = null,
+        private readonly array $phpOptions = [],
     ) {
         $this->workers = max(1, $workers ?? self::detectCpuCount());
         $this->phpspecBin = $phpspecBin ?? self::findPhpspecBin();
@@ -96,7 +98,7 @@ final class ParallelRunner
                 $this->coveragePartials[] = $coveragePartial;
             }
 
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags);
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $this->phpOptions);
             $processes[] = $process;
 
             $fiber = new \Fiber(function () use ($process) {

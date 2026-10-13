@@ -244,7 +244,7 @@ describe(Expectation::class, function() {
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
         $obj = new \stdClass();
-        $result = $method->invoke($exp, "Expected %s", $obj);
+        $result = $method->invoke(null, "Expected %s", $obj);
         expect($result)->toContain("stdClass");
     });
 
@@ -252,7 +252,7 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $result = $method->invoke($exp, "Expected %s", "hello");
+        $result = $method->invoke(null, "Expected %s", "hello");
         expect($result)->toContain('"hello"');
     });
 
@@ -260,7 +260,7 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $result = $method->invoke($exp, "Expected %s", false);
+        $result = $method->invoke(null, "Expected %s", false);
         expect($result)->toContain("false");
     });
 
@@ -268,7 +268,7 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $result = $method->invoke($exp, "Expected %s", [1, 2]);
+        $result = $method->invoke(null, "Expected %s", [1, 2]);
         expect($result)->toContain("[1, 2]");
     });
 
@@ -276,7 +276,7 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $result = $method->invoke($exp, "Expected %s", null);
+        $result = $method->invoke(null, "Expected %s", null);
         expect($result)->toContain("null");
     });
 
@@ -344,7 +344,7 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $result = $method->invoke($exp, "Expected %s", 42);
+        $result = $method->invoke(null, "Expected %s", 42);
         expect($result)->toContain("42");
     });
 

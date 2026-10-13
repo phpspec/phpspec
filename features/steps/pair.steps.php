@@ -18,7 +18,7 @@ if (!function_exists('_pair_exec')) {
         file_put_contents($world->projectDir . '/_pair_shim.php', $shim);
 
         $cmd = [
-            $world->phpBin, '-d', 'xdebug.mode=off',
+            $world->phpBin, '-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off',
             $world->projectDir . '/_pair_shim.php',
             $input,
         ];

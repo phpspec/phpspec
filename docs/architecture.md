@@ -206,7 +206,7 @@ Console `OutputInterface`:
 
 ## Code Coverage
 
-When coverage is enabled (via `--coverage` flags), the `CoverageCollector` uses xdebug to collect line-level coverage data. Three report formats are available:
+When coverage is enabled (via `--coverage` flags), `CoverageEngines` picks the engine, PCOV or Xdebug, and the `CoverageCollector` collects line-level coverage data through its driver. Three report formats are available:
 
 - `TextReport`: renders coverage percentages to the terminal
 - `HtmlReport`: generates an HTML report with color-coded source views

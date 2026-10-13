@@ -94,6 +94,29 @@ jobs:
                   name: phpspec.phar
                   path: phpspec.phar
 
+    coverage-pcov:
+        name: Coverage with PCOV (PHP 8.5, ubuntu-latest)
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - uses: actions/checkout@v5
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.5'
+                  extensions: mbstring, sockets
+                  coverage: pcov
+
+            - name: Install dependencies
+              run: composer update --no-progress
+
+            - name: Run features
+              run: php bin/phpspec run features/
+
+            - name: Check coverage
+              run: php -d pcov.enabled=1 bin/phpspec run --coverage-min=90 -f dot
+
     publish-phar:
         runs-on: ubuntu-latest
         name: Publish the PHAR

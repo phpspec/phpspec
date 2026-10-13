@@ -28,7 +28,10 @@ use PhpSpec\Console\Command\Run\OptionValues;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Console\InternalOptions;
+use PhpSpec\Coverage\CoverageAdapter;
+use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
+use PhpSpec\Coverage\CoverageRefusal;
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
@@ -88,6 +91,8 @@ final class Run extends Command implements InternalOptions
 
     private readonly OfferBook $offers;
 
+    private readonly CoverageEngines $engines;
+
     /**
      * @param Loader $loader the spec/feature file loader
      * @param Runner $runner the spec runner
@@ -99,8 +104,10 @@ final class Run extends Command implements InternalOptions
         private readonly Configuration $config = new Configuration(),
         private readonly ?ExtensionLoader $extensionLoader = null,
         ?OfferBook $offers = null,
+        ?CoverageEngines $engines = null,
     ) {
         $this->offers = $offers ?? new OfferBook();
+        $this->engines = $engines ?? CoverageEngines::of($config);
 
         parent::__construct();
     }
@@ -313,31 +320,30 @@ final class Run extends Command implements InternalOptions
         }
 
         $guard = $worker ? null : Inspection::of($this->config, new RealFilesystem());
-        $coverageReporter = $this->startCoverage($input, forced: $guard !== null);
+        $coverageReporter = $this->startCoverage($input, $guard);
 
         if ($formatter instanceof Agent) {
-            $formatter->runningWith($coverageReporter !== null && !is_string($coverageReporter), $guard !== null ? 'on' : 'off');
+            $formatter->runningWith($coverageReporter instanceof CoverageReporter, $guard !== null ? 'on' : 'off');
         }
 
-        if (is_string($coverageReporter)) {
+        if ($coverageReporter instanceof CoverageRefusal) {
             if ($guard === null || $this->wantsCoverage($input)) {
-                return $this->stopped($prose, $formatter, $coverageReporter, self::coverageRemedy());
+                return $this->refused($prose, $formatter, $coverageReporter);
             }
 
             // Guard judges what the run covered; with nothing to judge with,
             // a run it cannot judge is not a run it can let pass.
-            return $this->stopped(
-                $prose,
-                $formatter,
-                'Guard is on but no coverage driver is available, so this run cannot be judged: ' . lcfirst($coverageReporter) . '.',
-                self::coverageRemedy(),
-            );
+            return $this->refused($prose, $formatter, new CoverageRefusal(
+                'Guard is on but cannot judge this run: ' . $coverageReporter->reason,
+                $coverageReporter->remedy,
+                $coverageReporter->options,
+            ));
         }
 
         try {
             $results = $formatter instanceof Agent
-                ? $this->withOnlyTheDocumentOnStdout(fn(): SuiteResult => $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null))
-                : $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null);
+                ? $this->withOnlyTheDocumentOnStdout(fn(): SuiteResult => $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter?->adapter()))
+                : $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter?->adapter());
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
@@ -630,14 +636,18 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
-     * The same command under a coverage driver, which is the one thing a run
-     * that wanted coverage and found no Xdebug needs to hear.
+     * Stops a run that wanted coverage and cannot collect it, with the other
+     * ways past the refusal for a reader.
      */
-    private static function coverageRemedy(): string
+    private function refused(Output $prose, Formatter $formatter, CoverageRefusal $refusal): int
     {
-        $argv = $_SERVER['argv'] ?? [];
+        $status = $this->stopped($prose, $formatter, $refusal->reason, $refusal->remedy);
 
-        return 'XDEBUG_MODE=coverage ' . implode(' ', is_array($argv) && $argv !== [] ? array_map('strval', $argv) : ['bin/phpspec', 'run']);
+        foreach ($refusal->options as $option) {
+            $prose->writeln(sprintf('<fg=yellow>%s</>', $option));
+        }
+
+        return $status;
     }
 
     /**
@@ -724,15 +734,16 @@ final class Run extends Command implements InternalOptions
     }
 
     /**
-     * Starts code coverage collection if any --coverage* option was given.
+     * Starts code coverage collection if any --coverage* option was given, or
+     * guard is on to judge the run by it.
      *
      * @param Input $input the console input to check coverage options
-     * @return CoverageReporter|null|string the reporter once started, null when no
-     *                                      coverage was asked for, or why it could not start
+     * @return CoverageReporter|CoverageRefusal|null the reporter once started, null when no
+     *                                               coverage was asked for, or why it could not start
      */
-    private function startCoverage(Input $input, bool $forced = false): CoverageReporter|null|string
+    private function startCoverage(Input $input, ?Inspection $guard): CoverageReporter|CoverageRefusal|null
     {
-        if (!$this->wantsCoverage($input) && !$forced) {
+        if (!$this->wantsCoverage($input) && $guard === null) {
             return null;
         }
 
@@ -742,9 +753,23 @@ final class Run extends Command implements InternalOptions
             || $input->getOption('coverage-partial') !== null
             || $input->getOption('parallel') !== false;
 
-        $reporter = new CoverageReporter();
+        $reporter = new CoverageReporter($this->engines);
 
-        return $reporter->start(perExample: $perExample) ?? $reporter;
+        return $reporter->start($this->tracedDirectories($input, $guard), perExample: $perExample) ?? $reporter;
+    }
+
+    /**
+     * The directories a coverage run reports on: the source the reports
+     * cover, and what guard judges.
+     *
+     * @return list<string>
+     */
+    private function tracedDirectories(Input $input, ?Inspection $guard): array
+    {
+        $source = $input->getOption('coverage-src') ?? $this->config->getSrcPath();
+        $guarded = $guard === null ? [] : ($this->config->getGuardConfig()['paths'] ?? []);
+
+        return array_values(array_unique([(string) $source, ...$guarded]));
     }
 
     /**
@@ -925,7 +950,7 @@ final class Run extends Command implements InternalOptions
         return array_values(array_filter($roots, static fn(mixed $root): bool => is_string($root) && $root !== ''));
     }
 
-    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files, bool $collectingCoverage = false): SuiteResult
+    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files, ?CoverageAdapter $collectingWith = null): SuiteResult
     {
         $filter = $input->getOption('filter');
 
@@ -969,7 +994,7 @@ final class Run extends Command implements InternalOptions
             // asked for a report: guard asks for coverage of its own, and a
             // worker that was never told to dump it leaves the parent with
             // nothing to judge.
-            $coveragePartialDir = $collectingCoverage
+            $coveragePartialDir = $collectingWith !== null
                 ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
                 : null;
 
@@ -981,6 +1006,7 @@ final class Run extends Command implements InternalOptions
                 childOptions: $this->childOptions($input),
                 filter: is_string($filter) ? $filter : null,
                 tags: is_string($tags) ? $tags : null,
+                phpOptions: $this->engines->switches($collectingWith),
             );
             $stream = $parallelRunner->stream();
         } else {

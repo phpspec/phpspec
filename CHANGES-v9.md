@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
  - PhpSpec runs on PHP 8.6
+ - Coverage is collected with PCOV when it is enabled, else with Xdebug in coverage mode; `coverage_adapter: pcov` or `xdebug` in the config names one. A run that cannot collect says which engine it needs and the command that switches it on; under PCOV, a source directory outside `pcov.directory` is refused naming the directory to set
  - A file named `steps.php` holds step definitions as any `*.steps.php` does, wherever step files are looked for
  - A `{float}` step placeholder captures a decimal such as `4.5`, and a generated step definition takes a decimal in its text as `{float}` with a `float` parameter, where it used to read `{int}.{int}`
  - A line target that reaches no example shows, under the pretty and dot formatters, the seven lines around it with the target number in bold, so an off-by-one line can be corrected by sight

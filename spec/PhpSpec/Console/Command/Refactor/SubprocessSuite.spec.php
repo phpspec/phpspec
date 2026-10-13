@@ -72,10 +72,10 @@ describe(SubprocessSuite::class, function () {
     });
 
     it('collects coverage in a project that has guard on, so guard can judge the run', function () {
-        if (!extension_loaded('xdebug')) {
-            skip('Xdebug is not loaded.');
+        if (!extension_loaded('pcov') && !extension_loaded('xdebug')) {
+            skip('No coverage engine is loaded.');
         }
-        file_put_contents($this->project . '/spec/Green.spec.php', "<?php\ndescribe('Green', function () {\n    it('runs under coverage', fn() => expect(ini_get('xdebug.mode'))->toBe('coverage'));\n});\n");
+        file_put_contents($this->project . '/spec/Green.spec.php', "<?php\ndescribe('Green', function () {\n    it('runs under coverage', fn() => expect(filter_var(ini_get('pcov.enabled'), FILTER_VALIDATE_BOOL) || ini_get('xdebug.mode') === 'coverage')->toBeTrue());\n});\n");
 
         expect((new SubprocessSuite($this->project, new Configuration(['guard' => ['status' => 'active']])))->check()->failures())->toBe([]);
         expect((new SubprocessSuite($this->project, new Configuration()))->check()->failures()[0])->toContain('Green > runs under coverage');

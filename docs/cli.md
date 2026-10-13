@@ -518,9 +518,14 @@ vendor/bin/phpspec run --coverage-min 90                # Fail below 90%
 vendor/bin/phpspec run --coverage --coverage-src lib    # Scope the report to lib/
 ```
 
-Coverage requires the xdebug extension with `xdebug.mode=coverage`. Coverage
-options can be combined with `--parallel`: workers collect coverage per example
-and the parent process merges their results before rendering the reports.
+Coverage needs an engine: PCOV enabled (`pcov.enabled=1`), or Xdebug in
+coverage mode (`xdebug.mode=coverage`). With nothing named in the config, the
+run takes PCOV when it is enabled, else Xdebug;
+[`coverage_adapter`](configuration.md#coverage_adapter) names one. A run that
+cannot collect says which engine it needs and the command that switches it on.
+Coverage options can be combined with `--parallel`: workers collect coverage
+per example and the parent process merges their results before rendering the
+reports.
 
 #### JSON Coverage Report (experimental)
 

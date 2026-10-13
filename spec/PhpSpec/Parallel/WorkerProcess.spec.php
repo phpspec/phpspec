@@ -94,21 +94,20 @@ describe(WorkerProcess::class, function () {
     });
 
     context('buildCommand', function () {
-        it('disables xdebug and asks for the wire format by default', function () {
-            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec');
+        it('runs under the php options it is given, before the binary, and asks for the wire format', function () {
+            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', phpOptions: ['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off']);
             $command = $worker->buildCommand();
 
-            expect($command)->toContain('xdebug.mode=off');
+            expect(array_slice($command, 1, 5))->toBe(['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off', '/path/to/phpspec']);
             expect($command)->toContain('spec/A.spec.php');
             expect($command)->toContain('wire');
             expect($command)->not()->toContain('junit');
         });
 
-        it('enables xdebug coverage and requests a partial dump when a coverage partial path is set', function () {
+        it('requests a partial dump when a coverage partial path is set', function () {
             $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', '/tmp/partial-0.json');
             $command = $worker->buildCommand();
 
-            expect($command)->toContain('xdebug.mode=coverage');
             expect($command)->toContain('--coverage-partial=/tmp/partial-0.json');
         });
 
