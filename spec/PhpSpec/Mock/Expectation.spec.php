@@ -45,6 +45,18 @@ describe(Expectation::class, function() {
         expect($service->save())->toHaveBeenCalled();
     });
 
+    it("counts the calls made so far: once, twice, exactly, at least and at most N times", function(ExpectationSpecService $service) {
+        $service->store('a', 1);
+        $service->store('a', 1);
+        $service->save();
+
+        expect($service->save())->toHaveBeenCalled()->once();
+        expect($service->store('a', 1))->toHaveBeenCalled()->twice();
+        expect($service->store('a', 1))->toHaveBeenCalled()->exactly(2)->times();
+        expect($service->store(cetera()))->toHaveBeenCalled()->atLeast(1)->times();
+        expect($service->store(cetera()))->toHaveBeenCalled()->atMost(2)->times();
+    });
+
     it("holds toHaveBeenCalled to the arguments it was written with, cetera() standing for any", function(ExpectationSpecService $service) {
         $service->store('a', 1);
 
