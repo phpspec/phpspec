@@ -104,7 +104,10 @@ final class ScrollRegionOutput implements OutputInterface
     public function echoInput(string $input): void
     {
         $this->ensureInContent();
-        $this->inner->writeln("  <options=bold>\u{2502}</> <fg=gray>$input</>");
+
+        foreach (explode("\n", $input) as $line) {
+            $this->inner->writeln("  <options=bold>\u{2502}</> <fg=gray>$line</>");
+        }
     }
 
     /**

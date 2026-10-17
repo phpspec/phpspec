@@ -19,21 +19,32 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @internal
- * A raw-mode line editor for the pair REPL. Beyond reading a line, it can seed
- * the input with a dim "ghost" suggestion (the next command) that the user
- * accepts with Right-arrow or Tab — fish-shell style. Typing dismisses it.
+ * A raw-mode line editor for the pair REPL. The cursor moves through the text
+ * by character, by word, to either end of a line and up and down its rows;
+ * typing inserts at it. Shift+Enter or Alt+Enter break the line, a paste
+ * arrives whole, and Up on the first row or Down on the last walks the
+ * history. The input can be seeded with a dim "ghost" suggestion (the next
+ * command) that Right-arrow or Tab accepts, fish-shell style; typing
+ * dismisses it.
  *
- * On a TTY a byte-by-byte key loop drives it (stty raw); piped input falls back
- * to reading a whole line so scripted sessions keep working. Both the key reader
- * and the line reader are injectable, so specs drive it without a real terminal.
+ * On a TTY a key loop drives it, with the terminal asked to report modified
+ * keys apart and to bracket pastes; piped input falls back to reading a whole
+ * line so scripted sessions keep working. Both the key reader and the line
+ * reader are injectable, so specs drive it without a real terminal.
  */
 final class LineEditor
 {
+    /** Bracketed paste on, and modified keys such as Shift+Enter reported apart from plain ones. */
+    private const KEY_MODES_ON = "\033[?2004h\033[>1u";
+    private const KEY_MODES_OFF = "\033[<u\033[?2004l";
+
     private readonly Closure $reader;
 
     private readonly ?Closure $keys;
 
     private readonly bool $detectTty;
+
+    private readonly KeyDecoder $decoder;
 
     /**
      * @param PairOutput $output the pair screen to paint the input line into
@@ -48,6 +59,7 @@ final class LineEditor
     ) {
         $this->reader = $reader ?? fn(): ?string => $this->readStdinLine();
         $this->keys = $keys;
+        $this->decoder = new KeyDecoder();
         // Only probe the real terminal when no input source was injected, so
         // specs behave the same whether run from a TTY or a pipe.
         $this->detectTty = $reader === null && $keys === null;
@@ -55,8 +67,8 @@ final class LineEditor
 
     /**
      * Reads one line, optionally seeded with a dim suggestion the user accepts
-     * with Right-arrow or Tab. Up/Down walk the given history. Returns the line,
-     * or null on EOF / cancel.
+     * with Right-arrow or Tab. Up/Down walk the given history from the first
+     * and last rows. Returns the line, or null on EOF / cancel.
      *
      * @param list<string> $history earlier lines, oldest first, for Up/Down recall
      */
@@ -84,109 +96,102 @@ final class LineEditor
     }
 
     /**
-     * Key mode (TTY): a per-keystroke loop that maintains the buffer, paints the
-     * ghost after it, accepts it on Right-arrow / Tab, and walks history on Up/Down.
+     * Key mode (TTY): a per-keystroke loop over the line being typed. Ctrl-C
+     * arrives as a key rather than a signal, so however the loop ends the
+     * terminal is given back as it was.
      *
      * @param list<string> $history earlier lines, oldest first
      */
     private function readByKey(string $prompt, ?string $suggestion, array $history): ?string
     {
-        $rawMode = $this->keys === null;
-        if ($rawMode) {
-            system('stty -icanon -echo');
+        $next = $this->keys;
+
+        if ($next === null) {
+            $next = (new TerminalKeys())->next(...);
+            system('stty -icanon -echo -isig');
+            $this->output->rawOutput()->write(self::KEY_MODES_ON, false, OutputInterface::OUTPUT_RAW);
         }
 
-        $buffer = '';
+        $line = new TypedLine();
+        $draft = $line;
         $ghost = ($suggestion !== null && $suggestion !== '') ? $suggestion : null;
-        $histAt = count($history);
+        $recalled = count($history);
 
         try {
-            $this->render($prompt, $buffer, $ghost);
+            $this->render($prompt, $line, $ghost);
 
             while (true) {
-                $key = $this->keys !== null ? ($this->keys)() : $this->readKeyToken();
+                $key = $this->decoder->decode($next());
 
-                if ($key === "\n" || $key === "\r") {
-                    return $buffer;
+                if ($key->name === KeyName::Enter) {
+                    return $line->text;
                 }
 
-                if ($key === "\004") {
-                    return $buffer === '' ? null : $buffer;
-                }
-
-                if ($key === "\003" || $key === "\033") {
+                if ($key->name === KeyName::Cancel || ($key->name === KeyName::EndOfInput && $line->text === '')) {
                     return null;
                 }
 
-                if (($key === "\033[C" || $key === "\t") && $ghost !== null && $buffer === '') {
-                    $buffer = $ghost;
-                    $ghost = null;
-                } elseif ($key === "\033[A" && $histAt > 0) {
-                    $buffer = $history[--$histAt];
-                    $ghost = null;
-                } elseif ($key === "\033[B" && $histAt < count($history)) {
-                    $buffer = ++$histAt < count($history) ? $history[$histAt] : '';
-                    $ghost = null;
-                } elseif ($key === "\177" || $key === "\010") {
-                    $buffer = mb_substr($buffer, 0, -1);
-                } elseif (strlen($key) === 1 && ord($key) >= 32) {
-                    $buffer .= $key;
-                    $ghost = null;
-                } else {
+                if ($key->name === KeyName::EndOfInput) {
+                    return $line->text;
+                }
+
+                if ($key->name === KeyName::Ignored) {
                     continue;
                 }
 
-                $this->render($prompt, $buffer, $ghost);
+                if (in_array($key->name, [KeyName::Tab, KeyName::Right], true) && $ghost !== null && $line->text === '') {
+                    $line = new TypedLine($ghost);
+                    $ghost = null;
+                } elseif ($key->name === KeyName::Up) {
+                    $above = $this->wrapped($prompt, $line, $ghost)->cursorAbove();
+
+                    if ($above !== null) {
+                        $line = $line->at($above);
+                    } elseif ($recalled > 0) {
+                        $draft = $recalled === count($history) ? $line : $draft;
+                        $line = new TypedLine($history[--$recalled]);
+                        $ghost = null;
+                    }
+                } elseif ($key->name === KeyName::Down) {
+                    $below = $this->wrapped($prompt, $line, $ghost)->cursorBelow();
+
+                    if ($below !== null) {
+                        $line = $line->at($below);
+                    } elseif ($recalled < count($history)) {
+                        $line = ++$recalled === count($history) ? $draft : new TypedLine($history[$recalled]);
+                    }
+                } else {
+                    $line = $line->after($key);
+                    $ghost = $line->text === '' ? $ghost : null;
+                }
+
+                $this->render($prompt, $line, $ghost);
             }
         } finally {
-            if ($rawMode) {
-                system('stty icanon echo');
+            if ($this->keys === null) {
+                $this->output->rawOutput()->write(self::KEY_MODES_OFF, false, OutputInterface::OUTPUT_RAW);
+                system('stty icanon echo isig');
             }
         }
     }
 
     /**
-     * Repaints the line being typed: the prompt, the buffer in full colour,
-     * then the dim ghost, with the cursor before the ghost. On the pair screen
-     * the line takes as many rows as it wraps onto, the row being typed on at
-     * the bottom; without one it is repainted in place.
+     * Repaints the line being typed: the prompt, the text in full colour, then
+     * the dim ghost, with the cursor where it is in the text. On the pair
+     * screen the line takes as many rows as it lays out onto, the row being
+     * typed on kept in view; without one it is repainted in place.
      */
-    private function render(string $prompt, string $buffer, ?string $ghost): void
+    private function render(string $prompt, TypedLine $line, ?string $ghost): void
     {
-        $input = new WrappedInput($prompt, $buffer, $ghost, $this->output->width());
+        $input = $this->wrapped($prompt, $line, $ghost);
         $area = $this->output->inputArea($input->rowCount());
 
         $this->output->rawOutput()->write($area === null ? $input->inPlace() : $input->paintedIn($area), false, OutputInterface::OUTPUT_RAW);
     }
 
-    /**
-     * Reads one raw key token: a single character, or a complete escape sequence
-     * for the arrow keys (bare Esc stays a lone \033; EOF becomes Ctrl-D).
-     */
-    private function readKeyToken(): string
+    private function wrapped(string $prompt, TypedLine $line, ?string $ghost): WrappedInput
     {
-        $char = fgetc(STDIN);
-
-        if ($char === false) {
-            return "\004";
-        }
-
-        if ($char !== "\033") {
-            return $char;
-        }
-
-        $read = [STDIN];
-        $write = $except = [];
-
-        if ((int) stream_select($read, $write, $except, 0, 20000) < 1) {
-            return "\033";
-        }
-
-        if (fgetc(STDIN) !== '[') {
-            return "\033";
-        }
-
-        return "\033[" . fgetc(STDIN);
+        return new WrappedInput($prompt, $line->text, $ghost, $this->output->width(), $line->cursor);
     }
 
     /**

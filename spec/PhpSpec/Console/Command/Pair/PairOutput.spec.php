@@ -113,6 +113,12 @@ describe(PairOutput::class, function () {
         expect($output)->toContain('describe Acme\Greeter');
     });
 
+    it('echoes each line of a multi-line input behind the quote bar', function () {
+        $this->pairOutput->echoInput("one\ntwo");
+
+        expect($this->buffer->fetch())->toContain("  \u{2502} one" . PHP_EOL . "  \u{2502} two");
+    });
+
     it('prepareForInput delegates to scroll output after setup', function () {
         $this->pairOutput->setupLayout();
         $this->buffer->fetch(); // discard setup output

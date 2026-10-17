@@ -70,6 +70,12 @@ describe(ScrollRegionOutput::class, function () {
         expect($raw)->toContain('Y');
     });
 
+    it('echoes each line of a multi-line input behind the quote bar', function () {
+        $this->output->echoInput("one\ntwo");
+
+        expect($this->inner->fetch())->toContain("  \u{2502} one" . PHP_EOL . "  \u{2502} two");
+    });
+
     it('echoInput repositions after prepareForInput', function () {
         $this->output->prepareForInput();
         $this->inner->fetch(); // discard
