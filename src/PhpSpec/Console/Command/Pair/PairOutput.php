@@ -216,7 +216,9 @@ final class PairOutput
      */
     public function echoInput(string $input): void
     {
-        $this->getOutput()->writeln("  <options=bold>\u{2502}</> <fg=gray>{$input}</>");
+        foreach (explode("\n", $input) as $line) {
+            $this->getOutput()->writeln("  <options=bold>\u{2502}</> <fg=gray>{$line}</>");
+        }
     }
 
     /**

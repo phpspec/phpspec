@@ -86,7 +86,47 @@ describe(LineEditor::class, function () {
             $raw = $this->buffer->fetch();
             expect($raw)->toContain("\033[1;9r");
             expect($raw)->toContain("\033[10;1H\033[K\033[36m\u{2500}");
-            expect($raw)->toContain("\033[11;1H\033[K❯ abcdefghij\033[12;1H\033[Kklm\033[12;4H");
+            expect($raw)->toContain("\033[11;1H\033[K❯ abcdefghij\033[12;1H\033[K  klm\033[12;6H");
+        });
+    });
+
+    context('editing the line', function () use ($keying) {
+        it('inserts at the cursor, moved with the arrows, Home and End', function () use ($keying) {
+            expect($keying($this->pairOutput, ['a', 'c', "\033[D", 'b', "\033[H", '>', "\033[F", '<', "\n"])->readLine('❯ '))->toBe('>abc<');
+        });
+
+        it('moves by a word with Option and the arrows', function () use ($keying) {
+            expect($keying($this->pairOutput, [...str_split('say world'), "\033b", 'hello ', "\n"])->readLine('❯ '))->toBe('say hello world');
+        });
+
+        it('deletes under the cursor with Delete', function () use ($keying) {
+            expect($keying($this->pairOutput, ['a', 'x', 'b', "\033[D", "\033[D", "\033[3~", "\n"])->readLine('❯ '))->toBe('ab');
+        });
+
+        it('adds a new line with Shift+Enter or Alt+Enter, and submits with Enter', function () use ($keying) {
+            expect($keying($this->pairOutput, ['a', "\033[13;2u", 'b', "\033\r", 'c', "\r"])->readLine('❯ '))->toBe("a\nb\nc");
+        });
+
+        it('inserts a paste whole, its line breaks with it', function () use ($keying) {
+            expect($keying($this->pairOutput, ["\033[200~one\ntwo\033[201~", "\n"])->readLine('❯ '))->toBe("one\ntwo");
+        });
+
+        it('moves up a line before it reaches the history, and recalls it from the first line', function () use ($keying) {
+            $typed = $keying($this->pairOutput, ['a', "\033[13;2u", 'b', "\033[A", 'X', "\n"])->readLine('❯ ', null, ['/run']);
+            expect($typed)->toBe("aX\nb");
+
+            $recalled = $keying($this->pairOutput, ['a', "\033[13;2u", 'b', "\033[A", "\033[A", "\n"])->readLine('❯ ', null, ['/run']);
+            expect($recalled)->toBe('/run');
+        });
+
+        it('comes back down from the history to what was being typed, and goes no further', function () use ($keying) {
+            $typed = $keying($this->pairOutput, ['d', 'r', 'a', 'f', 't', "\033[A", "\033[B", "\033[B", "\n"])->readLine('❯ ', null, ['/run']);
+
+            expect($typed)->toBe('draft');
+        });
+
+        it('ignores a key it does not know', function () use ($keying) {
+            expect($keying($this->pairOutput, ['a', "\033[Z", 'b', "\n"])->readLine('❯ '))->toBe('ab');
         });
     });
 

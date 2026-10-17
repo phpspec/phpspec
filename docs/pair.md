@@ -89,8 +89,28 @@ step: describe a spec and it suggests running it, run and it suggests `/next`, a
 ```
 
 Press **Right-arrow** or **Tab** to accept it (it turns full colour, cursor to the end),
-or just start typing to dismiss it. **Up/Down** walk your history. On a terminal that
-can't enter raw mode (or piped input) the prompt falls back to a plain line reader.
+or just start typing to dismiss it. On a terminal that can't enter raw mode (or piped
+input) the prompt falls back to a plain line reader.
+
+### Editing the input
+
+The input is edited where the cursor is:
+
+| Keys | Action |
+|---|---|
+| Left, Right | Move by a character |
+| Option+Left, Option+Right (Alt or Ctrl on Linux) | Move by a word |
+| Home, End, Ctrl-A, Ctrl-E | Move to the start or end of the line |
+| Up, Down | Move up or down a row; from the first row, or the last, walk your history |
+| Backspace, Delete | Delete before the cursor, or under it |
+| Shift+Enter or Alt+Enter | Start a new line |
+| Enter | Send the input |
+
+The input grows upwards as it wraps or gains lines, the row being typed on staying
+at the bottom. A paste arrives whole, its line breaks included, rather than sending
+at its first line. Shift+Enter works where the terminal reports it apart from Enter,
+as iTerm2, kitty, WezTerm and Ghostty do; elsewhere use Alt+Enter, with the Option key
+set to send Meta (Esc+) on macOS.
 
 After `/next` with an AI provider, the ghost is built from the suggestion the AI
 registers: a matching `/generate ...` pre-filled in the prompt, so acting on the
