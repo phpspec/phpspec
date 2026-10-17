@@ -5,7 +5,9 @@ use PhpSpec\Console\Command\Pair\TerminalKeys;
 describe(TerminalKeys::class, function () {
 
     beforeEach(function () {
-        [$this->typed, $this->read] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        // Windows pairs sockets over loopback only.
+        $domain = DIRECTORY_SEPARATOR === '\\' ? STREAM_PF_INET : STREAM_PF_UNIX;
+        [$this->typed, $this->read] = stream_socket_pair($domain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $this->keys = new TerminalKeys($this->read);
     });
 

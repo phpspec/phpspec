@@ -116,7 +116,7 @@ describe(PairOutput::class, function () {
     it('echoes each line of a multi-line input behind the quote bar', function () {
         $this->pairOutput->echoInput("one\ntwo");
 
-        expect($this->buffer->fetch())->toContain("  \u{2502} one\n  \u{2502} two");
+        expect($this->buffer->fetch())->toContain("  \u{2502} one" . PHP_EOL . "  \u{2502} two");
     });
 
     it('prepareForInput delegates to scroll output after setup', function () {
