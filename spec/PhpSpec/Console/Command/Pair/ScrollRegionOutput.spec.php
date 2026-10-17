@@ -159,6 +159,26 @@ describe(ScrollRegionOutput::class, function () {
             expect($raw)->toContain("\033[20;1H\033[K\033[36m\u{2500}");
         });
 
+        it('gives the rows back without erasing the content scrolled down into them', function () {
+            $this->framed->resizeInput(3);
+            $this->inner->fetch();
+
+            $this->framed->resizeInput(1);
+            $raw = $this->inner->fetch();
+
+            expect($raw)->not()->toContain("\033[18;1H\033[K");
+            expect($raw)->not()->toContain("\033[19;1H\033[K");
+        });
+
+        it('puts the top divider back in its place when the input collapses into the content', function () {
+            $this->framed->resizeInput(3);
+            $this->inner->fetch();
+
+            $this->framed->returnToContent();
+
+            expect($this->inner->fetch())->toContain("\033[20;1H\033[K\033[36m\u{2500}");
+        });
+
         it('takes at most half the content rows', function () {
             expect($this->framed->resizeInput(30))->toBeLike(new InputArea(13, 9));
         });

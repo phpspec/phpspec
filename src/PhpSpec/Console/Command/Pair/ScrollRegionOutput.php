@@ -133,11 +133,16 @@ final class ScrollRegionOutput implements OutputInterface
 
     /**
      * Clears the input after readline returns, giving the content back the
-     * rows a long line took. Next write() will reposition into the scroll region.
+     * rows a long line took and the top divider its own row. Next write() will
+     * reposition into the scroll region.
      */
     public function returnToContent(): void
     {
-        $this->inner->write($this->regrown(0) . sprintf("\033[%d;1H\033[K", $this->inputRow));
+        $this->inner->write(
+            $this->regrown(0)
+            . sprintf("\033[%d;1H\033[K%s", $this->topDividerRow, $this->divider())
+            . sprintf("\033[%d;1H\033[K", $this->inputRow),
+        );
         $this->cursorInContent = false;
     }
 
@@ -239,10 +244,6 @@ final class ScrollRegionOutput implements OutputInterface
 
         if ($growth < $this->inputGrowth) {
             $out .= "\033[1;1H" . str_repeat("\033M", $this->inputGrowth - $growth);
-        }
-
-        for ($row = $this->topDividerRow - max($growth, $this->inputGrowth); $row < $this->topDividerRow - $growth; $row++) {
-            $out .= sprintf("\033[%d;1H\033[K", $row);
         }
 
         $this->inputGrowth = $growth;
