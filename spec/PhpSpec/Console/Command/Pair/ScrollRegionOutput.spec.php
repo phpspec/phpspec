@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Console\Command\Pair\InputArea;
 use PhpSpec\Console\Command\Pair\RoleState;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Console\Command\Pair\StatusBar;
@@ -126,6 +127,52 @@ describe(ScrollRegionOutput::class, function () {
         $this->output->prepareForInput();
         $raw = $this->inner->fetch();
         expect($raw)->toContain("\u{2500}");
+    });
+
+    context('an input that takes more than one row', function () {
+        // scrollBottom=19, input=21, topDivider=20, width=40, bottomDivider=22, statusRow=23, roleRow=24
+        this('framed', fn() => new ScrollRegionOutput($this->inner, 19, 21, 20, 40, 22, 23, 24, new StatusBar('~/proj', true, 'google', new RoleState())));
+
+        it('grows upwards: the content scrolls up into the rows above and the top divider rises with it', function () {
+            $area = $this->framed->resizeInput(3);
+            $raw = $this->inner->fetch();
+
+            expect($area)->toBeLike(new InputArea(19, 3));
+            expect($raw)->toContain("\033[19;1H\n\n");
+            expect($raw)->toContain("\033[1;17r");
+            expect($raw)->toContain("\033[18;1H\033[K\033[36m\u{2500}");
+        });
+
+        it('gives the rows back as it shrinks: the content scrolls down into them', function () {
+            $this->framed->resizeInput(3);
+            $this->inner->fetch();
+
+            expect($this->framed->resizeInput(1))->toBeLike(new InputArea(21, 1));
+            $raw = $this->inner->fetch();
+            expect($raw)->toContain("\033[1;19r\033[1;1H\033M\033M");
+            expect($raw)->toContain("\033[20;1H\033[K\033[36m\u{2500}");
+        });
+
+        it('takes at most half the content rows', function () {
+            expect($this->framed->resizeInput(30))->toBeLike(new InputArea(13, 9));
+        });
+
+        it('writes content above the area while it is grown', function () {
+            $this->framed->resizeInput(3);
+            $this->inner->fetch();
+
+            $this->framed->write('meanwhile');
+            expect($this->inner->fetch())->toContain("\033[17;1Hmeanwhile");
+        });
+
+        it('collapses the area when the cursor returns to the content', function () {
+            $this->framed->resizeInput(3);
+            $this->framed->returnToContent();
+            $this->inner->fetch();
+
+            $this->framed->writeln('after');
+            expect($this->inner->fetch())->toContain("\033[19;1Hafter");
+        });
     });
 
     it('draws the full bottom chrome when a status bar is configured', function () {

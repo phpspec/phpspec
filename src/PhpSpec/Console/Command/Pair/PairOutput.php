@@ -85,6 +85,24 @@ final class PairOutput
     }
 
     /**
+     * The terminal's width, in columns.
+     */
+    public function width(): int
+    {
+        return $this->width;
+    }
+
+    /**
+     * The rows the line being typed may take, as many as it asks for within
+     * what the screen spares; null when there is no screen laid out to place
+     * it on.
+     */
+    public function inputArea(int $rows): ?InputArea
+    {
+        return $this->scrollOutput?->resizeInput($rows);
+    }
+
+    /**
      * Sets up the fixed terminal layout: header, scroll region, bottom divider, input line.
      *
      * @param bool $aiAvailable whether an AI provider is configured

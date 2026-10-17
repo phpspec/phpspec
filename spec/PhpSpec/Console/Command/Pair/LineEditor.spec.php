@@ -66,6 +66,30 @@ describe(LineEditor::class, function () {
         expect($this->buffer->fetch())->toContain("\033[2m");
     });
 
+    context('on a screen laid out for pair', function () use ($keying) {
+        beforeEach(function () {
+            putenv('COLUMNS=12');
+            putenv('LINES=12');
+            $this->pairOutput->setupLayout();
+            $this->buffer->fetch();
+        });
+
+        afterEach(function () {
+            putenv('COLUMNS');
+            putenv('LINES');
+        });
+
+        it('keeps the line being typed on the bottom row of the input, moving the top divider up as the line wraps', function () use ($keying) {
+            $editor = $keying($this->pairOutput, [...str_split('abcdefghijklm'), "\n"]);
+
+            expect($editor->readLine('❯ '))->toBe('abcdefghijklm');
+            $raw = $this->buffer->fetch();
+            expect($raw)->toContain("\033[1;9r");
+            expect($raw)->toContain("\033[10;1H\033[K\033[36m\u{2500}");
+            expect($raw)->toContain("\033[11;1H\033[K❯ abcdefghij\033[12;1H\033[Kklm\033[12;4H");
+        });
+    });
+
     it('reads a whole line without a ghost when not a TTY', function () {
         $editor = new LineEditor($this->pairOutput, fn(): ?string => 'hello world');
 

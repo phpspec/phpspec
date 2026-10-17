@@ -28,6 +28,9 @@ final class ScrollRegionOutput implements OutputInterface
 {
     private bool $cursorInContent = true;
 
+    /** @var int the rows the input has taken from the content, above its own */
+    private int $inputGrowth = 0;
+
     /**
      * @param OutputInterface $inner the underlying Symfony console output to delegate to
      * @param int $scrollBottom the last row of the scrollable content region
@@ -78,15 +81,13 @@ final class ScrollRegionOutput implements OutputInterface
      */
     public function prepareForInput(): void
     {
-        $divider = "\033[36m" . str_repeat("\u{2500}", $this->width) . "\033[0m";
-
-        $out = sprintf("\033[%d;1H\033[K%s", $this->topDividerRow, $divider);
+        $out = $this->regrown(0) . sprintf("\033[%d;1H\033[K%s", $this->topDividerRow, $this->divider());
 
         if ($this->bottomDividerRow !== null && $this->statusRow !== null
             && $this->roleRow !== null && $this->statusBar !== null
         ) {
             [$status, $role] = $this->statusBar->lines($this->width);
-            $out .= sprintf("\033[%d;1H\033[K%s", $this->bottomDividerRow, $divider);
+            $out .= sprintf("\033[%d;1H\033[K%s", $this->bottomDividerRow, $this->divider());
             $out .= sprintf("\033[%d;1H\033[K%s", $this->statusRow, $status);
             $out .= sprintf("\033[%d;1H\033[K%s", $this->roleRow, $role);
         }
@@ -107,11 +108,33 @@ final class ScrollRegionOutput implements OutputInterface
     }
 
     /**
-     * Clears the input row after readline returns. Next write() will reposition into the scroll region.
+     * Gives the line being typed as many rows as it takes, up to half the
+     * content's: the rows above the input row, so the row being typed on
+     * stays at the bottom. The content scrolls up out of the rows the input
+     * takes, and back down into the rows it gives back, and the top divider
+     * moves with the input's first row.
+     */
+    public function resizeInput(int $rows): InputArea
+    {
+        $growth = min(max(0, $rows - 1), max(0, intdiv($this->scrollBottom, 2) - 1));
+
+        if ($growth !== $this->inputGrowth) {
+            $out = $this->regrown($growth);
+            $out .= sprintf("\033[%d;1H\033[K%s", $this->topDividerRow - $growth, $this->divider());
+            $this->inner->write($out);
+            $this->cursorInContent = false;
+        }
+
+        return new InputArea($this->inputRow - $growth, $growth + 1);
+    }
+
+    /**
+     * Clears the input after readline returns, giving the content back the
+     * rows a long line took. Next write() will reposition into the scroll region.
      */
     public function returnToContent(): void
     {
-        $this->inner->write(sprintf("\033[%d;1H\033[K", $this->inputRow));
+        $this->inner->write($this->regrown(0) . sprintf("\033[%d;1H\033[K", $this->inputRow));
         $this->cursorInContent = false;
     }
 
@@ -187,8 +210,45 @@ final class ScrollRegionOutput implements OutputInterface
     private function ensureInContent(): void
     {
         if (!$this->cursorInContent) {
-            $this->inner->write(sprintf("\033[%d;1H", $this->scrollBottom));
+            $this->inner->write(sprintf("\033[%d;1H", $this->scrollBottom - $this->inputGrowth));
             $this->cursorInContent = true;
         }
+    }
+
+    /**
+     * Moves the bottom of the scroll region to leave the input the rows it
+     * now takes. Taking rows scrolls the content up out of them first; giving
+     * them back scrolls it down into them, so no line of content is covered.
+     */
+    private function regrown(int $growth): string
+    {
+        if ($growth === $this->inputGrowth) {
+            return '';
+        }
+
+        $out = '';
+
+        if ($growth > $this->inputGrowth) {
+            $out .= sprintf("\033[%d;1H", $this->scrollBottom - $this->inputGrowth) . str_repeat("\n", $growth - $this->inputGrowth);
+        }
+
+        $out .= sprintf("\033[1;%dr", $this->scrollBottom - $growth);
+
+        if ($growth < $this->inputGrowth) {
+            $out .= "\033[1;1H" . str_repeat("\033M", $this->inputGrowth - $growth);
+        }
+
+        for ($row = $this->topDividerRow - max($growth, $this->inputGrowth); $row < $this->topDividerRow - $growth; $row++) {
+            $out .= sprintf("\033[%d;1H\033[K", $row);
+        }
+
+        $this->inputGrowth = $growth;
+
+        return $out;
+    }
+
+    private function divider(): string
+    {
+        return "\033[36m" . str_repeat("\u{2500}", $this->width) . "\033[0m";
     }
 }

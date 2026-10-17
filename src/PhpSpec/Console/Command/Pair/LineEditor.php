@@ -29,9 +29,6 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class LineEditor
 {
-    private const DIM = "\033[2m";
-    private const RESET = "\033[0m";
-
     private readonly Closure $reader;
 
     private readonly ?Closure $keys;
@@ -149,18 +146,17 @@ final class LineEditor
     }
 
     /**
-     * Repaints the input row in place: the prompt, the buffer in full colour,
-     * then the dim ghost — with the cursor moved back to sit before the ghost.
+     * Repaints the line being typed: the prompt, the buffer in full colour,
+     * then the dim ghost, with the cursor before the ghost. On the pair screen
+     * the line takes as many rows as it wraps onto, the row being typed on at
+     * the bottom; without one it is repainted in place.
      */
     private function render(string $prompt, string $buffer, ?string $ghost): void
     {
-        $line = "\r\033[K" . $prompt . $buffer;
+        $input = new WrappedInput($prompt, $buffer, $ghost, $this->output->width());
+        $area = $this->output->inputArea($input->rowCount());
 
-        if ($ghost !== null && $ghost !== '') {
-            $line .= self::DIM . $ghost . self::RESET . "\033[" . mb_strlen($ghost) . 'D';
-        }
-
-        $this->output->rawOutput()->write($line, false, OutputInterface::OUTPUT_RAW);
+        $this->output->rawOutput()->write($area === null ? $input->inPlace() : $input->paintedIn($area), false, OutputInterface::OUTPUT_RAW);
     }
 
     /**
