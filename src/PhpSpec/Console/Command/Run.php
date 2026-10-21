@@ -33,6 +33,7 @@ use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageRefusal;
 use PhpSpec\Coverage\CoverageVerdict;
+use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FileLoadException;
@@ -753,7 +754,7 @@ final class Run extends Command implements InternalOptions
             || $input->getOption('coverage-partial') !== null
             || $input->getOption('parallel') !== false;
 
-        $reporter = new CoverageReporter($this->engines);
+        $reporter = new CoverageReporter($this->engines, Exclusions::of($this->config, new RealFilesystem(), (string) getcwd()));
 
         return $reporter->start($this->tracedDirectories($input, $guard), perExample: $perExample) ?? $reporter;
     }

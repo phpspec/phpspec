@@ -27,7 +27,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class Configuration
 {
-    /** @var array<string, 'bool'|'string'|'array'|class-string<BackedEnum>> every key a config file may state, and the kind of value it takes: a scalar kind, a map, or the enum of the values it may hold */
+    /** @var array<string, 'bool'|'string'|'array'|'list'|class-string<BackedEnum>> every key a config file may state, and the kind of value it takes: a scalar kind, a map, a list of strings, or the enum of the values it may hold */
     private const KNOWN_KEYS = [
         'spec_path' => 'string',
         'src_path' => 'string',
@@ -40,6 +40,7 @@ final class Configuration
         'base_url' => 'string',
         'default_namespace' => 'string',
         'coverage_adapter' => CoverageAdapter::class,
+        'coverage_exclude' => 'list',
         'stop_on_failure' => 'bool',
         'stop_on_error' => 'bool',
         'stop_on_warning' => 'bool',
@@ -196,6 +197,7 @@ final class Configuration
             'bool' => is_bool($value),
             'string' => is_string($value),
             'array' => is_array($value),
+            'list' => is_array($value) && array_is_list($value) && array_filter($value, static fn(mixed $item): bool => !is_string($item) || $item === '') === [],
             default => is_string($value) && $expected::tryFrom($value) !== null,
         };
 
@@ -211,6 +213,7 @@ final class Configuration
                 'bool' => 'true or false',
                 'string' => 'a string',
                 'array' => 'a map',
+                'list' => 'a list of paths and names',
                 default => implode(' or ', array_map(static fn(BackedEnum $case): string => (string) $case->value, $expected::cases())),
             },
             is_scalar($value) ? '"' . $value . '"' : get_debug_type($value),
@@ -657,6 +660,18 @@ final class Configuration
     public function childOptions(): array
     {
         return $this->named && $this->settingsFile !== null ? ['--config=' . $this->settingsFile] : [];
+    }
+
+    /**
+     * The paths and names coverage leaves out, as the config lists them.
+     *
+     * @return list<string>
+     */
+    public function coverageExclusions(): array
+    {
+        $entries = $this->config['coverage_exclude'] ?? [];
+
+        return is_array($entries) ? array_values(array_filter($entries, 'is_string')) : [];
     }
 
     /**

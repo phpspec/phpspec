@@ -27,7 +27,13 @@ use PhpSpec\Source\Members;
  */
 final class JsonReportBuilder
 {
-    public function __construct(private readonly Filesystem $filesystem) {}
+    /**
+     * @param Exclusions|null $exclusions what the report leaves out; nothing when null
+     */
+    public function __construct(
+        private readonly Filesystem $filesystem,
+        private readonly ?Exclusions $exclusions = null,
+    ) {}
 
     /**
      * Builds the tests and sources sections of the JSON coverage report.
@@ -108,6 +114,12 @@ final class JsonReportBuilder
                 continue;
             }
 
+            $fileLines = $this->kept($file, $fileLines);
+
+            if ($fileLines === []) {
+                continue;
+            }
+
             $relative = $root->relative($file);
             $source = $this->filesystem->read($file);
             $sources[$relative] = [
@@ -116,16 +128,53 @@ final class JsonReportBuilder
                 // Which lines there were to reach at all, so a reader of the
                 // artifact can tell a line nothing reached from a line that
                 // was never code: "lines" holds only what ran.
-                'executable' => self::executable($aggregate[$file] ?? []),
+                'executable' => self::executable($this->kept($file, $aggregate[$file] ?? [])),
                 // Where each method begins and ends, because a mutation is a
                 // change to a method and the tests to re-run are the ones that
                 // covered it.
-                'methods' => Members::in($source)->spans(),
+                'methods' => $this->spansLeft($file, Members::in($source)->spans()),
             ];
         }
 
         ksort($sources);
 
         return $sources;
+    }
+
+    /**
+     * A source's lines without those coverage leaves out.
+     *
+     * @template T
+     * @param array<int, T> $lines
+     * @return array<int, T>
+     */
+    private function kept(string $file, array $lines): array
+    {
+        return $this->exclusions === null ? $lines : ($this->exclusions->appliedTo([$file => $lines])[$file] ?? []);
+    }
+
+    /**
+     * The method spans with at least one line coverage does not leave out.
+     *
+     * @param array<string, array{start: int, end: int}> $spans
+     * @return array<string, array{start: int, end: int}>
+     */
+    private function spansLeft(string $file, array $spans): array
+    {
+        $exclusions = $this->exclusions;
+
+        if ($exclusions === null) {
+            return $spans;
+        }
+
+        return array_filter($spans, static function (array $span) use ($file, $exclusions): bool {
+            foreach (range($span['start'], $span['end']) as $line) {
+                if (!$exclusions->excludes($file, $line)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 }

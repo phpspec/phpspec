@@ -529,6 +529,51 @@ Coverage options can be combined with `--parallel`: workers collect coverage
 per example and the parent process merges their results before rendering the
 reports.
 
+#### Excluding code from coverage
+
+Interfaces never count. Anything else can be left out, so its lines neither
+count towards the percentage, `--coverage-min` included, nor appear in any
+report, and guard never asks for an example of it.
+
+A class, interface, trait, enum, method or function leaves itself out with an
+attribute, or with the docblock tag PHPUnit reads:
+
+```php
+use PhpSpec\ExcludeFromCoverage;
+
+#[ExcludeFromCoverage]
+final class LegacyMapper
+{
+}
+
+final class Clock
+{
+    /** @codeCoverageIgnore */
+    public function sleep(int $seconds): void
+    {
+        sleep($seconds);
+    }
+}
+```
+
+A comment tag leaves out lines:
+
+| Comment | Leaves out |
+|---|---|
+| `// @codeCoverageIgnore` at the end of a line | that line |
+| `// @codeCoverageIgnore` on a line of its own | the line below |
+| either, on a line that opens a block (`if (...) {`, `} else {`, `} catch (...) {`, a `case`) | the whole block |
+| `// @codeCoverageIgnoreStart` ... `// @codeCoverageIgnoreEnd` | the lines between, or to the end of the file without an End |
+
+```php
+if ($handle === false) { // @codeCoverageIgnore
+    throw new RuntimeException('Disk full');
+}
+```
+
+Files, directories and names can also be listed in the config, under
+[`coverage_exclude`](configuration.md#coverage_exclude).
+
 #### JSON Coverage Report (experimental)
 
 The JSON report is designed for tools that need to know **which example covers

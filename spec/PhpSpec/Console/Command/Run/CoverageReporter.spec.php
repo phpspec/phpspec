@@ -7,10 +7,12 @@ use PhpSpec\Coverage\CoverageDriver;
 use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageRefusal;
+use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\LivePhpRuntime;
 use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\Coverage\PhpRuntime;
+use PhpSpec\Filesystem;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(CoverageReporter::class, function () {
@@ -82,6 +84,34 @@ describe(CoverageReporter::class, function () {
 
             expect($reporter->report($output, $options))->toBeNull();
             expect($output->fetch())->toBe('');
+        });
+
+        it('reports without what the exclusions leave out, and keeps the hits whole for guard', function (CoverageDriver $driver, PhpRuntime $php, Filesystem $fs) {
+            $fixture = (string) realpath(__DIR__ . '/../../../Coverage/Driver/fixtures/covered_probe.php');
+            $excluded = dirname($fixture) . '/Excluded.php';
+            allow($driver->start());
+            allow($driver->stop())->toReturn([$fixture => [3 => 1], $excluded => [4 => -1], '/elsewhere/vendor/Lib.php' => [9 => 1]]);
+            $collector = new PerExampleCollector($driver);
+            $collector->beginSpec('spec/PhpSpec/Coverage/JsonReport.spec.php');
+            $collector->beginExample();
+            $collector->endExample('probes');
+            CoverageRegistry::activate($collector);
+            $read = [];
+            allow($fs->exists(any()))->toReturn(true);
+            allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$read) {
+                $read[] = $path;
+
+                return "<?php\n";
+            });
+            $output = new BufferedOutput();
+            $reporter = new CoverageReporter(new CoverageEngines(null, $php, ''), new Exclusions(['Excluded.php'], $fs, dirname($fixture)));
+
+            $verdict = $reporter->report($output, new CoverageOptions(srcPath: dirname($fixture), showText: true));
+
+            expect($verdict->percent)->toBe(100.0);
+            expect($output->fetch())->not()->toContain('Excluded.php');
+            expect($reporter->hits())->toHaveKey($excluded);
+            expect($read)->toBe([dirname($fixture) . '/covered_probe.php']);
         });
 
         it('renders the requested reports from a per-example collection', function (CoverageDriver $driver) {

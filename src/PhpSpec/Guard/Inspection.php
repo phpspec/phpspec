@@ -16,6 +16,7 @@ namespace PhpSpec\Guard;
 
 use PhpSpec\CommandLine;
 use PhpSpec\Configuration;
+use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Filesystem;
 
 /**
@@ -46,7 +47,7 @@ final readonly class Inspection
             return null;
         }
 
-        return self::from($guard, $filesystem, $baseDir, CommandLine::invoked($config));
+        return self::from($guard, $filesystem, $baseDir, CommandLine::invoked($config), Exclusions::of($config, $filesystem, $baseDir));
     }
 
     /**
@@ -62,14 +63,15 @@ final readonly class Inspection
             'paths' => ['src'],
             'allow' => [],
             'detection' => 'git',
-        ], $filesystem, $baseDir, CommandLine::invoked($config));
+        ], $filesystem, $baseDir, CommandLine::invoked($config), Exclusions::of($config, $filesystem, $baseDir));
     }
 
     /**
      * @param array{paths: list<string>, allow: list<string>, detection: string, ...} $guard
      * @param CommandLine $commandLine how the guard command a refusal names is typed
+     * @param Exclusions $exclusions what coverage leaves out, which guard never asks an example for
      */
-    private static function from(array $guard, Filesystem $filesystem, string $baseDir, CommandLine $commandLine): self
+    private static function from(array $guard, Filesystem $filesystem, string $baseDir, CommandLine $commandLine, Exclusions $exclusions): self
     {
         $git = new ShellGit($baseDir);
         $scope = new Scope($guard['paths'], $guard['allow']);
@@ -87,7 +89,7 @@ final readonly class Inspection
         return new self(
             new Baseline($filesystem, $git, $baseDir, $commandLine),
             $changes,
-            new Guard($filesystem, $baseDir),
+            new Guard($filesystem, $baseDir, $exclusions),
         );
     }
 

@@ -254,6 +254,25 @@ is not set: `src`, `lib` or `app` under the working directory, else all of it.
 A coverage run whose source directory lies outside it is refused, naming the
 directory to set. Xdebug needs `xdebug.mode=coverage`.
 
+### `coverage_exclude`
+
+What coverage leaves out: the lines neither count towards the percentage nor
+need an example, and guard never asks for one. Each entry is read by its shape:
+
+```yaml
+coverage_exclude:
+  - src/Kernel.php          # a file, by its path from the project root
+  - src/Migrations/         # a directory
+  - src/**/Generated/*.php  # a glob: * within a directory, ** across them
+  - App\Legacy\*            # every class, trait or enum in a namespace
+  - App\Http\Kernel         # one class, trait or enum
+  - App\Clock::now          # a method (App\Clock::* for all of them)
+  - App\dump_and_die()      # a function
+```
+
+Names match whatever their case, as PHP's do. Code can also leave itself out;
+see [Excluding code from coverage](cli.md#excluding-code-from-coverage).
+
 ## Named Suites
 
 Group specs into named suites, each with its own paths and source directory. When no explicit paths are passed to `vendor/bin/phpspec run`, all suite paths are loaded.
