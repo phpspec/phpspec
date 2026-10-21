@@ -136,7 +136,9 @@ logic left unspecified.
 
 A changed line is a violation when it is **executable and nothing reached it**.
 The engine tells executable lines from the rest, so a brace, a blank line, a
-`use` statement or a declaration is never a violation, however new it is.
+`use` statement or a declaration is never a violation, however new it is. Nor
+is code left out of coverage: an interface, or anything excluded in the code or
+under `coverage_exclude` (see [Excluding code from coverage](cli.md#excluding-code-from-coverage)).
 
 A file the run never loaded at all has no coverage to consult, which is the
 shape of a class written and never specified. Guard reads the source instead and

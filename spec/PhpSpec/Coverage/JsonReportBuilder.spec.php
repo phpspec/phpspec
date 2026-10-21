@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Coverage\JsonReportBuilder;
 use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\Filesystem;
@@ -20,6 +21,24 @@ describe(JsonReportBuilder::class, function () {
         $this->collector->pushContext('Calculator');
         $this->collector->beginExample();
         $this->collector->endExample('adds two numbers');
+    });
+
+    it('leaves out what the exclusions leave out, and a method none of whose lines are left', function (CoverageDriver $driver, Filesystem $filesystem) {
+        $source = "<?php\nnamespace App;\nclass Calculator\n{\n    public function add(int \$a, int \$b): int\n    {\n        return \$a + \$b;\n    }\n    public function sub(int \$a, int \$b): int\n    {\n        return \$a - \$b;\n    }\n}\n";
+        allow($driver->start());
+        allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [7 => 1, 11 => -1]]);
+        $collector = new PerExampleCollector($driver);
+        $collector->beginSpec('spec/App/Calculator.spec.php');
+        $collector->beginExample();
+        $collector->endExample('adds');
+        allow($filesystem->exists(any()))->toReturn(true);
+        allow($filesystem->read(any()))->toReturn($source);
+
+        $report = (new JsonReportBuilder($filesystem, new Exclusions(['App\\Calculator::sub'], $filesystem, '/project')))->build($collector, '/project/src', '/project');
+
+        expect($report['sources']['src/App/Calculator.php']['lines'])->toBe([7 => ['spec/App/Calculator.spec.php::adds']]);
+        expect($report['sources']['src/App/Calculator.php']['executable'])->toBe([7]);
+        expect(array_keys($report['sources']['src/App/Calculator.php']['methods']))->toBe(['add']);
     });
 
     it('keeps only sources under the src path, relative to the project root, with checksums', function (Filesystem $filesystem) {

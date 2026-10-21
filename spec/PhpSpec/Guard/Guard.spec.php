@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Filesystem;
 use PhpSpec\Guard\Coverage;
 use PhpSpec\Guard\Delta;
@@ -99,6 +100,16 @@ describe(Guard::class, function () {
 
     it('has nothing to say when the session changed nothing', function (Filesystem $fs) {
         expect((new Guard($fs, '/app'))->violations(Delta::nothing(), Coverage::nothing()))->toBe([]);
+    });
+
+    it('leaves alone a changed line left out of coverage', function (Filesystem $fs) use ($source, $file) {
+        $file($fs, $source);
+        allow($fs->read(any()))->toReturn($source);
+        $coverage = new Coverage(['src/Basket.php' => [9 => 3, 14 => 0, 15 => 0, 18 => 0]]);
+
+        $violations = (new Guard($fs, '/app', new Exclusions(['App\\Basket::applyCoupon'], $fs, '/app')))->violations(Delta::of(['src/Basket.php' => [14, 15, 18]]), $coverage);
+
+        expect($violations)->toBe([]);
     });
 
 });

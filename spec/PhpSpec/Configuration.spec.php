@@ -47,6 +47,15 @@ describe(Configuration::class, function () {
             );
         });
 
+        it('refuses coverage exclusions that are not a list of paths and names', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "coverage_exclude: src/\n");
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: coverage_exclude expects a list of paths and names, "src/" given.',
+            );
+        });
+
         it('names the file that could not be parsed', function (Filesystem $fs) use ($yaml) {
             $yaml($fs, "formatt: [\n");
 
@@ -862,6 +871,17 @@ describe(Configuration::class, function () {
         $config = Configuration::load('/app', $fs);
 
         expect($config->getStepsPath())->toBe('acceptance_steps');
+    });
+
+    context('coverage exclusions', function () {
+        it('names none when the config says nothing', function () {
+            expect((new Configuration())->coverageExclusions())->toBe([]);
+        });
+
+        it('names the paths and names the config lists', function () {
+            expect((new Configuration(['coverage_exclude' => ['src/Kernel.php', 'App\\Legacy\\*']]))->coverageExclusions())
+                ->toBe(['src/Kernel.php', 'App\\Legacy\\*']);
+        });
     });
 
     context('coverage adapter', function () {

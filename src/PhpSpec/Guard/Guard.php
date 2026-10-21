@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Guard;
 
+use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Filesystem;
 use PhpSpec\Source\Members;
 
@@ -29,9 +30,13 @@ use PhpSpec\Source\Members;
  */
 final readonly class Guard
 {
+    /**
+     * @param Exclusions|null $exclusions what coverage leaves out, which guard never asks an example for
+     */
     public function __construct(
         private Filesystem $filesystem,
         private string $baseDir = '.',
+        private ?Exclusions $exclusions = null,
     ) {}
 
     /**
@@ -71,6 +76,8 @@ final readonly class Guard
      */
     private function logic(string $file, array $lines, Coverage $coverage): array
     {
+        $lines = array_values(array_filter($lines, fn(int $line): bool => !$this->exclusions?->excludes($file, $line)));
+
         // A file the run never loaded has no coverage to consult, which is the
         // shape of a class written and never specified: the source says which
         // of its lines are logic, and none of them were reached.

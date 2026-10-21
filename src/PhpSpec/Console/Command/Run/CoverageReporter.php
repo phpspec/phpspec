@@ -23,11 +23,13 @@ use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageRefusal;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\CoverageVerdict;
+use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Coverage\HtmlReport;
 use PhpSpec\Coverage\JsonReport;
 use PhpSpec\Coverage\JsonReportBuilder;
 use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\Coverage\TextReport;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
@@ -49,7 +51,17 @@ final class CoverageReporter
     /** @var array<string, array<int, int>> the lines the last run exercised, by absolute path */
     private array $hits = [];
 
-    public function __construct(private readonly CoverageEngines $engines) {}
+    private readonly Exclusions $exclusions;
+
+    /**
+     * @param Exclusions|null $exclusions what the reports leave out; interfaces only when null
+     */
+    public function __construct(
+        private readonly CoverageEngines $engines,
+        ?Exclusions $exclusions = null,
+    ) {
+        $this->exclusions = $exclusions ?? new Exclusions([], new RealFilesystem(), (string) getcwd());
+    }
 
     /**
      * The lines this run exercised, as the engine reports them: covered,
@@ -135,7 +147,7 @@ final class CoverageReporter
             // directory's view, guard wants the project's, and guard bounds
             // the paths itself.
             $this->hits = $perExampleCollector->getAggregate();
-            $covData = CoverageCollector::filterData($this->hits, $options->srcPath);
+            $covData = $this->reported($options->srcPath);
 
             if ($options->jsonPath !== null) {
                 $this->renderJson($output, $perExampleCollector, $options->srcPath, $options->jsonPath);
@@ -150,9 +162,24 @@ final class CoverageReporter
 
         $this->collector->stop();
         $this->hits = $this->collector->getData();
-        $covData = $this->collector->filter($options->srcPath);
+        $covData = $this->reported($options->srcPath);
 
         return $this->renderReports($output, $covData, $options);
+    }
+
+    /**
+     * The hits the reports cover: the source path's, without what coverage
+     * leaves out, named from the source path. Narrowed first, so no file
+     * outside it is read for what it leaves out.
+     *
+     * @return array<string, array<int, int>>
+     */
+    private function reported(string $srcPath): array
+    {
+        $source = ProjectRoot::at($srcPath);
+        $inSource = array_filter($this->hits, $source->holds(...), ARRAY_FILTER_USE_KEY);
+
+        return CoverageCollector::filterData($this->exclusions->appliedTo($inSource), $srcPath);
     }
 
     /**
@@ -214,7 +241,7 @@ final class CoverageReporter
         $realSrcPath = realpath($srcPath);
         $projectRoot = getcwd();
 
-        $report = (new JsonReportBuilder(new RealFilesystem()))->build(
+        $report = (new JsonReportBuilder(new RealFilesystem(), $this->exclusions))->build(
             $collector,
             $realSrcPath !== false ? $realSrcPath : $srcPath,
             $projectRoot !== false ? $projectRoot : '.',

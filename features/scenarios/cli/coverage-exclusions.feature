@@ -1,0 +1,355 @@
+Feature: Coverage exclusions
+  As a developer
+  I want to leave code out of coverage, in the code or in the config
+  So that the percentage measures the code I mean to specify
+
+  Background:
+    Given a PSR-4 project with "spec" and "src" directories
+
+  Scenario: An interface never counts
+    Given a class "src/App/Pricing.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Pricing
+      {
+          public function add(int $a, int $b): int;
+      }
+      """
+    And a class "src/App/Calculator.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Calculator implements Pricing
+      {
+          public function add(int $a, int $b): int
+          {
+              return $a + $b;
+          }
+      }
+      """
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+
+      use App\Calculator;
+
+      describe('Calculator', function () {
+          it('adds', fn() => expect((new Calculator())->add(1, 2))->toBe(3));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage"
+    Then the output should contain "App/Calculator.php"
+    And the output should not contain "App/Pricing.php"
+    And the output should contain "Total: 100.0%"
+
+  Scenario: An interface never counts under PCOV either
+    Given a class "src/App/Pricing.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Pricing
+      {
+          public function add(int $a, int $b): int;
+      }
+      """
+    And a class "src/App/Calculator.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Calculator implements Pricing
+      {
+          public function add(int $a, int $b): int
+          {
+              return $a + $b;
+          }
+      }
+      """
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+
+      use App\Calculator;
+
+      describe('Calculator', function () {
+          it('adds', fn() => expect((new Calculator())->add(1, 2))->toBe(3));
+      });
+      """
+    When I run phpspec run under PCOV with coverage options "--coverage"
+    Then the output should not contain "App/Pricing.php"
+    And the output should contain "Total: 100.0%"
+
+  Scenario: A class marked ExcludeFromCoverage does not count
+    Given a class "src/App/Legacy.php":
+      """
+      <?php
+
+      namespace App;
+
+      use PhpSpec\ExcludeFromCoverage;
+
+      #[ExcludeFromCoverage]
+      class Legacy
+      {
+          public function convert(string $value): string
+          {
+              return strtoupper($value);
+          }
+      }
+      """
+    And a spec file "spec/App/Legacy.spec.php":
+      """
+      <?php
+
+      use App\Legacy;
+
+      describe('Legacy', function () {
+          it('exists', fn() => expect(new Legacy())->toBeAnInstanceOf(Legacy::class));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage"
+    Then the output should not contain "App/Legacy.php"
+
+  Scenario: A method marked with @codeCoverageIgnore does not count
+    Given a class "src/App/Calculator.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Calculator
+      {
+          public function add(int $a, int $b): int
+          {
+              return $a + $b;
+          }
+
+          /** @codeCoverageIgnore */
+          public function describe(): string
+          {
+              return 'a calculator';
+          }
+      }
+      """
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+
+      use App\Calculator;
+
+      describe('Calculator', function () {
+          it('adds', fn() => expect((new Calculator())->add(1, 2))->toBe(3));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage"
+    Then the output should contain "Total: 100.0%"
+
+  Scenario: The config leaves out a directory, a namespace, a method and a function
+    Given a file "phpspec.json":
+      """
+      {
+          "autoload": {"App\\": "src/App"},
+          "coverage_exclude": ["src/App/Generated/", "App\\Legacy\\*", "App\\Calculator::describe", "App\\shout()"]
+      }
+      """
+    And a class "src/App/Generated/Mapper.php":
+      """
+      <?php
+
+      namespace App\Generated;
+
+      class Mapper
+      {
+          public function map(array $row): array
+          {
+              return array_values($row);
+          }
+      }
+      """
+    And a class "src/App/Legacy/Converter.php":
+      """
+      <?php
+
+      namespace App\Legacy;
+
+      class Converter
+      {
+          public function convert(string $value): string
+          {
+              return strtoupper($value);
+          }
+      }
+      """
+    And a file "src/App/functions.php":
+      """
+      <?php
+
+      namespace App;
+
+      function shout(string $value): string
+      {
+          return strtoupper($value) . '!';
+      }
+      """
+    And a class "src/App/Calculator.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Calculator
+      {
+          public function add(int $a, int $b): int
+          {
+              return $a + $b;
+          }
+
+          public function describe(): string
+          {
+              return 'a calculator';
+          }
+      }
+      """
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/functions.php';
+
+      use App\Calculator;
+      use App\Generated\Mapper;
+      use App\Legacy\Converter;
+
+      describe('Calculator', function () {
+          it('adds', fn() => expect((new Calculator())->add(1, 2))->toBe(3));
+          it('loads what the config leaves out', function () {
+              expect(new Mapper())->toBeAnInstanceOf(Mapper::class);
+              expect(new Converter())->toBeAnInstanceOf(Converter::class);
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--coverage"
+    Then the output should not contain "App/Generated/Mapper.php"
+    And the output should not contain "App/Legacy/Converter.php"
+    And the output should contain "Total: 100.0%"
+
+  Scenario: A comment tag leaves out a branch, the line below it, or a stretch
+    Given a class "src/App/Calculator.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Calculator
+      {
+          public function divide(int $a, int $b): int
+          {
+              if ($b === 0) { // @codeCoverageIgnore
+                  throw new \DivisionByZeroError('Division by zero');
+              }
+
+              if ($a < 0) {
+                  // @codeCoverageIgnore
+                  return -1;
+              }
+
+              // @codeCoverageIgnoreStart
+              if ($a > 1000) {
+                  return 1000;
+              }
+              // @codeCoverageIgnoreEnd
+
+              return intdiv($a, $b);
+          }
+      }
+      """
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+
+      use App\Calculator;
+
+      describe('Calculator', function () {
+          it('divides', fn() => expect((new Calculator())->divide(4, 2))->toBe(2));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage"
+    Then the output should contain "Total: 100.0%"
+
+  Scenario: Guard leaves excluded code alone
+    Given a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec guard
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      use PhpSpec\ExcludeFromCoverage;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+
+          #[ExcludeFromCoverage]
+          public function applyCoupon(int $value): int
+          {
+              if ($value > 100) {
+                  return 100;
+              }
+
+              return $value;
+          }
+      }
+      """
+    And I run phpspec run with coverage options ""
+    Then the output should not contain "Guard Violation"
+    And the exit code should be 0
+
+  Scenario: An exclusion list that is not a list is refused, naming the file
+    Given a file "phpspec.json":
+      """
+      {"autoload": {"App\\": "src/App"}, "coverage_exclude": "src/"}
+      """
+    When I run phpspec run in a fresh process
+    Then the output should contain:
+      """
+      phpspec.json: coverage_exclude expects a list of paths and names, "src/" given.
+      """
+    And the exit code should not be 0
