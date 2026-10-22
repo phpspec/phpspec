@@ -242,6 +242,25 @@ describe(CoverageReporter::class, function () {
             }
         });
 
+        it('refuses to report when part of the coverage never arrived, saying why', function (CoverageDriver $driver) {
+            allow($driver->start());
+            allow($driver->stop())->toReturn([]);
+            CoverageRegistry::activate(new PerExampleCollector($driver));
+            $unreadable = sys_get_temp_dir() . '/phpspec_partial_' . uniqid() . '.json';
+            file_put_contents($unreadable, '{"tests": ');
+            $output = new BufferedOutput();
+            $reporter = $this->reporter;
+
+            $reporter->mergePartials([$unreadable], ['Coverage is incomplete: a worker exited with code 255 before handing over its coverage.']);
+            $refusal = $reporter->report($output, new CoverageOptions(srcPath: 'src', showText: true, coverageMin: '90'));
+
+            expect($refusal)->toBeAnInstanceOf(CoverageRefusal::class);
+            expect($refusal->reason)->toBe("Coverage is incomplete: a worker exited with code 255 before handing over its coverage.\nCoverage is incomplete: a worker handed over coverage that could not be read.");
+            expect($output->fetch())->toBe('');
+            expect(file_exists($unreadable))->toBeFalse();
+            expect(CoverageRegistry::collector())->toBeNull();
+        });
+
         it('merges partial state files into the active collector and removes them', function (CoverageDriver $driver, CoverageDriver $workerDriver) {
             allow($workerDriver->start());
             allow($workerDriver->stop())->toReturn(['/project/src/App/Greeter.php' => [8 => 1]]);

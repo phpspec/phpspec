@@ -48,6 +48,9 @@ final class CoverageReporter
     /** @var array<string, array<int, int>> the lines the last run exercised, by absolute path */
     private array $hits = [];
 
+    /** @var list<string> why part of the run's coverage never arrived */
+    private array $lost = [];
+
     private readonly Exclusions $exclusions;
 
     /**
@@ -98,7 +101,7 @@ final class CoverageReporter
         }
 
         $this->adapter = $adapter;
-        CoverageRegistry::activate(new PerExampleCollector($adapter->driver(), crediting: $perExample));
+        CoverageRegistry::activate(new PerExampleCollector($adapter->driver($traced), crediting: $perExample));
 
         return null;
     }
@@ -111,11 +114,13 @@ final class CoverageReporter
      *
      * @param Output $output the console output
      * @param CoverageOptions $options the requested reports and their destinations
-     * @return CoverageVerdict|null what the run covered, or null when nothing was
-     *                              collected or the state was only dumped for a worker
+     * @return CoverageVerdict|CoverageRefusal|null what the run covered, why it cannot say
+     *                                              when part of its coverage never arrived,
+     *                                              or null when nothing was collected or the
+     *                                              state was only dumped for a worker
      * @throws DOMException
      */
-    public function report(Output $output, CoverageOptions $options): ?CoverageVerdict
+    public function report(Output $output, CoverageOptions $options): CoverageVerdict|CoverageRefusal|null
     {
         $collector = CoverageRegistry::collector();
 
@@ -125,6 +130,10 @@ final class CoverageReporter
 
         CoverageRegistry::reset();
         $collector->finish();
+
+        if ($this->lost !== []) {
+            return new CoverageRefusal(implode("\n", $this->lost));
+        }
 
         if ($options->partialPath !== null) {
             $this->writePartial($collector, $options->partialPath);
@@ -162,17 +171,16 @@ final class CoverageReporter
 
     /**
      * Merges partial collector state files produced by parallel workers into
-     * the active per-example collector, removing each file once applied.
+     * the active per-example collector, removing each file once applied. What
+     * never arrived, or arrived unreadable, leaves the run nothing to report.
      *
      * @param array<int, string> $paths partial state file paths written by workers
+     * @param list<string> $lost why the coverage of each worker that never handed it over was lost
      */
-    public function mergePartials(array $paths): void
+    public function mergePartials(array $paths, array $lost = []): void
     {
+        $this->lost = [...$this->lost, ...$lost];
         $collector = CoverageRegistry::collector();
-
-        if ($collector === null) {
-            return;
-        }
 
         foreach ($paths as $path) {
             if (!is_file($path)) {
@@ -180,12 +188,15 @@ final class CoverageReporter
             }
 
             $state = json_decode((string) file_get_contents($path), true);
+            unlink($path);
 
-            if (is_array($state)) {
-                $collector->applyState($state);
+            if (!is_array($state)) {
+                $this->lost[] = 'Coverage is incomplete: a worker handed over coverage that could not be read.';
+
+                continue;
             }
 
-            unlink($path);
+            $collector?->applyState($state);
         }
     }
 

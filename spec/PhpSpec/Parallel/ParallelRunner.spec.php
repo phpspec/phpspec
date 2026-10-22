@@ -63,6 +63,36 @@ describe(ParallelRunner::class, function () {
             }
         });
 
+        it('says which workers never handed over the coverage they were asked for', function () {
+            $tmpDir = sys_get_temp_dir() . '/phpspec_parallel_' . uniqid();
+            mkdir($tmpDir . '/spec', 0777, true);
+            mkdir($tmpDir . '/src', 0777, true);
+            symlink(realpath(__DIR__ . '/../../../vendor'), $tmpDir . '/vendor');
+
+            file_put_contents($tmpDir . '/spec/Dying.spec.php', <<<'PHP'
+            <?php
+            describe('Dying', function () {
+                it('takes the worker down', function () {
+                    exit(3);
+                });
+            });
+            PHP);
+
+            $savedCwd = getcwd();
+            chdir($tmpDir);
+
+            try {
+                $runner = new ParallelRunner([$tmpDir . '/spec/Dying.spec.php'], 1, coveragePartialDir: $tmpDir . '/coverage');
+                iterator_to_array($runner->stream(), false);
+
+                expect($runner->lostCoverage())->toHaveCount(1);
+                expect($runner->lostCoverage()[0])->toStartWith('Coverage is incomplete: a worker exited with code');
+            } finally {
+                chdir($savedCwd);
+                exec('rm -rf ' . escapeshellarg($tmpDir));
+            }
+        });
+
         it('distributes specs across workers', function () {
             $tmpDir = sys_get_temp_dir() . '/phpspec_parallel_' . uniqid();
             mkdir($tmpDir . '/spec', 0777, true);

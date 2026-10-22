@@ -32,6 +32,9 @@ final class ParallelRunner
     /** @var array<int, string> partial coverage state files assigned to workers */
     private array $coveragePartials = [];
 
+    /** @var list<WorkerProcess> */
+    private array $processes = [];
+
     /**
      * @param string[] $paths spec file paths to run
      * @param int|null $workers number of worker processes (null = auto-detect CPU count)
@@ -41,7 +44,7 @@ final class ParallelRunner
      * @param list<string> $childOptions the options the run was started with that set up the project, forwarded to every worker
      * @param string|null $filter the title filter to forward to workers
      * @param string|null $tags the tag expression to forward to workers
-     * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off
+     * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off, after the settings it takes from this process
      */
     public function __construct(
         private readonly array $paths,
@@ -70,6 +73,17 @@ final class ParallelRunner
     }
 
     /**
+     * Why the coverage of each worker that never handed it over was lost, once
+     * the stream has been fully consumed.
+     *
+     * @return list<string>
+     */
+    public function lostCoverage(): array
+    {
+        return array_values(array_filter(array_map(static fn(WorkerProcess $process): ?string => $process->lostCoverage(), $this->processes)));
+    }
+
+    /**
      * Yields results as they complete from worker processes.
      *
      * @return \Generator<Results>
@@ -80,6 +94,9 @@ final class ParallelRunner
             return;
         }
 
+        $parent = new PhpSetup($this->settings(ini_get_all(null, false)), get_loaded_extensions(), get_loaded_extensions(true));
+        $fresh = $this->freshSetup();
+        $phpOptions = [...($fresh === null ? [] : $parent->over($fresh)), ...$this->phpOptions];
         $workerCount = min($this->workers, count($this->paths));
         $partitions = array_fill(0, $workerCount, []);
         foreach ($this->paths as $i => $path) {
@@ -98,8 +115,9 @@ final class ParallelRunner
                 $this->coveragePartials[] = $coveragePartial;
             }
 
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $this->phpOptions);
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions);
             $processes[] = $process;
+            $this->processes[] = $process;
 
             $fiber = new \Fiber(function () use ($process) {
                 $process->start();
@@ -177,4 +195,54 @@ final class ParallelRunner
         return $resolved !== false ? $resolved : $argv0;
     }
 
+    /**
+     * How a php started afresh on the same binary is set up, asked of one, or
+     * null when it cannot be asked.
+     */
+    private function freshSetup(): ?PhpSetup
+    {
+        $process = proc_open([PHP_BINARY, '-r', 'echo json_encode([ini_get_all(null, false), get_loaded_extensions(), get_loaded_extensions(true)]);'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+
+        if (!is_resource($process)) {
+            return null;
+        }
+
+        $printed = (string) stream_get_contents($pipes[1]);
+        stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+        $setup = json_decode($printed, true);
+
+        if (!is_array($setup) || !is_array($setup[1] ?? null) || !is_array($setup[2] ?? null)) {
+            return null;
+        }
+
+        return new PhpSetup($this->settings($setup[0] ?? null), $this->names($setup[1]), $this->names($setup[2]));
+    }
+
+    /**
+     * @param array<mixed> $names
+     * @return list<string>
+     */
+    private function names(array $names): array
+    {
+        return array_values(array_filter($names, 'is_string'));
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function settings(mixed $all): array
+    {
+        $settings = [];
+
+        foreach (is_array($all) ? $all : [] as $name => $value) {
+            if (is_string($name) && (is_string($value) || $value === null)) {
+                $settings[$name] = $value;
+            }
+        }
+
+        return $settings;
+    }
 }

@@ -16,9 +16,9 @@ namespace PhpSpec\Coverage;
 
 /**
  * @internal
- * Why a run that wanted coverage cannot collect: the reason, the same command
- * run in a way that would, when there is one, and other ways past it for a
- * reader.
+ * Why a run that wanted coverage cannot collect it, or cannot report it once
+ * part of it never arrived: the reason, the same command run in a way that
+ * would, when there is one, and other ways past it for a reader.
  */
 final readonly class CoverageRefusal
 {

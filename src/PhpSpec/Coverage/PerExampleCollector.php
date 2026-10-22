@@ -208,15 +208,26 @@ final class PerExampleCollector
     }
 
     /**
-     * Exports the collector state for transfer between processes.
+     * Exports the collector state for transfer between processes. Each line
+     * names its tests by their place in the test list: a test's name, repeated
+     * on every line it ran, would make the state many times the size.
      *
-     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string}>, lines: array<string, array<int, array<int, string>>>, aggregate: array<string, array<int, int>>}
+     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string}>, lines: array<string, array<int, list<int>>>, aggregate: array<string, array<int, int>>}
      */
     public function toArray(): array
     {
+        $places = array_flip(array_keys($this->tests));
+        $lines = [];
+
+        foreach ($this->lines as $file => $fileLines) {
+            foreach ($fileLines as $lineNumber => $testIds) {
+                $lines[$file][$lineNumber] = array_map(static fn(string $testId): int => $places[$testId], array_keys($testIds));
+            }
+        }
+
         return [
             'tests' => $this->tests,
-            'lines' => $this->getLines(),
+            'lines' => $lines,
             'aggregate' => $this->aggregate,
         ];
     }
@@ -226,18 +237,20 @@ final class PerExampleCollector
      * into this one. Line attributions are unioned without duplicates and
      * aggregate hits are merged keeping the highest value per line.
      *
-     * @param array{tests?: array<string, array{time: float, memory: int, spec_file: string}>, lines?: array<string, array<int, array<int, string>>>, aggregate?: array<string, array<int, int>>} $state state produced by toArray()
+     * @param array{tests?: array<string, array{time: float, memory: int, spec_file: string}>, lines?: array<string, array<int, list<int>>>, aggregate?: array<string, array<int, int>>} $state state produced by toArray()
      */
     public function applyState(array $state): void
     {
+        $testIds = array_map('strval', array_keys($state['tests'] ?? []));
+
         foreach ($state['tests'] ?? [] as $testId => $test) {
-            $this->tests[$testId] = $test;
+            $this->tests[(string) $testId] = $test;
         }
 
         foreach ($state['lines'] ?? [] as $file => $lines) {
-            foreach ($lines as $lineNumber => $testIds) {
-                foreach ($testIds as $testId) {
-                    $this->lines[$file][$lineNumber][$testId] = true;
+            foreach ($lines as $lineNumber => $places) {
+                foreach ($places as $place) {
+                    $this->lines[$file][$lineNumber][$testIds[$place]] = true;
                 }
             }
         }

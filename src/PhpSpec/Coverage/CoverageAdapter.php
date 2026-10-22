@@ -28,11 +28,15 @@ enum CoverageAdapter: string
     case Pcov = 'pcov';
     case Xdebug = 'xdebug';
 
-    public function driver(): CoverageDriver
+    /**
+     * @param list<string> $traced the directories the run reports on; PCOV's
+     *                             own pcov.directory decides what it records
+     */
+    public function driver(array $traced = []): CoverageDriver
     {
         return match ($this) {
             self::Pcov => new PcovDriver(),
-            self::Xdebug => new XdebugDriver(),
+            self::Xdebug => new XdebugDriver($traced),
         };
     }
 

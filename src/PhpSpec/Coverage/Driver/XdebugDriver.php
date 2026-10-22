@@ -22,16 +22,25 @@ use PhpSpec\Coverage\CoverageDriver;
  * execution counts, with unused and dead code analysis so that
  * executable-but-unexecuted lines are reported; from Xdebug 3.6 that analysis
  * may also cover files compiled before the cycle began.
+ * It records only the directories it traces, as PCOV does with its
+ * pcov.directory, for the files compiled once it starts.
  * Requires Xdebug with coverage mode enabled.
  */
 final class XdebugDriver implements CoverageDriver
 {
+    private bool $filtered = false;
+
+    /**
+     * @param list<string> $traced the directories to record, or none to record every file
+     */
+    public function __construct(private readonly array $traced = []) {}
     /**
      * Starts or resumes Xdebug coverage collection with unused and dead code
      * analysis.
      */
     public function start(): void
     {
+        $this->filter();
         xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
     }
 
@@ -53,5 +62,29 @@ final class XdebugDriver implements CoverageDriver
         xdebug_stop_code_coverage();
 
         return $data;
+    }
+
+    /**
+     * Sets the process's filter to the traced directories the first time this
+     * driver starts, so a filter another driver set never carries over.
+     */
+    private function filter(): void
+    {
+        if ($this->filtered) {
+            return;
+        }
+
+        $this->filtered = true;
+        $prefixes = [];
+
+        foreach ($this->traced as $directory) {
+            $real = realpath($directory);
+
+            if ($real !== false) {
+                $prefixes[] = rtrim($real, '/\\') . DIRECTORY_SEPARATOR;
+            }
+        }
+
+        xdebug_set_filter(XDEBUG_FILTER_CODE_COVERAGE, $prefixes === [] ? XDEBUG_FILTER_NONE : XDEBUG_PATH_INCLUDE, $prefixes);
     }
 }

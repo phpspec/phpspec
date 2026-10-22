@@ -140,6 +140,22 @@ describe(PerExampleCollector::class, function () {
         ]);
     });
 
+    it('exports each line by the place of its tests in the test list, not by their names', function (CoverageDriver $driver) {
+        allow($driver->start());
+        allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);
+        $collector = new PerExampleCollector($driver);
+        $collector->beginSpec('spec/App/Calculator.spec.php');
+
+        $collector->beginExample();
+        $collector->endExample('adds');
+        $collector->beginExample();
+        $collector->endExample('subtracts');
+
+        $state = $collector->toArray();
+        expect(array_keys($state['tests']))->toBe(['spec/App/Calculator.spec.php::adds', 'spec/App/Calculator.spec.php::subtracts']);
+        expect($state['lines'])->toBe(['/project/src/App/Calculator.php' => [12 => [0, 1]]]);
+    });
+
     it('exports its state and merges state from another collector', function (CoverageDriver $driver, CoverageDriver $otherDriver) {
         allow($driver->start());
         allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1, 13 => -1]]);

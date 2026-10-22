@@ -298,8 +298,9 @@ tests, it leaves the exit code at `0`.
 
 A run that never started (a missing bootstrap, an unknown format, a config that
 cannot be taken, an option `run` does not take or one missing its value), that
-was narrowed by `--filter`, `--tags` or paths to nothing at all, or that died
-partway (a parse error, a class that fails to compile) still answers. It emits a
+was narrowed by `--filter`, `--tags` or paths to nothing at all, that died
+partway (a parse error, a class that fails to compile), or whose coverage is
+incomplete because a parallel worker never handed its part over, still answers. It emits a
 `fatal` line of `{ "message", "at", "remedy"? }`, keeps whatever it managed to
 collect, and counts 1 in `actionable`. `remedy` is present when the way past is
 known: a run that wanted coverage and found no engine on gets the same command

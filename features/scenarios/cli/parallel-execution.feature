@@ -234,6 +234,94 @@ Feature: Parallel execution
     And the output should contain "Dying.spec.php"
     And the exit code should not be 0
 
+  Scenario: A worker that dies takes its coverage with it, and the run says so rather than report less
+    Given a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function name(): string
+          {
+              return 'Basket';
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe(Basket::class, function () {
+          it('is named', function () {
+              expect((new Basket())->name())->toBe('Basket');
+          });
+      });
+      """
+    And a spec file "spec/App/Dying.spec.php":
+      """
+      <?php
+      describe('Dying', function () {
+          it('takes the worker down', function () {
+              exit(3);
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--coverage --parallel=2"
+    Then the output should contain "Coverage is incomplete: a worker exited with code 3 before handing over its coverage."
+    And the output should not contain "Total:"
+    And the exit code should be 1
+
+  Scenario: Workers run under the php settings the run was given
+    Given a spec file "spec/App/First.spec.php":
+      """
+      <?php
+      describe('First', function () {
+          it('runs under the settings given', function () {
+              expect(ini_get('memory_limit'))->toBe('96M');
+              expect(ini_get('precision'))->toBe('10');
+          });
+      });
+      """
+    And a spec file "spec/App/Second.spec.php":
+      """
+      <?php
+      describe('Second', function () {
+          it('runs under the settings given', function () {
+              expect(ini_get('memory_limit'))->toBe('96M');
+              expect(ini_get('precision'))->toBe('10');
+          });
+      });
+      """
+    When I run phpspec run under php "-d memory_limit=96M -d precision=10" with option "--parallel=2"
+    Then all examples should pass
+
+  Scenario: Workers load the extensions the run's command line loaded
+    Given php loads the Zend extension "opcache" only when its command line asks
+    And a spec file "spec/App/First.spec.php":
+      """
+      <?php
+      describe('First', function () {
+          it('runs with the extension loaded', function () {
+              expect(extension_loaded('Zend OPcache'))->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/Second.spec.php":
+      """
+      <?php
+      describe('Second', function () {
+          it('runs with the extension loaded', function () {
+              expect(extension_loaded('Zend OPcache'))->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run under php "-d zend_extension=opcache" with option "--parallel=2"
+    Then all examples should pass
+
   Scenario: Parallel with profile does not crash
     Given a spec file "spec/App/Slow.spec.php":
       """

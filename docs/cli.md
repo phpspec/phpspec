@@ -464,14 +464,22 @@ vendor/bin/phpspec run --parallel        # one worker per CPU core
 vendor/bin/phpspec run --parallel=4      # four workers
 ```
 
-Each worker runs a slice of the spec files in its own process and reports each
-result back whole, over PhpSpec's own wire (`--format=wire`, one JSON line per
-spec or feature); the parent renders them as they arrive, in whichever format
+Each worker runs a slice of the spec files in its own process, set up as the
+run was: the same php settings, and the extensions its command line loaded.
+`php -d memory_limit=1G -d extension=pcov vendor/bin/phpspec run --parallel`
+gives every worker a 1G ceiling and PCOV. Extensions go over by name, so one
+loaded from a path outside `extension_dir` reaches a worker only if
+`extension_dir` holds it too. A worker reports each result back whole, over
+PhpSpec's own wire (`--format=wire`, one JSON line per spec or feature); the
+parent renders them as they arrive, in whichever format
 was asked for, with everything a single process would show: a failure's values
 and code, an error's site, what an example printed. A worker that dies is
 reported as an error on the file it was running, naming its exit code. Coverage
 (`--coverage*`) composes with `--parallel`: workers collect per-example
-coverage and the parent merges it. `--format=agent` is parallel-safe too: the
+coverage and the parent merges it. A worker whose coverage never reaches the
+parent, because it died or the run stopped it, fails the run with the reason
+and what the worker said, rather than a smaller number. `--format=agent` is
+parallel-safe too: the
 parent emits each event as a worker reports it, so entries arrive in completion
 order rather than file order.
 
@@ -525,6 +533,8 @@ coverage mode (`xdebug.mode=coverage`). With nothing named in the config, the
 run takes PCOV when it is enabled, else Xdebug;
 [`coverage_adapter`](configuration.md#coverage_adapter) names one. A run that
 cannot collect says which engine it needs and the command that switches it on.
+Xdebug records only the source directory and the directories guard reads,
+from the moment the run starts collecting; PCOV records its `pcov.directory`.
 
 A line counts as covered when an example or a scenario runs it. That includes
 an example's `this` bindings and `beforeEach`/`afterEach` hooks, a scenario's

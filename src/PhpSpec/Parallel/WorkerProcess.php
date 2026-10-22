@@ -44,6 +44,8 @@ final class WorkerProcess
 
     private bool $ended = false;
 
+    private bool $stopped = false;
+
     /**
      * @param string[] $paths spec file paths to run in this worker
      * @param string $phpspecBin absolute path to the phpspec binary
@@ -189,6 +191,7 @@ final class WorkerProcess
      */
     public function terminate(): void
     {
+        $this->stopped = true;
         $process = $this->process;
         if ($process !== null && is_resource($process)) {
             proc_terminate($process);
@@ -263,6 +266,24 @@ final class WorkerProcess
     }
 
     /**
+     * Why the coverage this worker collected never reached the parent, or null
+     * when it did, or when none was asked for. Read once the worker is done.
+     */
+    public function lostCoverage(): ?string
+    {
+        if ($this->coveragePartial === null || is_file($this->coveragePartial)) {
+            return null;
+        }
+
+        $message = $this->stopped
+            ? 'Coverage is incomplete: a worker was stopped with the run before handing over its coverage.'
+            : sprintf('Coverage is incomplete: a worker exited %s before handing over its coverage.', $this->exited());
+        $said = trim($this->stderr);
+
+        return $said === '' ? $message : $message . "\n" . $said;
+    }
+
+    /**
      * @return list<SpecificationResult>
      */
     private function unreported(): array
@@ -285,14 +306,15 @@ final class WorkerProcess
 
     private function died(string $path): string
     {
-        $message = sprintf(
-            'The worker exited %s before reporting %s.',
-            $this->exitCode === null ? 'without a code' : 'with code ' . $this->exitCode,
-            $path,
-        );
+        $message = sprintf('The worker exited %s before reporting %s.', $this->exited(), $path);
         $said = trim($this->stderr);
 
         return $said === '' ? $message : $message . "\n" . $said;
+    }
+
+    private function exited(): string
+    {
+        return $this->exitCode === null ? 'without a code' : 'with code ' . $this->exitCode;
     }
 
     private static function samePathKey(string $path): string
