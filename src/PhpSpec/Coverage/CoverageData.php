@@ -19,7 +19,7 @@ namespace PhpSpec\Coverage;
  * Reads collected coverage data: the lines it counts, and the files under the
  * source path.
  */
-final class CoverageCollector
+final class CoverageData
 {
     /**
      * Counts covered and executable lines from a single file's coverage data.

@@ -39,7 +39,7 @@ describe(ExcludedLines::class, function () {
 
             $excluded = ExcludedLines::in($source);
 
-            expect($excluded->lines())->toBe([8, 9, 10, 11, 12, 13, 14, 19, 20, 21, 22]);
+            expect($excluded->lines())->toBe([8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 22, 28]);
             expect($excluded->wholeFile())->toBeFalse();
         });
 
@@ -84,7 +84,7 @@ describe(ExcludedLines::class, function () {
                 return $name === 'App\Clock::now';
             };
 
-            expect(ExcludedLines::in($source, $named)->lines())->toBe([5, 6, 7, 8]);
+            expect(ExcludedLines::in($source, $named)->lines())->toBe([3, 4, 5, 6, 7, 8]);
             expect($asked)->toBe(['class App\Clock', 'method App\Clock::now', 'function App\whisper']);
         });
 
@@ -104,6 +104,58 @@ describe(ExcludedLines::class, function () {
 
             expect($excluded->lines())->toBe([]);
             expect($excluded->wholeFile())->toBeFalse();
+        });
+
+        it('reads on past a ::class to the declarations after it', function () {
+            $source = <<<'PHP'
+                <?php
+                final class Pay
+                {
+                    public const GATE = Gate::class;
+
+                    #[\PhpSpec\ExcludeFromCoverage]
+                    public function legacy(): int
+                    {
+                        return 1;
+                    }
+                }
+                PHP;
+
+            expect(ExcludedLines::in($source)->lines())->toBe([2, 3, 7, 8, 9, 10, 11]);
+        });
+    });
+
+    context('a line that only declares', function () {
+        it('is left out: a class header, a namespaced constant and the end of the file', function () {
+            $source = <<<'PHP'
+                <?php
+                namespace App;
+
+                const VERSION = '1';
+
+                define('READY', true);
+
+                #[\AllowDynamicProperties]
+                final class Tally extends Base implements
+                    \Countable
+                {
+                    public function count(): int
+                    {
+                        return 1;
+                    }
+                }
+                PHP;
+
+            expect(ExcludedLines::in($source)->lines())->toBe([4, 9, 10, 11, 16]);
+        });
+
+        it('takes the end of the file as the line after the last one when a newline ends it', function () {
+            expect(ExcludedLines::in("<?php\nclass A\n{\n}\n")->lines())->toBe([2, 3, 5]);
+        });
+
+        it('keeps a last line that ends a function or a statement', function () {
+            expect(ExcludedLines::in("<?php\nfunction f(): void\n{\n    echo 1;\n}")->lines())->toBe([]);
+            expect(ExcludedLines::in("<?php\n\$ready = true;")->lines())->toBe([]);
         });
     });
 
@@ -164,7 +216,7 @@ describe(ExcludedLines::class, function () {
                 }
                 PHP;
 
-            expect(ExcludedLines::in($source)->lines())->toBe([7, 8, 9, 12, 14, 15, 16, 17, 18, 21, 22, 23, 24]);
+            expect(ExcludedLines::in($source)->lines())->toBe([3, 4, 7, 8, 9, 12, 14, 15, 16, 17, 18, 21, 22, 23, 24, 26]);
         });
 
         it('takes a statement whole when it spans lines, a case up to the next, and an unclosed stretch to the end', function () {

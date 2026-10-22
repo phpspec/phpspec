@@ -22,7 +22,9 @@ use PhpToken;
  * Reads a source file's tokens for what coverage leaves out. Declarations are
  * found by walking the tokens: a class, interface, trait or enum is followed
  * into its body for its methods, a function's body is stepped over whole. A
- * comment tag is then resolved against the statement it tags.
+ * comment tag is then resolved against the statement it tags. The lines that
+ * only declare, which an engine reports as run whenever the file loads, are
+ * left out too: a class header, a namespaced constant, the end of the file.
  */
 final class ExclusionReader
 {
@@ -41,6 +43,9 @@ final class ExclusionReader
     /** @var array<int, true> the docblocks a declaration took, which tag no line */
     private array $attached = [];
 
+    /** @var array<int, true> the tokens that close a function's body */
+    private array $functionEnds = [];
+
     private int $declared = 0;
 
     private int $declaredExcluded = 0;
@@ -58,6 +63,7 @@ final class ExclusionReader
     public function read(): ExcludedLines
     {
         $this->readDeclarations();
+        $this->readEnd();
         $this->readTags();
         $lines = array_keys($this->excluded);
         sort($lines);
@@ -100,10 +106,14 @@ final class ExclusionReader
                 [$i, $namespace] = $this->namespaceAt($i);
             } elseif ($token->is([T_USE, T_DECLARE])) {
                 $i = $this->statementEnd($i);
+            } elseif ($token->is(T_CONST) && $class === null) {
+                $end = $this->statementEnd($i);
+                $this->exclude($token->line, $this->tokens[$end]->line);
+                $i = $end;
             } elseif ($token->is(array_keys(self::KINDS)) && $this->declaresAt($i)) {
                 $classes[] = $this->classLike($i, $namespace, $marked, $doc, $class === null);
                 $i = $this->bodyOpen($i);
-            } elseif ($token->is(T_CLASS)) {
+            } elseif ($token->is(T_CLASS) && !$this->namesAClassAt($i)) {
                 $i = $this->matchingClose($this->bodyOpen($i));
             } elseif ($token->is(T_FUNCTION) && $this->nameAfter($i) !== null) {
                 $i = $this->function($i, $class === null ? $namespace : $class['name'] . '::', $marked, $doc, $class === null);
@@ -126,7 +136,9 @@ final class ExclusionReader
     {
         $kind = self::KINDS[$this->tokens[$at]->id];
         $name = $namespace . $this->nameAfter($at);
-        $end = $this->matchingClose($this->bodyOpen($at));
+        $open = $this->bodyOpen($at);
+        $end = $this->matchingClose($open);
+        $this->exclude($this->tokens[$at]->line, $this->tokens[$open]->line);
         $excluded = $kind === 'interface' || $marked || $this->tagged($doc) || ($this->named)('class', $name);
 
         $this->declare($at, $end, $excluded, $doc, $topLevel);
@@ -144,6 +156,7 @@ final class ExclusionReader
         $open = $this->bodyOpen($at);
         $end = $this->tokens[$open]->text === ';' ? $open : $this->matchingClose($open);
         $excluded = $marked || $this->tagged($doc) || ($this->named)($topLevel ? 'function' : 'method', $name);
+        $this->functionEnds[$end] = true;
 
         $this->declare($at, $end, $excluded, $doc, $topLevel);
 
@@ -164,6 +177,30 @@ final class ExclusionReader
         if ($excluded) {
             $this->exclude($this->tokens[$at]->line, $this->tokens[$end]->line);
         }
+    }
+
+    /**
+     * The line the engine closes the file on: the one after the last when a
+     * newline ends the file, else the last, unless a function or a statement
+     * ends there.
+     */
+    private function readEnd(): void
+    {
+        $lastIndex = array_key_last($this->tokens);
+
+        if ($lastIndex === null) {
+            return;
+        }
+
+        $last = $this->tokens[$lastIndex];
+        $line = $last->line + substr_count($last->text, "\n");
+        $closing = $this->tokens[$lastIndex]->isIgnorable() ? $this->significantBefore($lastIndex) : $lastIndex;
+
+        if ($closing !== null && $this->tokens[$closing]->line === $line && ($this->tokens[$closing]->text !== '}' || isset($this->functionEnds[$closing]))) {
+            return;
+        }
+
+        $this->exclude($line, $line);
     }
 
     /**
@@ -336,6 +373,13 @@ final class ExclusionReader
 
         return $this->nameAfter($at) !== null
             && ($before === null || !$this->tokens[$before]->is([T_DOUBLE_COLON, T_NEW]));
+    }
+
+    private function namesAClassAt(int $at): bool
+    {
+        $before = $this->significantBefore($at);
+
+        return $before !== null && $this->tokens[$before]->is(T_DOUBLE_COLON);
     }
 
     private function nameAfter(int $at): ?string

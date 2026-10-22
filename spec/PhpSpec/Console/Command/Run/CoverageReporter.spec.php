@@ -188,7 +188,7 @@ describe(CoverageReporter::class, function () {
         it('returns a verdict that demands exit code 1 when coverage is below the minimum', function (CoverageDriver $driver) {
             $fixture = (string) realpath(__DIR__ . '/../../../Coverage/Driver/fixtures/covered_probe.php');
             allow($driver->start());
-            allow($driver->stop())->toReturn([$fixture => [3 => 1, 4 => -1]]);
+            allow($driver->stop())->toReturn([$fixture => [3 => -1]]);
             $collector = new PerExampleCollector($driver);
             $collector->beginSpec('spec/PhpSpec/Coverage/JsonReport.spec.php');
             $collector->beginExample();
@@ -206,7 +206,7 @@ describe(CoverageReporter::class, function () {
 
                 expect($verdict->met())->toBeFalse();
                 expect($verdict->exitCode())->toBe(1);
-                expect($verdict->percent)->toBe(50.0);
+                expect($verdict->percent)->toBe(0.0);
                 expect($output->fetch())->toContain('below the required');
             } finally {
                 CoverageRegistry::reset();

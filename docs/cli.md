@@ -537,9 +537,11 @@ parent process merges their results before rendering the reports.
 
 #### Excluding code from coverage
 
-Interfaces never count. Anything else can be left out, so its lines neither
-count towards the percentage, `--coverage-min` included, nor appear in any
-report, and guard never asks for an example of it.
+Interfaces never count, and neither do the lines that only declare: a class's
+header, a namespaced constant and the end of the file, which the engines report
+as run whenever the file loads. Anything else can be left out, so its lines
+neither count towards the percentage, `--coverage-min` included, nor appear in
+any report, and guard never asks for an example of it.
 
 A class, interface, trait, enum, method or function leaves itself out with an
 attribute, or with the docblock tag PHPUnit reads:

@@ -64,7 +64,7 @@ final class CloverReport
                 $fileEl->appendChild($lineEl);
             }
 
-            $counts = CoverageCollector::countLines($lines);
+            $counts = CoverageData::countLines($lines);
             $fileStatements = $counts['executable'];
             $fileCovered = $counts['covered'];
 

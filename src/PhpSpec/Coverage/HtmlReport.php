@@ -43,7 +43,7 @@ final class HtmlReport
         $files = [];
 
         foreach ($data as $file => $lines) {
-            $counts = CoverageCollector::countLines($lines);
+            $counts = CoverageData::countLines($lines);
             $covered = $counts['covered'];
             $executable = $counts['executable'];
 
@@ -153,7 +153,7 @@ final class HtmlReport
         }
 
         $safeFile = htmlspecialchars($file, ENT_QUOTES);
-        $counts = CoverageCollector::countLines($lineData);
+        $counts = CoverageData::countLines($lineData);
         $pct = $counts['executable'] > 0 ? ($counts['covered'] / $counts['executable']) * 100 : 0;
         $meta = sprintf('%d/%d lines · %s', $counts['covered'], $counts['executable'], $this->fmt($pct));
 

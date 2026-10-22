@@ -70,9 +70,9 @@ Feature: What coverage counts
       });
       """
     When I run phpspec run with coverage options "spec <coverage>"
-    Then the output should contain "App/Basket.php ... 100.0% (2/2)"
+    Then the output should contain "App/Basket.php ... 100.0% (1/1)"
     And the output should contain "App/Clock.php ....   0.0%"
-    And the output should contain "Total: 66.7% (2/3)"
+    And the output should contain "Total: 50.0% (1/2)"
 
     Examples:
       | coverage                                 |
@@ -113,16 +113,56 @@ Feature: What coverage counts
       });
       """
     When I run phpspec run with coverage options "features <coverage>"
-    Then the output should contain "App/Basket.php ... 100.0% (2/2)"
-    And the output should contain "App/Shelf.php .... 100.0% (2/2)"
+    Then the output should contain "App/Basket.php ... 100.0% (1/1)"
+    And the output should contain "App/Shelf.php .... 100.0% (1/1)"
     And the output should contain "App/Clock.php ....   0.0%"
-    And the output should contain "Total: 80.0% (4/5)"
+    And the output should contain "Total: 66.7% (2/3)"
 
     Examples:
       | coverage                                 |
       | --coverage                               |
       | --coverage --parallel=2                  |
       | --coverage --coverage-json=coverage.json |
+
+  Scenario Outline: A class counts only its code, never the lines that declare it, wherever it was loaded
+    Given a class "src/App/Tally.php":
+      """
+      <?php
+
+      namespace App;
+
+      final class Tally implements \Countable
+      {
+          public function count(): int
+          {
+              return 1;
+          }
+      }
+      """
+    And a spec file "spec/App/Tally.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+      use App\Tally;
+
+      describe(Tally::class, function () {
+          $basket = new Basket();
+
+          it('counts', function () use ($basket) {
+              expect(count(new Tally()))->toBe(1);
+              expect($basket->name())->toBe('Basket');
+          });
+      });
+      """
+    When I run phpspec <run> with coverage options "spec --coverage"
+    Then the output should contain "App/Basket.php ... 100.0% (1/1)"
+    And the output should contain "App/Tally.php .... 100.0% (1/1)"
+
+    Examples:
+      | run            |
+      | run            |
+      | run under PCOV |
 
   Scenario: The JSON report credits a scenario as it credits an example, in a parallel run too
     Given a spec file "spec/App/Basket.spec.php":

@@ -206,11 +206,12 @@ Console `OutputInterface`:
 
 ## Code Coverage
 
-When coverage is enabled (via `--coverage` flags), `CoverageEngines` picks the engine, PCOV or Xdebug, and the `CoverageCollector` collects line-level coverage data through its driver. Three report formats are available:
+When coverage is enabled (via `--coverage` flags), `CoverageEngines` picks the engine, PCOV or Xdebug, and the `PerExampleCollector` collects line-level coverage through its driver around each example and scenario; `CoverageData` counts it and scopes it to the source path. Four report formats are available:
 
 - `TextReport`: renders coverage percentages to the terminal
 - `HtmlReport`: generates an HTML report with color-coded source views
 - `CloverReport`: outputs Clover XML for CI tool integration
+- `JsonReport`: names the examples and scenarios that ran each line, for mutation testing and guard
 
 ## Code Generation
 

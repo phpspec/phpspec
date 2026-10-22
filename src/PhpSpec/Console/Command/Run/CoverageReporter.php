@@ -17,7 +17,7 @@ namespace PhpSpec\Console\Command\Run;
 use DOMException;
 use PhpSpec\Coverage\CloverReport;
 use PhpSpec\Coverage\CoverageAdapter;
-use PhpSpec\Coverage\CoverageCollector;
+use PhpSpec\Coverage\CoverageData;
 use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageRefusal;
@@ -157,7 +157,7 @@ final class CoverageReporter
         $source = ProjectRoot::at($srcPath);
         $inSource = array_filter($this->hits, $source->holds(...), ARRAY_FILTER_USE_KEY);
 
-        return CoverageCollector::filterData($this->exclusions->appliedTo($inSource), $srcPath);
+        return CoverageData::filterData($this->exclusions->appliedTo($inSource), $srcPath);
     }
 
     /**
@@ -259,7 +259,7 @@ final class CoverageReporter
         $totalExecutable = 0;
 
         foreach ($covData as $lines) {
-            $counts = CoverageCollector::countLines($lines);
+            $counts = CoverageData::countLines($lines);
             $totalCovered += $counts['covered'];
             $totalExecutable += $counts['executable'];
         }

@@ -1,7 +1,7 @@
 <?php
 
 use PhpSpec\Coverage\CoverageAdapter;
-use PhpSpec\Coverage\CoverageCollector;
+use PhpSpec\Coverage\CoverageData;
 use PhpSpec\Coverage\CoverageDriver;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\Driver\PcovDriver;
@@ -18,13 +18,13 @@ describe(PcovDriver::class, function () {
     // so the probe is a method of the source tree.
     if ((new LivePhpRuntime())->enabled(CoverageAdapter::Pcov) && CoverageRegistry::collector() === null) {
 
-        $probe = (string) realpath(__DIR__ . '/../../../../src/PhpSpec/Coverage/CoverageCollector.php');
+        $probe = (string) realpath(__DIR__ . '/../../../../src/PhpSpec/Coverage/CoverageData.php');
 
         it('reports the lines a cycle executed as 1 and the executable lines it did not reach as -1', function () use ($probe) {
             $driver = new PcovDriver();
 
             $driver->start();
-            CoverageCollector::countLines([1 => 1, 2 => -2]);
+            CoverageData::countLines([1 => 1, 2 => -2]);
             $data = $driver->stop();
 
             expect($data)->toHaveKey($probe);
@@ -39,7 +39,7 @@ describe(PcovDriver::class, function () {
             $driver = new PcovDriver();
 
             $driver->start();
-            CoverageCollector::countLines([1 => 1]);
+            CoverageData::countLines([1 => 1]);
             $driver->stop();
             $driver->start();
             $data = $driver->stop();
@@ -51,7 +51,7 @@ describe(PcovDriver::class, function () {
             $driver = new PcovDriver();
 
             $driver->start();
-            CoverageCollector::countLines([1 => 1]);
+            CoverageData::countLines([1 => 1]);
             $driver->pause();
             $data = $driver->stop();
 
@@ -63,7 +63,7 @@ describe(PcovDriver::class, function () {
 
             $driver->start();
             $driver->pause();
-            CoverageCollector::countLines([1 => 1]);
+            CoverageData::countLines([1 => 1]);
             $data = $driver->stop();
 
             expect(array_filter($data[$probe] ?? [], fn (int $hit) => $hit > 0))->toBe([]);
