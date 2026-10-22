@@ -640,6 +640,7 @@ describe(Context::class, function() {
         });
         $collector = new PerExampleCollector($driver);
         $collector->beginSpec('spec/App/Calculator.spec.php');
+        $collecting = CoverageRegistry::collector();
         CoverageRegistry::activate($collector);
 
         try {
@@ -657,7 +658,7 @@ describe(Context::class, function() {
             $ctx->setWorld(new Subject());
             $ctx->run();
         } finally {
-            CoverageRegistry::reset();
+            $collecting === null ? CoverageRegistry::reset() : CoverageRegistry::activate($collecting);
         }
 
         expect($log)->toBe(['coverage start', 'beforeEach', 'example', 'afterEach', 'coverage stop']);

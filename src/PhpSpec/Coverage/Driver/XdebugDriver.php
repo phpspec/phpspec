@@ -18,8 +18,8 @@ use PhpSpec\Coverage\CoverageDriver;
 
 /**
  * @internal
- * Xdebug-backed coverage driver. Each start()/stop() pair is a fresh cycle
- * of execution counts, with unused and dead code analysis so that
+ * Xdebug-backed coverage driver. Each cycle up to stop() is a fresh set of
+ * execution counts, with unused and dead code analysis so that
  * executable-but-unexecuted lines are reported; from Xdebug 3.6 that analysis
  * may also cover files compiled before the cycle began.
  * Requires Xdebug with coverage mode enabled.
@@ -27,12 +27,17 @@ use PhpSpec\Coverage\CoverageDriver;
 final class XdebugDriver implements CoverageDriver
 {
     /**
-     * Starts a fresh Xdebug coverage collection cycle with unused and
-     * dead code analysis.
+     * Starts or resumes Xdebug coverage collection with unused and dead code
+     * analysis.
      */
     public function start(): void
     {
         xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+    }
+
+    public function pause(): void
+    {
+        xdebug_stop_code_coverage(false);
     }
 
     /**
@@ -42,6 +47,8 @@ final class XdebugDriver implements CoverageDriver
      */
     public function stop(): array
     {
+        // Xdebug discards what it recorded only when it stops while recording.
+        $this->start();
         $data = xdebug_get_code_coverage();
         xdebug_stop_code_coverage();
 

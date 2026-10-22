@@ -16,10 +16,11 @@ namespace PhpSpec\Coverage;
 
 /**
  * @internal
- * Collects line coverage attributed to individual examples by cycling the
- * coverage driver around each example run. Tracks the current spec file and
- * context titles to build stable test identifiers of the form
- * "spec/App/Calculator.spec.php::Calculator > adds two numbers".
+ * Collects line coverage around each example and scenario, so only what they
+ * run counts. When crediting, it collects at the end of each one and keeps
+ * which test ran each line, naming tests from the current spec file and
+ * context titles: "spec/App/Calculator.spec.php::Calculator > adds two numbers".
+ * Otherwise it pauses the driver between them and collects once, at finish().
  */
 final class PerExampleCollector
 {
@@ -40,7 +41,19 @@ final class PerExampleCollector
     /** @var float example start time from hrtime(), in nanoseconds */
     private float $startTime = 0.0;
 
-    public function __construct(private readonly CoverageDriver $driver) {}
+    /** @var int how many examples are open, an example run by another example being part of it */
+    private int $open = 0;
+
+    /** @var bool whether the paused driver holds what ran since it was last collected */
+    private bool $pending = false;
+
+    /**
+     * @param bool $crediting whether to keep which test ran each line, or only what ran
+     */
+    public function __construct(
+        private readonly CoverageDriver $driver,
+        private readonly bool $crediting = true,
+    ) {}
 
     /**
      * Records the spec file that examples are about to run from.
@@ -52,6 +65,10 @@ final class PerExampleCollector
      */
     public function beginSpec(string $path): void
     {
+        if ($this->open > 0) {
+            return;
+        }
+
         $path = str_replace('\\', '/', $path);
         $this->specPath = str_starts_with($path, './') ? substr($path, 2) : $path;
         $this->contextTitles = [];
@@ -64,6 +81,10 @@ final class PerExampleCollector
      */
     public function pushContext(string $title): void
     {
+        if ($this->open > 0) {
+            return;
+        }
+
         $this->contextTitles[] = $title;
     }
 
@@ -72,47 +93,67 @@ final class PerExampleCollector
      */
     public function popContext(): void
     {
+        if ($this->open > 0) {
+            return;
+        }
+
         array_pop($this->contextTitles);
     }
 
     /**
-     * Starts a coverage collection cycle for a single example, resetting the
-     * peak memory watermark and recording the start time.
+     * Starts or resumes collection for a single example, resetting the peak
+     * memory watermark and recording the start time.
      */
     public function beginExample(): void
     {
+        if ($this->open++ > 0) {
+            return;
+        }
+
         memory_reset_peak_usage();
         $this->startTime = hrtime(true);
         $this->driver->start();
     }
 
     /**
-     * Stops the current collection cycle, attributes every executed line
-     * to the example identified by the current spec path, context titles and
-     * title, and records the example's duration and peak memory usage.
+     * Ends collection for the example. When crediting, what ran goes into the
+     * aggregate and every executed line is credited to the example named by
+     * the current spec path, context titles and title, with the example's
+     * duration and peak memory usage; otherwise the driver is paused until the
+     * next example or finish().
      *
      * @param string $title the example title
      */
     public function endExample(string $title): void
     {
-        $data = $this->driver->stop();
-        $elapsed = (hrtime(true) - $this->startTime) / 1e9;
-        $testId = $this->testId($title);
-
-        $this->tests[$testId] = [
-            'time' => $elapsed,
-            'memory' => memory_get_peak_usage(),
-            'spec_file' => (string) $this->specPath,
-        ];
-
-        foreach ($data as $file => $lines) {
-            foreach ($lines as $lineNumber => $hit) {
-                if ($hit >= 1) {
-                    $this->lines[$file][$lineNumber][$testId] = true;
-                }
-                $this->aggregate[$file][$lineNumber] = max($this->aggregate[$file][$lineNumber] ?? $hit, $hit);
-            }
+        if (--$this->open > 0) {
+            return;
         }
+
+        if (!$this->crediting) {
+            $this->driver->pause();
+            $this->pending = true;
+
+            return;
+        }
+
+        $data = $this->driver->stop();
+        $this->aggregated($data);
+        $this->credit($this->testId($title), $data);
+    }
+
+    /**
+     * Collects what the examples ran since the driver was last collected,
+     * when it was paused rather than collected after each one.
+     */
+    public function finish(): void
+    {
+        if (!$this->pending) {
+            return;
+        }
+
+        $this->pending = false;
+        $this->aggregated($this->driver->stop());
     }
 
     /**
@@ -133,9 +174,8 @@ final class PerExampleCollector
     }
 
     /**
-     * Returns line hit data merged across all example cycles, in the same
-     * shape as a whole-suite collection, so the text, Clover and HTML reports
-     * can be rendered from a per-example run.
+     * Returns line hit data merged across all example cycles, which the text,
+     * Clover and HTML reports render.
      *
      * @return array<string, array<int, int>> file paths mapped to line-level hit counts
      */
@@ -202,9 +242,42 @@ final class PerExampleCollector
             }
         }
 
-        foreach ($state['aggregate'] ?? [] as $file => $lines) {
+        $this->aggregated($state['aggregate'] ?? []);
+    }
+
+    /**
+     * Merges line hits into the aggregate, keeping the highest value per line.
+     *
+     * @param array<string, array<int, int>> $data file path => line => hit value
+     */
+    private function aggregated(array $data): void
+    {
+        foreach ($data as $file => $lines) {
             foreach ($lines as $lineNumber => $hit) {
                 $this->aggregate[$file][$lineNumber] = max($this->aggregate[$file][$lineNumber] ?? $hit, $hit);
+            }
+        }
+    }
+
+    /**
+     * Records the test as having run every line it hit, with its duration and
+     * peak memory.
+     *
+     * @param array<string, array<int, int>> $data what the driver collected while the test ran
+     */
+    private function credit(string $testId, array $data): void
+    {
+        $this->tests[$testId] = [
+            'time' => (hrtime(true) - $this->startTime) / 1e9,
+            'memory' => memory_get_peak_usage(),
+            'spec_file' => (string) $this->specPath,
+        ];
+
+        foreach ($data as $file => $lines) {
+            foreach ($lines as $lineNumber => $hit) {
+                if ($hit >= 1) {
+                    $this->lines[$file][$lineNumber][$testId] = true;
+                }
             }
         }
     }

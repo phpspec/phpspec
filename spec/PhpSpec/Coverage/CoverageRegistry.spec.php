@@ -6,12 +6,14 @@ use PhpSpec\Coverage\PerExampleCollector;
 
 describe(CoverageRegistry::class, function () {
 
-    afterEach(function () {
-        CoverageRegistry::reset();
+    // The run's own collector, when coverage of this suite is being taken,
+    // is put back for the examples after these.
+    beforeEach(function () {
+        $this->collecting = CoverageRegistry::collector();
     });
 
-    it('has no collector by default', function () {
-        expect(CoverageRegistry::collector())->toBeNull();
+    afterEach(function () {
+        $this->collecting === null ? CoverageRegistry::reset() : CoverageRegistry::activate($this->collecting);
     });
 
     it('exposes the collector once activated', function (CoverageDriver $driver) {

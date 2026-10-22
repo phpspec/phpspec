@@ -17,6 +17,7 @@ namespace PhpSpec\StoryBDD;
 use PhpSpec\Attachments;
 use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
+use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\OwnCode;
 use PhpSpec\Result\FeatureResult;
@@ -116,6 +117,10 @@ final readonly class Feature implements SpecBlock
      */
     public function stream(): \Generator
     {
+        $coverage = CoverageRegistry::collector();
+        $coverage?->beginSpec($this->path);
+        $coverage?->pushContext($this->featureNode->title);
+
         $held = $this->attempt(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature');
 
         // The last scenario waits for afterFeature, which may break its last step.
@@ -148,6 +153,8 @@ final readonly class Feature implements SpecBlock
             if (!$closed) {
                 $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature');
             }
+
+            $coverage?->popContext();
         }
     }
 
@@ -176,13 +183,31 @@ final readonly class Feature implements SpecBlock
     }
 
     /**
+     * Runs a single scenario with coverage collected around it, its hooks
+     * included, as around an example.
+     *
+     * @param HookOutcome|null $featureHeld what a beforeFeature raised, deciding every scenario without running its hooks or steps
+     */
+    private function runScenario(ScenarioNode $scenario, ?HookOutcome $featureHeld = null): ScenarioResult
+    {
+        $coverage = CoverageRegistry::collector();
+        $coverage?->beginExample();
+
+        try {
+            return $this->runScenarioWithHooks($scenario, $featureHeld);
+        } finally {
+            $coverage?->endExample($scenario->title);
+        }
+    }
+
+    /**
      * Runs a single scenario, including background steps, and collects step results.
      * Skips remaining steps after the first failure.
      *
      * @param ScenarioNode $scenario the scenario to execute
      * @param HookOutcome|null $featureHeld what a beforeFeature raised, deciding every scenario without running its hooks or steps
      */
-    private function runScenario(ScenarioNode $scenario, ?HookOutcome $featureHeld = null): ScenarioResult
+    private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld): ScenarioResult
     {
         $world = new StepWorld();
         $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');

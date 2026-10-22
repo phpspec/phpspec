@@ -1,8 +1,8 @@
 <?php
 
 use PhpSpec\Coverage\CoverageAdapter;
-use PhpSpec\Coverage\CoverageCollector;
 use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\Driver\XdebugDriver;
 use PhpSpec\Coverage\LivePhpRuntime;
 
@@ -12,9 +12,9 @@ describe(XdebugDriver::class, function () {
         expect(new XdebugDriver())->toBeAnInstanceOf(CoverageDriver::class);
     });
 
-    // Cycling xdebug start/stop would clobber a live whole-suite collection
-    // (xdebug coverage state is process-global), so skip these when one is running.
-    if ((new LivePhpRuntime())->enabled(CoverageAdapter::Xdebug) && !CoverageCollector::isCollecting()) {
+    // Cycling xdebug start/stop would clobber a live collection (xdebug
+    // coverage state is process-global), so skip these when one is running.
+    if ((new LivePhpRuntime())->enabled(CoverageAdapter::Xdebug) && CoverageRegistry::collector() === null) {
 
         it('collects line hits between start and stop', function () {
             $driver = new XdebugDriver();
@@ -35,6 +35,29 @@ describe(XdebugDriver::class, function () {
             $driver->start();
             $driver->stop();
             $driver->start();
+            $data = $driver->stop();
+
+            $probe = $data[realpath(__DIR__ . '/fixtures/covered_probe.php')] ?? [];
+            expect(array_filter($probe, fn (int $hit) => $hit > 0))->toBe([]);
+        });
+
+        it('keeps what it recorded across a pause, for the next stop', function () {
+            $driver = new XdebugDriver();
+
+            $driver->start();
+            require __DIR__ . '/fixtures/covered_probe.php';
+            $driver->pause();
+            $data = $driver->stop();
+
+            expect($data[realpath(__DIR__ . '/fixtures/covered_probe.php')] ?? [])->toContain(1);
+        });
+
+        it('records nothing while paused', function () {
+            $driver = new XdebugDriver();
+
+            $driver->start();
+            $driver->pause();
+            require __DIR__ . '/fixtures/covered_probe.php';
             $data = $driver->stop();
 
             $probe = $data[realpath(__DIR__ . '/fixtures/covered_probe.php')] ?? [];

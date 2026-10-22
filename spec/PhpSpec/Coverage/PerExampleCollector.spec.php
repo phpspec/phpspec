@@ -64,6 +64,47 @@ describe(PerExampleCollector::class, function () {
         ]);
     });
 
+    it('pauses after each example when crediting none, and collects once when it finishes', function (CoverageDriver $driver) {
+        allow($driver->start());
+        allow($driver->pause());
+        allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1, 13 => -1]]);
+        $collector = new PerExampleCollector($driver, crediting: false);
+
+        $collector->beginSpec('spec/App/Calculator.spec.php');
+        $collector->beginExample();
+        $collector->endExample('adds');
+        $collector->beginExample();
+        $collector->endExample('subtracts');
+        $collector->finish();
+        $collector->finish();
+
+        expect($driver->pause())->toHaveBeenCalled()->twice();
+        expect($driver->stop())->toHaveBeenCalled()->once();
+        expect($collector->getAggregate())->toBe(['/project/src/App/Calculator.php' => [12 => 1, 13 => -1]]);
+        expect($collector->getLines())->toBe([]);
+        expect($collector->getTests())->toBe([]);
+    });
+
+    it('counts an example run inside another as part of the outer one', function (CoverageDriver $driver) {
+        allow($driver->start());
+        allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);
+        $collector = new PerExampleCollector($driver);
+
+        $collector->beginSpec('spec/App/Calculator.spec.php');
+        $collector->pushContext('Calculator');
+        $collector->beginExample();
+        $collector->beginSpec('/tmp/Inner.spec.php');
+        $collector->pushContext('Inner');
+        $collector->beginExample();
+        $collector->endExample('runs inside');
+        $collector->popContext();
+        $collector->endExample('runs a spec');
+
+        expect($driver->start())->toHaveBeenCalled()->once();
+        expect($driver->stop())->toHaveBeenCalled()->once();
+        expect(array_keys($collector->getTests()))->toBe(['spec/App/Calculator.spec.php::Calculator > runs a spec']);
+    });
+
     it('normalises away a leading ./ from the spec path in test identifiers', function (CoverageDriver $driver) {
         allow($driver->start());
         allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);

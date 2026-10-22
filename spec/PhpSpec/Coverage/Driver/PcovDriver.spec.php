@@ -3,6 +3,7 @@
 use PhpSpec\Coverage\CoverageAdapter;
 use PhpSpec\Coverage\CoverageCollector;
 use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\Driver\PcovDriver;
 use PhpSpec\Coverage\LivePhpRuntime;
 
@@ -12,10 +13,10 @@ describe(PcovDriver::class, function () {
         expect(new PcovDriver())->toBeAnInstanceOf(CoverageDriver::class);
     });
 
-    // A cycle clears PCOV's counts, which would empty a live whole-suite
-    // collection, so these run only when none is in progress. PCOV traces
-    // src by default, so the probe is a method of the source tree.
-    if ((new LivePhpRuntime())->enabled(CoverageAdapter::Pcov) && !CoverageCollector::isCollecting()) {
+    // A cycle clears PCOV's counts, which would empty a live collection, so
+    // these run only when none is in progress. PCOV traces src by default,
+    // so the probe is a method of the source tree.
+    if ((new LivePhpRuntime())->enabled(CoverageAdapter::Pcov) && CoverageRegistry::collector() === null) {
 
         $probe = (string) realpath(__DIR__ . '/../../../../src/PhpSpec/Coverage/CoverageCollector.php');
 
@@ -44,6 +45,28 @@ describe(PcovDriver::class, function () {
             $data = $driver->stop();
 
             expect(array_filter($data[$probe], fn (int $hit) => $hit > 0))->toBe([]);
+        });
+
+        it('keeps what it recorded across a pause, for the next stop', function () use ($probe) {
+            $driver = new PcovDriver();
+
+            $driver->start();
+            CoverageCollector::countLines([1 => 1]);
+            $driver->pause();
+            $data = $driver->stop();
+
+            expect($data[$probe])->toContain(1);
+        });
+
+        it('records nothing while paused', function () use ($probe) {
+            $driver = new PcovDriver();
+
+            $driver->start();
+            $driver->pause();
+            CoverageCollector::countLines([1 => 1]);
+            $data = $driver->stop();
+
+            expect(array_filter($data[$probe] ?? [], fn (int $hit) => $hit > 0))->toBe([]);
         });
 
     }

@@ -51,6 +51,7 @@ describe(Specification::class, function() {
         allow($driver->start());
         allow($driver->stop())->toReturn([]);
         $collector = new PerExampleCollector($driver);
+        $collecting = CoverageRegistry::collector();
         CoverageRegistry::activate($collector);
 
         $file = sys_get_temp_dir() . '/phpspec_spec_coverage_' . uniqid() . '.spec.php';
@@ -59,7 +60,7 @@ describe(Specification::class, function() {
         try {
             (new Specification($file))->run();
         } finally {
-            CoverageRegistry::reset();
+            $collecting === null ? CoverageRegistry::reset() : CoverageRegistry::activate($collecting);
             unlink($file);
         }
 

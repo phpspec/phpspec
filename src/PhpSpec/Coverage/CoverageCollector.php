@@ -16,53 +16,11 @@ namespace PhpSpec\Coverage;
 
 /**
  * @internal
- * One collection around the whole run: start, stop, and the data filtered to
- * the source path.
+ * Reads collected coverage data: the lines it counts, and the files under the
+ * source path.
  */
 final class CoverageCollector
 {
-    /** @var array<string, array<int, int>> raw coverage data keyed by file path */
-    private array $data = [];
-
-    /** @var bool whether a whole-suite collection is currently in progress */
-    private static bool $collecting = false;
-
-    public function __construct(private readonly CoverageDriver $driver) {}
-
-    /**
-     * Checks whether a whole-suite collection is currently in progress.
-     * An engine's coverage state is process-global, so cycling it (as the
-     * per-example collector does) would clobber a live whole-suite collection.
-     *
-     * @return bool true if a collection has been started and not yet stopped
-     */
-    public static function isCollecting(): bool
-    {
-        return self::$collecting;
-    }
-
-    public function start(): void
-    {
-        self::$collecting = true;
-        $this->driver->start();
-    }
-
-    public function stop(): void
-    {
-        $this->data = $this->driver->stop();
-        self::$collecting = false;
-    }
-
-    /**
-     * Returns the raw coverage data the engine collected.
-     *
-     * @return array<string, array<int, int>> file paths mapped to line-level hit counts
-     */
-    public function getData(): array
-    {
-        return $this->data;
-    }
-
     /**
      * Counts covered and executable lines from a single file's coverage data.
      * Lines with hit value -2 are non-executable and skipped.
@@ -86,18 +44,6 @@ final class CoverageCollector
         }
 
         return ['covered' => $covered, 'executable' => $executable];
-    }
-
-    /**
-     * Filters coverage data to only include files under the given source path.
-     * Returns relative paths sorted alphabetically.
-     *
-     * @param string $srcPath the source directory path to filter by
-     * @return array<string, array<int, int>> relative file paths mapped to line-level hit counts
-     */
-    public function filter(string $srcPath): array
-    {
-        return self::filterData($this->data, $srcPath);
     }
 
     /**

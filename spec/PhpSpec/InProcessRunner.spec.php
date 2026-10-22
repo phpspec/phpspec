@@ -214,6 +214,7 @@ describe(InProcessRunner::class, function () {
                 return [];
             });
             $outerCollector = new PerExampleCollector($driver);
+            $collecting = CoverageRegistry::collector();
             CoverageRegistry::activate($outerCollector);
 
             $dir = sys_get_temp_dir() . '/phpspec_inprocess_cov_' . uniqid();
@@ -234,7 +235,7 @@ describe(InProcessRunner::class, function () {
                 expect(CoverageRegistry::collector())->toBe($outerCollector);
                 expect($cycles)->toBe([]);
             } finally {
-                CoverageRegistry::reset();
+                $collecting === null ? CoverageRegistry::reset() : CoverageRegistry::activate($collecting);
                 @unlink($dir . '/spec/App/Inner.spec.php');
                 @rmdir($dir . '/spec/App');
                 @rmdir($dir . '/spec');

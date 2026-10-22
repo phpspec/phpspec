@@ -1,5 +1,8 @@
 <?php
 
+use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\CoverageRegistry;
+use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\TagExpression;
@@ -718,6 +721,75 @@ describe(Feature::class, function () {
         expect($steps[0]->isPassed())->toBeTrue();
         expect($receivedDoc)->toBe('some text');
         expect($receivedTable)->toBeAnInstanceOf(DataTable::class);
+    });
+
+    context('under coverage', function () {
+
+        // The run's own collector, when coverage of this suite is being
+        // taken, is put back for the examples after these.
+        beforeEach(function () {
+            $this->collecting = CoverageRegistry::collector();
+        });
+
+        afterEach(function () {
+            $this->collecting === null ? CoverageRegistry::reset() : CoverageRegistry::activate($this->collecting);
+        });
+
+        it('collects around each scenario and its own hooks, crediting it by feature and scenario title', function (CoverageDriver $driver) {
+            $log = [];
+            allow($driver->start())->toReturnUsing(function () use (&$log) {
+                $log[] = 'coverage start';
+            });
+            allow($driver->stop())->toReturnUsing(function () use (&$log) {
+                $log[] = 'coverage stop';
+
+                return ['/project/src/App/Basket.php' => [9 => 1]];
+            });
+            $hooks = new HookRegistry();
+            $hooks->addBeforeFeature(function () use (&$log) {
+                $log[] = 'beforeFeature';
+            });
+            $hooks->addBeforeScenario(function () use (&$log) {
+                $log[] = 'beforeScenario';
+            });
+            $hooks->addAfterScenario(function () use (&$log) {
+                $log[] = 'afterScenario';
+            });
+            $hooks->addAfterFeature(function () use (&$log) {
+                $log[] = 'afterFeature';
+            });
+            $registry = new StepRegistry();
+            $registry->addStep('a basket', function () use (&$log) {
+                $log[] = 'step';
+            });
+            $collector = new PerExampleCollector($driver);
+            CoverageRegistry::activate($collector);
+
+            (new Feature('features/shopping.feature', new FeatureNode('Shopping', '', null, [
+                new ScenarioNode('a basket', [new StepNode('Given', 'a basket')]),
+            ]), $registry, $hooks))->run();
+
+            expect($log)->toBe(['beforeFeature', 'coverage start', 'beforeScenario', 'step', 'afterScenario', 'coverage stop', 'afterFeature']);
+            expect($collector->getLines()['/project/src/App/Basket.php'][9])->toBe(['features/shopping.feature::Shopping > a basket']);
+        });
+
+        it('credits each row of an outline as a scenario of its own', function (CoverageDriver $driver) {
+            allow($driver->start());
+            allow($driver->stop())->toReturn([]);
+            $registry = new StepRegistry();
+            $registry->addStep('{int} items', function () {});
+            $collector = new PerExampleCollector($driver);
+            CoverageRegistry::activate($collector);
+
+            (new Feature('features/shopping.feature', new FeatureNode('Shopping', '', null, [
+                new ScenarioOutlineNode('counting', [new StepNode('Given', '<n> items')], [], new DataTable([['n'], ['1'], ['2']])),
+            ]), $registry, new HookRegistry()))->run();
+
+            expect(array_keys($collector->getTests()))->toBe([
+                'features/shopping.feature::Shopping > counting (1)',
+                'features/shopping.feature::Shopping > counting (2)',
+            ]);
+        });
     });
 
 });

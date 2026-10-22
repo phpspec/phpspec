@@ -748,8 +748,8 @@ final class Run extends Command implements InternalOptions
             return null;
         }
 
-        // Parallel runs also collect per example: workers dump raw per-example
-        // state and the parent merges it, which serves every report format.
+        // The JSON report names the example that ran each line, and parallel
+        // workers dump the same state for the parent to merge.
         $perExample = $input->getOption('coverage-json') !== null
             || $input->getOption('coverage-partial') !== null
             || $input->getOption('parallel') !== false;

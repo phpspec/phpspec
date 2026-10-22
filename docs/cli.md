@@ -525,9 +525,15 @@ coverage mode (`xdebug.mode=coverage`). With nothing named in the config, the
 run takes PCOV when it is enabled, else Xdebug;
 [`coverage_adapter`](configuration.md#coverage_adapter) names one. A run that
 cannot collect says which engine it needs and the command that switches it on.
-Coverage options can be combined with `--parallel`: workers collect coverage
-per example and the parent process merges their results before rendering the
-reports.
+
+A line counts as covered when an example or a scenario runs it. That includes
+an example's `this` bindings and `beforeEach`/`afterEach` hooks, a scenario's
+background and `beforeScenario`/`afterScenario` hooks, and a closure declared
+in `describe` that an example calls. Code that runs only in
+`beforeAll`/`afterAll`, `beforeFeature`/`afterFeature` or the `describe` body
+itself does not count. Every run counts the same way: coverage options can be
+combined with `--parallel`, whose workers collect coverage per example and the
+parent process merges their results before rendering the reports.
 
 #### Excluding code from coverage
 
@@ -608,11 +614,14 @@ change while the integration is being finalised.
 ```
 
 - **Test identifiers** are `<spec file>::<context titles joined with " > ">`,
-  at example granularity. All paths are relative to the project root.
+  at example granularity, and `<feature file>::<feature title> > <scenario title>`
+  for a scenario, an outline's row carrying its values as the run reports it
+  (`features/cart.feature::Cart > adds (1, 2)`). All paths are relative to the
+  project root; `spec_file` names the feature file for a scenario.
 - **`time`** is the example's wall-clock duration in seconds and **`memory`**
   its peak memory usage in bytes, both measured across the example *and* its
-  `this`/`beforeEach`/`afterEach` hooks, so setup code counts as covered by the
-  example that ran it.
+  `this`/`beforeEach`/`afterEach` hooks (a scenario's background and scenario
+  hooks), so setup code counts as covered by the example that ran it.
 - **`checksum`**/**`spec_checksum`** are MD5 hashes of the file contents,
   letting consumers detect stale coverage data.
 - **`lines`** holds what ran; **`executable`** holds what there was to run, so a
@@ -625,8 +634,6 @@ change while the integration is being finalised.
   absent. The key is the bare method name, except when two classes in the same
   file declare it, in which case that name is fully qualified
   (`App\Card::pay`) so a lookup finds nothing rather than the wrong range.
-- Code executed only in `beforeAll`/`afterAll` hooks is not attributed to any
-  example.
 
 ## Exit Codes
 

@@ -2,7 +2,6 @@
 
 use PhpSpec\Console\Command\Run\CoverageReporter;
 use PhpSpec\Coverage\CoverageAdapter;
-use PhpSpec\Coverage\CoverageCollector;
 use PhpSpec\Coverage\CoverageDriver;
 use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
@@ -16,6 +15,17 @@ use PhpSpec\Filesystem;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(CoverageReporter::class, function () {
+
+    // The run's own collector, when coverage of this suite is being taken,
+    // is out of the way of these examples and put back after each.
+    beforeEach(function () {
+        $this->collecting = CoverageRegistry::collector();
+        CoverageRegistry::reset();
+    });
+
+    afterEach(function () {
+        $this->collecting === null ? CoverageRegistry::reset() : CoverageRegistry::activate($this->collecting);
+    });
 
     context('start', function () {
 
@@ -49,22 +59,39 @@ describe(CoverageReporter::class, function () {
             }
         });
 
-        // A whole-suite collection asks the engine itself, so this runs under
-        // the engine this process has, and never beside a live collection.
+        // Collecting asks the engine itself, so these run under the engine
+        // this process has, and never beside a live collection.
         $live = new LivePhpRuntime();
 
-        if ((new CoverageEngines(null, $live, ''))->inThisProcess(['src']) instanceof CoverageAdapter && !CoverageCollector::isCollecting()) {
+        if ((new CoverageEngines(null, $live, ''))->inThisProcess(['src']) instanceof CoverageAdapter && CoverageRegistry::collector() === null) {
 
-            it('starts a whole-suite collection with the engine this process has', function () use ($live) {
-                $output = new BufferedOutput();
+            it('collects inside each example with the engine this process has, crediting none', function () use ($live) {
                 $reporter = new CoverageReporter(new CoverageEngines(null, $live, ''));
 
                 expect($reporter->start(['src']))->toBeNull();
-                expect($reporter->adapter())->toBeAnInstanceOf(CoverageAdapter::class);
-                expect(CoverageCollector::isCollecting())->toBeTrue();
+                $collector = CoverageRegistry::collector();
+                $collector->beginSpec('spec/Probe.spec.php');
+                $collector->beginExample();
+                $collector->endExample('probes');
+                $reporter->report(new BufferedOutput(), new CoverageOptions(srcPath: 'src'));
 
-                $reporter->report($output, new CoverageOptions(srcPath: 'src'));
-                expect(CoverageCollector::isCollecting())->toBeFalse();
+                expect($reporter->adapter())->toBeAnInstanceOf(CoverageAdapter::class);
+                expect($reporter->hits())->not()->toBeEmpty();
+                expect($collector->getTests())->toBe([]);
+                expect(CoverageRegistry::collector())->toBeNull();
+            });
+
+            it('credits each example when asked to collect per example', function () use ($live) {
+                $reporter = new CoverageReporter(new CoverageEngines(null, $live, ''));
+
+                $reporter->start(['src'], perExample: true);
+                $collector = CoverageRegistry::collector();
+                $collector->beginSpec('spec/Probe.spec.php');
+                $collector->beginExample();
+                $collector->endExample('probes');
+                $reporter->report(new BufferedOutput(), new CoverageOptions(srcPath: 'src'));
+
+                expect($collector->getTests())->toHaveKey('spec/Probe.spec.php::probes');
             });
 
         }
