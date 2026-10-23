@@ -8,6 +8,10 @@ final class DeclaredTypeSpecCoin {}
 final class DeclaredTypeSpecTally implements Countable {
     public function count(): int { return 0; }
 }
+class_alias(DeclaredTypeSpecPaper::class, 'DeclaredTypeSpecSheet');
+class DeclaredTypeSpecFault extends Error {}
+interface DeclaredTypeSpecFailure extends Throwable {}
+interface DeclaredTypeSpecMarker {}
 
 interface DeclaredTypeSpecReturns {
     public function narrow(): ArrayIterator;
@@ -29,6 +33,9 @@ interface DeclaredTypeSpecReturns {
     public function coin(): DeclaredTypeSpecCoin;
     public function tally(): DeclaredTypeSpecTally;
     public function same(): static;
+    public function sheet(): DeclaredTypeSpecSheet;
+    public function cased(): declaredtypespecpaper;
+    public function tallied(): DeclaredTypeSpecTally&Countable;
 }
 
 describe(DeclaredType::class, function () {
@@ -91,6 +98,22 @@ describe(DeclaredType::class, function () {
 
     it('shows classes as a reader writes them', function () {
         expect(($this->type)('maybeCounted')->shown())->toBe('Countable|null');
+    });
+
+    it('names a class as PHP does, however the declaration spells it', function () {
+        expect(($this->type)('paper')->meet(($this->type)('sheet'))->code())->toBe('\DeclaredTypeSpecPaper');
+        expect(($this->type)('paper')->meet(($this->type)('cased'))->code())->toBe('\DeclaredTypeSpecPaper');
+    });
+
+    it('writes an intersection as the fewest types it needs', function () {
+        expect(($this->type)('tallied')->code())->toBe('\DeclaredTypeSpecTally');
+    });
+
+    it('knows an object can be every type where what a class extends allows it, whether or not a double can', function () {
+        expect(DeclaredType::allOf([DeclaredTypeSpecFault::class, DeclaredTypeSpecFailure::class])->admitsNoValue())->toBeFalse();
+        expect(DeclaredType::allOf([DeclaredTypeSpecPaper::class, DeclaredTypeSpecFailure::class])->admitsNoValue())->toBeTrue();
+        expect(DeclaredType::allOf([UnitEnum::class, DeclaredTypeSpecMarker::class])->admitsNoValue())->toBeFalse();
+        expect(DeclaredType::allOf([Throwable::class, DateTimeInterface::class])->admitsNoValue())->toBeTrue();
     });
 
     it('knows the classes no one object can be', function () {

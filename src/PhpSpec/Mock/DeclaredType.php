@@ -49,7 +49,15 @@ final readonly class DeclaredType
      */
     public static function of(?ReflectionType $type, ReflectionMethod $method, array $own): self
     {
-        return new self($type === null ? null : self::termsOf($type, $method), $own);
+        $terms = $type === null ? null : self::termsOf($type, $method);
+
+        if ($terms === null) {
+            return new self(null, $own);
+        }
+
+        $reducing = new self([], $own);
+
+        return new self($reducing->widest(array_values(array_filter(array_map($reducing->reduced(...), $terms), static fn(?array $term): bool => $term !== null))), $own);
     }
 
     /**
@@ -59,7 +67,7 @@ final readonly class DeclaredType
      */
     public static function allOf(array $types): self
     {
-        $term = (new self([], []))->reduced($types);
+        $term = (new self([], []))->reduced(array_map(self::canonical(...), $types));
 
         return new self($term === null ? [] : [$term], []);
     }
@@ -204,7 +212,7 @@ final readonly class DeclaredType
         }
 
         if ($type instanceof ReflectionIntersectionType) {
-            return [array_values(array_map(static fn(ReflectionType $member): string => $member instanceof ReflectionNamedType ? $member->getName() : (string) $member, $type->getTypes()))];
+            return [array_values(array_map(static fn(ReflectionType $member): string => self::canonical($member instanceof ReflectionNamedType ? $member->getName() : (string) $member), $type->getTypes()))];
         }
 
         if (!$type instanceof ReflectionNamedType) {
@@ -219,7 +227,7 @@ final readonly class DeclaredType
             'self' => [[$method->getDeclaringClass()->getName()]],
             'parent' => [[($method->getDeclaringClass()->getParentClass() ?: $method->getDeclaringClass())->getName()]],
             'static', 'object' => [[strtolower($name)]],
-            default => [[$type->isBuiltin() ? strtolower($name) : $name]],
+            default => [[$type->isBuiltin() ? strtolower($name) : self::canonical($name)]],
         };
 
         if ($terms !== null && $type->allowsNull() && $terms !== [['null']]) {
@@ -227,6 +235,15 @@ final readonly class DeclaredType
         }
 
         return $terms;
+    }
+
+    /**
+     * A class as PHP names it, however the declaration spelled it: an alias
+     * or a name in another case is the class it stands for.
+     */
+    private static function canonical(string $name): string
+    {
+        return class_exists($name) || interface_exists($name) || enum_exists($name) ? (new ReflectionClass($name))->getName() : $name;
     }
 
     /**
@@ -261,7 +278,7 @@ final readonly class DeclaredType
      */
     private function reduced(array $atoms): ?array
     {
-        $atoms = array_values(array_unique($atoms));
+        $atoms = array_values(array_intersect_key($atoms, array_unique(array_map(strtolower(...), $atoms))));
 
         if (in_array('never', $atoms, true)) {
             return ['never'];
@@ -297,8 +314,10 @@ final readonly class DeclaredType
 
     /**
      * Whether one object can be of every one of the classes and interfaces,
-     * none of which extends another: a class at most, and a final one only
-     * when it already implements the rest.
+     * none of which extends another: a class at most, a final one only when
+     * it already implements the rest, and none that what one class can extend
+     * keeps from being every one of them. Whether PhpSpec can make a double of
+     * them is another question.
      *
      * @param list<string> $types
      */
@@ -310,23 +329,21 @@ final readonly class DeclaredType
             return false;
         }
 
-        if ($classes === []) {
-            return true;
-        }
+        $class = $classes === [] ? null : new ReflectionClass($classes[0]);
 
-        $class = new ReflectionClass($classes[0]);
-
-        if (!$class->isFinal() && !$class->isEnum()) {
-            return true;
-        }
-
-        foreach ($types as $type) {
-            if (!is_a($class->getName(), $type, true)) {
-                return false;
+        if ($class !== null && ($class->isFinal() || $class->isEnum())) {
+            foreach ($types as $type) {
+                if (!is_a($class->getName(), $type, true)) {
+                    return false;
+                }
             }
+
+            return true;
         }
 
-        return true;
+        $interfaces = array_map(static fn(string $type): ReflectionClass => new ReflectionClass($type), array_values(array_filter($types, interface_exists(...))));
+
+        return $interfaces === [] || (new NativeBase($interfaces, static fn(string $interface): ?string => null, $class))->conflict() === null;
     }
 
     /**

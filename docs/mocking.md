@@ -48,6 +48,14 @@ neither extends, the method is refused when called:
 App\Sized::size() returns int and App\Named::size() returns string, so no value can be returned for both.
 ```
 
+A class named with interfaces, such as what a method returning `Base&HasValue`
+answers, keeps what it is: its final methods, and an `Error` or a `DateTime` it
+already extends where an interface needs a `Throwable` or a
+`DateTimeInterface`. A subclass of it adds what it can, such as an
+`IteratorAggregate` for a `Traversable` interface. A class is the class it
+names however it is spelled, through an alias or in another case, and an
+intersection one of its types already satisfies is answered as that type.
+
 Declarations no class can implement together, a parameter one takes by
 reference and another by value, or a method narrowing one the base declares
 final, are refused: by `mock()` and `dummy()` at once, and as a return type only

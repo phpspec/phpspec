@@ -59,7 +59,7 @@ final readonly class MethodContract
     public static function of(string $owner, array $declarations, array $own): self
     {
         if (count($declarations) === 1) {
-            return self::declaredBy($owner, $declarations[0]);
+            return self::declaredBy($owner, $declarations[0], $own);
         }
 
         $first = $declarations[0];
@@ -155,7 +155,10 @@ final readonly class MethodContract
         return [implode(', ', $parameters), $defaults];
     }
 
-    private static function declaredBy(string $owner, ReflectionMethod $method): self
+    /**
+     * @param list<string> $own
+     */
+    private static function declaredBy(string $owner, ReflectionMethod $method, array $own): self
     {
         $parameters = [];
 
@@ -174,6 +177,16 @@ final readonly class MethodContract
         }
 
         $returnType = self::returnTypeOf($method);
+        $returnCode = $returnType === null ? '' : ': ' . self::typeIn($returnType, $method);
+
+        if ($returnType !== null && self::namesAnIntersection($returnType)) {
+            $declared = DeclaredType::of($returnType, $method, $own);
+
+            if (!$declared->admitsNoValue()) {
+                $returnCode = ': ' . $declared->code();
+                $returnType = self::reflected($declared->code());
+            }
+        }
 
         return new self(
             $owner,
@@ -181,7 +194,7 @@ final readonly class MethodContract
             $parameters,
             $method->getNumberOfRequiredParameters(),
             $returnType,
-            $returnType === null ? '' : ': ' . self::typeIn($returnType, $method),
+            $returnCode,
             $method->returnsReference(),
             null,
         );
@@ -415,6 +428,16 @@ final readonly class MethodContract
         $last = array_pop($declaring);
 
         return [$met, sprintf('%s and %s, so no value can be returned for %s.', implode(', ', $declaring), $last, count($declaring) === 1 ? 'both' : 'all of them')];
+    }
+
+    /**
+     * Whether the type names an intersection, which names a class however it
+     * is spelled, and as the fewest types it needs.
+     */
+    private static function namesAnIntersection(ReflectionType $type): bool
+    {
+        return $type instanceof ReflectionIntersectionType
+            || ($type instanceof ReflectionUnionType && array_filter($type->getTypes(), static fn(ReflectionType $member): bool => $member instanceof ReflectionIntersectionType) !== []);
     }
 
     private static function reflected(string $code): ?ReflectionType

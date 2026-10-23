@@ -21,21 +21,27 @@ use Exception;
 use IteratorAggregate;
 use ReflectionClass;
 use ReflectionMethod;
+use Throwable;
+use Traversable;
 
 /**
  * @internal
  * What a class must be to implement an interface built on a built-in one PHP
  * lets no plain class implement: an IteratorAggregate for a Traversable, an
  * Exception for a Throwable, a DateTimeImmutable for a DateTimeInterface.
- * Only an enum can implement a UnitEnum, so no double can be one. Any other
- * built-in interface is asked about, since an extension may refuse a plain
- * class too.
+ * A class the double extends instead keeps what it already is: an Error or a
+ * DateTime, or a Traversable; one that cannot be what the interfaces need
+ * conflicts with them, as no subclass of it can be. Only an enum can implement
+ * a UnitEnum, so no double can be one. Any other built-in interface is asked
+ * about, since an extension may refuse a plain class too.
  */
 final readonly class NativeBase
 {
     private const HANDLED = ['Traversable', 'Iterator', 'IteratorAggregate', 'Throwable', 'UnitEnum', 'BackedEnum', 'DateTimeInterface', 'Serializable'];
 
     private ?string $refusal;
+
+    private ?string $conflict;
 
     /** @var class-string|null */
     private ?string $extends;
@@ -48,8 +54,9 @@ final readonly class NativeBase
     /**
      * @param list<ReflectionClass<object>> $interfaces the interfaces a double must be, more than one for an intersection
      * @param Closure(class-string): ?string $refusedBy why PHP refuses a plain class implementing a built-in interface, or null
+     * @param ReflectionClass<object>|null $class the class the double extends, when its types name one
      */
-    public function __construct(array $interfaces, Closure $refusedBy)
+    public function __construct(array $interfaces, Closure $refusedBy, ?ReflectionClass $class = null)
     {
         $all = [];
         foreach ($interfaces as $interface) {
@@ -59,18 +66,34 @@ final readonly class NativeBase
         $declares = static fn(string $method): bool => array_filter($interfaces, static fn(ReflectionClass $interface): bool => $interface->hasMethod($method)) !== [];
         $throwable = in_array('Throwable', $all, true);
         $dated = in_array(DateTimeInterface::class, $all, true);
-        $traversed = in_array('Traversable', $all, true) && !in_array('Iterator', $all, true) && !in_array(IteratorAggregate::class, $all, true);
+        $enumOnly = in_array('UnitEnum', $all, true);
+        $traversed = in_array('Traversable', $all, true) && !in_array('Iterator', $all, true) && !in_array(IteratorAggregate::class, $all, true)
+            && !($class?->implementsInterface(Traversable::class) ?? false);
 
-        $this->extends = $throwable ? Exception::class : ($dated ? DateTimeImmutable::class : null);
+        $this->extends = $class?->getName() ?? ($throwable ? Exception::class : ($dated ? DateTimeImmutable::class : null));
         $this->implements = $traversed ? [IteratorAggregate::class] : [];
         $serializable = in_array('Serializable', $all, true);
         $this->code = ($serializable && !$declares('__serialize') ? 'public function __serialize(): array { return []; } ' : '')
             . ($serializable && !$declares('__unserialize') ? 'public function __unserialize(array $data): void {}' : '');
-        $this->refusal = match (true) {
-            in_array('UnitEnum', $all, true) => 'Only an enum can implement UnitEnum.',
-            $throwable && $dated => 'No class can extend both Exception and DateTimeImmutable.',
-            default => $this->refusedAmong($all, $refusedBy),
+        $this->conflict = match (true) {
+            $class !== null && $throwable && !$class->implementsInterface(Throwable::class) => sprintf('No class can extend both %s and Exception or Error.', $class->getName()),
+            $class !== null && $dated && !$class->implementsInterface(DateTimeInterface::class) => sprintf('No class can extend both %s and DateTime or DateTimeImmutable.', $class->getName()),
+            $class !== null && $enumOnly && !$class->isEnum() => 'Only an enum can implement UnitEnum.',
+            $class === null && $throwable && $dated => 'No class can extend both Exception and DateTimeImmutable.',
+            default => null,
         };
+        $this->refusal = $this->conflict ?? ($enumOnly ? 'Only an enum can implement UnitEnum.' : $this->refusedAmong($all, $refusedBy));
+    }
+
+    /**
+     * Why no class at all can be the interfaces, and the class a double
+     * extends, when none can: what one class can extend conflicts with what
+     * another requires. A refusal beyond it is PhpSpec's alone, which a value
+     * of those types could still pass.
+     */
+    public function conflict(): ?string
+    {
+        return $this->conflict;
     }
 
     /**
@@ -82,7 +105,8 @@ final readonly class NativeBase
     }
 
     /**
-     * The class a double must extend, or null when none.
+     * The class a double must extend, the one its types name or the base PHP
+     * requires, or null when none.
      */
     public function extends(): ?string
     {

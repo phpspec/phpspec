@@ -23,6 +23,20 @@ interface MethodSetSpecFailure extends Throwable {
     public function getPrevious(): ?MethodSetSpecFailure;
 }
 
+class MethodSetSpecBase {
+    final public function value(): int|string { return 'kept'; }
+    public function name(): string { return 'base'; }
+}
+
+interface MethodSetSpecHasValue {
+    public function value(): int|string|null;
+    public function name(): string;
+}
+
+interface MethodSetSpecNarrowValue {
+    public function value(): string;
+}
+
 interface MethodSetSpecByValue {
     public function fill(array $slots);
 }
@@ -64,6 +78,21 @@ describe(MethodSet::class, function () {
         expect($failure->contracts)->toBe([]);
         expect($failure->refusal)->toBe('MethodSetSpecFailure::getPrevious() narrows a method Exception declares final.');
         expect(MethodSet::of([new ReflectionClass(Throwable::class)], ($this->base)(Throwable::class))->refusal)->toBeNull();
+    });
+
+    it('keeps the final methods of a class the types name, and merges the others', function () {
+        $types = [new ReflectionClass(MethodSetSpecBase::class), new ReflectionClass(MethodSetSpecHasValue::class)];
+        $set = MethodSet::of($types, new NativeBase([$types[1]], static fn(string $interface): ?string => null, $types[0]));
+
+        expect(($this->returns)($set))->toBe(['name' => ': string']);
+        expect($set->refusal)->toBeNull();
+    });
+
+    it('refuses an interface narrowing a final method of the class the types name', function () {
+        $types = [new ReflectionClass(MethodSetSpecBase::class), new ReflectionClass(MethodSetSpecNarrowValue::class)];
+        $set = MethodSet::of($types, new NativeBase([$types[1]], static fn(string $interface): ?string => null, $types[0]));
+
+        expect($set->refusal)->toBe('MethodSetSpecNarrowValue::value() narrows a method MethodSetSpecBase declares final.');
     });
 
     it('refuses types no class can implement every declaration of', function () {

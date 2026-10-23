@@ -508,6 +508,149 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double of a class with an interface keeps what the class already is, and names a class however it is written
+    Given a class "src/App/Mixed.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Paper {}
+
+      class_alias(Paper::class, 'App\Sheet');
+
+      interface ByName
+      {
+          public function get(): Paper;
+      }
+
+      interface ByAlias
+      {
+          public function get(): Sheet;
+      }
+
+      interface ByCase
+      {
+          public function get(): paper;
+      }
+
+      class Base
+      {
+          final public function value(): string
+          {
+              return 'kept';
+          }
+      }
+
+      interface HasValue
+      {
+          public function value(): string;
+      }
+
+      class PlainBase {}
+
+      interface Bag extends \Traversable {}
+
+      final class Tally implements \Countable
+      {
+          public function count(): int
+          {
+              return 3;
+          }
+      }
+
+      interface Failure extends \Throwable {}
+
+      class Fault extends \Error {}
+
+      interface Moment extends \DateTimeInterface {}
+
+      class Clock extends \DateTime {}
+
+      interface Marker {}
+
+      interface Source
+      {
+          public function named(): ByName&ByAlias;
+
+          public function cased(): ByName&ByCase;
+
+          public function aliased(): Paper&Sheet;
+
+          public function valued(): Base&HasValue;
+
+          public function bag(): PlainBase&Bag;
+
+          public function tally(): Tally&\Countable;
+
+          public function fault(): Fault&Failure;
+
+          public function clock(): Clock&Moment;
+
+          public function marked(): \UnitEnum&Marker;
+
+          public function failing(): PlainBase&Failure;
+
+          public function title(): string;
+      }
+      """
+    And a spec file "spec/App/Mixed.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Mixed.php';
+
+      use App\Paper;
+      use App\Source;
+      use App\Tally;
+
+      describe('Mixed', function () {
+          it('answers a class named through an alias or in another case as that class', function () {
+              $source = dummy(Source::class);
+
+              expect($source->named()->get())->toBeAnInstanceOf(Paper::class);
+              expect($source->cased()->get())->toBeAnInstanceOf(Paper::class);
+              expect($source->aliased())->toBeAnInstanceOf(Paper::class);
+          });
+
+          it('keeps the final method of the class it extends', function () {
+              expect(dummy(Source::class)->valued()->value())->toBe('kept');
+          });
+
+          it('adds to a class the interface a subclass of it can implement', function () {
+              expect(iterator_to_array(dummy(Source::class)->bag()))->toBe([]);
+          });
+
+          it('answers an intersection a final class already satisfies as that class', function () {
+              $source = mock(Source::class);
+              allow($source->tally())->toReturn(new Tally());
+
+              expect($source->tally()->count())->toBe(3);
+              expect(fn() => dummy(Source::class)->tally())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::tally(): App\Tally is final, so no double of it can be made. Use mock() instead of dummy() and stub App\Source::tally().');
+          });
+
+          it('keeps a class that already is what the interface needs', function () {
+              $source = dummy(Source::class);
+
+              expect($source->fault())->toBeAnInstanceOf(Error::class);
+              expect($source->clock())->toBeAnInstanceOf(DateTime::class);
+          });
+
+          it('refuses only the call answering what no double can be', function () {
+              $source = dummy(Source::class);
+
+              expect($source->title())->toBe('');
+              expect(fn() => $source->failing())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::failing(): no double of App\PlainBase&App\Failure can be made. No object can be both App\PlainBase and App\Failure.');
+              expect(fn() => $source->marked())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::marked(): no double of UnitEnum&App\Marker can be made. Only an enum can implement UnitEnum.');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "6"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

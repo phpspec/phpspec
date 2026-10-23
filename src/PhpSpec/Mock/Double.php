@@ -23,7 +23,6 @@ use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
 use Throwable;
-use Traversable;
 
 /**
  * @internal
@@ -134,7 +133,7 @@ final class Double
 
         // make sure you are extending or implementing double class effectively
         $interfaces = $types[0]->isInterface() ? $names : array_slice($names, 1);
-        $extends = $types[0]->isInterface() ? $base?->extends() : '\\' . $names[0];
+        $extends = $base?->extends() ?? ($types[0]->isInterface() ? null : '\\' . $names[0]);
         $header = ($extends === null ? '' : 'extends ' . $extends . ' ') . 'implements ' . implode(', ', [...array_map(static fn(string $name): string => '\\' . $name, $interfaces), ...($base?->implements() ?? []), '\\PhpSpec\\Mock\\GeneratedDouble']);
 
         // put it all together and evaluate the double class template
@@ -859,22 +858,10 @@ PHP;
     public static function planOf(array $types): array
     {
         $interfaces = array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface()));
-        $base = $interfaces === [] ? null : new NativeBase($interfaces, self::refusedBy());
+        $base = $interfaces === [] ? null : new NativeBase($interfaces, self::refusedBy(), $types[0]->isInterface() ? null : $types[0]);
 
         if ($base?->refusal() !== null) {
             return [null, null, $base->refusal()];
-        }
-
-        $class = $types[0]->isInterface() ? null : $types[0];
-
-        if ($class !== null && $base !== null && ($base->extends() !== null || $base->implements() !== [])) {
-            $needed = ltrim($base->extends() ?? Traversable::class, '\\');
-
-            if (!is_a($class->getName(), $needed, true)) {
-                return [null, null, sprintf('No object can be both %s and %s.', $class->getName(), implode(' and ', array_map(static fn(ReflectionClass $type): string => $type->getName(), $interfaces)))];
-            }
-
-            $base = null;
         }
 
         $methods = MethodSet::of($types, $base);

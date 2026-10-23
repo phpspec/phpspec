@@ -22,7 +22,8 @@ use ReflectionMethod;
  * @internal
  * The methods a double of some types defines, each resolved from every
  * declaration of it: the types' own, those of the interfaces the double's
- * base brings, and the base class's, whose final methods the double keeps.
+ * base brings, and those of the class it extends, whose final methods the
+ * double keeps.
  * When PHP lets no class implement them all, there are none, and the reason.
  */
 final readonly class MethodSet
@@ -58,8 +59,12 @@ final readonly class MethodSet
                 continue;
             }
 
+            if ($based !== null && array_filter($declarations, static fn(ReflectionMethod $declaration): bool => $declaration->class === $based->class) === []) {
+                $declarations[] = $based;
+            }
+
             try {
-                $contracts[] = MethodContract::of($owners[$key], $based === null ? $declarations : [...$declarations, $based], $own);
+                $contracts[] = MethodContract::of($owners[$key], $declarations, $own);
             } catch (LogicException $e) {
                 return new self([], $e->getMessage());
             }

@@ -159,21 +159,21 @@ final class Answers
             return [null, null];
         }
 
-        foreach ($types as $type) {
-            if ($type->isInterface() && $type->isInternal()) {
-                return [null, null];
-            }
-        }
-
         [$base, $methods, $refusal] = Double::planOf($types);
 
         if ($methods === null) {
             return [null, $refusal];
         }
 
+        foreach ($types as $type) {
+            if ($type->isInterface() && $type->isInternal()) {
+                return [null, null];
+            }
+        }
+
         $className = 'MockedMethodFor' . $suffix;
         $interfaces = array_map(static fn(ReflectionClass $type): string => '\\' . $type->getName(), array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface())));
-        $extends = $first->isInterface() ? $base?->extends() : '\\' . $first->getName();
+        $extends = $base?->extends() ?? ($first->isInterface() ? null : '\\' . $first->getName());
 
         return [self::evaluated($className, self::wrapperCode($className, $extends, [...$interfaces, ...($base?->implements() ?? [])], $first->isInterface() && $base?->extends() !== null, $methodName, self::answerMethods($methods->contracts, $base))), null];
     }
