@@ -21,6 +21,100 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A double stands in for a method that takes or returns by reference, or defaults to a new object
+    Given a class "src/App/Shapes.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Clock
+      {
+          public function __construct(public int $at = 0) {}
+      }
+
+      interface Mapping
+      {
+          public function set(array &$mapping): void;
+
+          public function &all(): array;
+
+          public function fill(&...$slots): int;
+
+          public function at(Clock $clock = new Clock()): int;
+      }
+
+      class Holder
+      {
+          public function &get(): array
+          {
+              static $held = [];
+
+              return $held;
+          }
+      }
+
+      class UsesHolder
+      {
+          public function __construct(private Holder $holder) {}
+      }
+      """
+    And a spec file "spec/App/Mapping.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Shapes.php';
+
+      use App\Clock;
+      use App\Holder;
+      use App\Mapping;
+      use App\UsesHolder;
+
+      describe(Mapping::class, function () {
+          it('takes an argument by reference', function () {
+              $mapping = mock(Mapping::class);
+              $map = ['version' => 1];
+
+              expect($mapping->set($map))->toBeCalled();
+
+              $mapping->set($map);
+          });
+
+          it('returns by reference', function () {
+              $mapping = mock(Mapping::class);
+              $holder = mock(Holder::class);
+
+              allow($mapping->all())->toReturn(['a' => 1]);
+              allow($holder->get())->toReturn(['b' => 2]);
+
+              expect($mapping->all())->toBe(['a' => 1]);
+              expect($holder->get())->toBe(['b' => 2]);
+              expect(mock(UsesHolder::class))->toBeAnInstanceOf(UsesHolder::class);
+          });
+
+          it('takes a variadic by reference', function () {
+              $mapping = mock(Mapping::class);
+              $slot = 1;
+
+              allow($mapping->fill($slot))->toReturn(3);
+
+              expect($mapping->fill($slot))->toBe(3);
+          });
+
+          it('hands a callback the default a parameter builds with new', function () {
+              $mapping = mock(Mapping::class);
+
+              allow($mapping->at())->toReturnUsing(fn(Clock $clock): int => $clock->at + 7);
+
+              expect($mapping->at())->toBe(7);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "4"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

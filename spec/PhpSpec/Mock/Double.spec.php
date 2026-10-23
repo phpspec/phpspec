@@ -259,6 +259,35 @@ readonly class DoubleSpecReadonlyClass {
     public function __construct(public string $name) {}
 }
 
+interface DoubleSpecByReference {
+    public function set(array &$mapping): void;
+    public function fill(&...$slots): int;
+    public function &all(): array;
+    public function &maybe(): ?array;
+    public function &anything(): mixed;
+    public function &status(): DoubleSpecStatus;
+    public function &contract(): DoubleSpecContract;
+    public function &loose();
+    public function &either(): int|string;
+    public function &orNull(): int|string|null;
+}
+
+class DoubleSpecHolder {
+    public function &get(): array { static $held = []; return $held; }
+}
+
+class DoubleSpecUsesHolder {
+    public function __construct(private DoubleSpecHolder $holder) {}
+}
+
+class DoubleSpecClock {
+    public function __construct(public int $at = 0) {}
+}
+
+interface DoubleSpecNewDefault {
+    public function at(DoubleSpecClock $clock = new DoubleSpecClock(), array $clocks = [new DoubleSpecClock(5)]): int;
+}
+
 describe(Double::class, function() {
 
     it("creates a double of an interface", function() {
@@ -269,6 +298,75 @@ describe(Double::class, function() {
     it("creates a double of a class", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         expect($double)->toBeAnInstanceOf(DoubleSpecClass::class);
+    });
+
+    context("a method that takes or returns by reference, or defaults to what only runs", function () {
+        it("stands in for an argument taken by reference, a variadic one among them", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $map = ['version' => 1];
+            $slot = 1;
+
+            $double->set($map);
+
+            expect($double->fill($slot))->toBe(0);
+        });
+
+        it("returns by reference on every path without a notice", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $raised = [];
+            set_error_handler(function (int $level, string $message) use (&$raised): bool {
+                $raised[] = $message;
+
+                return true;
+            });
+
+            try {
+                $double->all();
+                $double->maybe();
+                $double->anything();
+                $double->status();
+                $double->contract();
+                $double->loose();
+                $double->either();
+                $double->orNull();
+            } finally {
+                restore_error_handler();
+            }
+
+            expect($raised)->toBe([]);
+        });
+
+        it("doubles a class returning by reference, and a class that takes one in its constructor", function () {
+            expect(Double::getInstance(DoubleSpecHolder::class)->get())->toBe([]);
+            expect(Double::getInstance(DoubleSpecUsesHolder::class))->toBeAnInstanceOf(DoubleSpecUsesHolder::class);
+        });
+
+        it("hands a callback each default built with new, built afresh on each call", function () {
+            $double = Double::getInstance(DoubleSpecNewDefault::class);
+            $seen = [];
+            allow($double->at())->toReturnUsing(function (DoubleSpecClock $clock, array $clocks) use (&$seen): int {
+                $seen[] = $clock;
+
+                return $clock->at + $clocks[0]->at;
+            });
+
+            expect($double->at())->toBe(5);
+            expect($double->at())->toBe(5);
+            expect($seen[0])->not()->toBe($seen[1]);
+        });
+
+        if (PHP_VERSION_ID >= 80500) {
+            it("hands a callback a default closure", function () {
+                if (!interface_exists('DoubleSpecClosureDefault')) {
+                    eval('interface DoubleSpecClosureDefault { public function run(\\Closure $then = static function (): int { return 9; }): int; }');
+                }
+                $double = Double::getInstance('DoubleSpecClosureDefault');
+
+                allow($double->run())->toReturnUsing(fn(\Closure $then): int => $then());
+
+                expect($double->run())->toBe(9);
+            });
+        }
     });
 
     it("tracks method calls", function() {

@@ -24,6 +24,7 @@ use ReflectionParameter;
 use ReflectionType;
 use ReflectionUnionType;
 use Throwable;
+use UnitEnum;
 
 /**
  * @internal
@@ -353,7 +354,6 @@ PHP;
      */
     private static function getUnionReturnCode(ReflectionUnionType $type): string
     {
-        $clear = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; ';
         $typeNames = array_map(
             fn(ReflectionNamedType|ReflectionIntersectionType $t) => $t instanceof ReflectionNamedType ? $t->getName() : (string) $t,
             $type->getTypes(),
@@ -361,18 +361,18 @@ PHP;
 
         // If null is in the union, return null
         if (in_array('null', $typeNames)) {
-            return $clear . 'return null;';
+            return self::returning('null');
         }
 
         // Pick the simplest type to return
         $map = ['string' => "''", 'int' => '0', 'float' => '0.0', 'bool' => 'false', 'array' => '[]'];
         foreach ($map as $name => $value) {
             if (in_array($name, $typeNames)) {
-                return "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+                return self::returning($value);
             }
         }
 
-        return $clear . 'return null;';
+        return self::returning('null');
     }
 
     /**
@@ -564,13 +564,13 @@ PHP;
      */
     private static function getBuiltinReturnCode(string $typeName): ?string
     {
-        $returning = static fn(string $value): string => "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+        $returning = self::returning(...);
 
         return match ($typeName) {
             'string' => $returning("''"),
             'void' => 'return;',
             'never' => "throw new \\RuntimeException('Mock method should not be called');",
-            'mixed' => 'return null;',
+            'mixed' => $returning('null'),
             'array', 'iterable' => $returning('[]'),
             'int' => $returning('0'),
             'float' => $returning('0.0'),
@@ -584,6 +584,56 @@ PHP;
             'Generator' => $returning('(static fn() => yield from [])()'),
             default => null,
         };
+    }
+
+    /**
+     * Returns a value through a variable, as a method returning by reference
+     * must, and keeps it as the last value a double returned.
+     */
+    private static function returning(string $value): string
+    {
+        return "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+    }
+
+    /**
+     * Whether var_export() writes the value as code a default may hold: no
+     * object other than an enum case, which only runs (new, a closure).
+     */
+    private static function writable(mixed $value): bool
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if (!self::writable($item)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return !is_object($value) || $value instanceof UnitEnum;
+    }
+
+    /**
+     * The default a parameter builds when the call leaves it out, since it
+     * cannot be written into the double's signature: an object afresh on every
+     * call, as PHP builds it, and a closure once, so a call that leaves it out
+     * matches a declaration that left it out too.
+     */
+    private static function defaultCode(ReflectionMethod $method, ReflectionParameter $parameter): string
+    {
+        if (!$parameter->isDefaultValueAvailable()) {
+            return '';
+        }
+
+        return sprintf(
+            'if (\\func_num_args() < %1$d) { static $__closure_%2$s = null; $%2$s = (new \\ReflectionParameter([%3$s, %4$s], %5$s))->getDefaultValue(); if ($%2$s instanceof \\Closure) { $%2$s = $__closure_%2$s ??= $%2$s; } }',
+            $parameter->getPosition() + 1,
+            $parameter->getName(),
+            var_export($method->class, true),
+            var_export($method->getName(), true),
+            var_export($parameter->getName(), true),
+        );
     }
 
     /**
@@ -737,16 +787,18 @@ PHP;
             // All parameters get defaults so mocks can be called with no args
             // (needed for allow($mock->method())->toReturn(...) stub setup)
             $paramStrings = [];
+            $defaults = '';
             foreach ($parameters as $parameter) {
                 // Use mixed for all params so ArgumentMatcher objects can be passed
                 // (parameter contravariance allows widening in an implementing class)
-                $typeStr = 'mixed ';
+                $typeStr = 'mixed ' . ($parameter->isPassedByReference() ? '&' : '');
                 if ($parameter->isVariadic()) {
                     $paramStr = $typeStr . '...$' . $parameter->getName();
-                } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable()) {
+                } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable() && self::writable($parameter->getDefaultValue())) {
                     $paramStr = $typeStr . '$' . $parameter->getName() . ' = ' . var_export($parameter->getDefaultValue(), true);
                 } else {
                     $paramStr = $typeStr . '$' . $parameter->getName() . ' = null';
+                    $defaults .= self::defaultCode($method, $parameter);
                 }
                 $paramStrings[] = $paramStr;
             }
@@ -886,18 +938,18 @@ PHP;
             $return = '';
             if ($isNullable && $simpleReturnName !== 'mixed' && !isset($className)) {
                 // Nullable types can just return null, clear mock state
-                $return = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return null;';
+                $return = self::returning('null');
             } elseif ($isCompoundType && !isset($className)) {
                 // Union/intersection types: return null if nullable, else pick simplest
                 if ($returnedType instanceof ReflectionUnionType) {
                     $return = self::getUnionReturnCode($returnedType);
                 } else {
-                    $return = 'return null;';
+                    $return = self::returning('null');
                 }
             } elseif (isset($className)) {
-                $return = 'return new \\' . $className . '($this);';
+                $return = '$__ret = new \\' . $className . '($this); return $__ret;';
             } elseif ($isEnum) {
-                $return = "return \\{$simpleReturnName}::cases()[0];";
+                $return = "\$__ret = \\{$simpleReturnName}::cases()[0]; return \$__ret;";
             } elseif ($simpleReturnName !== null) {
                 $return = self::getBuiltinReturnCode($simpleReturnName)
                     ?? self::placeholderReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName, $depth === 0);
@@ -924,10 +976,13 @@ PHP;
                     . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 
+            $byReference = $method->returnsReference() ? '&' : '';
+
             // put it all together
             $mockMethods[] = <<<PHP
-    public function $methodName($paramString)$returnedTypeSyntax {
+    public function {$byReference}$methodName($paramString)$returnedTypeSyntax {
         $hold
+        $defaults
         \$__args = $arguments;
         \$this->______PhpSpecWasCalledWith('$methodName', \$__args);
         $stubCheck
