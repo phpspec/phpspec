@@ -270,6 +270,8 @@ interface DoubleSpecByReference {
     public function &loose();
     public function &either(): int|string;
     public function &orNull(): int|string|null;
+    public function take(int &$value): mixed;
+    public function log(string $message, int ...$context): void;
 }
 
 class DoubleSpecHolder {
@@ -405,6 +407,43 @@ describe(Double::class, function() {
             $all['b'] = 2;
 
             expect($store)->toBe(['a' => 1, 'b' => 2]);
+        });
+
+        it("converts a scalar it takes by reference, for the callback and the caller, as PHP does", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = any();
+            allow($double->take($anything))->toReturnUsing(fn($value) => $value);
+            $value = '7';
+
+            expect($double->take($value))->toBe(7);
+            expect($value)->toBe(7);
+        });
+
+        it("records the named arguments a variadic collects, held to its type", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+
+            $double->log('hi', user: '7');
+
+            expect($double->log('hi', user: 7))->toHaveBeenCalled();
+            expect($double->log('hi', user: 8))->not()->toHaveBeenCalled();
+            expect($double->log('hi', 7))->not()->toHaveBeenCalled();
+        });
+
+        it("hands a callback the named arguments a by-reference variadic collects, as references", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = cetera();
+            allow($double->fill($anything))->toReturnUsing(function (&...$slots): int {
+                foreach ($slots as &$slot) {
+                    $slot++;
+                }
+
+                return count($slots);
+            });
+            $first = 1;
+            $second = 2;
+
+            expect($double->fill($first, second: $second))->toBe(2);
+            expect([$first, $second])->toBe([2, 3]);
         });
 
         it("hands back a copy of a value stubbed with toReturn, never the value itself", function () {

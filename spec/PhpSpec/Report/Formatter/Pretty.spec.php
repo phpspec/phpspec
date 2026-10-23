@@ -153,6 +153,18 @@ describe(Pretty::class, function() {
         expect($text)->not()->toContain('method =>');
     });
 
+    it("names an argument a variadic collected in a mock verification, as the call was written", function() {
+        $output = new BufferedOutput();
+        $received = ['method' => 'App\\Journal::log', 'calls' => [['arguments' => ['hi', 'user' => 'ann']]]];
+        $wanted = ['method' => 'App\\Journal::log', 'arguments' => ['hi', 'user' => 'bob'], 'times' => 'at least 1'];
+        $example = new ExampleResult("verifies", [MatchResult::failed($received, $wanted, 'Expected App\\Journal::log() to have been called', __FILE__, __LINE__, null, 'toHaveBeenCalled', false)]);
+        (new Pretty($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$example])]));
+
+        $text = $output->fetch();
+        expect($text)->toContain('expected: at least 1 call to App\\Journal::log("hi", user: "bob")');
+        expect($text)->toContain('got: App\\Journal::log("hi", user: "ann")');
+    });
+
     it("caps a long multiline value to head and tail around a marker, newlines escaped", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

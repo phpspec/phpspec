@@ -205,6 +205,73 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double sees the named arguments a variadic collects, and converts what it takes by reference as PHP does
+    Given a class "src/App/Journal.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Journal
+      {
+          public function log(string $message, string ...$context): void;
+
+          public function fill(&...$slots): int;
+
+          public function take(int &$value): mixed;
+      }
+      """
+    And a spec file "spec/App/Journal.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Journal.php';
+
+      use App\Journal;
+
+      describe(Journal::class, function () {
+          it('records the named arguments a variadic collects', function () {
+              $journal = mock(Journal::class);
+
+              $journal->log('hi', user: 'ann');
+
+              expect($journal->log('hi', user: 'ann'))->toHaveBeenCalled();
+              expect($journal->log('hi', user: 'bob'))->not()->toHaveBeenCalled();
+          });
+
+          it('writes through named arguments a by-reference variadic collects', function () {
+              $journal = mock(Journal::class);
+              $anything = cetera();
+              allow($journal->fill($anything))->toReturnUsing(function (&...$slots): int {
+                  foreach ($slots as &$slot) {
+                      $slot *= 10;
+                  }
+
+                  return count($slots);
+              });
+              $first = 1;
+              $second = 2;
+
+              expect($journal->fill(first: $first, second: $second))->toBe(2);
+              expect([$first, $second])->toBe([10, 20]);
+          });
+
+          it('converts a scalar taken by reference, for the callback and the caller', function () {
+              $journal = mock(Journal::class);
+              $anything = any();
+              allow($journal->take($anything))->toReturnUsing(fn($value) => $value);
+              $value = '7';
+
+              expect($journal->take($value))->toBe(7);
+              expect($value)->toBe(7);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "3"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

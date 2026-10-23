@@ -127,4 +127,11 @@ describe(MethodCallsStack::class, function() {
         expect($this->stack->callsTo("log"))->toBe([["arguments" => ["a"]]]);
     });
 
+    it("keeps the name of an argument a variadic collected", function () {
+        $subject = new stdClass();
+        $this->stack->push(new MockedMethod($subject, "log", ["hi", "user" => "ann"]));
+
+        expect($this->stack->callsTo("log"))->toBe([["arguments" => ["hi", "user" => "ann"]]]);
+    });
+
 });

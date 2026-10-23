@@ -482,7 +482,8 @@ PHP;
 
     /**
      * The code for a call's arguments with the defaults it left out filled
-     * in, so a call is matched as the call it is however it was written.
+     * in, and the named arguments a variadic collected after them, so a call
+     * is matched as the call it is however it was written.
      *
      * @param list<ReflectionParameter> $parameters
      */
@@ -499,14 +500,50 @@ PHP;
         }
 
         if ($held) {
-            return $named === [] ? '$__given' : sprintf('\\array_merge($__given, \\array_slice([%s], \\count($__given)))', implode(', ', $named));
+            $positional = $named === [] ? '$__given' : sprintf('\\array_merge($__given, \\array_slice([%s], \\count($__given)))', implode(', ', $named));
+        } else {
+            $positional = $named === [] ? '\\func_get_args()' : sprintf('\\array_merge([%s], \\array_slice(\\func_get_args(), %d))', implode(', ', $named), count($named));
         }
 
-        if ($named === []) {
-            return '\\func_get_args()';
+        return self::variadicOf($parameters) === null ? $positional : sprintf('\\array_merge(%s, $__named)', $positional);
+    }
+
+    /**
+     * @param list<ReflectionParameter> $parameters
+     */
+    private static function variadicOf(array $parameters): ?ReflectionParameter
+    {
+        $last = end($parameters);
+
+        return $last !== false && $last->isVariadic() ? $last : null;
+    }
+
+    /**
+     * The named arguments a variadic parameter collected, which PHP leaves out
+     * of func_get_args(): held to the parameter's type where the call is held,
+     * as they came otherwise; nothing for a method with no variadic.
+     *
+     * @param list<ReflectionParameter> $parameters
+     */
+    private static function namedCode(array $parameters, string $methodName, bool $held): string
+    {
+        $variadic = self::variadicOf($parameters);
+
+        if ($variadic === null) {
+            return '';
         }
 
-        return sprintf('\\array_merge([%s], \\array_slice(\\func_get_args(), %d))', implode(', ', $named), count($named));
+        $collected = sprintf("\\array_filter(\$%s, '\\is_string', \\ARRAY_FILTER_USE_KEY)", $variadic->getName());
+
+        if (!$held) {
+            return sprintf('$__named = %s;', $collected);
+        }
+
+        return sprintf(
+            "\$__named = \$this->______phpspec_signatures[%s]->holdNamed(%s, \\func_num_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
+            var_export($methodName, true),
+            $collected,
+        );
     }
 
     /**
@@ -639,6 +676,8 @@ PHP;
      * The arguments a stub's callback is handed, each one the method takes by
      * reference handed as that reference, so what the callback writes into it
      * reaches the caller; none when the method takes nothing by reference.
+     * The reference first takes the argument as it was held, so the caller's
+     * variable is converted to the parameter's type as PHP converts it.
      *
      * @param list<ReflectionParameter> $parameters
      */
@@ -652,8 +691,8 @@ PHP;
             }
 
             $references .= $parameter->isVariadic()
-                ? sprintf(' foreach (\\array_keys($%1$s) as $__key) { if (\\is_int($__key)) { $__passing[%2$d + $__key] = &$%1$s[$__key]; } }', $parameter->getName(), $parameter->getPosition())
-                : sprintf(' if (\\array_key_exists(%2$d, $__passing)) { $__passing[%2$d] = &$%1$s; }', $parameter->getName(), $parameter->getPosition());
+                ? sprintf(' foreach (\\array_keys($%1$s) as $__key) { $__at = \\is_int($__key) ? %2$d + $__key : $__key; if (\\array_key_exists($__at, $__passing)) { $%1$s[$__key] = $__passing[$__at]; $__passing[$__at] = &$%1$s[$__key]; } }', $parameter->getName(), $parameter->getPosition())
+                : sprintf(' if (\\array_key_exists(%2$d, $__passing)) { $%1$s = $__passing[%2$d]; $__passing[%2$d] = &$%1$s; }', $parameter->getName(), $parameter->getPosition());
         }
 
         return $references === '' ? '' : '$__passing = $__args;' . $references;
@@ -832,6 +871,7 @@ PHP;
                 : "\$__ret = (\$__match['data'])(...$callWith);";
             $paramString = implode(', ', $paramStrings);
             $arguments = self::argumentsCode($parameters, $depth === 0);
+            $named = self::namedCode($parameters, $methodName, $depth === 0);
             $hold = $depth === 0 ? self::holdCode($reflectionClass->getName(), $method) : '';
             $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s, self::class))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
 
@@ -1011,6 +1051,7 @@ PHP;
     public function {$byReference}$methodName($paramString)$returnedTypeSyntax {
         $defaults
         $hold
+        $named
         \$__args = $arguments;
         $passing
         \$this->______PhpSpecWasCalledWith('$methodName', \$__args);

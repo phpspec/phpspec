@@ -351,13 +351,13 @@ final class DetailSections
     {
         $times = (string) $wanted['times'];
         $count = preg_match('/(\d+)$/', $times, $digits) === 1 ? (int) $digits[1] : 1;
-        $arguments = is_array($wanted['arguments'] ?? null) ? array_values($wanted['arguments']) : null;
+        $arguments = is_array($wanted['arguments'] ?? null) ? $wanted['arguments'] : null;
         $call = sprintf('%s call%s to %s', $times, $count === 1 ? '' : 's', self::call((string) $wanted['method'], $arguments));
 
         $calls = [];
         foreach (is_array($received['calls']) ? $received['calls'] : [] as $made) {
             if (is_array($made) && is_array($made['arguments'] ?? null)) {
-                $calls[] = self::call((string) $received['method'], array_values($made['arguments']));
+                $calls[] = self::call((string) $received['method'], $made['arguments']);
             }
         }
 
@@ -365,11 +365,23 @@ final class DetailSections
     }
 
     /**
-     * @param list<mixed>|null $arguments the arguments, or null when any will do
+     * The call as it is written, an argument a variadic collected by name
+     * written with its name.
+     *
+     * @param array<int|string, mixed>|null $arguments the arguments, or null when any will do
      */
     private static function call(string $method, ?array $arguments): string
     {
-        return $method . '(' . ($arguments === null ? 'any arguments' : implode(', ', array_map(Typed::value(...), $arguments))) . ')';
+        if ($arguments === null) {
+            return $method . '(any arguments)';
+        }
+
+        $written = [];
+        foreach ($arguments as $name => $argument) {
+            $written[] = (is_string($name) ? $name . ': ' : '') . Typed::value($argument);
+        }
+
+        return $method . '(' . implode(', ', $written) . ')';
     }
 
     /**

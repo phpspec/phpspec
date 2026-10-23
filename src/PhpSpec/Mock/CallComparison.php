@@ -37,14 +37,14 @@ final readonly class CallComparison
     ) {}
 
     /**
-     * @return array{method: string, arguments?: list<mixed>, times: string}
+     * @return array{method: string, arguments?: array<int|string, mixed>, times: string}
      */
     public function wanted(): array
     {
         $wanted = ['method' => $this->name()];
 
         if ($this->arguments !== null) {
-            $wanted['arguments'] = array_map(self::describe(...), array_values($this->arguments));
+            $wanted['arguments'] = array_map(self::describe(...), $this->arguments);
         }
 
         $wanted['times'] = $this->times;
@@ -53,7 +53,7 @@ final readonly class CallComparison
     }
 
     /**
-     * @return array{method: string, calls: list<array{arguments: list<mixed>}>}
+     * @return array{method: string, calls: list<array{arguments: array<int|string, mixed>}>}
      */
     public function received(): array
     {

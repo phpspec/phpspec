@@ -122,7 +122,7 @@ final class MethodCallsStack
      * they came. A call taken back, which is what a verification's own call
      * becomes, is not one the double received.
      *
-     * @return list<array{arguments: list<mixed>}>
+     * @return list<array{arguments: array<int|string, mixed>}>
      */
     public function callsTo(string $method): array
     {
@@ -130,7 +130,7 @@ final class MethodCallsStack
 
         foreach ($this->stack as $mockedMethod) {
             if ($mockedMethod->method === $method && $mockedMethod->getTimesCalled() > 0) {
-                $calls[] = ['arguments' => array_values($mockedMethod->arguments)];
+                $calls[] = ['arguments' => $mockedMethod->arguments];
             }
         }
 

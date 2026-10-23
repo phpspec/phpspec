@@ -144,7 +144,9 @@ the call the spec wanted with the calls the double received, arguments included:
 
 `arguments` are the ones the expectation was written with, `[]` for a call
 written with none, and an argument matcher reads as it was written: `any()`,
-`cetera()`, `type(string)`, `anInstanceOf(App\Task)`.
+`cetera()`, `type(string)`, `anInstanceOf(App\Task)`. A named argument a
+variadic parameter collected keeps its name, so a call written
+`log('hi', user: 'ann')` reads `{"0": "hi", "user": "ann"}`.
 
 A **story step** that failed an expectation reports the same block, on the step
 inside `steps` (with `at`, the `file:line` of the expectation in your step file)
