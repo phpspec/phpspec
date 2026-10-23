@@ -39,9 +39,11 @@ function mock(string $class): object
 }
 
 /**
- * Creates a lenient test double. A call nothing declared with allow() or
- * expect() returns a default for its type wherever it is made, where a double
- * from mock() refuses such a call made from outside the spec code.
+ * Creates a dummy: a double that stands in for the real thing with no
+ * behaviour. Every call returns a default for its type, a dummy of a class or
+ * interface it returns, wherever it is made. A dummy takes no stub or
+ * expectation, and neither does what it answered: a spec that needs either
+ * needs a mock().
  *
  * @param class-string<object> $class fully qualified class or interface name
  * @return object the generated test double instance
@@ -53,7 +55,7 @@ function dummy(string $class): object
     $double = mock($class);
 
     if ($double instanceof GeneratedDouble) {
-        $double->______PhpSpecBeLenient();
+        $double->______PhpSpecBeDummy();
     }
 
     return $double;
@@ -192,6 +194,7 @@ function allow(mixed $returnValue = null): LastCallDouble
  */
 function declared(GeneratedDouble $double, string $method): LastCallDouble
 {
+    $double->______PhpSpecArrange($method, 'stubbed');
     $calls = $double->______PhpSpecGetStubbedCalls();
     $args = $calls->writtenFor($method);
     $arranging = $calls->peek();

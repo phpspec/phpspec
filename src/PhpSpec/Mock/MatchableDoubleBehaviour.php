@@ -26,8 +26,8 @@ namespace PhpSpec\Mock;
  */
 trait MatchableDoubleBehaviour
 {
-    /** @var object The parent test double instance */
-    private object $______phpspec_mockedObject;
+    /** @var GeneratedDouble The parent test double instance */
+    private GeneratedDouble $______phpspec_mockedObject;
 
     /** @var string The method name this wrapper represents */
     private string $______phpspec_methodName;
@@ -66,6 +66,24 @@ trait MatchableDoubleBehaviour
         $this->______PhpSpecAsWritten()->toThrow($exception, $message);
 
         return $this;
+    }
+
+    /**
+     * The refusal of a call on this answer, which is not for use: held when
+     * the code under spec made it, so catching it hides nothing.
+     *
+     * @param array<int, mixed> $arguments
+     * @param array{file?: string, line?: int} $frame
+     */
+    private function ______PhpSpecUsed(string $class, string $method, array $arguments, array $frame): UnexpectedCallException
+    {
+        $refusal = UnexpectedCallException::onAnswer($class, $method, $arguments, $frame['file'] ?? '', $frame['line'] ?? 0, $this->______phpspec_mockedObject->______PhpSpecChainTo($this->______phpspec_methodName));
+
+        if (!ArrangingCode::includes($frame['file'] ?? '')) {
+            HeldCalls::hold($this, $method, $arguments, $refusal);
+        }
+
+        return $refusal;
     }
 
     private function ______PhpSpecAsWritten(): LastCallDouble

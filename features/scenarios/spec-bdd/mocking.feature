@@ -1447,6 +1447,91 @@ Feature: Mocking
     When I run phpspec run
     Then all examples should pass
 
+  Scenario: A dummy answers a class with a dummy of it and takes no stubs, a mock that ignores the rest stubs only what matters, and a mock is stubbed link by link
+    Given an interface "src/App/Book.php":
+      """
+      <?php
+      namespace App;
+
+      interface Page {
+          public function title(): string;
+          public function next(): Page;
+      }
+
+      interface Book {
+          public function first(): Page;
+          public function pages(): int;
+      }
+      """
+    And a class "src/App/Reader.php":
+      """
+      <?php
+      namespace App;
+
+      class Reader {
+          public function __construct(private Book $book) {}
+          public function secondTitle(): string
+          {
+              return $this->book->first()->next()->title();
+          }
+          public function length(): int
+          {
+              return $this->book->pages();
+          }
+      }
+      """
+    And a spec file "spec/App/Reader.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/../../src/App/Book.php';
+
+      use App\Book;
+      use App\Page;
+      use App\Reader;
+
+      describe('Reader', function () {
+          it('reads through a dummy book, whose pages are dummies too', function () {
+              expect((new Reader(dummy(Book::class)))->secondTitle())->toBe('');
+          });
+
+          it('stubs the pages of a dummy book', function () {
+              $book = dummy(Book::class);
+              allow($book->pages())->toReturn(3);
+          });
+
+          it('counts the pages a mock book was stubbed with, reading the rest as defaults', function (Book $book) {
+              allow($book->pages())->toReturn(3)->ignoreOthers();
+
+              expect((new Reader($book))->length())->toBe(3);
+              expect((new Reader($book))->secondTitle())->toBe('');
+          });
+
+          it('stubs a page a dummy book answered', function () {
+              $book = dummy(Book::class);
+              allow($book->first()->next()->title())->toReturn('Two');
+          });
+
+          it('reads the page each link of a mock book was stubbed with', function (Book $book, Page $first, Page $second) {
+              allow($book->first())->toReturn($first);
+              allow($first->next())->toReturn($second);
+              allow($second->title())->toReturn('Two');
+
+              expect((new Reader($book))->secondTitle())->toBe('Two');
+          });
+
+          it('reads through a mock book nobody stubbed', function (Book $book) {
+              expect((new Reader($book))->secondTitle())->toBe('');
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "3 passed"
+    And the output should contain "App\Book::pages() was stubbed on a dummy. Use mock() instead of dummy()."
+    And the output should contain "App\Page::title() was stubbed on what dummy App\Book::first()->next() answered. Use mock() instead of dummy() and stub App\Book::first()."
+    And the output should contain "App\Book::first() was called but not expected, at src/App/Reader.php:8."
+    And the output should not contain "PhpSpecWasCalledWith"
+    And the exit code should be 1
+
   Scenario: A method returning a final class can be stubbed
     Given a class "src/App/Coin.php":
       """

@@ -29,6 +29,30 @@ interface GeneratedDouble
     public function ______PhpSpecBeLenient(): void;
 
     /**
+     * Makes the double a dummy: lenient, and taking no stub or expectation.
+     */
+    public function ______PhpSpecBeDummy(): void;
+
+    /**
+     * Takes a stub or an expectation on the method, which a dummy refuses.
+     *
+     * @param string $as what the spec did to the method: stubbed, expected or checked
+     */
+    public function ______PhpSpecArrange(string $method, string $as): void;
+
+    /**
+     * The calls that lead to what the double answers to the method, written
+     * as the spec writes them.
+     */
+    public function ______PhpSpecChainTo(string $method): string;
+
+    /**
+     * How the spec stubs what the double answers to the method, a dummy's
+     * answer being no double the spec can stub.
+     */
+    public function ______PhpSpecStubAdvice(string $method): string;
+
+    /**
      * @param array<int, mixed>|null $args
      */
     public function ______PhpSpecDeclare(string $method, ?array $args): void;

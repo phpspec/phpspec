@@ -39,13 +39,23 @@ Cannot create a test double for interface App\Labelled. Only an enum can impleme
 
 A double from `mock()` is strict: a call to it that the spec never declared,
 made from the code under spec, fails the example unless a `toHaveBeenCalled()`
-after the act checks it. `dummy()` makes a
-lenient double for a collaborator whose calls do not matter, a logger passed
-along for instance. It answers every call with a default for the return type
-and still takes stubs:
+after the act checks it. `dummy()` makes a double that stands in for the real
+thing with no behaviour, for a collaborator whose calls do not matter, a logger
+passed along for instance:
 
 ```php
 $logger = dummy(Logger::class);
+```
+
+Every call returns a default for its return type, and a method returning a
+class or interface answers a dummy of it, so a chain the code under spec
+follows is answered with defaults at any depth. A dummy takes no stub or
+expectation, and neither does what it answered. A spec that needs one needs a
+`mock()`, which ends a stub in `ignoreOthers()` when only some calls matter:
+
+```
+App\Book::pages() was stubbed on a dummy. Use mock() instead of dummy().
+App\Page::title() was stubbed on what dummy App\Book::first()->next() answered. Use mock() instead of dummy() and stub App\Book::first().
 ```
 
 ### Type-Hinted Mock Injection
@@ -149,13 +159,30 @@ exception it would throw: `expect(fn () => $repo->find(1))->toThrow(...)`.
 ### What an unstubbed call returns
 
 A method nobody stubbed returns a default for its return type: `''`, `0`,
-`false`, `[]`, `null` where allowed, a double of a class or interface it
-returns, an empty `iterable`, a `Closure`, an empty `Generator`, `true` or
-`false` for those types, the double itself for `static`, `self` and `parent`.
+`false`, `[]`, `null` where allowed, an answer of the class or interface it
+returns (of the first a union of them names), an empty `iterable`, a
+`Closure`, an empty `Generator`, `true` or `false` for those types, the double
+itself for `static`, `self` and `parent`.
 A method returning an interface no double can be (one only an enum can
 implement) is refused when it is called, with the reason. A method returning a final class hands the spec an
 instance of it built without its constructor, for `allow()` to replace; a
-`dummy()` has nobody about to replace it and says so instead.
+lenient double has nobody about to replace it and says so instead.
+
+An answer stands for the call that returned it, for `allow()` and `expect()`
+to take. A lenient double, a `dummy()` or one that ignores others, answers a
+dummy. A strict double's answer is not for use: a call on it is refused, naming
+the call to stub, and the code under spec catching the refusal still fails the
+example. A chain the code under spec follows is stubbed one call at a time,
+each with a double of its own:
+
+```php
+allow($book->first())->toReturn($page);
+allow($page->next())->toReturn($second);
+```
+
+```
+App\Page::next() was called on what App\Book::first() answered, at src/App/Reader.php:8. Stub App\Book::first().
+```
 
 ## Calls the spec never declared
 
@@ -200,9 +227,8 @@ App\Stock::reserve(): Argument #2 ($quantity) must be of type int, string given,
 
 The spec file itself is free to call anything: that is how `allow()` and
 `expect()` reach the call they declare. A collaborator whose calls do not
-matter is a `dummy()`. A double that was injected by type hint, which
-`dummy()` cannot make, is left lenient for the rest by ending a stub in
-`ignoreOthers()`:
+matter is a `dummy()`. A stub that stubs only what matters, and answers the
+rest with defaults, ends a stub in `ignoreOthers()`:
 
 ```php
 beforeEach(function (Filesystem $fs) {
@@ -413,7 +439,7 @@ The mock system handles:
 - **Classes**: generates a subclass
 - **Interfaces**: generates an implementation
 - **Nullable types** (`?Foo`): wraps return with null handling
-- **Union types** (`Foo|Bar`): uses the first mockable type
+- **Union types** (`Foo|Bar`): answers with the first type that can have an answer
 - **Intersection types** (`Foo&Bar`): creates a combined implementation
 - **Enum types**: returns the first case as default
 - **Scalar return types** (`string`, `int`, `float`, `bool`, `array`): returns type-appropriate defaults
@@ -423,4 +449,3 @@ The mock system handles:
 - Final classes cannot be mocked (PHP reflection limitation)
 - Readonly classes cannot be mocked
 - Constructor dependency auto-resolution handles classes, interfaces, strings, arrays, and scalars
-- Circular type dependencies are capped at depth 3

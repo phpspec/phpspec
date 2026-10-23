@@ -4,6 +4,7 @@ use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Mock\UnexpectedCallException;
+use PhpSpec\ProjectRoot;
 
 interface DoubleSpecContract {
     public function doSomething(): string;
@@ -37,8 +38,24 @@ interface DoubleSpecTill {
 define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
 if (!function_exists('double_spec_outsider_reserves')) {
     register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
-    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\nfunction double_spec_outsider_greets(object \$double) { return \$double->greet(); }\n");
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\nfunction double_spec_outsider_greets(object \$double) { return \$double->greet(); }\nfunction double_spec_outsider_reads(object \$book) { return \$book->first()->next()->title(); }\n");
     require DOUBLE_SPEC_OUTSIDER;
+}
+
+define('DOUBLE_SPEC_FILE', ProjectRoot::here()->relative(__FILE__));
+
+// The message of what the call throws.
+if (!function_exists('double_spec_refusal')) {
+    function double_spec_refusal(Closure $call): string
+    {
+        try {
+            $call();
+        } catch (LogicException $e) {
+            return $e->getMessage();
+        }
+
+        return '';
+    }
 }
 
 // The same, in a file that declares strict types.
@@ -212,21 +229,6 @@ interface DoubleSpecIntersectionReturn {
     public function get(): DoubleSpecIntersectA&DoubleSpecIntersectB;
 }
 
-interface DoubleSpecDeep4 {
-    public function leaf(): string;
-}
-interface DoubleSpecDeep3 {
-    public function next(): DoubleSpecDeep4;
-}
-interface DoubleSpecDeep2 {
-    public function next(): DoubleSpecDeep3;
-}
-interface DoubleSpecDeep1 {
-    public function next(): DoubleSpecDeep2;
-}
-interface DoubleSpecDeepRoot {
-    public function next(): DoubleSpecDeep1;
-}
 
 class DoubleSpecOptionalParam {
     public function __construct(private string $required, private string $optional = 'default') {}
@@ -306,6 +308,20 @@ interface DoubleSpecNativeSource {
     public function label(): DoubleSpecLabelled;
     public function counted(): DoubleSpecBag&DoubleSpecSized;
     public function name(): string;
+}
+interface DoubleSpecPage {
+    public function title(): string;
+    public function next(): DoubleSpecPage;
+    public function line(int $number): string;
+    public function price(): DoubleSpecCoin;
+}
+interface DoubleSpecNumbered {
+    public function number(): int;
+}
+interface DoubleSpecBook {
+    public function first(): DoubleSpecPage;
+    public function numbered(): DoubleSpecPage&DoubleSpecNumbered;
+    public function either(): DoubleSpecCoin|DoubleSpecPage;
 }
 
 describe(Double::class, function() {
@@ -576,6 +592,93 @@ describe(Double::class, function() {
         });
     });
 
+    context("what a call nobody stubbed answers, of a class or interface", function () {
+        it("is of that type, refusing to be used, naming the call it answered", function () {
+            $page = Double::getInstance(DoubleSpecBook::class)->first();
+
+            expect($page)->toBeAnInstanceOf(DoubleSpecPage::class);
+            expect(double_spec_refusal(fn() => $page->line(3)))->toBe(sprintf('DoubleSpecPage::line(3) was called on what DoubleSpecBook::first() answered, at %s:%d. Stub DoubleSpecBook::first().', DOUBLE_SPEC_FILE, __LINE__));
+        });
+
+        it("is of every type an intersection names, each refusing to be used", function () {
+            $numbered = Double::getInstance(DoubleSpecBook::class)->numbered();
+
+            expect(double_spec_refusal(fn() => $numbered->number()))->toContain('DoubleSpecNumbered::number() was called on what DoubleSpecBook::numbered() answered');
+            expect(double_spec_refusal(fn() => $numbered->title()))->toContain('DoubleSpecPage::title() was called on what DoubleSpecBook::numbered() answered');
+        });
+
+        it("is of the first type of a union that can have one", function () {
+            expect(double_spec_refusal(fn() => Double::getInstance(DoubleSpecBook::class)->either()->title()))->toContain('DoubleSpecPage::title() was called on what DoubleSpecBook::either() answered');
+        });
+    });
+
+    context("what a dummy answers of a class or interface", function () {
+        it("is a dummy of it, so a chain is answered with defaults at any depth", function () {
+            $page = dummy(DoubleSpecBook::class)->first();
+
+            expect($page)->toBeAnInstanceOf(DoubleSpecPage::class);
+            expect($page->next()->next()->line(3))->toBe('');
+        });
+
+        it("is a dummy of every type an intersection names", function () {
+            $numbered = dummy(DoubleSpecBook::class)->numbered();
+
+            expect($numbered->number())->toBe(0);
+            expect($numbered->title())->toBe('');
+        });
+
+        it("is a dummy of the first type of a union that can have one", function () {
+            expect(dummy(DoubleSpecBook::class)->either()->title())->toBe('');
+        });
+
+        it("refuses a stub or an expectation, naming the call a mock() should answer instead", function () {
+            $page = dummy(DoubleSpecBook::class)->first();
+            $refusal = 'DoubleSpecPage::next() was %s on what dummy DoubleSpecBook::first() answered. Use mock() instead of dummy() and stub DoubleSpecBook::first().';
+
+            expect(double_spec_refusal(fn() => allow($page->next())))->toBe(sprintf($refusal, 'stubbed'));
+            expect(double_spec_refusal(fn() => $page->next()->toReturn(dummy(DoubleSpecPage::class))))->toBe(sprintf($refusal, 'stubbed'));
+            expect(double_spec_refusal(fn() => expect($page->next())->toReturn(dummy(DoubleSpecPage::class))))->toBe(sprintf($refusal, 'stubbed'));
+            expect(double_spec_refusal(fn() => expect($page->next())->toBeCalled()))->toBe(sprintf($refusal, 'expected'));
+            expect(double_spec_refusal(fn() => expect($page->next())->toHaveBeenCalled()))->toBe(sprintf($refusal, 'checked'));
+        });
+
+        it("names the chain that led to it, and the first call of it as the one to stub", function () {
+            $deeper = dummy(DoubleSpecBook::class)->first()->next();
+
+            expect(double_spec_refusal(fn() => allow($deeper->title())))->toBe('DoubleSpecPage::title() was stubbed on what dummy DoubleSpecBook::first()->next() answered. Use mock() instead of dummy() and stub DoubleSpecBook::first().');
+            expect(double_spec_refusal(fn() => $deeper->price()))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecPage::price(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecBook::first().');
+        });
+
+        it("names a mock that ignores others as the double to stub the first call of the chain on", function () {
+            $book = Double::getInstance(DoubleSpecBook::class);
+            $book->______PhpSpecBeLenient();
+
+            expect(double_spec_refusal(fn() => allow($book->first()->title())))->toBe('DoubleSpecPage::title() was stubbed on what dummy DoubleSpecBook::first() answered. Stub DoubleSpecBook::first() with a mock() instead.');
+        });
+    });
+
+    context("a dummy", function () {
+        it("refuses a stub or an expectation on any method", function () {
+            $book = dummy(DoubleSpecBook::class);
+            $stock = dummy(DoubleSpecStock::class);
+            $refusal = '%s() was %s on a dummy. Use mock() instead of dummy().';
+
+            expect(double_spec_refusal(fn() => allow($stock->reserve('tea', 2))->toReturn(true)))->toBe(sprintf($refusal, 'DoubleSpecStock::reserve', 'stubbed'));
+            expect(double_spec_refusal(fn() => allow($book->first())))->toBe(sprintf($refusal, 'DoubleSpecBook::first', 'stubbed'));
+            expect(double_spec_refusal(fn() => $book->first()->toReturn(dummy(DoubleSpecPage::class))))->toBe(sprintf($refusal, 'DoubleSpecBook::first', 'stubbed'));
+            expect(double_spec_refusal(fn() => expect($stock->reserve('tea', 2))->toBeCalled()))->toBe(sprintf($refusal, 'DoubleSpecStock::reserve', 'expected'));
+            expect(double_spec_refusal(fn() => expect($book->first())->toHaveBeenCalled()))->toBe(sprintf($refusal, 'DoubleSpecBook::first', 'checked'));
+        });
+
+        it("still has what it answered judged as any value", function () {
+            expect(dummy(DoubleSpecStock::class)->reserve('tea', 2))->toBeFalse();
+        });
+
+        it("says to use mock() instead when it cannot stand in for a final return type", function () {
+            expect(double_spec_refusal(fn() => dummy(DoubleSpecMachine::class)->coin()))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecMachine::coin(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecMachine::coin().');
+        });
+    });
+
     it("tracks method calls", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         $double->greet();
@@ -755,6 +858,26 @@ describe(Double::class, function() {
             allow($stock->reserve('coffee', 1))->toReturn(true)->ignoreOthers();
 
             expect(double_spec_outsider_reserves($stock))->toBeFalse();
+        });
+
+        it("refuses a chain nobody declared at its first call, before the use of what that call answered", function () {
+            $book = Double::getInstance(DoubleSpecBook::class);
+
+            expect(fn() => double_spec_outsider_reads($book))->toThrow(UnexpectedCallException::class);
+
+            expect(HeldCalls::take()?->getMessage())->toContain('DoubleSpecBook::first() was called but not expected');
+        });
+
+        it("holds the use of what a declared call answered, so code that catches it still fails", function () {
+            $book = Double::getInstance(DoubleSpecBook::class);
+            allow($book->first());
+
+            try {
+                double_spec_outsider_reads($book);
+            } catch (UnexpectedCallException) {
+            }
+
+            expect(HeldCalls::take()?->getMessage())->toContain('DoubleSpecPage::next() was called on what DoubleSpecBook::first() answered, at ' . str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER)));
         });
 
         it("answers every call with a default once made lenient", function () {
@@ -1012,11 +1135,6 @@ describe(Double::class, function() {
     it("handles intersection return type", function() {
         $double = Double::getInstance(DoubleSpecIntersectionReturn::class);
         expect($double)->toBeAnInstanceOf(DoubleSpecIntersectionReturn::class);
-    });
-
-    it("handles deep nesting hitting depth limit", function() {
-        $double = Double::getInstance(DoubleSpecDeepRoot::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecDeepRoot::class);
     });
 
     it("handles optional constructor parameters", function() {

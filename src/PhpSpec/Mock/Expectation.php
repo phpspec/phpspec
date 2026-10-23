@@ -112,6 +112,7 @@ final class Expectation extends BaseExpectation
             throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalled().');
         }
         $methodName = $method->method;
+        $double->______PhpSpecArrange($methodName, 'expected');
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
@@ -159,6 +160,7 @@ final class Expectation extends BaseExpectation
         }
 
         $methodName = $method->method;
+        $double->______PhpSpecArrange($methodName, 'checked');
         $method->unCall();
         $argPattern = $method->arguments;
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
