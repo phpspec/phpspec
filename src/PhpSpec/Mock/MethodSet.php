@@ -95,8 +95,8 @@ final readonly class MethodSet
 
         foreach ($declaring as [$owner, $type]) {
             foreach ($type->getMethods() as $method) {
-                // constructors, final and static methods, and internal magic methods stay as declared
-                if ($method->getName() === '__construct' || $method->isFinal() || $method->isStatic() || ($method->isInternal() && str_starts_with($method->getName(), '__'))) {
+                // constructors, final, static and private methods, and internal magic methods stay as declared
+                if ($method->getName() === '__construct' || $method->isFinal() || $method->isStatic() || $method->isPrivate() || ($method->isInternal() && str_starts_with($method->getName(), '__'))) {
                     continue;
                 }
 

@@ -80,16 +80,17 @@ final readonly class MethodContract
     }
 
     /**
-     * Whether every call each declaration takes, this method takes too, and
-     * what it returns each declaration admits: the test a method a base class
-     * declares final must pass, since a double cannot replace it.
+     * Whether every call each declaration takes, this method takes too, as a
+     * public method, and what it returns each declaration admits: the test a
+     * method a base class declares final must pass, since a double cannot
+     * replace it.
      *
      * @param list<string> $own the types of the double, which static stands for
      * @param list<string> $assumed the combinations of types being decided to share an instance, on the way here
      */
     public static function satisfies(ReflectionMethod $method, ReflectionMethod $declaration, array $own, array $assumed = []): bool
     {
-        if ($declaration->returnsReference() && !$method->returnsReference()) {
+        if (!$method->isPublic() || ($declaration->returnsReference() && !$method->returnsReference())) {
             return false;
         }
 

@@ -1048,6 +1048,84 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double of a class with an interface holds the class's protected final methods to the interface, and leaves its private ones out
+    Given a class "src/App/Visible.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Bag extends \Traversable {}
+
+      interface Rewinding
+      {
+          public function rewind(): void;
+      }
+
+      class Guarded
+      {
+          public function getIterator(): self
+          {
+              return $this;
+          }
+
+          final protected function rewind(): void {}
+      }
+
+      class Locked
+      {
+          final protected function rewind(): void {}
+      }
+
+      class Hidden
+      {
+          public function getIterator(): self
+          {
+              return $this;
+          }
+
+          private function valid(): true
+          {
+              return true;
+          }
+      }
+
+      interface Source
+      {
+          public function guarded(): Guarded&Bag;
+
+          public function locked(): Locked&Rewinding;
+
+          public function hidden(): Hidden&Bag;
+      }
+      """
+    And a spec file "spec/App/Visible.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Visible.php';
+
+      use App\Source;
+
+      describe('Visible', function () {
+          it('refuses only the call needing the protected final method to be public', function () {
+              $source = dummy(Source::class);
+
+              expect(fn() => iterator_to_array($source->guarded()))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Guarded&App\Bag::getIterator(): no empty iterator of App\Guarded&Traversable can be made. Iterator::rewind() narrows a method App\Guarded declares final.');
+              expect(fn() => $source->locked())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::locked(): no double of App\Locked&App\Rewinding can be made. App\Rewinding::rewind() narrows a method App\Locked declares final.');
+          });
+
+          it('ends the iteration of a class whose valid() is private', function () {
+              expect(iterator_to_array(dummy(Source::class)->hidden()))->toBe([]);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "2"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

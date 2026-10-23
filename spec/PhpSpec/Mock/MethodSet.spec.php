@@ -37,6 +37,19 @@ interface MethodSetSpecNarrowValue {
     public function value(): string;
 }
 
+class MethodSetSpecHidden {
+    private function value(): int { return 1; }
+    final protected function name(): string { return 'guarded'; }
+}
+
+interface MethodSetSpecValueOnly {
+    public function value(): string;
+}
+
+interface MethodSetSpecNameOnly {
+    public function name(): string;
+}
+
 interface MethodSetSpecByValue {
     public function fill(array $slots);
 }
@@ -93,6 +106,20 @@ describe(MethodSet::class, function () {
         $set = MethodSet::of($types, new NativeBase([$types[1]], static fn(string $interface): ?string => null, $types[0]));
 
         expect($set->refusal)->toBe('MethodSetSpecNarrowValue::value() narrows a method MethodSetSpecBase declares final.');
+    });
+
+    it('leaves out a private method of the class, which a subclass declares afresh', function () {
+        $types = [new ReflectionClass(MethodSetSpecHidden::class), new ReflectionClass(MethodSetSpecValueOnly::class)];
+        $set = MethodSet::of($types, new NativeBase([$types[1]], static fn(string $interface): ?string => null, $types[0]));
+
+        expect(($this->returns)($set))->toBe(['value' => ': string']);
+    });
+
+    it('refuses an interface declaring publicly a method the class declares final and protected', function () {
+        $types = [new ReflectionClass(MethodSetSpecHidden::class), new ReflectionClass(MethodSetSpecNameOnly::class)];
+        $set = MethodSet::of($types, new NativeBase([$types[1]], static fn(string $interface): ?string => null, $types[0]));
+
+        expect($set->refusal)->toBe('MethodSetSpecNameOnly::name() narrows a method MethodSetSpecHidden declares final.');
     });
 
     it('refuses types no class can implement every declaration of', function () {

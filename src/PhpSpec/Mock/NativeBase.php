@@ -163,7 +163,7 @@ final readonly class NativeBase
     /**
      * How the class a double extends declares the method, which a double
      * leaves as it is where that class declares it final; null when it
-     * declares no such public method.
+     * declares no such method a subclass inherits.
      */
     public function declaration(string $method): ?ReflectionMethod
     {
@@ -173,7 +173,7 @@ final readonly class NativeBase
 
         $declaration = new ReflectionMethod($this->extends, $method);
 
-        return $declaration->isPublic() && !$declaration->isStatic() ? $declaration : null;
+        return !$declaration->isPrivate() && !$declaration->isStatic() ? $declaration : null;
     }
 
     /**

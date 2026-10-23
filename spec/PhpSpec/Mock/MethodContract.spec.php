@@ -21,6 +21,10 @@ interface MethodContractSpecLong {
     public function held(): array;
 }
 
+class MethodContractSpecGuarded {
+    final protected function rewind(): void {}
+}
+
 interface MethodContractSpecFailure extends Throwable {
     public function getPrevious(): ?MethodContractSpecFailure;
 }
@@ -84,5 +88,9 @@ describe(MethodContract::class, function () {
 
         expect(MethodContract::satisfies($previous, new ReflectionMethod(Throwable::class, 'getPrevious'), []))->toBeTrue();
         expect(MethodContract::satisfies($previous, new ReflectionMethod(MethodContractSpecFailure::class, 'getPrevious'), []))->toBeFalse();
+    });
+
+    it('knows a method that is not public satisfies no declaration', function () {
+        expect(MethodContract::satisfies(new ReflectionMethod(MethodContractSpecGuarded::class, 'rewind'), new ReflectionMethod(Iterator::class, 'rewind'), []))->toBeFalse();
     });
 });
