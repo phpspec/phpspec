@@ -357,6 +357,157 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double of interfaces declaring one method differently takes every call each declares and returns what each admits
+    Given a class "src/App/Shelf.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface NarrowBag extends \Traversable
+      {
+          public function getIterator(): \ArrayIterator;
+      }
+
+      interface HalfPayload extends \Serializable
+      {
+          public function __unserialize(array $data): void;
+      }
+
+      interface Pages
+      {
+          public function count(): int;
+      }
+
+      interface Indexed
+      {
+          public function at(int $page): string;
+      }
+
+      interface Wide
+      {
+          public function items(): Pages;
+
+          public function put(string $key);
+      }
+
+      interface Narrow
+      {
+          public function items(): Indexed;
+
+          public function put(string $key, string $value = 'none');
+      }
+
+      interface Sized
+      {
+          public function size(): int;
+      }
+
+      interface Named
+      {
+          public function size(): string;
+      }
+
+      class Paper {}
+
+      class Ink {}
+
+      interface Printed
+      {
+          public function sheet(): Paper;
+      }
+
+      interface Inked
+      {
+          public function sheet(): Ink;
+      }
+
+      interface ByValue
+      {
+          public function fill(array $slots);
+      }
+
+      interface ByReference
+      {
+          public function fill(array &$slots);
+      }
+
+      interface Failure extends \Throwable
+      {
+          public function getPrevious(): ?Failure;
+      }
+
+      interface Shelf
+      {
+          public function both(): Wide&Narrow;
+
+          public function sized(): Sized&Named;
+
+          public function printed(): Printed&Inked;
+
+          public function filled(): ByValue&ByReference;
+
+          public function bound(): Paper&Ink;
+
+          public function title(): string;
+      }
+      """
+    And a spec file "spec/App/Shelf.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Shelf.php';
+
+      use App\Failure;
+      use App\HalfPayload;
+      use App\NarrowBag;
+      use App\Shelf;
+
+      describe('Shelf', function () {
+          it('iterates a double of an interface narrowing getIterator()', function () {
+              $bag = mock(NarrowBag::class);
+              allow($bag->getIterator())->toReturn(new ArrayIterator([1, 2]));
+
+              expect(iterator_to_array($bag))->toBe([1, 2]);
+              expect(iterator_to_array(dummy(NarrowBag::class)))->toBe([]);
+          });
+
+          it('doubles a Serializable interface declaring __unserialize()', function () {
+              expect(dummy(HalfPayload::class))->toBeAnInstanceOf(HalfPayload::class);
+          });
+
+          it('takes every call each interface declares, and returns what each admits', function () {
+              $both = dummy(Shelf::class)->both();
+              $both->put('cover');
+              $both->put('cover', 'blue');
+
+              expect($both->items()->count())->toBe(0);
+              expect($both->items()->at(1))->toBe('');
+          });
+
+          it('refuses only a call no value can answer for every interface', function () {
+              $shelf = dummy(Shelf::class);
+
+              expect($shelf->title())->toBe('');
+              expect(fn() => $shelf->sized()->size())->toThrow(LogicException::class, 'App\Sized::size() returns int and App\Named::size() returns string, so no value can be returned for both.');
+              expect(fn() => $shelf->printed()->sheet())->toThrow(LogicException::class, 'App\Printed::sheet() returns App\Paper and App\Inked::sheet() returns App\Ink, so no value can be returned for both.');
+              expect(fn() => $shelf->bound())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Shelf::bound(): no double of App\Paper&App\Ink can be made. No object can be both App\Paper and App\Ink.');
+          });
+
+          it('refuses a double no class can be, at once, and as a return type only when called', function () {
+              $shelf = dummy(Shelf::class);
+
+              expect(fn() => mock(Failure::class))->toThrow(LogicException::class, 'Cannot create a test double for interface App\Failure. App\Failure::getPrevious() narrows a method Exception declares final.');
+              expect(fn() => $shelf->filled())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Shelf::filled(): no double of App\ByValue&App\ByReference can be made. App\ByValue::fill() takes $slots by value and App\ByReference::fill() takes $slots by reference.');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "5"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

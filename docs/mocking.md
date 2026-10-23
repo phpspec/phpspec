@@ -35,6 +35,28 @@ a double PHP refuses is refused with PHP's reason:
 Cannot create a test double for interface App\Labelled. Only an enum can implement UnitEnum.
 ```
 
+A double of several interfaces, such as what a method returning `Wide&Narrow`
+answers, takes every call each of them declares, and returns what every
+declared return type admits. A method returning `Traversable` in one and
+`ArrayIterator` in the other returns `ArrayIterator`, and one returning
+`Countable` and `Traversable` returns `Countable&Traversable`. The same holds
+between an interface and the base a double of it is built on. Where no value
+can satisfy every return type, such as `int` and `string`, or two classes
+neither extends, the method is refused when called:
+
+```
+App\Sized::size() returns int and App\Named::size() returns string, so no value can be returned for both.
+```
+
+Declarations no class can implement together, a parameter one takes by
+reference and another by value, or a method narrowing one the base declares
+final, are refused: by `mock()` and `dummy()` at once, and as a return type only
+when the method returning it is called:
+
+```
+Cannot create a test double for interface App\Failure. App\Failure::getPrevious() narrows a method Exception declares final.
+```
+
 ### Using `dummy()`
 
 A double from `mock()` is strict: a call to it that the spec never declared,

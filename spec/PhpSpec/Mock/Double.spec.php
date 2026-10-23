@@ -309,6 +309,32 @@ interface DoubleSpecNativeSource {
     public function counted(): DoubleSpecBag&DoubleSpecSized;
     public function name(): string;
 }
+interface DoubleSpecNarrowBag extends \Traversable {
+    public function getIterator(): \ArrayIterator;
+}
+interface DoubleSpecHalfPayload extends \Serializable {
+    public function __unserialize(array $data): void;
+}
+interface DoubleSpecNarrowFailure extends \Throwable {
+    public function getPrevious(): ?DoubleSpecNarrowFailure;
+}
+interface DoubleSpecShortPut {
+    public function put(string $key): int;
+}
+interface DoubleSpecLongPut {
+    public function put(string $key, string $value = 'none'): int|string;
+}
+interface DoubleSpecFillByValue {
+    public function fill(array $slots);
+}
+interface DoubleSpecFillByReference {
+    public function fill(array &$slots);
+}
+interface DoubleSpecPutSource {
+    public function puts(): DoubleSpecShortPut&DoubleSpecLongPut;
+    public function fills(): DoubleSpecFillByValue&DoubleSpecFillByReference;
+    public function count(): int;
+}
 interface DoubleSpecPage {
     public function title(): string;
     public function next(): DoubleSpecPage;
@@ -676,6 +702,40 @@ describe(Double::class, function() {
 
         it("says to use mock() instead when it cannot stand in for a final return type", function () {
             expect(double_spec_refusal(fn() => dummy(DoubleSpecMachine::class)->coin()))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecMachine::coin(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecMachine::coin().');
+        });
+    });
+
+    context("types declaring one method differently", function () {
+        it("doubles an interface narrowing the getIterator() its base brings", function () {
+            $bag = Double::getInstance(DoubleSpecNarrowBag::class);
+            allow($bag->getIterator())->toReturn(new ArrayIterator([1]));
+
+            expect(iterator_to_array($bag))->toBe([1]);
+            expect(fn() => allow($bag->getIterator())->toReturn(new EmptyIterator()))->toThrow(LogicException::class, 'DoubleSpecNarrowBag::getIterator() returns ArrayIterator, so it cannot return EmptyIterator.');
+        });
+
+        it("doubles a Serializable interface declaring one of the methods its base brings", function () {
+            expect(Double::getInstance(DoubleSpecHalfPayload::class))->toBeAnInstanceOf(DoubleSpecHalfPayload::class);
+        });
+
+        it("refuses at once a double no class can be", function () {
+            expect(fn() => Double::getInstance(DoubleSpecNarrowFailure::class))->toThrow(LogicException::class, 'Cannot create a test double for interface DoubleSpecNarrowFailure. DoubleSpecNarrowFailure::getPrevious() narrows a method Exception declares final.');
+        });
+
+        it("answers with a double taking every call each declaration takes, and holds what it returns to every one of them", function () {
+            $puts = dummy(DoubleSpecPutSource::class)->puts();
+            $stub = Double::getInstance(DoubleSpecPutSource::class)->puts();
+
+            expect($puts->put('cover'))->toBe(0);
+            expect($puts->put('cover', 'blue'))->toBe(0);
+            expect(double_spec_refusal(fn() => $stub->put('cover', 'blue')))->toContain('DoubleSpecShortPut::put("cover", "blue") was called on what DoubleSpecPutSource::puts() answered');
+        });
+
+        it("refuses only the call answering what no class can be", function () {
+            $source = dummy(DoubleSpecPutSource::class);
+
+            expect($source->count())->toBe(0);
+            expect(fn() => $source->fills())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of DoubleSpecPutSource::fills(): no double of DoubleSpecFillByValue&DoubleSpecFillByReference can be made. DoubleSpecFillByValue::fill() takes $slots by value and DoubleSpecFillByReference::fill() takes $slots by reference.');
         });
     });
 

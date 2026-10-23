@@ -34,13 +34,13 @@ final readonly class ReturnType
     private ReflectionMethod $method;
 
     /**
-     * @param string $class the doubled class or interface
-     * @param string $double the double's own class, which static stands for on it, and which declares what the doubled type cannot (an IteratorAggregate's getIterator)
+     * @param string $class the doubled class or interface, named in messages
+     * @param string $double the double's own class, whose method declares what every declaration of it admits, and which static stands for
      */
     public function __construct(string $class, string $method, private string $double)
     {
         $this->class = ltrim($class, '\\');
-        $this->method = new ReflectionMethod(method_exists($this->class, $method) ? $this->class : $this->double, $method);
+        $this->method = new ReflectionMethod($this->double, $method);
     }
 
     /**

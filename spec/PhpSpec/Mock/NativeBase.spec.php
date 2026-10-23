@@ -9,33 +9,36 @@ interface NativeBaseMoment extends \DateTimeInterface {}
 interface NativeBaseLabelled extends \UnitEnum {}
 interface NativeBaseClash extends \Throwable, \DateTimeInterface {}
 interface NativeBasePayload extends \Serializable {}
+interface NativeBaseHalfPayload extends \Serializable {
+    public function __unserialize(array $data): void;
+}
 interface NativeBaseSized extends \Countable {}
 
 describe(NativeBase::class, function () {
 
     this('nothingRefused', fn() => static fn(string $interface): ?string => null);
 
-    it('makes a Traversable interface an IteratorAggregate, with the method that takes', function () {
+    it('makes a Traversable interface an IteratorAggregate', function () {
         $base = new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused);
 
         expect($base->implements())->toBe(['\IteratorAggregate']);
-        expect(array_map(fn(ReflectionMethod $method) => $method->getName(), $base->methods()))->toBe(['getIterator']);
+        expect(array_map(fn(ReflectionClass $interface) => $interface->getName(), $base->interfaces()))->toBe([IteratorAggregate::class]);
         expect((new NativeBase([new ReflectionClass(NativeBaseAggregate::class)], $this->nothingRefused))->implements())->toBe([]);
     });
 
-    it('builds a Throwable interface on Exception, keeping the methods Exception declares final', function () {
+    it('builds a Throwable interface on Exception, declaring the methods Exception declares', function () {
         $base = new NativeBase([new ReflectionClass(NativeBaseFailure::class)], $this->nothingRefused);
 
         expect($base->extends())->toBe('\Exception');
-        expect($base->keeps('getMessage'))->toBeTrue();
-        expect($base->keeps('describe'))->toBeFalse();
+        expect($base->declaration('getMessage')?->isFinal())->toBeTrue();
+        expect($base->declaration('describe'))->toBeNull();
     });
 
     it('builds a DateTimeInterface interface on DateTimeImmutable', function () {
         $base = new NativeBase([new ReflectionClass(NativeBaseMoment::class)], $this->nothingRefused);
 
         expect($base->extends())->toBe('\DateTimeImmutable');
-        expect($base->keeps('format'))->toBeFalse();
+        expect($base->declaration('format')?->isFinal())->toBeFalse();
     });
 
     it('refuses an interface only an enum can implement, and one that needs two bases', function () {
@@ -49,6 +52,13 @@ describe(NativeBase::class, function () {
 
         expect($code)->toContain('function __serialize(): array');
         expect($code)->toContain('function __unserialize(array $data): void');
+    });
+
+    it('leaves out of that code a method the interface declares itself', function () {
+        $code = (new NativeBase([new ReflectionClass(NativeBaseHalfPayload::class)], $this->nothingRefused))->code();
+
+        expect($code)->toContain('function __serialize(): array');
+        expect($code)->not()->toContain('__unserialize');
     });
 
     it('asks about any other built-in interface, refusing what PHP refuses in its words', function () {

@@ -40,16 +40,10 @@ final readonly class NativeBase
     /** @var class-string|null */
     private ?string $extends;
 
-    /** @var list<string> */
+    /** @var list<class-string> */
     private array $implements;
 
-    /** @var list<ReflectionMethod> */
-    private array $methods;
-
     private string $code;
-
-    /** @var list<string> lower-cased */
-    private array $finals;
 
     /**
      * @param list<ReflectionClass<object>> $interfaces the interfaces a double must be, more than one for an intersection
@@ -62,18 +56,16 @@ final readonly class NativeBase
             $all = [...$all, $interface->getName(), ...$interface->getInterfaceNames()];
         }
         $all = array_values(array_unique($all));
-        $serializes = array_filter($interfaces, static fn(ReflectionClass $interface): bool => $interface->hasMethod('__serialize')) !== [];
+        $declares = static fn(string $method): bool => array_filter($interfaces, static fn(ReflectionClass $interface): bool => $interface->hasMethod($method)) !== [];
         $throwable = in_array('Throwable', $all, true);
         $dated = in_array(DateTimeInterface::class, $all, true);
         $traversed = in_array('Traversable', $all, true) && !in_array('Iterator', $all, true) && !in_array(IteratorAggregate::class, $all, true);
 
         $this->extends = $throwable ? Exception::class : ($dated ? DateTimeImmutable::class : null);
-        $this->implements = $traversed ? ['\\' . IteratorAggregate::class] : [];
-        $this->methods = $traversed ? [new ReflectionMethod(IteratorAggregate::class, 'getIterator')] : [];
-        $this->code = in_array('Serializable', $all, true) && !$serializes
-            ? 'public function __serialize(): array { return []; } public function __unserialize(array $data): void {}'
-            : '';
-        $this->finals = $this->extends === null ? [] : $this->finalsOf($this->extends);
+        $this->implements = $traversed ? [IteratorAggregate::class] : [];
+        $serializable = in_array('Serializable', $all, true);
+        $this->code = ($serializable && !$declares('__serialize') ? 'public function __serialize(): array { return []; } ' : '')
+            . ($serializable && !$declares('__unserialize') ? 'public function __unserialize(array $data): void {}' : '');
         $this->refusal = match (true) {
             in_array('UnitEnum', $all, true) => 'Only an enum can implement UnitEnum.',
             $throwable && $dated => 'No class can extend both Exception and DateTimeImmutable.',
@@ -104,17 +96,17 @@ final readonly class NativeBase
      */
     public function implements(): array
     {
-        return $this->implements;
+        return array_map(static fn(string $interface): string => '\\' . $interface, $this->implements);
     }
 
     /**
-     * The methods those interfaces bring, which a double defines like its own.
+     * Those interfaces, whose methods a double defines like its own.
      *
-     * @return list<ReflectionMethod>
+     * @return list<ReflectionClass<object>>
      */
-    public function methods(): array
+    public function interfaces(): array
     {
-        return $this->methods;
+        return array_map(static fn(string $interface): ReflectionClass => new ReflectionClass($interface), $this->implements);
     }
 
     /**
@@ -126,29 +118,19 @@ final readonly class NativeBase
     }
 
     /**
-     * Whether a double leaves the method as the class it extends has it,
-     * since that class declares it final.
+     * How the class a double extends declares the method, which a double
+     * leaves as it is where that class declares it final; null when it
+     * declares no such public method.
      */
-    public function keeps(string $method): bool
+    public function declaration(string $method): ?ReflectionMethod
     {
-        return in_array(strtolower($method), $this->finals, true);
-    }
-
-    /**
-     * @param class-string $class
-     * @return list<string>
-     */
-    private function finalsOf(string $class): array
-    {
-        $finals = [];
-
-        foreach ((new ReflectionClass($class))->getMethods() as $method) {
-            if ($method->isFinal()) {
-                $finals[] = strtolower($method->getName());
-            }
+        if ($this->extends === null || !method_exists($this->extends, $method)) {
+            return null;
         }
 
-        return $finals;
+        $declaration = new ReflectionMethod($this->extends, $method);
+
+        return $declaration->isPublic() && !$declaration->isStatic() ? $declaration : null;
     }
 
     /**

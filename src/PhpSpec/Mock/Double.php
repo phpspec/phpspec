@@ -19,12 +19,11 @@ use LogicException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionIntersectionType;
-use ReflectionMethod;
 use ReflectionNamedType;
-use ReflectionParameter;
 use ReflectionType;
 use ReflectionUnionType;
 use Throwable;
+use Traversable;
 use UnitEnum;
 
 /**
@@ -97,13 +96,13 @@ final class Double
             );
         }
 
-        $base = $reflectionClass->isInterface() ? new NativeBase([$reflectionClass], self::refusedBy()) : null;
+        [$base, $methods, $refusal] = self::planOf([$reflectionClass]);
 
-        if ($base?->refusal() !== null) {
-            throw new LogicException(sprintf('Cannot create a test double for interface %s. %s', ltrim($class, '\\'), $base->refusal()));
+        if ($methods === null) {
+            throw new LogicException(sprintf('Cannot create a test double for %s %s. %s', $reflectionClass->isInterface() ? 'interface' : 'class', ltrim($class, '\\'), $refusal));
         }
 
-        $mockClassName = self::classOf([$reflectionClass], $base);
+        $mockClassName = self::classOf([$reflectionClass], $base, $methods);
 
         self::$classCache[$class] = [
             'mockClassName' => $mockClassName,
@@ -118,7 +117,7 @@ final class Double
      * What a lenient double answers to a call of a method returning the given
      * types: a dummy of them, standing for the call.
      *
-     * @param list<class-string> $types a class alone, or interfaces
+     * @param non-empty-list<class-string> $types a class first, if any, then interfaces
      */
     public static function answerTo(GeneratedDouble $double, string $method, array $types): object
     {
@@ -135,11 +134,11 @@ final class Double
      * class, or an implementation of interfaces on the base PHP requires for
      * them.
      *
-     * @param list<ReflectionClass<object>> $types a class alone, or interfaces
+     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
      * @return string the generated class name
      * @throws ReflectionException
      */
-    private static function classOf(array $types, ?NativeBase $base): string
+    private static function classOf(array $types, ?NativeBase $base, MethodSet $methods): string
     {
         $names = array_map(static fn(ReflectionClass $type): string => $type->getName(), $types);
         $doubledName = implode('&', $names);
@@ -148,20 +147,15 @@ final class Double
         // to avoid collisions between classes with the same short name
         $mockShortName = $types[0]->getShortName() . '_Double_' . substr(md5($doubledName), 0, 8) . '_' . uniqid();
 
-        $methods = [];
-        $last = array_key_last($types);
-        foreach ($types as $position => $type) {
-            $methods += self::generateMethods($type, $base, $position === $last ? ($base?->methods() ?? []) : []);
-        }
-        $methods = implode("\n", $methods) . ($base?->code() ?? '');
+        $methods = self::generateMethods($methods->contracts) . ($base?->code() ?? '');
         $undefinedMethodGuard = self::undefinedMethodGuard($types, $doubledName);
         $doubled = var_export($doubledName, true);
         $prefixedClass = '\\' . $doubledName;
 
         // make sure you are extending or implementing double class effectively
-        $header = $types[0]->isInterface()
-            ? ($base?->extends() === null ? '' : 'extends ' . $base->extends() . ' ') . 'implements ' . implode(', ', [...array_map(static fn(string $name): string => '\\' . $name, $names), ...($base?->implements() ?? []), '\\PhpSpec\\Mock\\GeneratedDouble'])
-            : 'extends \\' . $names[0] . ' implements \\PhpSpec\\Mock\\GeneratedDouble';
+        $interfaces = $types[0]->isInterface() ? $names : array_slice($names, 1);
+        $extends = $types[0]->isInterface() ? $base?->extends() : '\\' . $names[0];
+        $header = ($extends === null ? '' : 'extends ' . $extends . ' ') . 'implements ' . implode(', ', [...array_map(static fn(string $name): string => '\\' . $name, $interfaces), ...($base?->implements() ?? []), '\\PhpSpec\\Mock\\GeneratedDouble']);
 
         // put it all together and evaluate the double class template
         $mockClassCode = <<<PHP
@@ -282,13 +276,19 @@ PHP;
      * Generates the class of a dummy answer of the given types: a double of
      * them that stands for the call it answered.
      *
-     * @param list<ReflectionClass<object>> $types a class alone, or interfaces
+     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
      * @return class-string<DummyAnswer>
      * @throws ReflectionException
      */
     private static function answerClassOf(array $types): string
     {
-        $doubleClass = self::classOf($types, $types[0]->isInterface() ? new NativeBase($types, self::refusedBy()) : null);
+        [$base, $methods, $refusal] = self::planOf($types);
+
+        if ($methods === null) {
+            throw new LogicException((string) $refusal);
+        }
+
+        $doubleClass = self::classOf($types, $base, $methods);
         $shortName = substr($doubleClass, strlen('PhpspecDouble\\')) . '_Answer';
 
         eval("namespace PhpspecDouble; class $shortName extends \\$doubleClass implements \\PhpSpec\\Mock\\MatchableDouble, \\PhpSpec\\Mock\\DummyAnswer { use \\PhpSpec\\Mock\\MatchableDoubleBehaviour, \\PhpSpec\\Mock\\DummyAnswerBehaviour; }");
@@ -467,71 +467,21 @@ PHP;
     }
 
     /**
-     * Formats a ReflectionType into valid PHP type syntax for code generation.
-     * Handles named, union, and intersection types with proper namespace prefixing.
-     *
-     * @param ?ReflectionType $type the reflection type to format
-     * @return string the PHP type syntax (e.g. "?\\Foo\\Bar", "string|int")
-     */
-    private static function formatTypeSyntax(?ReflectionType $type): string
-    {
-        if ($type === null) {
-            return '';
-        }
-
-        if ($type instanceof ReflectionNamedType) {
-            $name = $type->getName();
-            if (!$type->isBuiltin() && $name !== 'self' && $name !== 'static' && $name !== 'parent') {
-                $name = '\\' . $name;
-            }
-            return $type->allowsNull() && $name !== 'mixed' && $name !== 'null' ? '?' . $name : $name;
-        }
-
-        if ($type instanceof ReflectionUnionType) {
-            $parts = [];
-            foreach ($type->getTypes() as $t) {
-                $formatted = self::formatTypeSyntax($t);
-                // Wrap intersection members in parentheses for DNF types (e.g. (A&B)|C)
-                if ($t instanceof ReflectionIntersectionType) {
-                    $formatted = '(' . $formatted . ')';
-                }
-                $parts[] = $formatted;
-            }
-            return implode('|', $parts);
-        }
-
-        if ($type instanceof ReflectionIntersectionType) {
-            $parts = [];
-            foreach ($type->getTypes() as $t) {
-                if (!$t instanceof ReflectionNamedType) {
-                    continue;
-                }
-                $name = $t->getName();
-                if (!$t->isBuiltin()) {
-                    $name = '\\' . $name;
-                }
-                $parts[] = $name;
-            }
-            return implode('&', $parts);
-        }
-
-        return (string) $type;
-    }
-
-    /**
      * The code that holds a call to what the real method takes, before the
      * double answers it.
      */
-    private static function holdCode(string $class, ReflectionMethod $method): string
+    private static function holdCode(MethodContract $contract): string
     {
+        $takes = $contract->takes();
+
         return sprintf(
             "\$__frame = \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []; \$__made = !\\PhpSpec\\Mock\\ArrangingCode::includes(\$__frame['file'] ?? ''); \$__given = (\$this->______phpspec_signatures[%2\$s] ??= new \\PhpSpec\\Mock\\Signature(%1\$s, %2\$s, %3\$d, %4\$s, %5\$s, %6\$s))->hold(\\func_get_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
-            var_export($class, true),
-            var_export($method->getName(), true),
-            $method->getNumberOfRequiredParameters(),
-            $method->isVariadic() ? 'null' : (string) $method->getNumberOfParameters(),
-            var_export(self::parameterList($method), true),
-            self::typedCode($method),
+            var_export($contract->owner, true),
+            var_export($contract->name, true),
+            $contract->required,
+            $takes === null ? 'null' : (string) $takes,
+            var_export(self::parameterList($contract), true),
+            self::typedCode($contract),
         );
     }
 
@@ -540,35 +490,16 @@ PHP;
      * taking that type alone, through which an argument is held to it as PHP
      * holds it; no closure for a parameter that takes anything.
      */
-    private static function typedCode(ReflectionMethod $method): string
+    private static function typedCode(MethodContract $contract): string
     {
         $typed = [];
 
-        foreach ($method->getParameters() as $parameter) {
-            $type = $parameter->getType();
-            $taking = $type === null || ($type instanceof ReflectionNamedType && $type->getName() === 'mixed')
-                ? 'null'
-                : sprintf('static fn(%s $value) => $value', self::typeIn($type, $method));
-            $typed[] = sprintf('[%s, %s, %s]', var_export($parameter->getName(), true), var_export((string) $type, true), $taking);
+        foreach ($contract->parameters as $parameter) {
+            $taking = $parameter->takes === null ? 'null' : sprintf('static fn(%s $value) => $value', $parameter->takes);
+            $typed[] = sprintf('[%s, %s, %s]', var_export($parameter->name, true), var_export($parameter->declared, true), $taking);
         }
 
         return '[' . implode(', ', $typed) . ']';
-    }
-
-    /**
-     * A type as code outside the class that declares it: self and parent
-     * named for the classes they stand for.
-     */
-    private static function typeIn(ReflectionType $type, ReflectionMethod $method): string
-    {
-        $declaring = $method->getDeclaringClass();
-        $parent = $declaring->getParentClass();
-
-        return (string) preg_replace_callback(
-            '/(?<![\\\\\w])(self|parent)(?![\\\\\w])/',
-            static fn(array $word): string => '\\' . ($word[1] === 'self' || $parent === false ? $declaring->getName() : $parent->getName()),
-            self::formatTypeSyntax($type),
-        );
     }
 
     /**
@@ -576,18 +507,18 @@ PHP;
      * in, and the named arguments a variadic collected after them, so a call
      * is matched as the call it is however it was written.
      *
-     * @param list<ReflectionParameter> $parameters
+     * @param list<ContractParameter> $parameters
      */
     private static function argumentsCode(array $parameters): string
     {
         $named = [];
 
         foreach ($parameters as $parameter) {
-            if ($parameter->isVariadic() || ($parameter->isOptional() && !$parameter->isDefaultValueAvailable())) {
+            if ($parameter->variadic || ($parameter->optional && !$parameter->hasDefault())) {
                 break;
             }
 
-            $named[] = '$' . $parameter->getName();
+            $named[] = '$' . $parameter->name;
         }
 
         $positional = $named === [] ? '$__given' : sprintf('\\array_merge($__given, \\array_slice([%s], \\count($__given)))', implode(', ', $named));
@@ -596,13 +527,13 @@ PHP;
     }
 
     /**
-     * @param list<ReflectionParameter> $parameters
+     * @param list<ContractParameter> $parameters
      */
-    private static function variadicOf(array $parameters): ?ReflectionParameter
+    private static function variadicOf(array $parameters): ?ContractParameter
     {
         $last = end($parameters);
 
-        return $last !== false && $last->isVariadic() ? $last : null;
+        return $last !== false && $last->variadic ? $last : null;
     }
 
     /**
@@ -610,7 +541,7 @@ PHP;
      * of func_get_args(), held to the parameter's type; nothing for a method
      * with no variadic.
      *
-     * @param list<ReflectionParameter> $parameters
+     * @param list<ContractParameter> $parameters
      */
     private static function namedCode(array $parameters, string $methodName): string
     {
@@ -623,7 +554,7 @@ PHP;
         // Copied out, so the call is recorded as it was made: a by-reference
         // variadic holds the caller's variables, and only a stub's callback is
         // handed those.
-        $collected = sprintf("\\array_map(static fn(\$value) => \$value, \\array_filter(\$%s, '\\is_string', \\ARRAY_FILTER_USE_KEY))", $variadic->getName());
+        $collected = sprintf("\\array_map(static fn(\$value) => \$value, \\array_filter(\$%s, '\\is_string', \\ARRAY_FILTER_USE_KEY))", $variadic->name);
 
         return sprintf(
             "\$__named = \$this->______phpspec_signatures[%s]->holdNamed(%s, \\func_num_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
@@ -635,19 +566,18 @@ PHP;
     /**
      * The parameter list as the method declares it, for a message.
      */
-    private static function parameterList(ReflectionMethod $method): string
+    private static function parameterList(MethodContract $contract): string
     {
         $listed = [];
 
-        foreach ($method->getParameters() as $parameter) {
-            $type = $parameter->getType();
+        foreach ($contract->parameters as $parameter) {
             $listed[] = ltrim(sprintf(
                 '%s %s%s$%s%s',
-                $type === null ? '' : (string) $type,
-                $parameter->isPassedByReference() ? '&' : '',
-                $parameter->isVariadic() ? '...' : '',
-                $parameter->getName(),
-                $parameter->isDefaultValueAvailable() ? ' = ' . self::shownDefault($parameter->getDefaultValue()) : '',
+                $parameter->declared,
+                $parameter->byReference ? '&' : '',
+                $parameter->variadic ? '...' : '',
+                $parameter->name,
+                $parameter->hasDefault() ? ' = ' . self::shownDefault($parameter->default()) : '',
             ));
         }
 
@@ -794,18 +724,18 @@ PHP;
      * call, as PHP builds it, and a closure once, so a call that leaves it out
      * matches a declaration that left it out too.
      */
-    private static function defaultCode(ReflectionMethod $method, ReflectionParameter $parameter): string
+    private static function defaultCode(ContractParameter $parameter): string
     {
-        if (!$parameter->isDefaultValueAvailable()) {
+        if (!$parameter->hasDefault()) {
             return '';
         }
 
         return sprintf(
             'if ($%1$s === \\PhpSpec\\Mock\\LeftOut::Argument) { static $__closure_%1$s = null; $%1$s = (new \\ReflectionParameter([%2$s, %3$s], %4$s))->getDefaultValue(); if ($%1$s instanceof \\Closure) { $%1$s = $__closure_%1$s ??= $%1$s; } }',
-            $parameter->getName(),
-            var_export($method->class, true),
-            var_export($method->getName(), true),
-            var_export($parameter->getName(), true),
+            $parameter->name,
+            var_export($parameter->source->getDeclaringClass()?->getName(), true),
+            var_export($parameter->source->getDeclaringFunction()->getName(), true),
+            var_export($parameter->source->getName(), true),
         );
     }
 
@@ -816,20 +746,20 @@ PHP;
      * The reference first takes the argument as it was held, so the caller's
      * variable is converted to the parameter's type as PHP converts it.
      *
-     * @param list<ReflectionParameter> $parameters
+     * @param list<ContractParameter> $parameters
      */
     private static function passingCode(array $parameters): string
     {
         $references = '';
 
         foreach ($parameters as $parameter) {
-            if (!$parameter->isPassedByReference()) {
+            if (!$parameter->byReference) {
                 continue;
             }
 
-            $references .= $parameter->isVariadic()
-                ? sprintf(' foreach (\\array_keys($%1$s) as $__key) { $__at = \\is_int($__key) ? %2$d + $__key : $__key; if (\\array_key_exists($__at, $__passing)) { $%1$s[$__key] = $__passing[$__at]; $__passing[$__at] = &$%1$s[$__key]; } }', $parameter->getName(), $parameter->getPosition())
-                : sprintf(' if (\\array_key_exists(%2$d, $__passing)) { $%1$s = $__passing[%2$d]; $__passing[%2$d] = &$%1$s; }', $parameter->getName(), $parameter->getPosition());
+            $references .= $parameter->variadic
+                ? sprintf(' foreach (\\array_keys($%1$s) as $__key) { $__at = \\is_int($__key) ? %2$d + $__key : $__key; if (\\array_key_exists($__at, $__passing)) { $%1$s[$__key] = $__passing[$__at]; $__passing[$__at] = &$%1$s[$__key]; } }', $parameter->name, $parameter->position)
+                : sprintf(' if (\\array_key_exists(%2$d, $__passing)) { $%1$s = $__passing[%2$d]; $__passing[%2$d] = &$%1$s; }', $parameter->name, $parameter->position);
         }
 
         return $references === '' ? '' : '$__passing = $__args;' . $references;
@@ -938,58 +868,60 @@ PHP;
      * Each generated method records calls, checks for stubs/throws, and returns
      * a type-appropriate default, or an answer of the type it returns.
      *
-     * @param ReflectionClass<object> $reflectionClass the class whose methods to generate
-     * @param NativeBase|null $base what the double is built on, whose final methods it keeps
-     * @param list<ReflectionMethod> $extra methods the double defines besides the class's own
-     * @return array<string, string> the generated PHP code of each method, by its lower-cased name
+     * @param list<MethodContract> $contracts the methods, each resolved from every declaration of it
+     * @return string the generated PHP method code
      * @throws ReflectionException
      */
-    private static function generateMethods(ReflectionClass $reflectionClass, ?NativeBase $base = null, array $extra = []): array
+    private static function generateMethods(array $contracts): string
     {
         $mockMethods = [];
-        foreach (self::overridden($reflectionClass, $base, $extra) as $method) {
-            $methodName = $method->getName();
-            $parameters = $method->getParameters();
-            $returnedType = self::returnTypeOf($method);
+        foreach ($contracts as $contract) {
+            $owner = $contract->owner;
+            $methodName = $contract->name;
+            $returnedType = $contract->returnType;
             $simpleReturnName = self::getSimpleReturnTypeName($returnedType);
             $isNullable = self::isNullableType($returnedType);
             $isEnum = self::isClassReturnType($returnedType) && $simpleReturnName !== null && enum_exists($simpleReturnName);
 
-            [$paramString, $defaults] = self::parametersCode($method);
-            $passing = self::passingCode($parameters);
+            [$paramString, $defaults] = self::parametersCode($contract);
+            $passing = self::passingCode($contract->parameters);
             $callWith = $passing === '' ? '$__args' : '$__passing';
-            $called = $method->returnsReference()
+            $called = $contract->byReference
                 ? "\$__cb = \$__match['data']; if ((new \\ReflectionFunction(\\Closure::fromCallable(\$__cb)))->returnsReference()) { \$__ret = &\$__cb(...$callWith); } else { \$__ret = \$__cb(...$callWith); }"
                 : "\$__ret = (\$__match['data'])(...$callWith);";
-            $arguments = self::argumentsCode($parameters);
-            $named = self::namedCode($parameters, $methodName);
-            $hold = self::holdCode($reflectionClass->getName(), $method);
-            $holdAnswer = $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s, self::class))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
+            $arguments = self::argumentsCode($contract->parameters);
+            $named = self::namedCode($contract->parameters, $methodName);
+            $hold = self::holdCode($contract);
+            $holdAnswer = $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s, self::class))->holdAnswer($__ret);', var_export($owner, true), var_export($methodName, true)) : '';
 
             // Unique suffix for MockedMethodFor classes, includes parent class hash to avoid collisions
-            $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($reflectionClass->getName() . '::' . $methodName), 0, 8) . '_' . uniqid();
-            [$className, $refusedReturn, $answerTypes] = $returnedType === null
-                ? [self::untypedAnswerClass($methodName, $wrapperSuffix), null, []]
-                : self::answerClassFor($returnedType, $methodName, $wrapperSuffix);
+            $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($owner . '::' . $methodName), 0, 8) . '_' . uniqid();
+            [$className, $refusedReturn, $answerTypes] = match (true) {
+                $contract->noValue !== null => [null, null, []],
+                $returnedType === null => [self::untypedAnswerClass($methodName, $wrapperSuffix), null, []],
+                default => self::answerClassFor($returnedType, $methodName, $wrapperSuffix),
+            };
 
             $return = '';
-            if ($className !== null && $answerTypes !== []) {
+            if ($contract->noValue !== null) {
+                $return = 'throw new \\LogicException(' . var_export($contract->noValue, true) . ');';
+            } elseif ($className !== null && $answerTypes !== []) {
                 $return = sprintf('$__ret = $this->______phpspec_lenient ? \\PhpSpec\\Mock\\Double::answerTo($this, %s, %s) : new \\%s($this); return $__ret;', var_export($methodName, true), var_export($answerTypes, true), $className);
             } elseif ($className !== null) {
                 $return = '$__ret = new \\' . $className . '($this); return $__ret;';
             } elseif ($isNullable && $simpleReturnName !== 'mixed') {
                 $return = self::returning('null');
+            } elseif ($refusedReturn !== null && $returnedType !== null) {
+                $return = self::refusedReturnCode($owner, $methodName, (string) $returnedType, $refusedReturn);
             } elseif ($returnedType instanceof ReflectionUnionType) {
                 $return = self::getUnionReturnCode($returnedType);
             } elseif ($returnedType instanceof ReflectionIntersectionType) {
                 $return = self::returning('null');
             } elseif ($isEnum) {
                 $return = "\$__ret = \\{$simpleReturnName}::cases()[0]; return \$__ret;";
-            } elseif ($refusedReturn !== null && $simpleReturnName !== null) {
-                $return = self::refusedReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName, $refusedReturn);
             } elseif ($simpleReturnName !== null) {
                 $return = self::getBuiltinReturnCode($simpleReturnName)
-                    ?? self::placeholderReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName);
+                    ?? self::placeholderReturnCode($owner, $methodName, $simpleReturnName);
             }
 
             $guard = '';
@@ -1012,11 +944,11 @@ PHP;
                     . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 
-            $byReference = $method->returnsReference() ? '&' : '';
-            $returnTypeCode = self::returnTypeCode($method);
+            $byReference = $contract->byReference ? '&' : '';
+            $returnTypeCode = $contract->returnCode;
 
             // put it all together
-            $mockMethods[strtolower($methodName)] = <<<PHP
+            $mockMethods[] = <<<PHP
     public function {$byReference}$methodName($paramString)$returnTypeCode {
         $defaults
         $hold
@@ -1031,42 +963,7 @@ PHP;
 PHP;
         }
 
-        return $mockMethods;
-    }
-
-    /**
-     * The methods a double defines for a type: all but the constructor,
-     * final and static methods, and internal magic methods.
-     *
-     * @param ReflectionClass<object> $type
-     * @param list<ReflectionMethod> $extra
-     * @return list<ReflectionMethod>
-     */
-    private static function overridden(ReflectionClass $type, ?NativeBase $base, array $extra): array
-    {
-        return array_values(array_filter(
-            [...$type->getMethods(), ...$extra],
-            static fn(ReflectionMethod $method): bool => $method->getName() !== '__construct'
-                && !($base?->keeps($method->getName()) ?? false)
-                && !$method->isFinal()
-                && !$method->isStatic()
-                && !($method->isInternal() && str_starts_with($method->getName(), '__')),
-        ));
-    }
-
-    private static function returnTypeOf(ReflectionMethod $method): ?ReflectionType
-    {
-        // Tentative return types (e.g. JsonSerializable::jsonSerialize(): mixed) are not
-        // exposed via getReturnType(); declaring them explicitly avoids the PHP deprecation
-        // about incompatible/missing return types on internal interfaces.
-        return $method->getReturnType() ?? $method->getTentativeReturnType();
-    }
-
-    private static function returnTypeCode(ReflectionMethod $method): string
-    {
-        $type = self::returnTypeOf($method);
-
-        return $type === null ? '' : ': ' . self::typeIn($type, $method);
+        return implode("\n", $mockMethods);
     }
 
     /**
@@ -1077,21 +974,21 @@ PHP;
      *
      * @return array{0: string, 1: string}
      */
-    private static function parametersCode(ReflectionMethod $method): array
+    private static function parametersCode(MethodContract $contract): array
     {
         $parameters = [];
         $defaults = '';
 
-        foreach ($method->getParameters() as $parameter) {
-            $type = 'mixed ' . ($parameter->isPassedByReference() ? '&' : '');
+        foreach ($contract->parameters as $parameter) {
+            $type = 'mixed ' . ($parameter->byReference ? '&' : '');
 
-            if ($parameter->isVariadic()) {
-                $parameters[] = $type . '...$' . $parameter->getName();
-            } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable() && self::writable($parameter->getDefaultValue())) {
-                $parameters[] = $type . '$' . $parameter->getName() . ' = ' . var_export($parameter->getDefaultValue(), true);
+            if ($parameter->variadic) {
+                $parameters[] = $type . '...$' . $parameter->name;
+            } elseif ($parameter->optional && $parameter->hasDefault() && self::writable($parameter->default())) {
+                $parameters[] = $type . '$' . $parameter->name . ' = ' . var_export($parameter->default(), true);
             } else {
-                $parameters[] = $type . '$' . $parameter->getName() . ($parameter->isDefaultValueAvailable() ? ' = \\PhpSpec\\Mock\\LeftOut::Argument' : ' = null');
-                $defaults .= self::defaultCode($method, $parameter);
+                $parameters[] = $type . '$' . $parameter->name . ($parameter->hasDefault() ? ' = \\PhpSpec\\Mock\\LeftOut::Argument' : ' = null');
+                $defaults .= self::defaultCode($parameter);
             }
         }
 
@@ -1122,6 +1019,15 @@ PHP;
                 continue;
             }
 
+            $names = array_map(static fn(ReflectionClass $type): string => $type->getName(), $types);
+
+            if (DeclaredType::allOf($names)->admitsNoValue()) {
+                $last = array_pop($names);
+                $refusal ??= sprintf('No object can be %s %s and %s.', count($names) === 1 ? 'both' : 'all of', implode(', ', $names), $last);
+
+                continue;
+            }
+
             [$className, $refused] = self::answerClass($types, $methodName, $suffix);
 
             if ($className !== null) {
@@ -1149,7 +1055,7 @@ PHP;
      * The classes and interfaces a type names, or null when it names
      * something else: a built-in type, an enum, a type that does not exist.
      *
-     * @return list<ReflectionClass<object>>|null
+     * @return non-empty-list<ReflectionClass<object>>|null
      */
     private static function typesOf(ReflectionType $type): ?array
     {
@@ -1170,69 +1076,98 @@ PHP;
             $types[] = new ReflectionClass($name);
         }
 
-        return $types;
+        usort($types, static fn(ReflectionClass $one, ReflectionClass $other): int => $one->isInterface() <=> $other->isInterface());
+
+        return $types === [] ? null : $types;
     }
 
     /**
      * The class of an answer of the given types: a subclass of a class that
-     * can have one, built without its constructor, or an implementation of
-     * user interfaces on the base PHP requires for them.
+     * can have one, built without its constructor, implementing the
+     * interfaces, on the base PHP requires for them.
      *
-     * @param list<ReflectionClass<object>> $types
-     * @return array{0: string|null, 1: string|null} the class, or the reason PHP lets no class be the types
+     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
+     * @return array{0: string|null, 1: string|null} the class, or the reason no class can be the types
      */
     private static function answerClass(array $types, string $methodName, string $suffix): array
     {
-        $className = 'MockedMethodFor' . $suffix;
         $first = $types[0];
 
-        if (!$first->isInterface()) {
-            if (count($types) > 1 || $first->isFinal() || $first->isReadOnly()) {
-                return [null, null];
-            }
-
-            return [self::evaluated($className, self::wrapperCode($className, '\\' . $first->getName(), [], false, $methodName, self::answerMethods($types, null))), null];
+        if (!$first->isInterface() && ($first->isFinal() || $first->isReadOnly())) {
+            return [null, null];
         }
 
         foreach ($types as $type) {
-            if (!$type->isInterface() || $type->isInternal()) {
+            if ($type->isInterface() && $type->isInternal()) {
                 return [null, null];
             }
         }
 
-        $base = new NativeBase($types, self::refusedBy());
+        [$base, $methods, $refusal] = self::planOf($types);
 
-        if ($base->refusal() !== null) {
-            return [null, $base->refusal()];
+        if ($methods === null) {
+            return [null, $refusal];
         }
 
-        $interfaces = [...array_map(static fn(ReflectionClass $type): string => '\\' . $type->getName(), $types), ...$base->implements()];
+        $className = 'MockedMethodFor' . $suffix;
+        $interfaces = array_map(static fn(ReflectionClass $type): string => '\\' . $type->getName(), array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface())));
+        $extends = $first->isInterface() ? $base?->extends() : '\\' . $first->getName();
 
-        return [self::evaluated($className, self::wrapperCode($className, $base->extends(), $interfaces, $base->extends() !== null, $methodName, self::answerMethods($types, $base))), null];
+        return [self::evaluated($className, self::wrapperCode($className, $extends, [...$interfaces, ...($base?->implements() ?? [])], $first->isInterface() && $base?->extends() !== null, $methodName, self::answerMethods($methods->contracts, $base))), null];
     }
 
     /**
-     * The methods of an answer: each the type declares, refusing to be used.
+     * What a double of the types is built on, and the methods it defines; or
+     * why no class can be the types.
      *
-     * @param list<ReflectionClass<object>> $types
+     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
+     * @return array{0: NativeBase|null, 1: MethodSet|null, 2: string|null}
      */
-    private static function answerMethods(array $types, ?NativeBase $base): string
+    private static function planOf(array $types): array
+    {
+        $interfaces = array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface()));
+        $base = $interfaces === [] ? null : new NativeBase($interfaces, self::refusedBy());
+
+        if ($base?->refusal() !== null) {
+            return [null, null, $base->refusal()];
+        }
+
+        $class = $types[0]->isInterface() ? null : $types[0];
+
+        if ($class !== null && $base !== null && ($base->extends() !== null || $base->implements() !== [])) {
+            $needed = ltrim($base->extends() ?? Traversable::class, '\\');
+
+            if (!is_a($class->getName(), $needed, true)) {
+                return [null, null, sprintf('No object can be both %s and %s.', $class->getName(), implode(' and ', array_map(static fn(ReflectionClass $type): string => $type->getName(), $interfaces)))];
+            }
+
+            $base = null;
+        }
+
+        $methods = MethodSet::of($types, $base);
+
+        return $methods->refusal === null ? [$base, $methods, null] : [null, null, $methods->refusal];
+    }
+
+    /**
+     * The methods of an answer: each the types declare, refusing to be used.
+     *
+     * @param list<MethodContract> $contracts
+     */
+    private static function answerMethods(array $contracts, ?NativeBase $base): string
     {
         $methods = [];
-        $last = array_key_last($types);
 
-        foreach ($types as $position => $type) {
-            foreach (self::overridden($type, $base, $position === $last ? ($base?->methods() ?? []) : []) as $method) {
-                $methods[strtolower($method->getName())] ??= sprintf(
-                    '    public function %s%s(%s)%s { throw $this->______PhpSpecUsed(%s, %s, \\func_get_args(), \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []); }',
-                    $method->returnsReference() ? '&' : '',
-                    $method->getName(),
-                    self::parametersCode($method)[0],
-                    self::returnTypeCode($method),
-                    var_export($type->getName(), true),
-                    var_export($method->getName(), true),
-                );
-            }
+        foreach ($contracts as $contract) {
+            $methods[] = sprintf(
+                '    public function %s%s(%s)%s { throw $this->______PhpSpecUsed(%s, %s, \\func_get_args(), \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []); }',
+                $contract->byReference ? '&' : '',
+                $contract->name,
+                self::parametersCode($contract)[0],
+                $contract->returnCode,
+                var_export($contract->owner, true),
+                var_export($contract->name, true),
+            );
         }
 
         return implode("\n", $methods) . ($base?->code() ?? '');
