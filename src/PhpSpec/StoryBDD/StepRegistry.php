@@ -44,12 +44,7 @@ final class StepRegistry
     public function addStep(string $pattern, \Closure $callback): void
     {
         if (isset($this->definedAt[$pattern])) {
-            throw new RuntimeException(sprintf(
-                'Step "%s" is already defined at %s; remove the duplicate at %s. Step titles must be unique across all steps files, whatever their keyword.',
-                $pattern,
-                $this->definedAt[$pattern],
-                self::locationOf($callback),
-            ));
+            throw $this->duplicate($pattern, self::locationOf($callback));
         }
 
         $this->definedAt[$pattern] = self::locationOf($callback);
@@ -58,6 +53,27 @@ final class StepRegistry
             'regex' => $this->patternToRegex($pattern),
             'callback' => $callback,
         ];
+    }
+
+    /**
+     * Takes another registry's definitions as its own, as they were compiled
+     * there, refusing a title it already has as it would refuse one added
+     * directly.
+     *
+     * @throws RuntimeException when a title is already registered
+     */
+    public function adopt(self $other): void
+    {
+        foreach ($other->steps as $step) {
+            $pattern = $step['pattern'];
+
+            if (isset($this->definedAt[$pattern])) {
+                throw $this->duplicate($pattern, $other->definedAt[$pattern]);
+            }
+
+            $this->definedAt[$pattern] = $other->definedAt[$pattern];
+            $this->steps[] = $step;
+        }
     }
 
     /**
@@ -139,5 +155,15 @@ final class StepRegistry
         $regex = str_replace('\\{\\*\\}', '(.+)', $regex);
 
         return '/^' . $regex . '$/';
+    }
+
+    private function duplicate(string $pattern, string $at): RuntimeException
+    {
+        return new RuntimeException(sprintf(
+            'Step "%s" is already defined at %s; remove the duplicate at %s. Step titles must be unique across all steps files, whatever their keyword.',
+            $pattern,
+            $this->definedAt[$pattern],
+            $at,
+        ));
     }
 }

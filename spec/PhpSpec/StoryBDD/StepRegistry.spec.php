@@ -53,6 +53,29 @@ describe(StepRegistry::class, function () {
         expect($this->registry->count())->toBe(1);
     });
 
+    it("adopts another registry's definitions as its own", function () {
+        $other = new StepRegistry();
+        $other->addStep("a basket", function () {});
+        $this->registry->addStep("a shelf", function () {});
+
+        $this->registry->adopt($other);
+
+        expect($this->registry->count())->toBe(2);
+        expect($this->registry->match("a basket"))->toBeAnInstanceOf(StepMatch::class);
+    });
+
+    it("refuses a title it already has when adopting, naming both definitions", function () {
+        $other = new StepRegistry();
+        $other->addStep("a basket", function () {});
+        $this->registry->addStep("a basket", function () {});
+
+        expect(fn() => $this->registry->adopt($other))->toThrow(RuntimeException::class, sprintf(
+            'Step "a basket" is already defined at spec/PhpSpec/StoryBDD/StepRegistry.spec.php:%d; remove the duplicate at spec/PhpSpec/StoryBDD/StepRegistry.spec.php:%d. Step titles must be unique across all steps files, whatever their keyword.',
+            __LINE__ - 4,
+            __LINE__ - 6,
+        ));
+    });
+
     it("returns null for unmatched step", function () {
         expect($this->registry->match("no such step"))->toBeNull();
     });

@@ -68,6 +68,20 @@ final class HookRegistry
     }
 
     /**
+     * Takes another registry's hooks after its own, in the order they were
+     * added there.
+     */
+    public function adopt(self $other): void
+    {
+        array_push($this->beforeFeature, ...$other->beforeFeature);
+        array_push($this->beforeScenario, ...$other->beforeScenario);
+        array_push($this->beforeStep, ...$other->beforeStep);
+        array_push($this->afterFeature, ...$other->afterFeature);
+        array_push($this->afterScenario, ...$other->afterScenario);
+        array_push($this->afterStep, ...$other->afterStep);
+    }
+
+    /**
      * Executes all registered before-feature hooks in registration order.
      *
      * @return void
