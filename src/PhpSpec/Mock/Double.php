@@ -627,13 +627,36 @@ PHP;
         }
 
         return sprintf(
-            'if (\\func_num_args() < %1$d) { static $__closure_%2$s = null; $%2$s = (new \\ReflectionParameter([%3$s, %4$s], %5$s))->getDefaultValue(); if ($%2$s instanceof \\Closure) { $%2$s = $__closure_%2$s ??= $%2$s; } }',
-            $parameter->getPosition() + 1,
+            'if ($%1$s === \\PhpSpec\\Mock\\LeftOut::Argument) { static $__closure_%1$s = null; $%1$s = (new \\ReflectionParameter([%2$s, %3$s], %4$s))->getDefaultValue(); if ($%1$s instanceof \\Closure) { $%1$s = $__closure_%1$s ??= $%1$s; } }',
             $parameter->getName(),
             var_export($method->class, true),
             var_export($method->getName(), true),
             var_export($parameter->getName(), true),
         );
+    }
+
+    /**
+     * The arguments a stub's callback is handed, each one the method takes by
+     * reference handed as that reference, so what the callback writes into it
+     * reaches the caller; none when the method takes nothing by reference.
+     *
+     * @param list<ReflectionParameter> $parameters
+     */
+    private static function passingCode(array $parameters): string
+    {
+        $references = '';
+
+        foreach ($parameters as $parameter) {
+            if (!$parameter->isPassedByReference()) {
+                continue;
+            }
+
+            $references .= $parameter->isVariadic()
+                ? sprintf(' foreach (\\array_keys($%1$s) as $__key) { if (\\is_int($__key)) { $__passing[%2$d + $__key] = &$%1$s[$__key]; } }', $parameter->getName(), $parameter->getPosition())
+                : sprintf(' if (\\array_key_exists(%2$d, $__passing)) { $__passing[%2$d] = &$%1$s; }', $parameter->getName(), $parameter->getPosition());
+        }
+
+        return $references === '' ? '' : '$__passing = $__args;' . $references;
     }
 
     /**
@@ -797,11 +820,16 @@ PHP;
                 } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable() && self::writable($parameter->getDefaultValue())) {
                     $paramStr = $typeStr . '$' . $parameter->getName() . ' = ' . var_export($parameter->getDefaultValue(), true);
                 } else {
-                    $paramStr = $typeStr . '$' . $parameter->getName() . ' = null';
+                    $paramStr = $typeStr . '$' . $parameter->getName() . ($parameter->isDefaultValueAvailable() ? ' = \\PhpSpec\\Mock\\LeftOut::Argument' : ' = null');
                     $defaults .= self::defaultCode($method, $parameter);
                 }
                 $paramStrings[] = $paramStr;
             }
+            $passing = self::passingCode($parameters);
+            $callWith = $passing === '' ? '$__args' : '$__passing';
+            $called = $method->returnsReference()
+                ? "\$__cb = \$__match['data']; if ((new \\ReflectionFunction(\\Closure::fromCallable(\$__cb)))->returnsReference()) { \$__ret = &\$__cb(...$callWith); } else { \$__ret = \$__cb(...$callWith); }"
+                : "\$__ret = (\$__match['data'])(...$callWith);";
             $paramString = implode(', ', $paramStrings);
             $arguments = self::argumentsCode($parameters, $depth === 0);
             $hold = $depth === 0 ? self::holdCode($reflectionClass->getName(), $method) : '';
@@ -966,13 +994,13 @@ PHP;
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
                     . " if (\$__match !== null && \$__match['type'] === 'withheld') { \\PhpSpec\\Mock\\Expectation::\$withheld = \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); \$__match = null; }"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { (\$__match['data'])(...\$__args); }"
+                    . " if (\$__match['type'] === 'callback') { (\$__match['data'])(...$callWith); }"
                     . ' \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
             } elseif ($simpleReturnName !== 'never') {
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
                     . " if (\$__match !== null && \$__match['type'] === 'withheld') { \\PhpSpec\\Mock\\Expectation::\$withheld = \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); \$__match = null; }"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { \$__ret = (\$__match['data'])(...\$__args); $holdAnswer \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
+                    . " if (\$__match['type'] === 'callback') { $called $holdAnswer \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
                     . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 
@@ -981,9 +1009,10 @@ PHP;
             // put it all together
             $mockMethods[] = <<<PHP
     public function {$byReference}$methodName($paramString)$returnedTypeSyntax {
-        $hold
         $defaults
+        $hold
         \$__args = $arguments;
+        $passing
         \$this->______PhpSpecWasCalledWith('$methodName', \$__args);
         $stubCheck
         $guard

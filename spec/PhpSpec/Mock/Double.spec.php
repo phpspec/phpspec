@@ -286,6 +286,7 @@ class DoubleSpecClock {
 
 interface DoubleSpecNewDefault {
     public function at(DoubleSpecClock $clock = new DoubleSpecClock(), array $clocks = [new DoubleSpecClock(5)]): int;
+    public function maybe(?DoubleSpecClock $clock = new DoubleSpecClock(9), int $mode = 0): ?int;
 }
 
 describe(Double::class, function() {
@@ -353,6 +354,67 @@ describe(Double::class, function() {
             expect($double->at())->toBe(5);
             expect($double->at())->toBe(5);
             expect($seen[0])->not()->toBe($seen[1]);
+        });
+
+        it("builds a default left out before a named argument, and keeps a null given for it", function () {
+            $double = Double::getInstance(DoubleSpecNewDefault::class);
+            allow($double->maybe(any(), any()))->toReturnUsing(fn(?DoubleSpecClock $clock, int $mode): ?int => $clock === null ? null : $clock->at + $mode);
+
+            expect($double->maybe(mode: 1))->toBe(10);
+            expect($double->maybe(null, 1))->toBeNull();
+        });
+
+        it("writes back through an argument a callback takes by reference", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = any();
+            allow($double->set($anything))->toReturnUsing(function (array &$mapping): void {
+                $mapping['seen'] = true;
+            });
+            $mapping = [];
+
+            $double->set($mapping);
+
+            expect($mapping)->toBe(['seen' => true]);
+        });
+
+        it("writes back through each argument a by-reference variadic takes", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = cetera();
+            allow($double->fill($anything))->toReturnUsing(function (&...$slots): int {
+                foreach ($slots as &$slot) {
+                    $slot++;
+                }
+
+                return count($slots);
+            });
+            $first = 1;
+            $second = 2;
+
+            expect($double->fill($first, $second))->toBe(2);
+            expect([$first, $second])->toBe([2, 3]);
+        });
+
+        it("hands back the reference a callback returns by reference", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $store = ['a' => 1];
+            allow($double->all())->toReturnUsing(function &() use (&$store): array {
+                return $store;
+            });
+
+            $all = &$double->all();
+            $all['b'] = 2;
+
+            expect($store)->toBe(['a' => 1, 'b' => 2]);
+        });
+
+        it("hands back a copy of a value stubbed with toReturn, never the value itself", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            allow($double->all())->toReturn(['a' => 1]);
+
+            $all = &$double->all();
+            $all['b'] = 2;
+
+            expect($double->all())->toBe(['a' => 1]);
         });
 
         if (PHP_VERSION_ID >= 80500) {

@@ -115,6 +115,96 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A stub keeps PHP's references and defaults, so what its callback writes reaches the caller
+    Given a class "src/App/Cache.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Clock
+      {
+          public function __construct(public int $at = 0) {}
+      }
+
+      interface Cache
+      {
+          public function get(string $key, ?array &$metadata = null): string;
+
+          public function fill(&...$slots): int;
+
+          public function &all(): array;
+
+          public function at(Clock $clock = new Clock(), int $mode = 0): int;
+      }
+      """
+    And a spec file "spec/App/Cache.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Cache.php';
+
+      use App\Cache;
+      use App\Clock;
+
+      describe(Cache::class, function () {
+          it('writes through an argument taken by reference', function () {
+              $cache = mock(Cache::class);
+              $anything = any();
+              allow($cache->get('key', $anything))->toReturnUsing(function (string $key, ?array &$metadata): string {
+                  $metadata = ['hit' => true];
+
+                  return 'value';
+              });
+              $metadata = null;
+
+              expect($cache->get('key', $metadata))->toBe('value');
+              expect($metadata)->toBe(['hit' => true]);
+          });
+
+          it('writes through arguments taken by reference one by one', function () {
+              $cache = mock(Cache::class);
+              $anything = cetera();
+              allow($cache->fill($anything))->toReturnUsing(function (&...$slots): int {
+                  foreach ($slots as &$slot) {
+                      $slot *= 10;
+                  }
+
+                  return count($slots);
+              });
+              $first = 1;
+              $second = 2;
+
+              expect($cache->fill($first, $second))->toBe(2);
+              expect([$first, $second])->toBe([10, 20]);
+          });
+
+          it('hands back the reference a callback returns by reference', function () {
+              $cache = mock(Cache::class);
+              $store = ['a' => 1];
+              allow($cache->all())->toReturnUsing(function &() use (&$store): array {
+                  return $store;
+              });
+
+              $all = &$cache->all();
+              $all['b'] = 2;
+
+              expect($store)->toBe(['a' => 1, 'b' => 2]);
+          });
+
+          it('builds a default left out before a named argument', function () {
+              $cache = mock(Cache::class);
+              allow($cache->at(mode: 3))->toReturnUsing(fn(Clock $clock, int $mode): int => $clock->at + $mode);
+
+              expect($cache->at(mode: 3))->toBe(3);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "4"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

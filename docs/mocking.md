@@ -80,6 +80,20 @@ App\Counter::count() returns int, so it cannot return string "three".
 What a `toReturnUsing()` callback answers is held the same way when the call
 is made.
 
+A callback is handed the call's arguments as PHP hands them to the real
+method. One the method takes by reference reaches the callback as that
+reference, so what the callback writes into it reaches the caller. A method
+that returns by reference hands back the reference a callback returns by
+reference. A value given to `toReturn()` is always handed back as a copy:
+
+```php
+allow($cache->get('key', $anything))->toReturnUsing(function (string $key, ?array &$metadata): string {
+    $metadata = ['hit' => true];
+
+    return 'value';
+});
+```
+
 ### `allow()` + `toThrow()`
 
 Stub a method to throw an exception:
