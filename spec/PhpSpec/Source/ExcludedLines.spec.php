@@ -153,6 +153,14 @@ describe(ExcludedLines::class, function () {
             expect(ExcludedLines::in("<?php\nclass A\n{\n}\n")->lines())->toBe([2, 3, 5]);
         });
 
+        it('keeps a line that declares when it also holds code', function () {
+            expect(ExcludedLines::in("<?php\nclass A { public function value() { return 1; } }")->lines())->toBe([]);
+            expect(ExcludedLines::in("<?php\nclass A { public function value() { return 1; } }\n")->lines())->toBe([3]);
+            expect(ExcludedLines::in("<?php\nclass A\n{\n    public function value() { return 1; }}")->lines())->toBe([2, 3]);
+            expect(ExcludedLines::in("<?php\nfinal class A extends B implements\n    C { public function f() { return 1; }\n}\n")->lines())->toBe([2, 5]);
+            expect(ExcludedLines::in("<?php\nnamespace App; const A = 1; echo A;\n")->lines())->toBe([3]);
+        });
+
         it('keeps a last line that ends a function or a statement', function () {
             expect(ExcludedLines::in("<?php\nfunction f(): void\n{\n    echo 1;\n}")->lines())->toBe([]);
             expect(ExcludedLines::in("<?php\n\$ready = true;")->lines())->toBe([]);

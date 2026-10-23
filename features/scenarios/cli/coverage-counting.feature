@@ -164,6 +164,47 @@ Feature: What coverage counts
       | run            |
       | run under PCOV |
 
+  Scenario Outline: A line that declares counts when it also holds code
+    Given a class "src/App/Compact.php":
+      """
+      <?php
+
+      namespace App;
+
+      final class Compact { public function value(): int { return 1; } }
+      """
+    And a class "src/App/Tail.php":
+      """
+      <?php
+
+      namespace App;
+
+      final class Tail
+      {
+          public function value(): int { return 2; }}
+      """
+    And a spec file "spec/App/Compact.spec.php":
+      """
+      <?php
+
+      use App\Compact;
+      use App\Tail;
+
+      describe(Compact::class, function () {
+          it('has values', function () {
+              expect((new Compact())->value() + (new Tail())->value())->toBe(3);
+          });
+      });
+      """
+    When I run phpspec <run> with coverage options "spec --coverage"
+    Then the output should contain "App/Compact.php ... 100.0% (1/1)"
+    And the output should contain "App/Tail.php ...... 100.0% (1/1)"
+
+    Examples:
+      | run            |
+      | run            |
+      | run under PCOV |
+
   Scenario: The JSON report credits a scenario as it credits an example, in a parallel run too
     Given a spec file "spec/App/Basket.spec.php":
       """

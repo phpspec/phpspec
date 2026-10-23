@@ -43,8 +43,11 @@ final class ExclusionReader
     /** @var array<int, true> the docblocks a declaration took, which tag no line */
     private array $attached = [];
 
-    /** @var array<int, true> the tokens that close a function's body */
-    private array $functionEnds = [];
+    /** @var array<int, true> lines that only declare, left out unless they hold code too */
+    private array $declaring = [];
+
+    /** @var array<int, true> lines that hold code: a function with a body, or the file's own statements */
+    private array $code = [];
 
     private int $declared = 0;
 
@@ -64,6 +67,11 @@ final class ExclusionReader
     {
         $this->readDeclarations();
         $this->readEnd();
+
+        foreach (array_keys(array_diff_key($this->declaring, $this->code)) as $line) {
+            $this->excluded[$line] = true;
+        }
+
         $this->readTags();
         $lines = array_keys($this->excluded);
         sort($lines);
@@ -108,17 +116,20 @@ final class ExclusionReader
                 $i = $this->statementEnd($i);
             } elseif ($token->is(T_CONST) && $class === null) {
                 $end = $this->statementEnd($i);
-                $this->exclude($token->line, $this->tokens[$end]->line);
+                $this->mark($this->declaring, $token->line, $this->tokens[$end]->line);
                 $i = $end;
             } elseif ($token->is(array_keys(self::KINDS)) && $this->declaresAt($i)) {
                 $classes[] = $this->classLike($i, $namespace, $marked, $doc, $class === null);
                 $i = $this->bodyOpen($i);
             } elseif ($token->is(T_CLASS) && !$this->namesAClassAt($i)) {
-                $i = $this->matchingClose($this->bodyOpen($i));
+                $end = $this->matchingClose($this->bodyOpen($i));
+                $this->mark($this->code, $token->line, $this->tokens[$end]->line);
+                $i = $end;
             } elseif ($token->is(T_FUNCTION) && $this->nameAfter($i) !== null) {
                 $i = $this->function($i, $class === null ? $namespace : $class['name'] . '::', $marked, $doc, $class === null);
             } elseif ($class === null && !$token->is([123, ord('}'), ord(';')])) {
                 $this->ownCode = true;
+                $this->mark($this->code, $token->line, $token->line + substr_count($token->text, "\n"));
             }
 
             $marked = false;
@@ -138,7 +149,7 @@ final class ExclusionReader
         $name = $namespace . $this->nameAfter($at);
         $open = $this->bodyOpen($at);
         $end = $this->matchingClose($open);
-        $this->exclude($this->tokens[$at]->line, $this->tokens[$open]->line);
+        $this->mark($this->declaring, $this->tokens[$at]->line, $this->tokens[$open]->line);
         $excluded = $kind === 'interface' || $marked || $this->tagged($doc) || ($this->named)('class', $name);
 
         $this->declare($at, $end, $excluded, $doc, $topLevel);
@@ -156,7 +167,10 @@ final class ExclusionReader
         $open = $this->bodyOpen($at);
         $end = $this->tokens[$open]->text === ';' ? $open : $this->matchingClose($open);
         $excluded = $marked || $this->tagged($doc) || ($this->named)($topLevel ? 'function' : 'method', $name);
-        $this->functionEnds[$end] = true;
+
+        if ($this->tokens[$open]->text !== ';') {
+            $this->mark($this->code, $this->tokens[$at]->line, $this->tokens[$end]->line);
+        }
 
         $this->declare($at, $end, $excluded, $doc, $topLevel);
 
@@ -181,8 +195,7 @@ final class ExclusionReader
 
     /**
      * The line the engine closes the file on: the one after the last when a
-     * newline ends the file, else the last, unless a function or a statement
-     * ends there.
+     * newline ends the file, else the last.
      */
     private function readEnd(): void
     {
@@ -194,13 +207,7 @@ final class ExclusionReader
 
         $last = $this->tokens[$lastIndex];
         $line = $last->line + substr_count($last->text, "\n");
-        $closing = $this->tokens[$lastIndex]->isIgnorable() ? $this->significantBefore($lastIndex) : $lastIndex;
-
-        if ($closing !== null && $this->tokens[$closing]->line === $line && ($this->tokens[$closing]->text !== '}' || isset($this->functionEnds[$closing]))) {
-            return;
-        }
-
-        $this->exclude($line, $line);
+        $this->declaring[$line] = true;
     }
 
     /**
@@ -477,6 +484,16 @@ final class ExclusionReader
         }
 
         return null;
+    }
+
+    /**
+     * @param array<int, true> $lines
+     */
+    private function mark(array &$lines, int $from, int $to): void
+    {
+        for ($line = $from; $line <= $to; $line++) {
+            $lines[$line] = true;
+        }
     }
 
     private function exclude(int $from, int $to): void
