@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Mock;
 
+use Closure;
 use LogicException;
 use ReflectionClass;
 use ReflectionException;
@@ -36,6 +37,9 @@ final class Double
 {
     /** @var array<string, array{mockClassName: string, reflectionClass: ReflectionClass<object>}> Cached class definitions by FQCN */
     private static array $classCache = [];
+
+    /** Whether PHP lets a plain class implement a built-in interface, asked once per interface in this process */
+    private static ?ImplementationProbe $probe = null;
 
     /**
      * Resets the class cache between in-process runs.
@@ -97,7 +101,13 @@ final class Double
             );
         }
 
-        $methods = self::generateMethods($reflectionClass);
+        $base = $reflectionClass->isInterface() ? new NativeBase([$reflectionClass], self::refusedBy()) : null;
+
+        if ($base?->refusal() !== null) {
+            throw new LogicException(sprintf('Cannot create a test double for interface %s. %s', ltrim($class, '\\'), $base->refusal()));
+        }
+
+        $methods = self::generateMethods($reflectionClass, 0, $base, $base?->methods() ?? []) . ($base?->code() ?? '');
         $undefinedMethodGuard = self::undefinedMethodGuard($reflectionClass, ltrim($class, '\\'));
 
         // prefix class name with a namespace separator
@@ -109,9 +119,9 @@ final class Double
         // make sure you are extending or implementing double class effectively
         $extends = 'extends';
         $implementsGenerated = 'implements \\PhpSpec\\Mock\\GeneratedDouble';
-        if ($reflectionClass->isInterface()) {
-            $extends = 'implements';
-            $implementsGenerated = ', \\PhpSpec\\Mock\\GeneratedDouble';
+        if ($base !== null) {
+            $extends = ($base->extends() === null ? '' : 'extends ' . $base->extends() . ' ') . 'implements';
+            $implementsGenerated = implode('', array_map(static fn(string $interface): string => ', ' . $interface, $base->implements())) . ', \\PhpSpec\\Mock\\GeneratedDouble';
         }
 
         // Extract the short class name from the namespaced mock class name
@@ -622,8 +632,58 @@ PHP;
             'object' => $returning('new \\stdClass()'),
             'callable', 'Closure' => $returning('static fn() => null'),
             'Generator' => $returning('(static fn() => yield from [])()'),
+            'Traversable', 'Iterator' => $returning('new \\ArrayIterator([])'),
             default => null,
         };
+    }
+
+    /**
+     * A return value's double: a MatchableDouble of the interfaces, on the
+     * base PHP requires for them, initialised as that base is.
+     *
+     * @param list<string> $interfaces
+     */
+    private static function wrapperCode(string $className, array $interfaces, NativeBase $base, string $methodName, string $methods): string
+    {
+        $extends = $base->extends() === null ? '' : 'extends ' . $base->extends() . ' ';
+        $implements = implode(', ', ['\\PhpSpec\\Mock\\MatchableDouble', ...$interfaces, ...$base->implements()]);
+        $initialised = $base->extends() === null ? '' : 'parent::__construct();';
+
+        return <<<PHP
+class $className {$extends}implements $implements {
+    use \\PhpSpec\\Mock\\MatchableDoubleBehaviour;
+
+    public function __construct(object \$mockedObject) {
+        $initialised
+        \$this->______phpspec_mockedObject = \$mockedObject;
+        \$this->______phpspec_methodName = '$methodName';
+    }
+
+    $methods
+}
+PHP;
+    }
+
+    /**
+     * Why PHP refuses a plain class implementing a built-in interface, asked
+     * of a child php once per interface in this process.
+     *
+     * @return Closure(class-string): ?string
+     */
+    private static function refusedBy(): Closure
+    {
+        return (self::$probe ??= new ImplementationProbe())->refusal(...);
+    }
+
+    /**
+     * What a method returns when PHP lets no double be its return type: the
+     * reason, said when the method is called.
+     */
+    private static function refusedReturnCode(string $class, string $methodName, string $returnType, string $why): string
+    {
+        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no double of %s can be made. %s', ltrim($class, '\\'), $methodName, ltrim($returnType, '\\'), $why);
+
+        return 'throw new \\LogicException(' . var_export($message, true) . ');';
     }
 
     /**
@@ -804,17 +864,19 @@ PHP;
      *
      * @param ReflectionClass<object> $reflectionClass the class whose methods to generate
      * @param int $depth recursion depth to prevent infinite loops on circular return types
+     * @param NativeBase|null $base what the double is built on, whose final methods it keeps
+     * @param list<ReflectionMethod> $extra methods the double defines besides the class's own
      * @return string the generated PHP method code
      * @throws ReflectionException
      */
-    private static function generateMethods(ReflectionClass $reflectionClass, int $depth = 0): string
+    private static function generateMethods(ReflectionClass $reflectionClass, int $depth = 0, ?NativeBase $base = null, array $extra = []): string
     {
         if ($depth > 3) {
             return '';
         }
 
         // get the reflection methods
-        $methods = $reflectionClass->getMethods();
+        $methods = [...$reflectionClass->getMethods(), ...$extra];
 
         // for each reflection method generate the method code as a string
         //  - make it return an instance of the hinted returned type
@@ -823,6 +885,7 @@ PHP;
 
             // ignore constructors, final methods, static methods, and internal magic methods
             if ($method->getName() === '__construct'
+                || $base?->keeps($method->getName())
                 || $method->isFinal()
                 || $method->isStatic()
                 || ($method->isInternal() && str_starts_with($method->getName(), '__'))) {
@@ -885,30 +948,23 @@ PHP;
             // implementing the Matchable interface
             // whilst extending the returned type
             $className = null;
+            $refusedReturn = null;
             $isEnum = $isClassReturn && $simpleReturnName && enum_exists($simpleReturnName);
             $returnTypeFqcn = $isClassReturn && $simpleReturnName ? '\\' . $simpleReturnName : null;
             if ($isClassReturn && !$isEnum && $depth === 0 && $returnTypeFqcn !== null && (class_exists($returnTypeFqcn) || interface_exists($returnTypeFqcn))) {
                 $returnedTypeReflected = new ReflectionClass($returnTypeFqcn);
+                $wrapperBase = $returnedTypeReflected->isInterface() && !$returnedTypeReflected->isInternal() ? new NativeBase([$returnedTypeReflected], self::refusedBy()) : null;
                 $templateMethods = '';
 
-                if (count($returnedTypeReflected->getMethods())) {
-                    $templateMethods = self::generateMethods($returnedTypeReflected, $depth + 1);
+                if (count($returnedTypeReflected->getMethods()) || $wrapperBase?->methods() !== []) {
+                    $templateMethods = self::generateMethods($returnedTypeReflected, $depth + 1, $wrapperBase, $wrapperBase?->methods() ?? []) . ($wrapperBase?->code() ?? '');
                 }
                 $template = '';
-                if ($returnedTypeReflected->isInterface() && !$returnedTypeReflected->isInternal()) {
+                if ($wrapperBase?->refusal() !== null) {
+                    $refusedReturn = $wrapperBase->refusal();
+                } elseif ($wrapperBase !== null) {
                     $className = 'MockedMethodFor' . $wrapperSuffix;
-                    $template = <<<PHP
-class $className implements \PhpSpec\Mock\MatchableDouble, $returnTypeFqcn {
-    use \PhpSpec\Mock\MatchableDoubleBehaviour;
-
-    public function __construct(object \$mockedObject) {
-        \$this->______phpspec_mockedObject = \$mockedObject;
-        \$this->______phpspec_methodName = '$methodName';
-    }
-
-    $templateMethods
-}
-PHP;
+                    $template = self::wrapperCode($className, [$returnTypeFqcn], $wrapperBase, $methodName, $templateMethods);
                 } elseif (class_exists($returnTypeFqcn, false) && !$returnedTypeReflected->isFinal() && !$returnedTypeReflected->isReadOnly()) {
                     $className = 'MockedMethodFor' . $wrapperSuffix;
                     $template = <<<PHP
@@ -954,34 +1010,27 @@ PHP;
                     }
                     $interfaceList[] = '\\' . $tName;
                 }
-                if ($canGenerate && count($interfaceList) > 0) {
+                $allInterfaceReflections = [];
+                foreach ($canGenerate ? $interfaceList : [] as $iface) {
+                    /** @var class-string $ifaceClassName */
+                    $ifaceClassName = ltrim($iface, '\\');
+                    $allInterfaceReflections[] = new ReflectionClass($ifaceClassName);
+                }
+                $intersectionBase = $allInterfaceReflections === [] ? null : new NativeBase($allInterfaceReflections, self::refusedBy());
+                if ($intersectionBase !== null && $intersectionBase->refusal() === null) {
                     $className = 'MockedMethodFor' . $wrapperSuffix;
-                    $interfacesStr = implode(', ', $interfaceList);
-                    // Gather methods from all interfaces for the template
-                    $allInterfaceReflections = [];
-                    foreach ($interfaceList as $iface) {
-                        /** @var class-string $ifaceClassName */
-                        $ifaceClassName = ltrim($iface, '\\');
-                        $allInterfaceReflections[] = new ReflectionClass($ifaceClassName);
-                    }
+                    // Gather methods from all interfaces for the template, and
+                    // what the base brings once, beside the last of them
                     $combinedTemplateMethods = '';
-                    foreach ($allInterfaceReflections as $ifaceReflection) {
-                        if (count($ifaceReflection->getMethods())) {
-                            $combinedTemplateMethods .= self::generateMethods($ifaceReflection, $depth + 1) . "\n";
+                    $last = array_key_last($allInterfaceReflections);
+                    foreach ($allInterfaceReflections as $position => $ifaceReflection) {
+                        $extra = $position === $last ? $intersectionBase->methods() : [];
+                        if (count($ifaceReflection->getMethods()) || $extra !== []) {
+                            $combinedTemplateMethods .= self::generateMethods($ifaceReflection, $depth + 1, $intersectionBase, $extra) . "\n";
                         }
                     }
-                    $template = <<<PHP
-class $className implements \PhpSpec\Mock\MatchableDouble, $interfacesStr {
-    use \PhpSpec\Mock\MatchableDoubleBehaviour;
-
-    public function __construct(object \$mockedObject) {
-        \$this->______phpspec_mockedObject = \$mockedObject;
-        \$this->______phpspec_methodName = '$methodName';
-    }
-
-    $combinedTemplateMethods
-}
-PHP;
+                    $combinedTemplateMethods .= $intersectionBase->code();
+                    $template = self::wrapperCode($className, $interfaceList, $intersectionBase, $methodName, $combinedTemplateMethods);
                     try {
                         eval($template);
                     } catch (Throwable) {
@@ -1021,6 +1070,8 @@ PHP;
                 $return = '$__ret = new \\' . $className . '($this); return $__ret;';
             } elseif ($isEnum) {
                 $return = "\$__ret = \\{$simpleReturnName}::cases()[0]; return \$__ret;";
+            } elseif ($refusedReturn !== null) {
+                $return = self::refusedReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName, $refusedReturn);
             } elseif ($simpleReturnName !== null) {
                 $return = self::getBuiltinReturnCode($simpleReturnName)
                     ?? self::placeholderReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName, $depth === 0);

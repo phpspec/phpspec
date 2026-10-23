@@ -291,6 +291,23 @@ interface DoubleSpecNewDefault {
     public function maybe(?DoubleSpecClock $clock = new DoubleSpecClock(9), int $mode = 0): ?int;
 }
 
+interface DoubleSpecBag extends \Traversable {}
+interface DoubleSpecFailure extends \Throwable {}
+interface DoubleSpecMoment extends \DateTimeInterface {}
+interface DoubleSpecLabelled extends \UnitEnum {}
+interface DoubleSpecPayload extends \Serializable {}
+interface DoubleSpecSized {
+    public function size(): int;
+}
+interface DoubleSpecNativeSource {
+    public function bag(): DoubleSpecBag;
+    public function failure(): DoubleSpecFailure;
+    public function moment(): DoubleSpecMoment;
+    public function label(): DoubleSpecLabelled;
+    public function counted(): DoubleSpecBag&DoubleSpecSized;
+    public function name(): string;
+}
+
 describe(Double::class, function() {
 
     it("creates a double of an interface", function() {
@@ -497,6 +514,66 @@ describe(Double::class, function() {
                 expect($double->run())->toBe(9);
             });
         }
+    });
+
+    context("an interface built on one PHP lets no plain class implement", function () {
+        it("is an IteratorAggregate when built on Traversable, iterating as stubbed or empty", function () {
+            $bag = Double::getInstance(DoubleSpecBag::class);
+            allow($bag->getIterator())->toReturn(new ArrayIterator([1, 2]));
+
+            expect(iterator_to_array($bag))->toBe([1, 2]);
+            expect(iterator_to_array(dummy(DoubleSpecBag::class)))->toBe([]);
+        });
+
+        it("is an Exception when built on Throwable, keeping what Exception declares final", function () {
+            $failure = Double::getInstance(DoubleSpecFailure::class);
+
+            expect($failure)->toBeAnInstanceOf(Exception::class);
+            expect($failure->getMessage())->toBe('');
+            expect(fn() => throw $failure)->toThrow(DoubleSpecFailure::class);
+        });
+
+        it("is a DateTimeImmutable when built on DateTimeInterface, its methods stubbed", function () {
+            $moment = Double::getInstance(DoubleSpecMoment::class);
+            allow($moment->format('Y'))->toReturn('2026');
+
+            expect($moment)->toBeAnInstanceOf(DateTimeImmutable::class);
+            expect($moment->format('Y'))->toBe('2026');
+        });
+
+        it("refuses one only an enum can implement, saying why", function () {
+            expect(fn() => Double::getInstance(DoubleSpecLabelled::class))
+                ->toThrow(LogicException::class, 'Cannot create a test double for interface DoubleSpecLabelled. Only an enum can implement UnitEnum.');
+        });
+
+        it("stands in for each as a return type, refusing the enum-only one only when it is called", function () {
+            $source = dummy(DoubleSpecNativeSource::class);
+
+            expect($source->bag())->toBeAnInstanceOf(DoubleSpecBag::class);
+            expect($source->failure())->toBeAnInstanceOf(DoubleSpecFailure::class);
+            expect($source->moment())->toBeAnInstanceOf(DoubleSpecMoment::class);
+            expect($source->counted())->toBeAnInstanceOf(DoubleSpecSized::class);
+            expect($source->name())->toBe('');
+            expect(fn() => $source->label())
+                ->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of DoubleSpecNativeSource::label(): no double of DoubleSpecLabelled can be made. Only an enum can implement UnitEnum.');
+        });
+
+        it("doubles one built on Serializable without the deprecation", function () {
+            $raised = [];
+            set_error_handler(function (int $level, string $message) use (&$raised): bool {
+                $raised[] = $message;
+
+                return true;
+            });
+
+            try {
+                Double::getInstance(DoubleSpecPayload::class);
+            } finally {
+                restore_error_handler();
+            }
+
+            expect($raised)->toBe([]);
+        });
     });
 
     it("tracks method calls", function() {

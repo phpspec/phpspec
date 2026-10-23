@@ -12,7 +12,7 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Parallel;
+namespace PhpSpec\Process;
 
 /**
  * @internal

@@ -1,6 +1,6 @@
 <?php
 
-use PhpSpec\Parallel\PhpSetup;
+use PhpSpec\Process\PhpSetup;
 
 describe(PhpSetup::class, function () {
 

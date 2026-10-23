@@ -272,6 +272,91 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double stands in for an interface built on one PHP lets no plain class implement
+    Given a class "src/App/Natives.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Bag extends \Traversable {}
+
+      interface BagSource
+      {
+          public function items(): Bag;
+      }
+
+      interface Failure extends \Throwable {}
+
+      interface Moment extends \DateTimeInterface {}
+
+      interface Labelled extends \UnitEnum {}
+
+      interface LabelSource
+      {
+          public function label(): Labelled;
+
+          public function name(): string;
+      }
+
+      interface Payload extends \Serializable {}
+      """
+    And a spec file "spec/App/Natives.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Natives.php';
+
+      use App\Bag;
+      use App\BagSource;
+      use App\Failure;
+      use App\Labelled;
+      use App\LabelSource;
+      use App\Moment;
+      use App\Payload;
+
+      describe('Natives', function () {
+          it('iterates a double of a Traversable interface, empty or as stubbed', function () {
+              $bag = mock(Bag::class);
+              allow($bag->getIterator())->toReturn(new ArrayIterator([1, 2]));
+
+              expect(iterator_to_array(dummy(Bag::class)))->toBe([]);
+              expect(iterator_to_array($bag))->toBe([1, 2]);
+              expect(dummy(BagSource::class)->items())->toBeAnInstanceOf(Bag::class);
+          });
+
+          it('throws a double of a Throwable interface', function () {
+              $failure = dummy(Failure::class);
+
+              expect(fn() => throw $failure)->toThrow(Failure::class);
+          });
+
+          it('stubs a double of a DateTimeInterface interface', function () {
+              $moment = mock(Moment::class);
+              allow($moment->format('Y'))->toReturn('2026');
+
+              expect($moment->format('Y'))->toBe('2026');
+          });
+
+          it('refuses a double of an interface only an enum can implement, and that return type only when called', function () {
+              $source = dummy(LabelSource::class);
+
+              expect(fn() => mock(Labelled::class))->toThrow(LogicException::class, 'Cannot create a test double for interface App\Labelled. Only an enum can implement UnitEnum.');
+              expect($source->name())->toBe('');
+              expect(fn() => $source->label())->toThrow(LogicException::class);
+          });
+
+          it('doubles a Serializable interface without a deprecation', function () {
+              expect(dummy(Payload::class))->toBeAnInstanceOf(Payload::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "5"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """
