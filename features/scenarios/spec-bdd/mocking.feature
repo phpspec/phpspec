@@ -803,6 +803,251 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double of a class with a Traversable interface decides its iterator through self-references and static methods, and only where it can end
+    Given a class "src/App/Loops.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Bag extends \Traversable {}
+
+      interface Failure extends \Throwable {}
+
+      interface HasValue
+      {
+          public function value(): string;
+      }
+
+      interface Ticker extends \Iterator
+      {
+          public function valid(): true;
+      }
+
+      class Collection
+      {
+          public function getIterator(): self
+          {
+              return $this;
+          }
+      }
+
+      class Outer
+      {
+          public function getIterator(): Ring
+          {
+              return new Ring();
+          }
+      }
+
+      class Ring
+      {
+          public function getIterator(): Outer
+          {
+              return new Outer();
+          }
+      }
+
+      class Coil
+      {
+          public function getIterator(): Coil&Failure
+          {
+              throw new \LogicException();
+          }
+      }
+
+      class Shelf
+      {
+          public static function getIterator(): \ArrayIterator
+          {
+              return new \ArrayIterator([]);
+          }
+      }
+
+      class Valued
+      {
+          public static function value(): string
+          {
+              return 'static';
+          }
+      }
+
+      class Hidden
+      {
+          private static function value(): string
+          {
+              return 'hidden';
+          }
+      }
+
+      class Forever
+      {
+          public function getIterator(): array
+          {
+              return [];
+          }
+
+          public function valid(): true
+          {
+              return true;
+          }
+      }
+
+      interface Source
+      {
+          public function collection(): Collection&Bag;
+
+          public function outer(): Outer&Bag;
+
+          public function coil(): Coil&Bag;
+
+          public function shelf(): Shelf&Bag;
+
+          public function valued(): Valued&HasValue;
+
+          public function hidden(): Hidden&HasValue;
+
+          public function forever(): Forever&Bag;
+      }
+      """
+    And a spec file "spec/App/Loops.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Loops.php';
+
+      use App\Collection;
+      use App\Outer;
+      use App\Source;
+      use App\Ticker;
+
+      describe('Loops', function () {
+          it('answers a class whose getIterator() returns itself, or a class returning it back', function () {
+              $source = dummy(Source::class);
+
+              expect($source->collection())->toBeAnInstanceOf(Collection::class);
+              expect($source->outer())->toBeAnInstanceOf(Outer::class);
+          });
+
+          it('settles a self-reference running into what no object can be as an Iterator', function () {
+              expect(iterator_to_array(dummy(Source::class)->coil()))->toBe([]);
+          });
+
+          it('iterates as an Iterator a class whose getIterator() is static', function () {
+              expect(iterator_to_array(dummy(Source::class)->shelf()))->toBe([]);
+          });
+
+          it('refuses a class declaring static what an interface declares on an object, unless it is private', function () {
+              $source = dummy(Source::class);
+
+              expect(fn() => $source->valued())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::valued(): no double of App\Valued&App\HasValue can be made. No object can be both App\Valued and App\HasValue.');
+              expect($source->hidden()->value())->toBe('');
+          });
+
+          it('refuses a double whose valid() cannot return false, which could never end its iteration', function () {
+              expect(fn() => dummy(Source::class)->forever())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::forever(): no double of App\Forever&App\Bag can be made. App\Forever declares valid() returning true, so a double of it cannot end its iteration.');
+              expect(fn() => mock(Ticker::class))->toThrow(LogicException::class, 'Cannot create a test double for interface App\Ticker. App\Ticker declares valid() returning true, so a double of it cannot end its iteration.');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "5"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
+  Scenario: A dummy aggregate answers its getIterator() with an empty iterator, or says what keeps it from one when iterated
+    Given a class "src/App/Iterated.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Bag extends \Traversable {}
+
+      class Collection
+      {
+          public function getIterator(): self
+          {
+              return $this;
+          }
+      }
+
+      class Aggregate implements \IteratorAggregate
+      {
+          public function getIterator(): self
+          {
+              return $this;
+          }
+      }
+
+      class Stuck
+      {
+          public function getIterator(): array
+          {
+              return [];
+          }
+
+          final public function valid(): bool
+          {
+              return true;
+          }
+      }
+
+      interface Source
+      {
+          public function collection(): Collection&Bag;
+      }
+
+      interface Shelf extends \IteratorAggregate
+      {
+          public function getIterator(): Aggregate;
+      }
+
+      interface Stalled extends \IteratorAggregate
+      {
+          public function getIterator(): Stuck&Bag;
+      }
+      """
+    And a spec file "spec/App/Iterated.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Iterated.php';
+
+      use App\Aggregate;
+      use App\Shelf;
+      use App\Source;
+      use App\Stalled;
+
+      describe('Iterated', function () {
+          it('iterates as empty a dummy whose getIterator() returns its own class', function () {
+              expect(iterator_to_array(dummy(Source::class)->collection()))->toBe([]);
+          });
+
+          it('refuses an empty iterator only when the unstubbed getIterator() is called, naming what keeps it from one', function () {
+              $shelf = dummy(Shelf::class);
+
+              expect($shelf)->toBeAnInstanceOf(Shelf::class);
+              expect(fn() => iterator_to_array($shelf))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Shelf::getIterator(): no empty iterator of App\Aggregate can be made. App\Aggregate is an IteratorAggregate, which no class can be along with an Iterator.');
+              expect(fn() => iterator_to_array(dummy(Stalled::class)))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Stalled::getIterator(): no empty iterator of App\Stuck&App\Bag can be made. App\Stuck declares valid() final, so a double of it cannot end its iteration.');
+          });
+
+          it('leaves a mock to stub what getIterator() returns', function () {
+              $shelf = mock(Shelf::class);
+              $aggregate = new Aggregate();
+              allow($shelf->getIterator())->toReturn($aggregate);
+
+              expect($shelf->getIterator())->toBe($aggregate);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "3"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

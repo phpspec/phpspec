@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Mock;
 
+use IteratorAggregate;
 use LogicException;
 use ReflectionClass;
 use ReflectionException;
@@ -42,14 +43,30 @@ final class Answers
 
     /**
      * What a lenient double answers to a call of a method returning the given
-     * types: a dummy of them, standing for the call.
+     * types: a dummy of them, standing for the call. What an aggregate's
+     * getIterator() answers is an empty Iterator, which foreach ends at once,
+     * where another aggregate could lead to one more without end; one that
+     * cannot be is refused, saying what keeps it from being one.
      *
      * @param non-empty-list<class-string> $types a class first, if any, then interfaces
      */
     public static function dummy(GeneratedDouble $double, string $method, array $types): object
     {
+        $emptyIterator = $double instanceof IteratorAggregate && strcasecmp($method, 'getIterator') === 0;
         $reflections = array_map(static fn(string $type): ReflectionClass => new ReflectionClass($type), $types);
-        $answerClass = new ReflectionClass(self::$dummies[implode('&', $types)] ??= self::dummyClassOf($reflections));
+        $key = implode('&', $types) . ($emptyIterator ? ' as an empty iterator' : '');
+
+        if (!isset(self::$dummies[$key])) {
+            [$base, $methods, $refusal] = Double::planOf($reflections, $emptyIterator);
+
+            if ($methods === null) {
+                throw new LogicException(sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no %s of %s can be made. %s', ltrim($double->______PhpSpecNameOfClassDoubled(), '\\'), $method, $emptyIterator ? 'empty iterator' : 'double', implode('&', $types), $refusal));
+            }
+
+            self::$dummies[$key] = self::dummyClassOf($reflections, $base, $methods);
+        }
+
+        $answerClass = new ReflectionClass(self::$dummies[$key]);
         $answer = $reflections[0]->isInterface() ? $answerClass->newInstance() : $answerClass->newInstanceWithoutConstructor();
         $answer->______PhpSpecAnswering($double, $method);
 
@@ -122,14 +139,8 @@ final class Answers
      * @return class-string<DummyAnswer>
      * @throws ReflectionException
      */
-    private static function dummyClassOf(array $types): string
+    private static function dummyClassOf(array $types, ?NativeBase $base, MethodSet $methods): string
     {
-        [$base, $methods, $refusal] = Double::planOf($types);
-
-        if ($methods === null) {
-            throw new LogicException((string) $refusal);
-        }
-
         $doubleClass = Double::classOf($types, $base, $methods);
         $shortName = substr($doubleClass, strlen('PhpspecDouble\\')) . '_Answer';
 
@@ -159,14 +170,14 @@ final class Answers
             return [null, null];
         }
 
-        [$base, $methods, $refusal] = Double::planOf($types);
+        [$base, $methods, $refusal] = Double::planOf($types, false, false);
 
         if ($methods === null) {
             return [null, $refusal];
         }
 
         foreach ($types as $type) {
-            if ($type->isInterface() && $type->isInternal()) {
+            if ($type->isInterface() && $type->isInternal() && (count($types) === 1 || !in_array($type->getName(), NativeBase::HANDLED, true))) {
                 return [null, null];
             }
         }

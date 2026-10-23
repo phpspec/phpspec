@@ -54,8 +54,14 @@ already extends where an interface needs a `Throwable` or a
 `DateTimeInterface`, the serialization methods it has, and the iterator it
 already is. A subclass of it adds what it can for a `Traversable` interface: an
 `IteratorAggregate` where its `getIterator()` allows one, so stubbing
-`getIterator()` rules `foreach`, else an `Iterator`, refused when its `valid()`
-is final, since no double could end the iteration. A class is the class it
+`getIterator()` rules `foreach`, else an `Iterator`. A double iterating as an
+`Iterator` is refused where its `valid()` is final, or resolves to a type
+without `false`, since no double of it could end the iteration. What a dummy
+aggregate's `getIterator()` answers is an empty `Iterator`, which `foreach` ends
+at once; where its class cannot be one, iterating the dummy is refused, saying
+what keeps it from one, and a `mock()` can still stub the call. A class
+declaring static, and not private, a method an interface declares on an object
+cannot be that interface. A class is the class it
 names however it is spelled, through an alias or in another case, and an
 intersection one of its types already satisfies is answered as that type.
 

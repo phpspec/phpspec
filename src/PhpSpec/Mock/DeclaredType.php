@@ -38,26 +38,29 @@ final readonly class DeclaredType
     /**
      * @param list<list<string>>|null $terms null for mixed, which admits any value but none from void
      * @param list<string> $own the types of the double, which static stands for
+     * @param list<string> $assumed the classes and interfaces being decided to share an instance, on the way here, which a decision about them again takes to
      */
     private function __construct(
         private ?array $terms,
         private array $own,
+        private array $assumed = [],
     ) {}
 
     /**
      * @param list<string> $own the types of the double, which static stands for
+     * @param list<string> $assumed the combinations of types being decided to share an instance, on the way here
      */
-    public static function of(?ReflectionType $type, ReflectionMethod $method, array $own): self
+    public static function of(?ReflectionType $type, ReflectionMethod $method, array $own, array $assumed = []): self
     {
         $terms = $type === null ? null : self::termsOf($type, $method);
 
         if ($terms === null) {
-            return new self(null, $own);
+            return new self(null, $own, $assumed);
         }
 
-        $reducing = new self([], $own);
+        $reducing = new self([], $own, $assumed);
 
-        return new self($reducing->widest(array_values(array_filter(array_map($reducing->reduced(...), $terms), static fn(?array $term): bool => $term !== null))), $own);
+        return new self($reducing->widest(array_values(array_filter(array_map($reducing->reduced(...), $terms), static fn(?array $term): bool => $term !== null))), $own, $assumed);
     }
 
     /**
@@ -80,7 +83,7 @@ final readonly class DeclaredType
         if ($this->terms === null || $other->terms === null) {
             $terms = $this->terms ?? $other->terms;
 
-            return new self($terms === [['void']] ? [] : $terms, $this->own);
+            return new self($terms === [['void']] ? [] : $terms, $this->own, $this->assumed);
         }
 
         $met = [];
@@ -95,7 +98,7 @@ final readonly class DeclaredType
             }
         }
 
-        return new self($this->widest($met), $this->own);
+        return new self($this->widest($met), $this->own, $this->assumed);
     }
 
     /**
@@ -104,10 +107,10 @@ final readonly class DeclaredType
     public function join(self $other): self
     {
         if ($this->terms === null || $other->terms === null) {
-            return new self(null, $this->own);
+            return new self(null, $this->own, $this->assumed);
         }
 
-        return new self($this->widest([...$this->terms, ...$other->terms]), $this->own);
+        return new self($this->widest([...$this->terms, ...$other->terms]), $this->own, $this->assumed);
     }
 
     /**
@@ -130,6 +133,14 @@ final readonly class DeclaredType
         }
 
         return true;
+    }
+
+    /**
+     * Whether the type admits the built-in type, false for one.
+     */
+    public function admits(string $builtin): bool
+    {
+        return $this->terms === null || in_array([$builtin], $this->terms, true);
     }
 
     public function admitsNoValue(): bool
@@ -343,7 +354,7 @@ final readonly class DeclaredType
 
         $interfaces = array_map(static fn(string $type): ReflectionClass => new ReflectionClass($type), array_values(array_filter($types, interface_exists(...))));
 
-        return $interfaces === [] || (new NativeBase($interfaces, static fn(string $interface): ?string => null, $class))->conflict() === null;
+        return $interfaces === [] || (new NativeBase($interfaces, static fn(string $interface): ?string => null, $class, $this->assumed))->conflict() === null;
     }
 
     /**

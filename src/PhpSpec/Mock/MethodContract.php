@@ -54,22 +54,23 @@ final readonly class MethodContract
     /**
      * @param non-empty-list<ReflectionMethod> $declarations every declaration the method implements, the owner's first
      * @param list<string> $own the types of the double, which static stands for
+     * @param list<string> $assumed the combinations of types being decided to share an instance, on the way here
      * @throws LogicException when two declarations take a parameter one by reference and one by value, which no class can implement
      */
-    public static function of(string $owner, array $declarations, array $own): self
+    public static function of(string $owner, array $declarations, array $own, array $assumed = []): self
     {
         if (count($declarations) === 1) {
-            return self::declaredBy($owner, $declarations[0], $own);
+            return self::declaredBy($owner, $declarations[0], $own, $assumed);
         }
 
         $first = $declarations[0];
-        [$returnType, $noValue] = self::returning($declarations, $own);
+        [$returnType, $noValue] = self::returning($declarations, $own, $assumed);
         $code = $returnType === null ? '' : ($noValue === null ? $returnType->code() : 'never');
 
         return new self(
             $owner,
             $first->getName(),
-            self::merged($declarations, $own),
+            self::merged($declarations, $own, $assumed),
             min(array_map(static fn(ReflectionMethod $declaration): int => $declaration->getNumberOfRequiredParameters(), $declarations)),
             $code === '' ? null : self::reflected($code),
             $code === '' ? '' : ': ' . $code,
@@ -84,8 +85,9 @@ final readonly class MethodContract
      * declares final must pass, since a double cannot replace it.
      *
      * @param list<string> $own the types of the double, which static stands for
+     * @param list<string> $assumed the combinations of types being decided to share an instance, on the way here
      */
-    public static function satisfies(ReflectionMethod $method, ReflectionMethod $declaration, array $own): bool
+    public static function satisfies(ReflectionMethod $method, ReflectionMethod $declaration, array $own, array $assumed = []): bool
     {
         if ($declaration->returnsReference() && !$method->returnsReference()) {
             return false;
@@ -93,7 +95,7 @@ final readonly class MethodContract
 
         $returns = self::returnTypeOf($declaration);
 
-        if ($returns !== null && !DeclaredType::of(self::returnTypeOf($method), $method, $own)->within(DeclaredType::of($returns, $declaration, $own))) {
+        if ($returns !== null && !DeclaredType::of(self::returnTypeOf($method), $method, $own, $assumed)->within(DeclaredType::of($returns, $declaration, $own, $assumed))) {
             return false;
         }
 
@@ -108,7 +110,7 @@ final readonly class MethodContract
                 return false;
             }
 
-            if (!DeclaredType::of($wanted->getType(), $declaration, $own)->within(DeclaredType::of($taking->getType(), $method, $own))) {
+            if (!DeclaredType::of($wanted->getType(), $declaration, $own, $assumed)->within(DeclaredType::of($taking->getType(), $method, $own, $assumed))) {
                 return false;
             }
         }
@@ -157,8 +159,9 @@ final readonly class MethodContract
 
     /**
      * @param list<string> $own
+     * @param list<string> $assumed
      */
-    private static function declaredBy(string $owner, ReflectionMethod $method, array $own): self
+    private static function declaredBy(string $owner, ReflectionMethod $method, array $own, array $assumed): self
     {
         $parameters = [];
 
@@ -180,7 +183,7 @@ final readonly class MethodContract
         $returnCode = $returnType === null ? '' : ': ' . self::typeIn($returnType, $method);
 
         if ($returnType !== null && self::namesAnIntersection($returnType)) {
-            $declared = DeclaredType::of($returnType, $method, $own);
+            $declared = DeclaredType::of($returnType, $method, $own, $assumed);
 
             if (!$declared->admitsNoValue()) {
                 $returnCode = ': ' . $declared->code();
@@ -246,10 +249,11 @@ final readonly class MethodContract
      *
      * @param non-empty-list<ReflectionMethod> $declarations
      * @param list<string> $own
+     * @param list<string> $assumed
      * @return list<ContractParameter>
      * @throws LogicException when the declarations disagree on taking one by reference
      */
-    private static function merged(array $declarations, array $own): array
+    private static function merged(array $declarations, array $own, array $assumed): array
     {
         $positional = max(array_map(static fn(ReflectionMethod $declaration): int => count(self::positionalOf($declaration)), $declarations));
         $required = min(array_map(static fn(ReflectionMethod $declaration): int => $declaration->getNumberOfRequiredParameters(), $declarations));
@@ -261,7 +265,7 @@ final readonly class MethodContract
             $source = self::sourceAt($declarations, $position);
             $name = self::uniqueName($source->getName(), $names);
             $names[] = $name;
-            [$declared, $takes] = self::typesOf($covering, $own);
+            [$declared, $takes] = self::typesOf($covering, $own, $assumed);
             $parameters[] = new ContractParameter($source, $name, $position, self::byReference($covering), false, $position >= $required, $declared, $takes);
         }
 
@@ -276,7 +280,7 @@ final readonly class MethodContract
         }
 
         if ($covering !== []) {
-            [$declared, $takes] = self::typesOf($covering, $own);
+            [$declared, $takes] = self::typesOf($covering, $own, $assumed);
             $parameters[] = new ContractParameter($covering[0][1], self::uniqueName($covering[0][1]->getName(), $names), $positional, self::byReference($covering), true, true, $declared, $takes);
         }
 
@@ -372,9 +376,10 @@ final readonly class MethodContract
      *
      * @param list<array{ReflectionMethod, ReflectionParameter}> $covering
      * @param list<string> $own
+     * @param list<string> $assumed
      * @return array{string, string|null}
      */
-    private static function typesOf(array $covering, array $own): array
+    private static function typesOf(array $covering, array $own, array $assumed): array
     {
         $joined = null;
 
@@ -385,7 +390,7 @@ final readonly class MethodContract
                 return ['', null];
             }
 
-            $declared = DeclaredType::of($type, $method, $own);
+            $declared = DeclaredType::of($type, $method, $own, $assumed);
             $joined = $joined === null ? $declared : $joined->join($declared);
         }
 
@@ -402,9 +407,10 @@ final readonly class MethodContract
      *
      * @param list<ReflectionMethod> $declarations
      * @param list<string> $own
+     * @param list<string> $assumed
      * @return array{DeclaredType|null, string|null}
      */
-    private static function returning(array $declarations, array $own): array
+    private static function returning(array $declarations, array $own, array $assumed): array
     {
         $met = null;
         $declaring = [];
@@ -416,7 +422,7 @@ final readonly class MethodContract
                 continue;
             }
 
-            $declared = DeclaredType::of($type, $declaration, $own);
+            $declared = DeclaredType::of($type, $declaration, $own, $assumed);
             $met = $met === null ? $declared : $met->meet($declared);
             $declaring[] = sprintf('%s::%s() returns %s', $declaration->class, $declaration->getName(), $declared->shown());
         }

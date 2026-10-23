@@ -31,6 +31,40 @@ class NativeBaseEndless {
     public function getIterator(): array { return []; }
     final public function valid(): true { return true; }
 }
+class NativeBaseSelfIterating {
+    public function getIterator(): self { return $this; }
+}
+class NativeBaseOuter {
+    public function getIterator(): NativeBaseRing { return new NativeBaseRing(); }
+}
+class NativeBaseRing {
+    public function getIterator(): NativeBaseOuter { return new NativeBaseOuter(); }
+}
+class NativeBaseStaticIterator {
+    public static function getIterator(): \ArrayIterator { return new \ArrayIterator([]); }
+}
+class NativeBaseForever {
+    public function getIterator(): array { return []; }
+    public function valid(): true { return true; }
+}
+class NativeBaseValued {
+    public static function value(): string { return 'static'; }
+}
+class NativeBaseHiddenValue {
+    private static function value(): string { return 'hidden'; }
+}
+interface NativeBaseHasValue {
+    public function value(): string;
+}
+interface NativeBaseTicker extends \Iterator {
+    public function valid(): true;
+}
+class NativeBaseAggregating implements \IteratorAggregate {
+    public function getIterator(): \ArrayIterator { return new \ArrayIterator([]); }
+}
+class NativeBaseStuck {
+    final public function valid(): bool { return true; }
+}
 class NativeBaseHopeless {
     final public function getIterator(): array { return []; }
     final public function next(): int { return 0; }
@@ -142,6 +176,52 @@ describe(NativeBase::class, function () {
         expect($endless->conflict())->toBeNull();
         expect($endless->refusal())->toBe('NativeBaseEndless declares valid() final, so a double of it cannot end its iteration.');
         expect($hopeless->conflict())->toBe('No class extending NativeBaseHopeless can implement Iterator or IteratorAggregate.');
+    });
+
+    it('takes a class whose getIterator() comes back to it, at once or through another, to aggregate', function () {
+        $self = new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass(NativeBaseSelfIterating::class));
+        $mutual = new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass(NativeBaseOuter::class));
+
+        expect($self->conflict())->toBeNull();
+        expect($self->implements())->toBe(['\IteratorAggregate']);
+        expect($mutual->conflict())->toBeNull();
+    });
+
+    it('iterates as an Iterator a class whose getIterator() is static', function () {
+        expect((new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass(NativeBaseStaticIterator::class)))->implements())->toBe(['\Iterator']);
+    });
+
+    it('conflicts with a class declaring static, and not private, what an interface declares on an object', function () {
+        $valued = new NativeBase([new ReflectionClass(NativeBaseHasValue::class)], $this->nothingRefused, new ReflectionClass(NativeBaseValued::class));
+        $hidden = new NativeBase([new ReflectionClass(NativeBaseHasValue::class)], $this->nothingRefused, new ReflectionClass(NativeBaseHiddenValue::class));
+
+        expect($valued->conflict())->toBe('NativeBaseValued declares value() static, so no class extending it can implement NativeBaseHasValue::value().');
+        expect($hidden->conflict())->toBeNull();
+    });
+
+    it('refuses an Iterator whose valid() resolves to a type without false, without its conflicting', function () {
+        $forever = new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass(NativeBaseForever::class));
+        $ticker = new NativeBase([new ReflectionClass(NativeBaseTicker::class)], $this->nothingRefused);
+
+        expect($forever->conflict())->toBeNull();
+        expect($forever->refusal())->toBe('NativeBaseForever declares valid() returning true, so a double of it cannot end its iteration.');
+        expect($ticker->refusal())->toBe('NativeBaseTicker declares valid() returning true, so a double of it cannot end its iteration.');
+    });
+
+    it('makes a double an empty Iterator where asked, saying what keeps a class from being one', function () {
+        $empty = fn(?string $class) => new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, $class === null ? null : new ReflectionClass($class), [], true);
+
+        expect($empty(null)->implements())->toBe(['\Iterator']);
+        expect($empty(NativeBaseSelfIterating::class)->implements())->toBe(['\Iterator']);
+        expect($empty(NativeBaseAggregating::class)->refusal())->toBe('NativeBaseAggregating is an IteratorAggregate, which no class can be along with an Iterator.');
+        expect($empty(NativeBaseStuck::class)->refusal())->toBe('NativeBaseStuck declares valid() final, so a double of it cannot end its iteration.');
+    });
+
+    it('leaves a double that refuses every call free of whether its iteration could end', function () {
+        $forever = new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass(NativeBaseForever::class));
+
+        expect($forever->refusal(false))->toBeNull();
+        expect($forever->refusal())->not()->toBeNull();
     });
 
     it('asks about any other built-in interface, refusing what PHP refuses in its words', function () {

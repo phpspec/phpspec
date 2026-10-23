@@ -41,11 +41,14 @@ use Traversable;
  */
 final readonly class NativeBase
 {
-    private const HANDLED = ['Traversable', 'Iterator', 'IteratorAggregate', 'Throwable', 'UnitEnum', 'BackedEnum', 'DateTimeInterface', 'Serializable'];
+    /** The built-in interfaces it knows how a class can be */
+    public const HANDLED = ['Traversable', 'Iterator', 'IteratorAggregate', 'Throwable', 'UnitEnum', 'BackedEnum', 'DateTimeInterface', 'Serializable'];
 
     private ?string $refusal;
 
     private ?string $conflict;
+
+    private ?string $unending;
 
     /** @var class-string|null */
     private ?string $extends;
@@ -59,8 +62,10 @@ final readonly class NativeBase
      * @param list<ReflectionClass<object>> $interfaces the interfaces a double must be, more than one for an intersection
      * @param Closure(class-string): ?string $refusedBy why PHP refuses a plain class implementing a built-in interface, or null
      * @param ReflectionClass<object>|null $class the class the double extends, when its types name one
+     * @param list<string> $assumed the combinations of types being decided to share an instance, on the way here: deciding one again takes it to share one, once nothing else rules it out
+     * @param bool $emptyIterator whether the double must be an Iterator its defaults end at once: what a dummy aggregate's getIterator() answers
      */
-    public function __construct(array $interfaces, Closure $refusedBy, ?ReflectionClass $class = null)
+    public function __construct(array $interfaces, Closure $refusedBy, ?ReflectionClass $class = null, array $assumed = [], bool $emptyIterator = false)
     {
         $all = [];
         foreach ($interfaces as $interface) {
@@ -71,23 +76,30 @@ final readonly class NativeBase
         $throwable = in_array('Throwable', $all, true);
         $dated = in_array(DateTimeInterface::class, $all, true);
         $enumOnly = in_array('UnitEnum', $all, true);
-        $traversed = in_array('Traversable', $all, true) && !in_array('Iterator', $all, true) && !in_array(IteratorAggregate::class, $all, true)
+        $names = array_map(static fn(ReflectionClass $interface): string => $interface->getName(), $interfaces);
+        $deciding = $this->combinationOf($class, $names);
+        $contradiction = match (true) {
+            $class !== null && $throwable && !$class->implementsInterface(Throwable::class) => sprintf('No class can extend both %s and Exception or Error.', $class->getName()),
+            $class !== null && $dated && !$class->implementsInterface(DateTimeInterface::class) => sprintf('No class can extend both %s and DateTime or DateTimeImmutable.', $class->getName()),
+            $class !== null && $enumOnly && !$class->isEnum() => 'Only an enum can implement UnitEnum.',
+            $class === null && $throwable && $dated => 'No class can extend both Exception and DateTimeImmutable.',
+            $class !== null => $this->staticClash($class, $interfaces),
+            default => null,
+        };
+        $traversed = $contradiction === null && in_array('Traversable', $all, true) && !in_array('Iterator', $all, true) && !in_array(IteratorAggregate::class, $all, true)
             && !($class?->implementsInterface(Traversable::class) ?? false);
-        [$iterator, $unimplementable, $unending] = $traversed ? $this->iteratorOver($class, [...array_map(static fn(ReflectionClass $interface): string => $interface->getName(), $interfaces)]) : [null, null, null];
+        [$iterator, $unimplementable] = $traversed && !$emptyIterator ? $this->iteratorOver($class, $names, [...$assumed, $deciding], in_array($deciding, $assumed, true)) : [null, null];
+        [$iterator, $noEmptyIterator] = $emptyIterator && $contradiction === null ? $this->emptyIteratorOver($class, $all, $names, $assumed) : [$iterator, null];
 
         $this->extends = $class?->getName() ?? ($throwable ? Exception::class : ($dated ? DateTimeImmutable::class : null));
         $this->implements = $iterator === null ? [] : [$iterator];
         $serializable = in_array('Serializable', $all, true);
         $this->code = ($serializable && !$declares('__serialize') ? 'public function __serialize(): array { return []; } ' : '')
             . ($serializable && !$declares('__unserialize') ? 'public function __unserialize(array $data): void {}' : '');
-        $this->conflict = match (true) {
-            $class !== null && $throwable && !$class->implementsInterface(Throwable::class) => sprintf('No class can extend both %s and Exception or Error.', $class->getName()),
-            $class !== null && $dated && !$class->implementsInterface(DateTimeInterface::class) => sprintf('No class can extend both %s and DateTime or DateTimeImmutable.', $class->getName()),
-            $class !== null && $enumOnly && !$class->isEnum() => 'Only an enum can implement UnitEnum.',
-            $class === null && $throwable && $dated => 'No class can extend both Exception and DateTimeImmutable.',
-            default => $unimplementable,
-        };
-        $this->refusal = $this->conflict ?? $unending ?? ($enumOnly ? 'Only an enum can implement UnitEnum.' : $this->refusedAmong($all, $refusedBy));
+        $this->conflict = $contradiction ?? $unimplementable;
+        $iterates = in_array('Iterator', $all, true) || $iterator === Iterator::class || ($class?->implementsInterface(Iterator::class) ?? false);
+        $this->unending = $noEmptyIterator ?? ($this->conflict === null && $iterates ? $this->unending($class, $interfaces, $iterator === Iterator::class || $emptyIterator, [...($class === null ? [] : [$class->getName()]), ...$names], $assumed) : null);
+        $this->refusal = $enumOnly ? 'Only an enum can implement UnitEnum.' : $this->refusedAmong($all, $refusedBy);
     }
 
     /**
@@ -102,11 +114,13 @@ final readonly class NativeBase
     }
 
     /**
-     * Why no double can be this interface, or null when one can.
+     * Why no double can be this interface, or null when one can. One that
+     * stands for a call, every call on it refused, never iterates, so whether
+     * its iteration could end is none of its concern.
      */
-    public function refusal(): ?string
+    public function refusal(bool $iterated = true): ?string
     {
-        return $this->refusal;
+        return $this->conflict ?? ($iterated ? $this->unending : null) ?? $this->refusal;
     }
 
     /**
@@ -166,46 +180,150 @@ final readonly class NativeBase
      * The iterator a subclass of the class implements to be Traversable: an
      * IteratorAggregate where its getIterator() allows one, so a stub of
      * getIterator() rules foreach, else an Iterator where its methods allow
-     * one. Why none can be, when neither fits; and why no double of it can end
-     * its iteration, when its valid() is final.
+     * one; and why none can be, when neither fits. Deciding the same types
+     * again on the way, through a getIterator() returning the class itself,
+     * takes one to fit.
      *
      * @param ReflectionClass<object>|null $class
      * @param list<string> $interfaces
-     * @return array{class-string|null, string|null, string|null}
+     * @param list<string> $assumed
+     * @return array{class-string|null, string|null}
      */
-    private function iteratorOver(?ReflectionClass $class, array $interfaces): array
+    private function iteratorOver(?ReflectionClass $class, array $interfaces, array $assumed, bool $again): array
     {
-        if ($class === null) {
-            return [IteratorAggregate::class, null, null];
+        if ($class === null || $again) {
+            return [IteratorAggregate::class, null];
         }
 
         $own = [$class->getName(), ...$interfaces];
 
-        if ($this->fits($class, IteratorAggregate::class, $own)) {
-            return [IteratorAggregate::class, null, null];
+        if ($this->unfit($class, IteratorAggregate::class, $own, $assumed) === null) {
+            return [IteratorAggregate::class, null];
         }
 
-        if (!$this->fits($class, Iterator::class, $own)) {
-            return [null, sprintf('No class extending %s can implement Iterator or IteratorAggregate.', $class->getName()), null];
+        if ($this->unfit($class, Iterator::class, $own, $assumed) === null) {
+            return [Iterator::class, null];
         }
 
-        if ($class->hasMethod('valid') && $class->getMethod('valid')->isFinal()) {
-            return [Iterator::class, null, sprintf('%s declares valid() final, so a double of it cannot end its iteration.', $class->getName())];
-        }
-
-        return [Iterator::class, null, null];
+        return [null, sprintf('No class extending %s can implement Iterator or IteratorAggregate.', $class->getName())];
     }
 
     /**
-     * Whether a subclass of the class can implement the interface: each of its
-     * methods the class declares final satisfies the interface's, and each it
-     * declares otherwise can be overridden to satisfy both.
+     * The Iterator a double must be to answer as empty: none an aggregate can
+     * be, nor one whose methods its class keeps from the Iterator's, with why.
+     *
+     * @param ReflectionClass<object>|null $class
+     * @param list<string> $all
+     * @param list<string> $interfaces
+     * @param list<string> $assumed
+     * @return array{class-string|null, string|null}
+     */
+    private function emptyIteratorOver(?ReflectionClass $class, array $all, array $interfaces, array $assumed): array
+    {
+        $aggregate = array_values(array_filter([$class?->getName(), ...$interfaces], static fn(?string $type): bool => $type !== null && is_a($type, IteratorAggregate::class, true)));
+
+        if ($aggregate !== []) {
+            return [null, sprintf('%s is an IteratorAggregate, which no class can be along with an Iterator.', $aggregate[0])];
+        }
+
+        if (in_array('Iterator', $all, true) || ($class?->implementsInterface(Iterator::class) ?? false)) {
+            return [null, null];
+        }
+
+        $unfit = $class === null ? null : $this->unfit($class, Iterator::class, [$class->getName(), ...$interfaces], $assumed);
+
+        return $unfit === null ? [Iterator::class, null] : [null, $unfit];
+    }
+
+    /**
+     * Why no double iterating as an Iterator can end its iteration: the
+     * valid() of a class it extends instead of an aggregate is final, or the
+     * valid() every declaration resolves to cannot return false. An Iterator
+     * the class already is keeps its own final valid().
+     *
+     * @param ReflectionClass<object>|null $class
+     * @param list<ReflectionClass<object>> $interfaces
+     * @param list<string> $own
+     * @param list<string> $assumed
+     */
+    private function unending(?ReflectionClass $class, array $interfaces, bool $fallback, array $own, array $assumed): ?string
+    {
+        $classValid = $class !== null && $class->hasMethod('valid') && !$class->getMethod('valid')->isPrivate() ? $class->getMethod('valid') : null;
+
+        if ($classValid !== null && $classValid->isFinal()) {
+            return $fallback ? sprintf('%s declares valid() final, so a double of it cannot end its iteration.', $classValid->class) : null;
+        }
+
+        $declarations = array_values(array_filter([
+            $classValid,
+            ...array_map(static fn(ReflectionClass $interface): ?ReflectionMethod => $interface->hasMethod('valid') ? $interface->getMethod('valid') : null, $interfaces),
+            $fallback ? new ReflectionMethod(Iterator::class, 'valid') : null,
+        ]));
+
+        foreach ($declarations as $declaration) {
+            $returns = DeclaredType::of($declaration->getReturnType() ?? $declaration->getTentativeReturnType(), $declaration, $own, $assumed);
+
+            if (!$returns->admits('false')) {
+                return sprintf('%s declares valid() returning %s, so a double of it cannot end its iteration.', $declaration->class, $returns->shown());
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Why no class extending the class can implement the interfaces: it
+     * declares static, and not private, a method one of them declares on an
+     * object.
+     *
+     * @param ReflectionClass<object> $class
+     * @param list<ReflectionClass<object>> $interfaces
+     */
+    private function staticClash(ReflectionClass $class, array $interfaces): ?string
+    {
+        foreach ($interfaces as $interface) {
+            foreach ($interface->getMethods() as $declaration) {
+                if ($declaration->isStatic() || !$class->hasMethod($declaration->getName())) {
+                    continue;
+                }
+
+                $method = $class->getMethod($declaration->getName());
+
+                if ($method->isStatic() && !$method->isPrivate()) {
+                    return sprintf('%s declares %s() static, so no class extending it can implement %s::%s().', $class->getName(), $method->getName(), $declaration->class, $declaration->getName());
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The class and the interfaces, as one combination to decide about.
+     *
+     * @param ReflectionClass<object>|null $class
+     * @param list<string> $interfaces
+     */
+    private function combinationOf(?ReflectionClass $class, array $interfaces): string
+    {
+        $types = array_map(strtolower(...), [...($class === null ? [] : [$class->getName()]), ...$interfaces]);
+        sort($types);
+
+        return implode('&', $types);
+    }
+
+    /**
+     * What keeps a subclass of the class from implementing the interface, or
+     * null when nothing does: a method of it the class declares static, or
+     * final where the interface's could not be it, or otherwise such that no
+     * override satisfies both.
      *
      * @param ReflectionClass<object> $class
      * @param class-string $interface
      * @param list<string> $own
+     * @param list<string> $assumed
      */
-    private function fits(ReflectionClass $class, string $interface, array $own): bool
+    private function unfit(ReflectionClass $class, string $interface, array $own, array $assumed): ?string
     {
         foreach ((new ReflectionClass($interface))->getMethods() as $declaration) {
             if (!$class->hasMethod($declaration->getName()) || $class->getMethod($declaration->getName())->isPrivate()) {
@@ -214,24 +332,30 @@ final readonly class NativeBase
 
             $method = $class->getMethod($declaration->getName());
 
+            if ($method->isStatic()) {
+                return sprintf('%s declares %s() static, so no class extending it can implement %s::%s().', $method->class, $method->getName(), $declaration->class, $declaration->getName());
+            }
+
             if ($method->isFinal()) {
-                if (!MethodContract::satisfies($method, $declaration, $own)) {
-                    return false;
+                if (!MethodContract::satisfies($method, $declaration, $own, $assumed)) {
+                    return sprintf('%s::%s() narrows a method %s declares final.', $declaration->class, $declaration->getName(), $method->class);
                 }
 
                 continue;
             }
 
             try {
-                if (MethodContract::of($class->getName(), [$method, $declaration], $own)->noValue !== null) {
-                    return false;
-                }
-            } catch (LogicException) {
-                return false;
+                $noValue = MethodContract::of($class->getName(), [$method, $declaration], $own, $assumed)->noValue;
+            } catch (LogicException $e) {
+                return $e->getMessage();
+            }
+
+            if ($noValue !== null) {
+                return $noValue;
             }
         }
 
-        return true;
+        return null;
     }
 
     /**
