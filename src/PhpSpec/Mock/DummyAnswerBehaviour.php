@@ -34,13 +34,28 @@ trait DummyAnswerBehaviour
     /** @var string How the spec stubs what this answer stands for */
     private string $______phpspec_advice;
 
-    public function ______PhpSpecAnswering(GeneratedDouble $double, string $method): void
+    /** @var list<string> The combinations of types being iterated when it answered a getIterator() */
+    private array $______phpspec_iterating = [];
+
+    /**
+     * @param list<string> $iterating
+     */
+    public function ______PhpSpecAnswering(GeneratedDouble $double, string $method, array $iterating = []): void
     {
+        $this->______phpspec_iterating = $iterating;
         $this->______phpspec_mockedObject = $double;
         $this->______phpspec_methodName = $method;
         $this->______phpspec_chain = $double->______PhpSpecChainTo($method);
         $this->______phpspec_advice = $double->______PhpSpecStubAdvice($method);
         $this->______PhpSpecBeLenient();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function ______PhpSpecIterating(): array
+    {
+        return $this->______phpspec_iterating;
     }
 
     public function ______PhpSpecChainTo(string $method): string

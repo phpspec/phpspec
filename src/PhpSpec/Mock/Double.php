@@ -853,14 +853,14 @@ PHP;
      * why no class can be the types.
      *
      * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
-     * @param bool $emptyIterator whether the double must be an Iterator its defaults end at once
+     * @param list<string>|null $emptyIteratorAfter when the double answers a dummy aggregate's getIterator(), the combinations of types being iterated already; null otherwise
      * @param bool $iterated whether the double iterates by itself, where one that refuses every call never does
      * @return array{0: NativeBase|null, 1: MethodSet|null, 2: string|null}
      */
-    public static function planOf(array $types, bool $emptyIterator = false, bool $iterated = true): array
+    public static function planOf(array $types, ?array $emptyIteratorAfter = null, bool $iterated = true): array
     {
         $interfaces = array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface()));
-        $base = $interfaces === [] && !$emptyIterator ? null : new NativeBase($interfaces, self::refusedBy(), $types[0]->isInterface() ? null : $types[0], [], $emptyIterator);
+        $base = $interfaces === [] && $emptyIteratorAfter === null ? null : new NativeBase($interfaces, self::refusedBy(), $types[0]->isInterface() ? null : $types[0], [], $emptyIteratorAfter);
 
         if ($base?->refusal($iterated) !== null) {
             return [null, null, $base->refusal($iterated)];

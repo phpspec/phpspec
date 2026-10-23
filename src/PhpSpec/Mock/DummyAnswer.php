@@ -22,6 +22,15 @@ interface DummyAnswer
 {
     /**
      * Makes this what the double answered to a call of the method.
+     *
+     * @param list<string> $iterating the combinations of types being iterated when it answered a getIterator(), from the outermost
      */
-    public function ______PhpSpecAnswering(GeneratedDouble $double, string $method): void;
+    public function ______PhpSpecAnswering(GeneratedDouble $double, string $method, array $iterating = []): void;
+
+    /**
+     * The combinations of types being iterated when it answered.
+     *
+     * @return list<string>
+     */
+    public function ______PhpSpecIterating(): array;
 }

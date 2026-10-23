@@ -1267,6 +1267,78 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A dummy aggregate never iterates an aggregate already being iterated, and ends at a generator
+    Given a class "src/App/Narrowed.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Broad implements \IteratorAggregate
+      {
+          public function getIterator(): \Traversable
+          {
+              return new \ArrayIterator([]);
+          }
+      }
+
+      class Cursor implements \Iterator
+      {
+          public function rewind(): void {}
+          public function next(): void {}
+          public function current(): mixed { return null; }
+          public function key(): mixed { return null; }
+          public function valid(): bool { return false; }
+      }
+
+      interface Narrow extends \IteratorAggregate
+      {
+          public function getIterator(): (Broad&Narrow)|Cursor;
+      }
+
+      interface Entry extends \IteratorAggregate
+      {
+          public function getIterator(): Broad&Narrow;
+      }
+
+      class Yielding implements \IteratorAggregate
+      {
+          public function getIterator(): \Generator
+          {
+              yield 1;
+          }
+      }
+
+      interface Yielded extends \IteratorAggregate
+      {
+          public function getIterator(): Yielding;
+      }
+      """
+    And a spec file "spec/App/Narrowed.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Narrowed.php';
+
+      use App\Entry;
+      use App\Yielded;
+
+      describe('Narrowed', function () {
+          it('takes the member that ends where an interface narrows getIterator() back to an aggregate being iterated', function () {
+              expect(iterator_to_array(dummy(Entry::class)))->toBe([]);
+          });
+
+          it('iterates as empty an aggregate whose getIterator() returns a generator', function () {
+              expect(iterator_to_array(dummy(Yielded::class)))->toBe([]);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "2"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

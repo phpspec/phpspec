@@ -53,17 +53,25 @@ final class Answers
     public static function dummy(GeneratedDouble $double, string $method, array $alternatives): object
     {
         $emptyIterator = $double instanceof IteratorAggregate && strcasecmp($method, 'getIterator') === 0;
+        $iterating = $emptyIterator ? [...($double instanceof DummyAnswer ? $double->______PhpSpecIterating() : []), NativeBase::keyOf(explode('&', $double->______PhpSpecNameOfClassDoubled()))] : null;
         $refusal = null;
 
         foreach ($alternatives as $types) {
             $reflections = array_map(static fn(string $type): ReflectionClass => new ReflectionClass($type), $types);
             $key = implode('&', $types) . ($emptyIterator ? ' as an empty iterator' : '');
+            $cannot = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no %s of %s can be made.', ltrim($double->______PhpSpecNameOfClassDoubled(), '\\'), $method, $emptyIterator ? 'empty iterator' : 'double', implode('&', $types));
+
+            if ($iterating !== null && in_array(NativeBase::keyOf($types), $iterating, true)) {
+                $refusal ??= sprintf('%s %s is being iterated already, so its iteration could not end.', $cannot, implode('&', $types));
+
+                continue;
+            }
 
             if (!isset(self::$dummies[$key])) {
-                [$base, $methods, $refused] = Double::planOf($reflections, $emptyIterator);
+                [$base, $methods, $refused] = Double::planOf($reflections, $iterating);
 
                 if ($methods === null) {
-                    $refusal ??= sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no %s of %s can be made. %s', ltrim($double->______PhpSpecNameOfClassDoubled(), '\\'), $method, $emptyIterator ? 'empty iterator' : 'double', implode('&', $types), $refused);
+                    $refusal ??= $cannot . ' ' . $refused;
 
                     continue;
                 }
@@ -71,7 +79,7 @@ final class Answers
                 self::$dummies[$key] = self::dummyClassOf($reflections, $base, $methods);
             }
 
-            return self::dummyOf(self::$dummies[$key], $reflections, $double, $method);
+            return self::dummyOf(self::$dummies[$key], $reflections, $double, $method, $iterating ?? []);
         }
 
         throw new LogicException((string) $refusal);
@@ -80,12 +88,13 @@ final class Answers
     /**
      * @param class-string<DummyAnswer> $class
      * @param non-empty-list<ReflectionClass<object>> $reflections
+     * @param list<string> $iterating
      */
-    private static function dummyOf(string $class, array $reflections, GeneratedDouble $double, string $method): DummyAnswer
+    private static function dummyOf(string $class, array $reflections, GeneratedDouble $double, string $method, array $iterating): DummyAnswer
     {
         $answerClass = new ReflectionClass($class);
         $answer = $reflections[0]->isInterface() ? $answerClass->newInstance() : $answerClass->newInstanceWithoutConstructor();
-        $answer->______PhpSpecAnswering($double, $method);
+        $answer->______PhpSpecAnswering($double, $method, $iterating);
 
         return $answer;
     }
@@ -188,7 +197,7 @@ final class Answers
     private static function answerClass(array $types, string $methodName, string $suffix): array
     {
         $first = $types[0];
-        [$base, $methods, $refusal] = Double::planOf($types, false, false);
+        [$base, $methods, $refusal] = Double::planOf($types, null, false);
 
         if ($methods === null) {
             return [null, $refusal];

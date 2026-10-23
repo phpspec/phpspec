@@ -65,6 +65,15 @@ class NativeBaseAggregating implements \IteratorAggregate {
 class NativeBaseCircling implements \IteratorAggregate {
     public function getIterator(): self { return $this; }
 }
+class NativeBaseYielding implements \IteratorAggregate {
+    public function getIterator(): \Generator { yield 1; }
+}
+class NativeBaseNarrowable implements \IteratorAggregate {
+    public function getIterator(): \Traversable { return new \ArrayIterator([]); }
+}
+interface NativeBaseNarrowing extends \IteratorAggregate {
+    public function getIterator(): NativeBaseNarrowable&NativeBaseNarrowing;
+}
 class NativeBaseStuck {
     final public function valid(): bool { return true; }
 }
@@ -212,7 +221,7 @@ describe(NativeBase::class, function () {
     });
 
     it('makes a double an empty Iterator where asked, or an aggregate whose iteration ends, saying what keeps a class from either', function () {
-        $empty = fn(?string $class) => new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, $class === null ? null : new ReflectionClass($class), [], true);
+        $empty = fn(?string $class) => new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, $class === null ? null : new ReflectionClass($class), [], []);
 
         expect($empty(null)->implements())->toBe(['\Iterator']);
         expect($empty(NativeBaseSelfIterating::class)->implements())->toBe(['\Iterator']);
@@ -220,6 +229,18 @@ describe(NativeBase::class, function () {
         expect($empty(NativeBaseAggregating::class)->implements())->toBe([]);
         expect($empty(NativeBaseCircling::class)->refusal())->toBe('NativeBaseCircling::getIterator() returns NativeBaseCircling, so its iteration could not end.');
         expect($empty(NativeBaseStuck::class)->refusal())->toBe('NativeBaseStuck declares valid() final, so a double of it cannot end its iteration.');
+    });
+
+    it('follows the getIterator() every declaration resolves to, ending at a generator, and refuses one coming back to an aggregate being iterated', function () {
+        $yielding = new NativeBase([], $this->nothingRefused, new ReflectionClass(NativeBaseYielding::class), [], []);
+        $narrowed = new NativeBase([new ReflectionClass(NativeBaseNarrowing::class)], $this->nothingRefused, new ReflectionClass(NativeBaseNarrowable::class), [], []);
+
+        expect($yielding->refusal())->toBeNull();
+        expect($narrowed->refusal())->toBe('NativeBaseNarrowable&NativeBaseNarrowing::getIterator() returns NativeBaseNarrowable&NativeBaseNarrowing, so its iteration could not end.');
+    });
+
+    it('names a combination of types however its classes are spelled or ordered', function () {
+        expect(NativeBase::keyOf(['\\App\\Bag', 'App\\Collection']))->toBe(NativeBase::keyOf(['app\\collection', 'App\\Bag']));
     });
 
     it('leaves a double that refuses every call free of whether its iteration could end', function () {
