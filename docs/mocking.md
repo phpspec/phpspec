@@ -51,8 +51,11 @@ App\Sized::size() returns int and App\Named::size() returns string, so no value 
 A class named with interfaces, such as what a method returning `Base&HasValue`
 answers, keeps what it is: its final methods, and an `Error` or a `DateTime` it
 already extends where an interface needs a `Throwable` or a
-`DateTimeInterface`. A subclass of it adds what it can, such as an
-`IteratorAggregate` for a `Traversable` interface. A class is the class it
+`DateTimeInterface`, the serialization methods it has, and the iterator it
+already is. A subclass of it adds what it can for a `Traversable` interface: an
+`IteratorAggregate` where its `getIterator()` allows one, so stubbing
+`getIterator()` rules `foreach`, else an `Iterator`, refused when its `valid()`
+is final, since no double could end the iteration. A class is the class it
 names however it is spelled, through an alias or in another case, and an
 intersection one of its types already satisfies is answered as that type.
 

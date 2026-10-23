@@ -651,6 +651,158 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double of a class with a Serializable or Traversable interface builds on what the class already has
+    Given a class "src/App/Built.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Payload extends \Serializable {}
+
+      interface Bag extends \Traversable {}
+
+      class Open
+      {
+          public function __serialize(): array
+          {
+              return ['open'];
+          }
+      }
+
+      class Sealed
+      {
+          final public function __unserialize(array $data): void {}
+      }
+
+      class Aggregated
+      {
+          public function getIterator(): \ArrayIterator
+          {
+              return new \ArrayIterator([1]);
+          }
+      }
+
+      class Listing
+      {
+          public function getIterator(): array
+          {
+              return [];
+          }
+      }
+
+      class Locked
+      {
+          final public function getIterator(): array
+          {
+              return [];
+          }
+      }
+
+      class Cursor implements \Iterator
+      {
+          public function current(): mixed { return 1; }
+          public function key(): mixed { return 0; }
+          public function next(): void {}
+          public function rewind(): void {}
+          public function valid(): bool { return true; }
+      }
+
+      class Endless
+      {
+          public function getIterator(): array
+          {
+              return [];
+          }
+
+          final public function valid(): true
+          {
+              return true;
+          }
+      }
+
+      class Hopeless
+      {
+          final public function getIterator(): array
+          {
+              return [];
+          }
+
+          final public function next(): int
+          {
+              return 0;
+          }
+      }
+
+      interface Source
+      {
+          public function open(): Open&Payload;
+
+          public function sealed(): Sealed&Payload;
+
+          public function aggregated(): Aggregated&Bag;
+
+          public function listing(): Listing&Bag;
+
+          public function locked(): Locked&Bag;
+
+          public function cursor(): Cursor&Bag;
+
+          public function endless(): Endless&Bag;
+
+          public function hopeless(): Hopeless&Bag;
+      }
+      """
+    And a spec file "spec/App/Built.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Built.php';
+
+      use App\Open;
+      use App\Payload;
+      use App\Sealed;
+      use App\Source;
+
+      describe('Built', function () {
+          it('keeps the serialization methods the class already has', function () {
+              $source = dummy(Source::class);
+
+              expect($source->open())->toBeAnInstanceOf(Payload::class);
+              expect($source->open())->toBeAnInstanceOf(Open::class);
+              expect($source->sealed())->toBeAnInstanceOf(Sealed::class);
+          });
+
+          it('aggregates where the class has a getIterator() an aggregate can have', function () {
+              expect(dummy(Source::class)->aggregated())->toBeAnInstanceOf(IteratorAggregate::class);
+          });
+
+          it('iterates as an Iterator, empty, where the class has a getIterator() no aggregate can have', function () {
+              $source = dummy(Source::class);
+
+              expect(iterator_to_array($source->listing()))->toBe([]);
+              expect(iterator_to_array($source->locked()))->toBe([]);
+              expect($source->locked())->toBeAnInstanceOf(Iterator::class);
+          });
+
+          it('keeps the iterator the class already is', function () {
+              expect(iterator_to_array(dummy(Source::class)->cursor()))->toBe([]);
+          });
+
+          it('refuses only the call answering a class whose iteration it cannot end, or that cannot iterate', function () {
+              $source = dummy(Source::class);
+
+              expect(fn() => $source->endless())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::endless(): no double of App\Endless&App\Bag can be made. App\Endless declares valid() final, so a double of it cannot end its iteration.');
+              expect(fn() => $source->hopeless())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::hopeless(): no double of App\Hopeless&App\Bag can be made. No object can be both App\Hopeless and App\Bag.');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "5"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

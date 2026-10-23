@@ -18,6 +18,23 @@ class NativeBasePlain {}
 class NativeBaseFault extends \Error {}
 class NativeBaseClock extends \DateTime {}
 class NativeBaseList extends \ArrayIterator {}
+class NativeBaseSerialized {
+    public function __serialize(): array { return []; }
+}
+class NativeBaseAggregated {
+    public function getIterator(): \ArrayIterator { return new \ArrayIterator([]); }
+}
+class NativeBaseListing {
+    final public function getIterator(): array { return []; }
+}
+class NativeBaseEndless {
+    public function getIterator(): array { return []; }
+    final public function valid(): true { return true; }
+}
+class NativeBaseHopeless {
+    final public function getIterator(): array { return []; }
+    final public function next(): int { return 0; }
+}
 
 describe(NativeBase::class, function () {
 
@@ -101,6 +118,30 @@ describe(NativeBase::class, function () {
 
         expect($marked->conflict())->toBeNull();
         expect($marked->refusal())->toBe('Only an enum can implement UnitEnum.');
+    });
+
+    it('leaves out of its code a serialization method the class it extends has', function () {
+        $code = (new NativeBase([new ReflectionClass(NativeBasePayload::class)], $this->nothingRefused, new ReflectionClass(NativeBaseSerialized::class)))->code();
+
+        expect($code)->not()->toContain('__serialize');
+        expect($code)->toContain('function __unserialize(array $data): void');
+    });
+
+    it('makes a class an IteratorAggregate where its getIterator() allows, else an Iterator', function () {
+        $over = fn(string $class) => new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass($class));
+
+        expect($over(NativeBaseAggregated::class)->implements())->toBe(['\IteratorAggregate']);
+        expect($over(NativeBaseListing::class)->implements())->toBe(['\Iterator']);
+        expect($over(NativeBaseListing::class)->refusal())->toBeNull();
+    });
+
+    it('refuses a class whose final valid() no double can end iteration with, and conflicts with one no iterator fits', function () {
+        $endless = new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass(NativeBaseEndless::class));
+        $hopeless = new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, new ReflectionClass(NativeBaseHopeless::class));
+
+        expect($endless->conflict())->toBeNull();
+        expect($endless->refusal())->toBe('NativeBaseEndless declares valid() final, so a double of it cannot end its iteration.');
+        expect($hopeless->conflict())->toBe('No class extending NativeBaseHopeless can implement Iterator or IteratorAggregate.');
     });
 
     it('asks about any other built-in interface, refusing what PHP refuses in its words', function () {

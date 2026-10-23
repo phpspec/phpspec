@@ -18,7 +18,9 @@ use Closure;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
+use Iterator;
 use IteratorAggregate;
+use LogicException;
 use ReflectionClass;
 use ReflectionMethod;
 use Throwable;
@@ -30,8 +32,10 @@ use Traversable;
  * lets no plain class implement: an IteratorAggregate for a Traversable, an
  * Exception for a Throwable, a DateTimeImmutable for a DateTimeInterface.
  * A class the double extends instead keeps what it already is: an Error or a
- * DateTime, or a Traversable; one that cannot be what the interfaces need
- * conflicts with them, as no subclass of it can be. Only an enum can implement
+ * DateTime, or a Traversable, and the serialization methods it has. A
+ * Traversable interface makes a subclass of it an IteratorAggregate where its
+ * getIterator() allows, else an Iterator. A class that cannot be what the
+ * interfaces need conflicts with them, as no subclass of it can be. Only an enum can implement
  * a UnitEnum, so no double can be one. Any other built-in interface is asked
  * about, since an extension may refuse a plain class too.
  */
@@ -63,15 +67,16 @@ final readonly class NativeBase
             $all = [...$all, $interface->getName(), ...$interface->getInterfaceNames()];
         }
         $all = array_values(array_unique($all));
-        $declares = static fn(string $method): bool => array_filter($interfaces, static fn(ReflectionClass $interface): bool => $interface->hasMethod($method)) !== [];
+        $declares = static fn(string $method): bool => ($class?->hasMethod($method) ?? false) || array_filter($interfaces, static fn(ReflectionClass $interface): bool => $interface->hasMethod($method)) !== [];
         $throwable = in_array('Throwable', $all, true);
         $dated = in_array(DateTimeInterface::class, $all, true);
         $enumOnly = in_array('UnitEnum', $all, true);
         $traversed = in_array('Traversable', $all, true) && !in_array('Iterator', $all, true) && !in_array(IteratorAggregate::class, $all, true)
             && !($class?->implementsInterface(Traversable::class) ?? false);
+        [$iterator, $unimplementable, $unending] = $traversed ? $this->iteratorOver($class, [...array_map(static fn(ReflectionClass $interface): string => $interface->getName(), $interfaces)]) : [null, null, null];
 
         $this->extends = $class?->getName() ?? ($throwable ? Exception::class : ($dated ? DateTimeImmutable::class : null));
-        $this->implements = $traversed ? [IteratorAggregate::class] : [];
+        $this->implements = $iterator === null ? [] : [$iterator];
         $serializable = in_array('Serializable', $all, true);
         $this->code = ($serializable && !$declares('__serialize') ? 'public function __serialize(): array { return []; } ' : '')
             . ($serializable && !$declares('__unserialize') ? 'public function __unserialize(array $data): void {}' : '');
@@ -80,9 +85,9 @@ final readonly class NativeBase
             $class !== null && $dated && !$class->implementsInterface(DateTimeInterface::class) => sprintf('No class can extend both %s and DateTime or DateTimeImmutable.', $class->getName()),
             $class !== null && $enumOnly && !$class->isEnum() => 'Only an enum can implement UnitEnum.',
             $class === null && $throwable && $dated => 'No class can extend both Exception and DateTimeImmutable.',
-            default => null,
+            default => $unimplementable,
         };
-        $this->refusal = $this->conflict ?? ($enumOnly ? 'Only an enum can implement UnitEnum.' : $this->refusedAmong($all, $refusedBy));
+        $this->refusal = $this->conflict ?? $unending ?? ($enumOnly ? 'Only an enum can implement UnitEnum.' : $this->refusedAmong($all, $refusedBy));
     }
 
     /**
@@ -155,6 +160,78 @@ final readonly class NativeBase
         $declaration = new ReflectionMethod($this->extends, $method);
 
         return $declaration->isPublic() && !$declaration->isStatic() ? $declaration : null;
+    }
+
+    /**
+     * The iterator a subclass of the class implements to be Traversable: an
+     * IteratorAggregate where its getIterator() allows one, so a stub of
+     * getIterator() rules foreach, else an Iterator where its methods allow
+     * one. Why none can be, when neither fits; and why no double of it can end
+     * its iteration, when its valid() is final.
+     *
+     * @param ReflectionClass<object>|null $class
+     * @param list<string> $interfaces
+     * @return array{class-string|null, string|null, string|null}
+     */
+    private function iteratorOver(?ReflectionClass $class, array $interfaces): array
+    {
+        if ($class === null) {
+            return [IteratorAggregate::class, null, null];
+        }
+
+        $own = [$class->getName(), ...$interfaces];
+
+        if ($this->fits($class, IteratorAggregate::class, $own)) {
+            return [IteratorAggregate::class, null, null];
+        }
+
+        if (!$this->fits($class, Iterator::class, $own)) {
+            return [null, sprintf('No class extending %s can implement Iterator or IteratorAggregate.', $class->getName()), null];
+        }
+
+        if ($class->hasMethod('valid') && $class->getMethod('valid')->isFinal()) {
+            return [Iterator::class, null, sprintf('%s declares valid() final, so a double of it cannot end its iteration.', $class->getName())];
+        }
+
+        return [Iterator::class, null, null];
+    }
+
+    /**
+     * Whether a subclass of the class can implement the interface: each of its
+     * methods the class declares final satisfies the interface's, and each it
+     * declares otherwise can be overridden to satisfy both.
+     *
+     * @param ReflectionClass<object> $class
+     * @param class-string $interface
+     * @param list<string> $own
+     */
+    private function fits(ReflectionClass $class, string $interface, array $own): bool
+    {
+        foreach ((new ReflectionClass($interface))->getMethods() as $declaration) {
+            if (!$class->hasMethod($declaration->getName()) || $class->getMethod($declaration->getName())->isPrivate()) {
+                continue;
+            }
+
+            $method = $class->getMethod($declaration->getName());
+
+            if ($method->isFinal()) {
+                if (!MethodContract::satisfies($method, $declaration, $own)) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            try {
+                if (MethodContract::of($class->getName(), [$method, $declaration], $own)->noValue !== null) {
+                    return false;
+                }
+            } catch (LogicException) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
