@@ -24,7 +24,6 @@ use ReflectionType;
 use ReflectionUnionType;
 use Throwable;
 use Traversable;
-use UnitEnum;
 
 /**
  * @internal
@@ -37,9 +36,6 @@ final class Double
     /** @var array<string, array{mockClassName: string, reflectionClass: ReflectionClass<object>}> Cached class definitions by FQCN */
     private static array $classCache = [];
 
-    /** @var array<string, class-string<DummyAnswer>> The class of a dummy answer, by the types it is of */
-    private static array $answerClasses = [];
-
     /** Whether PHP lets a plain class implement a built-in interface, asked once per interface in this process */
     private static ?ImplementationProbe $probe = null;
 
@@ -49,7 +45,7 @@ final class Double
     public static function resetCache(): void
     {
         self::$classCache = [];
-        self::$answerClasses = [];
+        Answers::reset();
     }
 
     /**
@@ -114,22 +110,6 @@ final class Double
     }
 
     /**
-     * What a lenient double answers to a call of a method returning the given
-     * types: a dummy of them, standing for the call.
-     *
-     * @param non-empty-list<class-string> $types a class first, if any, then interfaces
-     */
-    public static function answerTo(GeneratedDouble $double, string $method, array $types): object
-    {
-        $reflections = array_map(static fn(string $type): ReflectionClass => new ReflectionClass($type), $types);
-        $answerClass = new ReflectionClass(self::$answerClasses[implode('&', $types)] ??= self::answerClassOf($reflections));
-        $answer = $reflections[0]->isInterface() ? $answerClass->newInstance() : $answerClass->newInstanceWithoutConstructor();
-        $answer->______PhpSpecAnswering($double, $method);
-
-        return $answer;
-    }
-
-    /**
      * Generates the class of a double of the given types: a subclass of a
      * class, or an implementation of interfaces on the base PHP requires for
      * them.
@@ -138,7 +118,7 @@ final class Double
      * @return string the generated class name
      * @throws ReflectionException
      */
-    private static function classOf(array $types, ?NativeBase $base, MethodSet $methods): string
+    public static function classOf(array $types, ?NativeBase $base, MethodSet $methods): string
     {
         $names = array_map(static fn(ReflectionClass $type): string => $type->getName(), $types);
         $doubledName = implode('&', $names);
@@ -270,35 +250,6 @@ PHP;
         eval($mockClassCode);
 
         return 'PhpspecDouble\\' . $mockShortName;
-    }
-
-    /**
-     * Generates the class of a dummy answer of the given types: a double of
-     * them that stands for the call it answered.
-     *
-     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
-     * @return class-string<DummyAnswer>
-     * @throws ReflectionException
-     */
-    private static function answerClassOf(array $types): string
-    {
-        [$base, $methods, $refusal] = self::planOf($types);
-
-        if ($methods === null) {
-            throw new LogicException((string) $refusal);
-        }
-
-        $doubleClass = self::classOf($types, $base, $methods);
-        $shortName = substr($doubleClass, strlen('PhpspecDouble\\')) . '_Answer';
-
-        eval("namespace PhpspecDouble; class $shortName extends \\$doubleClass implements \\PhpSpec\\Mock\\MatchableDouble, \\PhpSpec\\Mock\\DummyAnswer { use \\PhpSpec\\Mock\\MatchableDoubleBehaviour, \\PhpSpec\\Mock\\DummyAnswerBehaviour; }");
-        $answerClass = 'PhpspecDouble\\' . $shortName;
-
-        if (!is_a($answerClass, DummyAnswer::class, true)) {
-            throw new LogicException("Generated answer class '$answerClass' is not a dummy answer.");
-        }
-
-        return $answerClass;
     }
 
     /**
@@ -641,34 +592,6 @@ PHP;
     }
 
     /**
-     * An answer's class: a MatchableDouble standing for the call that
-     * answered it, of the class it extends and the interfaces it implements,
-     * initialised as a base PHP requires is.
-     *
-     * @param list<string> $interfaces
-     */
-    private static function wrapperCode(string $className, ?string $extends, array $interfaces, bool $initialised, string $methodName, string $methods): string
-    {
-        $extends = $extends === null ? '' : 'extends ' . $extends . ' ';
-        $implements = implode(', ', ['\\PhpSpec\\Mock\\MatchableDouble', ...$interfaces]);
-        $initialised = $initialised ? 'parent::__construct();' : '';
-
-        return <<<PHP
-class $className {$extends}implements $implements {
-    use \\PhpSpec\\Mock\\MatchableDoubleBehaviour;
-
-    public function __construct(object \$mockedObject) {
-        $initialised
-        \$this->______phpspec_mockedObject = \$mockedObject;
-        \$this->______phpspec_methodName = '$methodName';
-    }
-
-    $methods
-}
-PHP;
-    }
-
-    /**
      * Why PHP refuses a plain class implementing a built-in interface, asked
      * of a child php once per interface in this process.
      *
@@ -697,46 +620,6 @@ PHP;
     private static function returning(string $value): string
     {
         return "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
-    }
-
-    /**
-     * Whether var_export() writes the value as code a default may hold: no
-     * object other than an enum case, which only runs (new, a closure).
-     */
-    private static function writable(mixed $value): bool
-    {
-        if (is_array($value)) {
-            foreach ($value as $item) {
-                if (!self::writable($item)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        return !is_object($value) || $value instanceof UnitEnum;
-    }
-
-    /**
-     * The default a parameter builds when the call leaves it out, since it
-     * cannot be written into the double's signature: an object afresh on every
-     * call, as PHP builds it, and a closure once, so a call that leaves it out
-     * matches a declaration that left it out too.
-     */
-    private static function defaultCode(ContractParameter $parameter): string
-    {
-        if (!$parameter->hasDefault()) {
-            return '';
-        }
-
-        return sprintf(
-            'if ($%1$s === \\PhpSpec\\Mock\\LeftOut::Argument) { static $__closure_%1$s = null; $%1$s = (new \\ReflectionParameter([%2$s, %3$s], %4$s))->getDefaultValue(); if ($%1$s instanceof \\Closure) { $%1$s = $__closure_%1$s ??= $%1$s; } }',
-            $parameter->name,
-            var_export($parameter->source->getDeclaringClass()?->getName(), true),
-            var_export($parameter->source->getDeclaringFunction()->getName(), true),
-            var_export($parameter->source->getName(), true),
-        );
     }
 
     /**
@@ -883,7 +766,7 @@ PHP;
             $isNullable = self::isNullableType($returnedType);
             $isEnum = self::isClassReturnType($returnedType) && $simpleReturnName !== null && enum_exists($simpleReturnName);
 
-            [$paramString, $defaults] = self::parametersCode($contract);
+            [$paramString, $defaults] = $contract->parametersCode();
             $passing = self::passingCode($contract->parameters);
             $callWith = $passing === '' ? '$__args' : '$__passing';
             $called = $contract->byReference
@@ -898,15 +781,15 @@ PHP;
             $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($owner . '::' . $methodName), 0, 8) . '_' . uniqid();
             [$className, $refusedReturn, $answerTypes] = match (true) {
                 $contract->noValue !== null => [null, null, []],
-                $returnedType === null => [self::untypedAnswerClass($methodName, $wrapperSuffix), null, []],
-                default => self::answerClassFor($returnedType, $methodName, $wrapperSuffix),
+                $returnedType === null => [Answers::untypedClass($methodName, $wrapperSuffix), null, []],
+                default => Answers::classFor($returnedType, $methodName, $wrapperSuffix),
             };
 
             $return = '';
             if ($contract->noValue !== null) {
                 $return = 'throw new \\LogicException(' . var_export($contract->noValue, true) . ');';
             } elseif ($className !== null && $answerTypes !== []) {
-                $return = sprintf('$__ret = $this->______phpspec_lenient ? \\PhpSpec\\Mock\\Double::answerTo($this, %s, %s) : new \\%s($this); return $__ret;', var_export($methodName, true), var_export($answerTypes, true), $className);
+                $return = sprintf('$__ret = $this->______phpspec_lenient ? \\PhpSpec\\Mock\\Answers::dummy($this, %s, %s) : new \\%s($this); return $__ret;', var_export($methodName, true), var_export($answerTypes, true), $className);
             } elseif ($className !== null) {
                 $return = '$__ret = new \\' . $className . '($this); return $__ret;';
             } elseif ($isNullable && $simpleReturnName !== 'mixed') {
@@ -967,163 +850,13 @@ PHP;
     }
 
     /**
-     * The code for a method's parameters, and for the defaults its signature
-     * cannot hold, built when a call leaves them out. Every parameter takes
-     * mixed, so an ArgumentMatcher can be handed to it, and has a default, so
-     * the spec can write the call with fewer arguments.
-     *
-     * @return array{0: string, 1: string}
-     */
-    private static function parametersCode(MethodContract $contract): array
-    {
-        $parameters = [];
-        $defaults = '';
-
-        foreach ($contract->parameters as $parameter) {
-            $type = 'mixed ' . ($parameter->byReference ? '&' : '');
-
-            if ($parameter->variadic) {
-                $parameters[] = $type . '...$' . $parameter->name;
-            } elseif ($parameter->optional && $parameter->hasDefault() && self::writable($parameter->default())) {
-                $parameters[] = $type . '$' . $parameter->name . ' = ' . var_export($parameter->default(), true);
-            } else {
-                $parameters[] = $type . '$' . $parameter->name . ($parameter->hasDefault() ? ' = \\PhpSpec\\Mock\\LeftOut::Argument' : ' = null');
-                $defaults .= self::defaultCode($parameter);
-            }
-        }
-
-        return [implode(', ', $parameters), $defaults];
-    }
-
-    /**
-     * The class of what a call nobody stubbed answers when its method returns
-     * a class or an interface, or a union of them alone: one of the first type
-     * that can have one, there to be handed along, refusing to be used, and
-     * the types it is of, for a lenient double to answer a dummy of instead.
-     * With no class, the reason PHP lets no class be the type, when it gives
-     * one.
-     *
-     * @return array{0: string|null, 1: string|null, 2: list<class-string>}
-     */
-    private static function answerClassFor(ReflectionType $type, string $methodName, string $suffix): array
-    {
-        $members = $type instanceof ReflectionUnionType
-            ? ($type->allowsNull() || self::holdsScalar($type) ? [] : $type->getTypes())
-            : [$type];
-        $refusal = null;
-
-        foreach ($members as $member) {
-            $types = self::typesOf($member);
-
-            if ($types === null) {
-                continue;
-            }
-
-            $names = array_map(static fn(ReflectionClass $type): string => $type->getName(), $types);
-
-            if (DeclaredType::allOf($names)->admitsNoValue()) {
-                $last = array_pop($names);
-                $refusal ??= sprintf('No object can be %s %s and %s.', count($names) === 1 ? 'both' : 'all of', implode(', ', $names), $last);
-
-                continue;
-            }
-
-            [$className, $refused] = self::answerClass($types, $methodName, $suffix);
-
-            if ($className !== null) {
-                return [$className, null, array_map(static fn(ReflectionClass $type): string => $type->getName(), $types)];
-            }
-
-            $refusal ??= $refused;
-        }
-
-        return [null, $refusal, []];
-    }
-
-    private static function holdsScalar(ReflectionUnionType $type): bool
-    {
-        foreach ($type->getTypes() as $member) {
-            if ($member instanceof ReflectionNamedType && in_array($member->getName(), ['string', 'int', 'float', 'bool', 'array'], true)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * The classes and interfaces a type names, or null when it names
-     * something else: a built-in type, an enum, a type that does not exist.
-     *
-     * @return non-empty-list<ReflectionClass<object>>|null
-     */
-    private static function typesOf(ReflectionType $type): ?array
-    {
-        $named = $type instanceof ReflectionIntersectionType ? $type->getTypes() : [$type];
-        $types = [];
-
-        foreach ($named as $member) {
-            if (!$member instanceof ReflectionNamedType || $member->isBuiltin()) {
-                return null;
-            }
-
-            $name = $member->getName();
-
-            if ((!class_exists($name) && !interface_exists($name)) || enum_exists($name)) {
-                return null;
-            }
-
-            $types[] = new ReflectionClass($name);
-        }
-
-        usort($types, static fn(ReflectionClass $one, ReflectionClass $other): int => $one->isInterface() <=> $other->isInterface());
-
-        return $types === [] ? null : $types;
-    }
-
-    /**
-     * The class of an answer of the given types: a subclass of a class that
-     * can have one, built without its constructor, implementing the
-     * interfaces, on the base PHP requires for them.
-     *
-     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
-     * @return array{0: string|null, 1: string|null} the class, or the reason no class can be the types
-     */
-    private static function answerClass(array $types, string $methodName, string $suffix): array
-    {
-        $first = $types[0];
-
-        if (!$first->isInterface() && ($first->isFinal() || $first->isReadOnly())) {
-            return [null, null];
-        }
-
-        foreach ($types as $type) {
-            if ($type->isInterface() && $type->isInternal()) {
-                return [null, null];
-            }
-        }
-
-        [$base, $methods, $refusal] = self::planOf($types);
-
-        if ($methods === null) {
-            return [null, $refusal];
-        }
-
-        $className = 'MockedMethodFor' . $suffix;
-        $interfaces = array_map(static fn(ReflectionClass $type): string => '\\' . $type->getName(), array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface())));
-        $extends = $first->isInterface() ? $base?->extends() : '\\' . $first->getName();
-
-        return [self::evaluated($className, self::wrapperCode($className, $extends, [...$interfaces, ...($base?->implements() ?? [])], $first->isInterface() && $base?->extends() !== null, $methodName, self::answerMethods($methods->contracts, $base))), null];
-    }
-
-    /**
      * What a double of the types is built on, and the methods it defines; or
      * why no class can be the types.
      *
      * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
      * @return array{0: NativeBase|null, 1: MethodSet|null, 2: string|null}
      */
-    private static function planOf(array $types): array
+    public static function planOf(array $types): array
     {
         $interfaces = array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface()));
         $base = $interfaces === [] ? null : new NativeBase($interfaces, self::refusedBy());
@@ -1147,56 +880,5 @@ PHP;
         $methods = MethodSet::of($types, $base);
 
         return $methods->refusal === null ? [$base, $methods, null] : [null, null, $methods->refusal];
-    }
-
-    /**
-     * The methods of an answer: each the types declare, refusing to be used.
-     *
-     * @param list<MethodContract> $contracts
-     */
-    private static function answerMethods(array $contracts, ?NativeBase $base): string
-    {
-        $methods = [];
-
-        foreach ($contracts as $contract) {
-            $methods[] = sprintf(
-                '    public function %s%s(%s)%s { throw $this->______PhpSpecUsed(%s, %s, \\func_get_args(), \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []); }',
-                $contract->byReference ? '&' : '',
-                $contract->name,
-                self::parametersCode($contract)[0],
-                $contract->returnCode,
-                var_export($contract->owner, true),
-                var_export($contract->name, true),
-            );
-        }
-
-        return implode("\n", $methods) . ($base?->code() ?? '');
-    }
-
-    /**
-     * The class of what a method with no return type answers: a handle on the
-     * call, for allow() and expect().
-     */
-    private static function untypedAnswerClass(string $methodName, string $suffix): string
-    {
-        $className = 'MockedMethodFor' . $suffix;
-
-        eval(self::wrapperCode($className, null, [], false, $methodName, ''));
-
-        return $className;
-    }
-
-    /**
-     * The class, once its code is evaluated, or null when PHP refuses it.
-     */
-    private static function evaluated(string $className, string $code): ?string
-    {
-        try {
-            eval($code);
-        } catch (Throwable) {
-            return null;
-        }
-
-        return $className;
     }
 }

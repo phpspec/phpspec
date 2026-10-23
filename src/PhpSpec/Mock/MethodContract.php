@@ -21,6 +21,7 @@ use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionType;
 use ReflectionUnionType;
+use UnitEnum;
 
 /**
  * @internal
@@ -125,6 +126,35 @@ final readonly class MethodContract
         return $last !== null && $last->variadic ? null : count($this->parameters);
     }
 
+    /**
+     * The code for a method's parameters, and for the defaults its signature
+     * cannot hold, built when a call leaves them out. Every parameter takes
+     * mixed, so an ArgumentMatcher can be handed to it, and has a default, so
+     * the spec can write the call with fewer arguments.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function parametersCode(): array
+    {
+        $parameters = [];
+        $defaults = '';
+
+        foreach ($this->parameters as $parameter) {
+            $type = 'mixed ' . ($parameter->byReference ? '&' : '');
+
+            if ($parameter->variadic) {
+                $parameters[] = $type . '...$' . $parameter->name;
+            } elseif ($parameter->optional && $parameter->hasDefault() && self::writable($parameter->default())) {
+                $parameters[] = $type . '$' . $parameter->name . ' = ' . var_export($parameter->default(), true);
+            } else {
+                $parameters[] = $type . '$' . $parameter->name . ($parameter->hasDefault() ? ' = \\PhpSpec\\Mock\\LeftOut::Argument' : ' = null');
+                $defaults .= self::defaultCode($parameter);
+            }
+        }
+
+        return [implode(', ', $parameters), $defaults];
+    }
+
     private static function declaredBy(string $owner, ReflectionMethod $method): self
     {
         $parameters = [];
@@ -155,6 +185,46 @@ final readonly class MethodContract
             $method->returnsReference(),
             null,
         );
+    }
+
+    /**
+     * The default a parameter builds when the call leaves it out, since it
+     * cannot be written into the double's signature: an object afresh on every
+     * call, as PHP builds it, and a closure once, so a call that leaves it out
+     * matches a declaration that left it out too.
+     */
+    private static function defaultCode(ContractParameter $parameter): string
+    {
+        if (!$parameter->hasDefault()) {
+            return '';
+        }
+
+        return sprintf(
+            'if ($%1$s === \\PhpSpec\\Mock\\LeftOut::Argument) { static $__closure_%1$s = null; $%1$s = (new \\ReflectionParameter([%2$s, %3$s], %4$s))->getDefaultValue(); if ($%1$s instanceof \\Closure) { $%1$s = $__closure_%1$s ??= $%1$s; } }',
+            $parameter->name,
+            var_export($parameter->source->getDeclaringClass()?->getName(), true),
+            var_export($parameter->source->getDeclaringFunction()->getName(), true),
+            var_export($parameter->source->getName(), true),
+        );
+    }
+
+    /**
+     * Whether var_export() writes the value as code a default may hold: no
+     * object other than an enum case, which only runs (new, a closure).
+     */
+    private static function writable(mixed $value): bool
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if (!self::writable($item)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return !is_object($value) || $value instanceof UnitEnum;
     }
 
     /**
