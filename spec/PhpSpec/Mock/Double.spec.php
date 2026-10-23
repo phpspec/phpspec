@@ -446,6 +446,35 @@ describe(Double::class, function() {
             expect([$first, $second])->toBe([2, 3]);
         });
 
+        it("records the named arguments a by-reference variadic collects as they were when the call was made", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = cetera();
+            allow($double->fill($anything))->toReturnUsing(function (&...$slots): int {
+                foreach ($slots as &$slot) {
+                    $slot = 9;
+                }
+
+                return 0;
+            });
+            $value = 1;
+
+            $double->fill(first: $value);
+            $value = 2;
+
+            $one = 1;
+            expect($double->fill(first: $one))->toHaveBeenCalled();
+        });
+
+        it("keeps a stub declared with a named by-reference argument to the value it was declared with", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $pattern = 1;
+            allow($double->fill(first: $pattern))->toReturn(5);
+            $pattern = 2;
+
+            $one = 1;
+            expect($double->fill(first: $one))->toBe(5);
+        });
+
         it("hands back a copy of a value stubbed with toReturn, never the value itself", function () {
             $double = Double::getInstance(DoubleSpecByReference::class);
             allow($double->all())->toReturn(['a' => 1]);

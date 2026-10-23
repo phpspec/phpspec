@@ -533,7 +533,10 @@ PHP;
             return '';
         }
 
-        $collected = sprintf("\\array_filter(\$%s, '\\is_string', \\ARRAY_FILTER_USE_KEY)", $variadic->getName());
+        // Copied out, so the call is recorded as it was made: a by-reference
+        // variadic holds the caller's variables, and only a stub's callback is
+        // handed those.
+        $collected = sprintf("\\array_map(static fn(\$value) => \$value, \\array_filter(\$%s, '\\is_string', \\ARRAY_FILTER_USE_KEY))", $variadic->getName());
 
         if (!$held) {
             return sprintf('$__named = %s;', $collected);
