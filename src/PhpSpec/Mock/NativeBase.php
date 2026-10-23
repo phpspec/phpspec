@@ -22,7 +22,11 @@ use Iterator;
 use IteratorAggregate;
 use LogicException;
 use ReflectionClass;
+use ReflectionIntersectionType;
 use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
 use Throwable;
 use Traversable;
 
@@ -209,8 +213,11 @@ final readonly class NativeBase
     }
 
     /**
-     * The Iterator a double must be to answer as empty: none an aggregate can
-     * be, nor one whose methods its class keeps from the Iterator's, with why.
+     * The Iterator a double must be to answer as empty, with why it cannot
+     * be one: its class keeps the Iterator's methods from it. An aggregate
+     * stays one, PHP iterating what it aggregates in turn, where following its
+     * getIterator() reaches an Iterator without coming back to an aggregate on
+     * the way.
      *
      * @param ReflectionClass<object>|null $class
      * @param list<string> $all
@@ -223,7 +230,7 @@ final readonly class NativeBase
         $aggregate = array_values(array_filter([$class?->getName(), ...$interfaces], static fn(?string $type): bool => $type !== null && is_a($type, IteratorAggregate::class, true)));
 
         if ($aggregate !== []) {
-            return [null, sprintf('%s is an IteratorAggregate, which no class can be along with an Iterator.', $aggregate[0])];
+            return [null, $this->endlessFrom($aggregate[0], [strtolower($aggregate[0])])];
         }
 
         if (in_array('Iterator', $all, true) || ($class?->implementsInterface(Iterator::class) ?? false)) {
@@ -233,6 +240,83 @@ final readonly class NativeBase
         $unfit = $class === null ? null : $this->unfit($class, Iterator::class, [$class->getName(), ...$interfaces], $assumed);
 
         return $unfit === null ? [Iterator::class, null] : [null, $unfit];
+    }
+
+    /**
+     * Why iterating the aggregate as a dummy could not end: every type its
+     * getIterator() may return comes back to an aggregate on the way, or can
+     * be no empty iterator; null when one type it may return ends.
+     *
+     * @param class-string $aggregate
+     * @param list<string> $path the aggregates followed so far, lower-cased
+     */
+    private function endlessFrom(string $aggregate, array $path): ?string
+    {
+        $getIterator = new ReflectionMethod($aggregate, 'getIterator');
+        $returns = $getIterator->getReturnType() ?? $getIterator->getTentativeReturnType();
+        $members = $returns instanceof ReflectionUnionType ? $returns->getTypes() : ($returns === null ? [] : [$returns]);
+        $first = null;
+
+        foreach ($members as $member) {
+            $endless = $this->endlessAt($member, $getIterator, $path);
+
+            if ($endless === null) {
+                return null;
+            }
+
+            $first ??= $endless;
+        }
+
+        return $first;
+    }
+
+    /**
+     * Why a type a getIterator() returns could not answer as an empty
+     * iterator, or null when it can: a built-in type has a stand-in, an
+     * aggregate must end in turn, anything else must be an empty Iterator.
+     *
+     * @param list<string> $path
+     */
+    private function endlessAt(ReflectionType $member, ReflectionMethod $getIterator, array $path): ?string
+    {
+        $named = $member instanceof ReflectionIntersectionType ? $member->getTypes() : [$member];
+        $types = [];
+
+        foreach ($named as $type) {
+            $name = $type instanceof ReflectionNamedType ? match (strtolower($type->getName())) {
+                'self', 'static' => $getIterator->class,
+                'parent' => $getIterator->getDeclaringClass()->getParentClass() === false ? null : $getIterator->getDeclaringClass()->getParentClass()->getName(),
+                default => $type->isBuiltin() ? null : $type->getName(),
+            } : null;
+
+            if ($name === null || !(class_exists($name) || interface_exists($name))) {
+                return null;
+            }
+
+            $types[] = new ReflectionClass($name);
+        }
+
+        foreach ($types as $type) {
+            if (!$type->implementsInterface(IteratorAggregate::class)) {
+                continue;
+            }
+
+            if (in_array(strtolower($type->getName()), $path, true)) {
+                return sprintf('%s::%s() returns %s, so its iteration could not end.', $getIterator->class, $getIterator->getName(), implode('&', array_map(static fn(ReflectionClass $named): string => $named->getName(), $types)));
+            }
+
+            return $this->endlessFrom($type->getName(), [...$path, strtolower($type->getName())]);
+        }
+
+        $class = array_values(array_filter($types, static fn(ReflectionClass $type): bool => !$type->isInterface()))[0] ?? null;
+
+        if ($class !== null && ($class->isFinal() || $class->isReadOnly())) {
+            return sprintf('%s is final, so no double of it can be made.', $class->getName());
+        }
+
+        $interfaces = array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface()));
+
+        return (new self($interfaces, static fn(string $interface): ?string => null, $class, [], true))->refusal();
     }
 
     /**

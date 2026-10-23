@@ -1029,7 +1029,7 @@ Feature: Mocking
               $shelf = dummy(Shelf::class);
 
               expect($shelf)->toBeAnInstanceOf(Shelf::class);
-              expect(fn() => iterator_to_array($shelf))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Shelf::getIterator(): no empty iterator of App\Aggregate can be made. App\Aggregate is an IteratorAggregate, which no class can be along with an Iterator.');
+              expect(fn() => iterator_to_array($shelf))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Shelf::getIterator(): no empty iterator of App\Aggregate can be made. App\Aggregate::getIterator() returns App\Aggregate, so its iteration could not end.');
               expect(fn() => iterator_to_array(dummy(Stalled::class)))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Stalled::getIterator(): no empty iterator of App\Stuck&App\Bag can be made. App\Stuck declares valid() final, so a double of it cannot end its iteration.');
           });
 
@@ -1122,6 +1122,147 @@ Feature: Mocking
       """
     When I run phpspec run in a fresh process with option "--format=agent"
     Then the summary should state "passing" as "2"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
+  Scenario: A dummy aggregate answers its getIterator() with an aggregate whose iteration ends, whichever member of a union it is
+    Given a class "src/App/Nested.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Cursor implements \Iterator
+      {
+          public function rewind(): void {}
+          public function next(): void {}
+          public function current(): mixed { return null; }
+          public function key(): mixed { return null; }
+          public function valid(): bool { return false; }
+      }
+
+      class Healthy implements \IteratorAggregate
+      {
+          public function getIterator(): \ArrayIterator
+          {
+              return new \ArrayIterator([1, 2]);
+          }
+      }
+
+      class Middle implements \IteratorAggregate
+      {
+          public function getIterator(): Healthy
+          {
+              return new Healthy();
+          }
+      }
+
+      class Selfish implements \IteratorAggregate
+      {
+          public function getIterator(): self
+          {
+              return $this;
+          }
+      }
+
+      interface Single extends \IteratorAggregate
+      {
+          public function getIterator(): Healthy;
+      }
+
+      interface Nested extends \IteratorAggregate
+      {
+          public function getIterator(): Middle;
+      }
+
+      interface Forward extends \IteratorAggregate
+      {
+          public function getIterator(): Healthy|Cursor;
+      }
+
+      interface Backward extends \IteratorAggregate
+      {
+          public function getIterator(): Cursor|Healthy;
+      }
+
+      interface LoopFirst extends \IteratorAggregate
+      {
+          public function getIterator(): Selfish|Cursor;
+      }
+
+      interface Looping extends \IteratorAggregate
+      {
+          public function getIterator(): Selfish;
+      }
+
+      interface PingPong extends \IteratorAggregate
+      {
+          public function getIterator(): Ping;
+      }
+      """
+    And a class "src/App/Ping.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Ping implements \IteratorAggregate
+      {
+          public function getIterator(): Pong
+          {
+              return new Pong();
+          }
+      }
+      """
+    And a class "src/App/Pong.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Pong implements \IteratorAggregate
+      {
+          public function getIterator(): Ping
+          {
+              return new Ping();
+          }
+      }
+      """
+    And a spec file "spec/App/Nested.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Nested.php';
+
+      use App\Backward;
+      use App\Forward;
+      use App\LoopFirst;
+      use App\Looping;
+      use App\Nested;
+      use App\PingPong;
+      use App\Single;
+
+      describe('Nested', function () {
+          it('iterates as empty through aggregates whose iteration ends', function () {
+              expect(iterator_to_array(dummy(Single::class)))->toBe([]);
+              expect(iterator_to_array(dummy(Nested::class)))->toBe([]);
+          });
+
+          it('answers a union with its first member whose iteration ends, whatever their order', function () {
+              expect(iterator_to_array(dummy(Forward::class)))->toBe([]);
+              expect(iterator_to_array(dummy(Backward::class)))->toBe([]);
+              expect(iterator_to_array(dummy(LoopFirst::class)))->toBe([]);
+          });
+
+          it('refuses an aggregate whose iteration comes back to it, naming where', function () {
+              expect(fn() => iterator_to_array(dummy(Looping::class)))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Looping::getIterator(): no empty iterator of App\Selfish can be made. App\Selfish::getIterator() returns App\Selfish, so its iteration could not end.');
+              expect(fn() => iterator_to_array(dummy(PingPong::class)))->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\PingPong::getIterator(): no empty iterator of App\Ping can be made. App\Pong::getIterator() returns App\Ping, so its iteration could not end.');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "3"
     And the summary should state "deprecations" as "0"
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"

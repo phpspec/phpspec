@@ -57,9 +57,11 @@ already is. A subclass of it adds what it can for a `Traversable` interface: an
 `getIterator()` rules `foreach`, else an `Iterator`. A double iterating as an
 `Iterator` is refused where its `valid()` is final, or resolves to a type
 without `false`, since no double of it could end the iteration. What a dummy
-aggregate's `getIterator()` answers is an empty `Iterator`, which `foreach` ends
-at once; where its class cannot be one, iterating the dummy is refused, saying
-what keeps it from one, and a `mock()` can still stub the call. A class
+aggregate's `getIterator()` answers iterates as empty: an aggregate whose own
+`getIterator()` leads to an `Iterator` without coming back to an aggregate on
+the way, else an empty `Iterator`, trying each type of a union in turn. Where
+none can be, iterating the dummy is refused, saying what keeps it from one, and
+a `mock()` can still stub the call. A class
 declaring static, and not private, a method an interface declares on an object
 cannot be that interface. A class is the class it
 names however it is spelled, through an alias or in another case, and an

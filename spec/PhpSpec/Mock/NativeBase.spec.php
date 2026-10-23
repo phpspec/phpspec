@@ -62,6 +62,9 @@ interface NativeBaseTicker extends \Iterator {
 class NativeBaseAggregating implements \IteratorAggregate {
     public function getIterator(): \ArrayIterator { return new \ArrayIterator([]); }
 }
+class NativeBaseCircling implements \IteratorAggregate {
+    public function getIterator(): self { return $this; }
+}
 class NativeBaseStuck {
     final public function valid(): bool { return true; }
 }
@@ -208,12 +211,14 @@ describe(NativeBase::class, function () {
         expect($ticker->refusal())->toBe('NativeBaseTicker declares valid() returning true, so a double of it cannot end its iteration.');
     });
 
-    it('makes a double an empty Iterator where asked, saying what keeps a class from being one', function () {
+    it('makes a double an empty Iterator where asked, or an aggregate whose iteration ends, saying what keeps a class from either', function () {
         $empty = fn(?string $class) => new NativeBase([new ReflectionClass(NativeBaseBag::class)], $this->nothingRefused, $class === null ? null : new ReflectionClass($class), [], true);
 
         expect($empty(null)->implements())->toBe(['\Iterator']);
         expect($empty(NativeBaseSelfIterating::class)->implements())->toBe(['\Iterator']);
-        expect($empty(NativeBaseAggregating::class)->refusal())->toBe('NativeBaseAggregating is an IteratorAggregate, which no class can be along with an Iterator.');
+        expect($empty(NativeBaseAggregating::class)->refusal())->toBeNull();
+        expect($empty(NativeBaseAggregating::class)->implements())->toBe([]);
+        expect($empty(NativeBaseCircling::class)->refusal())->toBe('NativeBaseCircling::getIterator() returns NativeBaseCircling, so its iteration could not end.');
         expect($empty(NativeBaseStuck::class)->refusal())->toBe('NativeBaseStuck declares valid() final, so a double of it cannot end its iteration.');
     });
 

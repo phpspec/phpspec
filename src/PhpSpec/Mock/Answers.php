@@ -48,25 +48,42 @@ final class Answers
      * where another aggregate could lead to one more without end; one that
      * cannot be is refused, saying what keeps it from being one.
      *
-     * @param non-empty-list<class-string> $types a class first, if any, then interfaces
+     * @param non-empty-list<non-empty-list<class-string>> $alternatives the types of each member of the return type that can have an answer, a class first, if any, then interfaces
      */
-    public static function dummy(GeneratedDouble $double, string $method, array $types): object
+    public static function dummy(GeneratedDouble $double, string $method, array $alternatives): object
     {
         $emptyIterator = $double instanceof IteratorAggregate && strcasecmp($method, 'getIterator') === 0;
-        $reflections = array_map(static fn(string $type): ReflectionClass => new ReflectionClass($type), $types);
-        $key = implode('&', $types) . ($emptyIterator ? ' as an empty iterator' : '');
+        $refusal = null;
 
-        if (!isset(self::$dummies[$key])) {
-            [$base, $methods, $refusal] = Double::planOf($reflections, $emptyIterator);
+        foreach ($alternatives as $types) {
+            $reflections = array_map(static fn(string $type): ReflectionClass => new ReflectionClass($type), $types);
+            $key = implode('&', $types) . ($emptyIterator ? ' as an empty iterator' : '');
 
-            if ($methods === null) {
-                throw new LogicException(sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no %s of %s can be made. %s', ltrim($double->______PhpSpecNameOfClassDoubled(), '\\'), $method, $emptyIterator ? 'empty iterator' : 'double', implode('&', $types), $refusal));
+            if (!isset(self::$dummies[$key])) {
+                [$base, $methods, $refused] = Double::planOf($reflections, $emptyIterator);
+
+                if ($methods === null) {
+                    $refusal ??= sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no %s of %s can be made. %s', ltrim($double->______PhpSpecNameOfClassDoubled(), '\\'), $method, $emptyIterator ? 'empty iterator' : 'double', implode('&', $types), $refused);
+
+                    continue;
+                }
+
+                self::$dummies[$key] = self::dummyClassOf($reflections, $base, $methods);
             }
 
-            self::$dummies[$key] = self::dummyClassOf($reflections, $base, $methods);
+            return self::dummyOf(self::$dummies[$key], $reflections, $double, $method);
         }
 
-        $answerClass = new ReflectionClass(self::$dummies[$key]);
+        throw new LogicException((string) $refusal);
+    }
+
+    /**
+     * @param class-string<DummyAnswer> $class
+     * @param non-empty-list<ReflectionClass<object>> $reflections
+     */
+    private static function dummyOf(string $class, array $reflections, GeneratedDouble $double, string $method): DummyAnswer
+    {
+        $answerClass = new ReflectionClass($class);
         $answer = $reflections[0]->isInterface() ? $answerClass->newInstance() : $answerClass->newInstanceWithoutConstructor();
         $answer->______PhpSpecAnswering($double, $method);
 
@@ -77,11 +94,12 @@ final class Answers
      * The class of what a call nobody stubbed answers when its method returns
      * a class or an interface, or a union of them alone: one of the first type
      * that can have one, there to be handed along, refusing to be used, and
-     * the types it is of, for a lenient double to answer a dummy of instead.
+     * the types of each member that can have one, in order, for a lenient
+     * double to answer a dummy of the first that suits instead.
      * With no class, the reason PHP lets no class be the type, when it gives
      * one.
      *
-     * @return array{0: string|null, 1: string|null, 2: list<class-string>}
+     * @return array{0: string|null, 1: string|null, 2: list<non-empty-list<class-string>>}
      */
     public static function classFor(ReflectionType $type, string $methodName, string $suffix): array
     {
@@ -89,6 +107,8 @@ final class Answers
             ? ($type->allowsNull() || self::holdsScalar($type) ? [] : $type->getTypes())
             : [$type];
         $refusal = null;
+        $className = null;
+        $alternatives = [];
 
         foreach ($members as $member) {
             $types = self::typesOf($member);
@@ -106,16 +126,19 @@ final class Answers
                 continue;
             }
 
-            [$className, $refused] = self::answerClass($types, $methodName, $suffix);
-
-            if ($className !== null) {
-                return [$className, null, array_map(static fn(ReflectionClass $type): string => $type->getName(), $types)];
+            if (!self::answerable($types)) {
+                continue;
             }
 
-            $refusal ??= $refused;
+            $alternatives[] = $names;
+
+            if ($className === null) {
+                [$className, $refused] = self::answerClass($types, $methodName, $suffix);
+                $refusal ??= $refused;
+            }
         }
 
-        return [null, $refusal, []];
+        return $className === null ? [null, $refusal, []] : [$className, null, $alternatives];
     }
 
     /**
@@ -165,21 +188,10 @@ final class Answers
     private static function answerClass(array $types, string $methodName, string $suffix): array
     {
         $first = $types[0];
-
-        if (!$first->isInterface() && ($first->isFinal() || $first->isReadOnly())) {
-            return [null, null];
-        }
-
         [$base, $methods, $refusal] = Double::planOf($types, false, false);
 
         if ($methods === null) {
             return [null, $refusal];
-        }
-
-        foreach ($types as $type) {
-            if ($type->isInterface() && $type->isInternal() && (count($types) === 1 || !in_array($type->getName(), NativeBase::HANDLED, true))) {
-                return [null, null];
-            }
         }
 
         $className = 'MockedMethodFor' . $suffix;
@@ -187,6 +199,29 @@ final class Answers
         $extends = $base?->extends() ?? ($first->isInterface() ? null : '\\' . $first->getName());
 
         return [self::evaluated($className, self::wrapperCode($className, $extends, [...$interfaces, ...($base?->implements() ?? [])], $first->isInterface() && $base?->extends() !== null, $methodName, self::answerMethods($methods->contracts, $base))), null];
+    }
+
+    /**
+     * Whether an answer of the types can be made at all: none of a final or
+     * readonly class, none of a built-in interface alone, which answers leave
+     * to its stand-in or refusal, nor of one in an intersection that the base
+     * PHP requires does not cover.
+     *
+     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
+     */
+    private static function answerable(array $types): bool
+    {
+        if (!$types[0]->isInterface() && ($types[0]->isFinal() || $types[0]->isReadOnly())) {
+            return false;
+        }
+
+        foreach ($types as $type) {
+            if ($type->isInterface() && $type->isInternal() && (count($types) === 1 || !in_array($type->getName(), NativeBase::HANDLED, true))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
