@@ -174,4 +174,13 @@ describe(ArgumentMatcher::class, function () {
         });
     });
 
+
+    it('matches a matcher given as an argument only when it is the same matcher, never running its predicate', function () {
+        $typed = ArgumentMatcher::satisfy(fn (int $value) => $value > 1);
+
+        expect($typed->matches(ArgumentMatcher::satisfy(fn (int $value) => $value > 2)))->toBeFalse();
+        expect($typed->matches($typed))->toBeTrue();
+        expect(ArgumentMatcher::type('string')->matches(ArgumentMatcher::type('string')))->toBeTrue();
+        expect(ArgumentMatcher::any()->matches(ArgumentMatcher::type('string')))->toBeFalse();
+    });
 });

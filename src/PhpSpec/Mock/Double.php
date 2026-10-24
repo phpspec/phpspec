@@ -219,8 +219,8 @@ class $mockShortName $header {
 
     private function ______PhpSpecHoldUnlessExpected(string \$method, array \$args, array \$frame): void {
         if (\$this->______phpspec_lenient
-            || (\$this->______phpspec_declared?->cover(\$method, \$args) ?? false)
-            || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')) {
+            || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')
+            || (\$this->______phpspec_declared?->cover(\$method, \$args) ?? false)) {
             return;
         }
 

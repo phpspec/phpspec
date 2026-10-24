@@ -1673,6 +1673,62 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: Typed satisfy() predicates on one method take only values, however many declarations it has
+    Given a class "src/App/Members.php":
+      """
+      <?php
+      namespace App;
+
+      final class Member
+      {
+          public function __construct(public string $name) {}
+      }
+
+      interface Members
+      {
+          public function save(Member $member): bool;
+      }
+
+      class Signup
+      {
+          public function __construct(private Members $members) {}
+
+          public function join(string $name): bool
+          {
+              return $this->members->save(new Member($name));
+          }
+      }
+      """
+    And a spec file "spec/App/Signup.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/../../src/App/Members.php';
+
+      use App\Member;
+      use App\Members;
+      use App\Signup;
+
+      describe('Signup', function () {
+          it('answers each member as its declaration says', function (Members $members) {
+              allow($members->save(satisfy(fn (Member $member) => $member->name === 'Alice')))->toReturn(true);
+              allow($members->save(satisfy(fn (Member $member) => $member->name === 'Bob')))->toReturn(false);
+
+              expect((new Signup($members))->join('Alice'))->toBeTrue();
+              expect((new Signup($members))->join('Bob'))->toBeFalse();
+          });
+
+          it('checks a call it declared the same way', function (Members $members) {
+              allow($members->save(satisfy(fn (Member $member) => $member->name === 'Alice')))->toReturn(true);
+
+              (new Signup($members))->join('Alice');
+
+              expect($members->save(satisfy(fn (Member $member) => $member->name === 'Alice')))->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """
