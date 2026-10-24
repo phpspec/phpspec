@@ -14,6 +14,8 @@
 
 namespace PhpSpec\CodeGeneration;
 
+use PhpSpec\ProjectRoot;
+
 /**
  * @internal
  * Where a class's source file lives. A class under a mapped namespace lives
@@ -74,6 +76,21 @@ final readonly class SourceLayout
     public function defaultNamespace(): ?string
     {
         return $this->defaultNamespace;
+    }
+
+    /**
+     * Whether a file is the project's own source: under the source path or a
+     * directory a namespace is mapped to.
+     */
+    public function holds(string $file): bool
+    {
+        foreach ([$this->srcPath, ...array_values($this->mappings)] as $directory) {
+            if (ProjectRoot::at($directory)->holds($file)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isMapped(string $fqcn): bool

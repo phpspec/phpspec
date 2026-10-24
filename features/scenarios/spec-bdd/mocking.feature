@@ -1971,6 +1971,47 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A method only an @method tag declares is stubbed like any other, and a static one refuses to be called
+    Given an interface "src/App/Repository.php":
+      """
+      <?php
+      namespace App;
+
+      /** @method void reset() */
+      interface Repository
+      {
+      }
+      """
+    And an interface "src/App/Store.php":
+      """
+      <?php
+      namespace App;
+
+      /**
+       * @method mixed transactional(callable $work)
+       * @method static make()
+       * @method static Store open(string $dsn)
+       */
+      interface Store extends Repository
+      {
+          public function flush(): void;
+      }
+      """
+    And a spec with example:
+      """
+      $store = mock(App\Store::class);
+      allow($store->transactional(any()))->toReturn('saved');
+      allow($store->make())->toReturn($store);
+
+      expect($store->transactional(fn () => 1))->toBe('saved');
+      expect($store->make())->toBe($store);
+      expect($store->reset())->toBeCalled();
+      $store->reset();
+      expect(fn () => $store::open('db'))->toThrow(LogicException::class, 'App\Store::open() is static, so no double can answer it.');
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing a return value
     Given an interface "src/App/UserRepository.php":
       """

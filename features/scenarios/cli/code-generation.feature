@@ -260,6 +260,54 @@ Feature: Code generation
     And I run phpspec run with option "--accept-offers"
     Then the file "src/App/Catalogue.php" should contain "public function priceOf($argument1);"
 
+  Scenario: Nothing is offered on a type outside the source path
+    Given a file "third_party/Shelf/Store.php":
+      """
+      <?php
+      namespace Shelf;
+
+      interface Store
+      {
+          public function flush(): void;
+      }
+      """
+    And a file "third_party/Shelf/Ledger.php":
+      """
+      <?php
+      namespace Shelf;
+
+      class Ledger
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Accounts.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/../../third_party/Shelf/Store.php';
+      require_once __DIR__ . '/../../third_party/Shelf/Ledger.php';
+
+      describe('App\Accounts', function () {
+          it('flushes in a transaction', function (Shelf\Store $store) {
+              allow($store->wrapInTransaction(any()))->toReturn(1);
+          });
+
+          it('sums', function () {
+              expect((new Shelf\Ledger())->subtotal())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the output should contain "Call to undefined method Shelf\Store::wrapInTransaction()"
+    And the output should contain "Call to undefined method Shelf\Ledger::subtotal()"
+    And the output should not contain "to interface Shelf\Store"
+    And the output should not contain "Shelf\Ledger::subtotal() for you"
+    And the file "third_party/Shelf/Store.php" should not contain "wrapInTransaction"
+    And the file "third_party/Shelf/Ledger.php" should not contain "subtotal"
+
   Scenario: Generate an interface from a type-hinted injection
     Given a spec file "spec/App/Service.spec.php":
       """

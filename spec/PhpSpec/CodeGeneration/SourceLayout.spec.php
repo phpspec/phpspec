@@ -64,4 +64,12 @@ describe(SourceLayout::class, function () {
         expect($layout->withinDefaultNamespace('Another\\Acme\\Thing'))->toBe('Another\\Acme\\Thing');
         expect((new SourceLayout('src', ['Brew\\' => 'src/Brew']))->withinDefaultNamespace('Thing'))->toBe('Thing');
     });
+
+    it('holds the files under its source path and every mapped directory, and no other', function () {
+        $layout = new SourceLayout('/app/src', ['Shop\\' => '/app/modules/shop']);
+
+        expect($layout->holds('/app/src/Basket.php'))->toBeTrue();
+        expect($layout->holds('/app/modules/shop/Till.php'))->toBeTrue();
+        expect($layout->holds('/app/vendor/acme/Store.php'))->toBeFalse();
+    });
 });

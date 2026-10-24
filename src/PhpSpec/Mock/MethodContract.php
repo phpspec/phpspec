@@ -92,6 +92,26 @@ final readonly class MethodContract
     }
 
     /**
+     * A method a type declares only by an @method tag, as a library does to
+     * keep a method it has not declared yet: it takes any arguments and
+     * returns any value, since the tag's types are the docblock's, not PHP's.
+     */
+    public static function tagged(string $owner, string $name, bool $static): self
+    {
+        return new self(
+            $owner,
+            $name,
+            [new ContractParameter(null, 'arguments', 0, false, true, true, '', null)],
+            0,
+            self::reflected('mixed'),
+            ': mixed',
+            false,
+            null,
+            $static,
+        );
+    }
+
+    /**
      * Whether every call each declaration takes, this method takes too, as a
      * public method, and what it returns each declaration admits: the test a
      * method a base class declares final must pass, since a double cannot
@@ -241,7 +261,7 @@ final readonly class MethodContract
      */
     private static function defaultCode(ContractParameter $parameter): string
     {
-        if (!$parameter->hasDefault()) {
+        if (!$parameter->hasDefault() || $parameter->source === null) {
             return '';
         }
 
