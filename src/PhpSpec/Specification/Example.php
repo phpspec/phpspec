@@ -25,13 +25,11 @@ use PhpSpec\EventDispatcher\Event\ExampleRunned;
 use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber;
 use PhpSpec\ExampleId;
-use PhpSpec\Mock\Double;
 use PhpSpec\Mock\HeldCalls;
 use PhpSpec\OwnCode;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ExampleResultRegistry;
 use PhpSpec\Results;
-use ReflectionException;
 use ReflectionFunction;
 
 /**
@@ -43,9 +41,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
 {
     /** @var array<Closure> collected match closures from expectations */
     private array $matches = [];
-
-    /** @var array<mixed> mock doubles created during this example */
-    private array $doubles = [];
 
     /** @var ExampleResult accumulated result for this example */
     private ExampleResult $exampleResult;
@@ -475,45 +470,17 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
     }
 
     /**
-     * Tracks a mock double created during this example.
+     * What the context arranged for this example to hand its parameters. An
+     * example outside any describe() has no this() and no hook to share its
+     * doubles with.
      *
-     * @param mixed $double mock double instance
-     * @return void
-     */
-    public function addDouble(mixed $double): void
-    {
-        $this->doubles[] = $double;
-    }
-
-    /**
-     * Resolves type-hinted closure parameters to injected mocks, world properties,
-     * or new mock doubles.
-     *
-     * @param Closure $closure example closure whose parameters to resolve
-     * @return array<mixed> resolved arguments
-     * @throws ReflectionException
+     * @return list<object>
      */
     private function resolveClosureArgs(Closure $closure): array
     {
-        $ref = new ReflectionFunction($closure);
-        $world = $ref->getClosureThis();
-        $injectedMocks = ($world !== null && isset($world->__phpspec_injected_mocks))
-            ? $world->__phpspec_injected_mocks : [];
-        $args = [];
-        foreach ($ref->getParameters() as $param) {
-            $type = $param->getType();
-            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
-                $name = $param->getName();
-                $className = $type->getName();
-                if (isset($injectedMocks[$name]) && $injectedMocks[$name] instanceof $className) {
-                    $args[] = $injectedMocks[$name];
-                } elseif ($world !== null && isset($world->$name) && $world->$name instanceof $className) {
-                    $args[] = $world->$name;
-                } else {
-                    $args[] = Double::getInstance($className);
-                }
-            }
-        }
-        return $args;
+        $world = (new ReflectionFunction($closure))->getClosureThis();
+        $arguments = $world instanceof Subject ? $world->__phpspec_arguments : null;
+
+        return ($arguments ?? new ExampleArguments())->for($closure);
     }
 }

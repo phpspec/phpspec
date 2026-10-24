@@ -190,6 +190,82 @@ Feature: Writing specs
     Then all examples should pass
     And no file "noisy-was-built.txt" should be generated
 
+  Scenario: A parameter is a double, the same for every closure of the example naming it alike and never a this() value, and only a this() puts it on $this
+    Given an interface "src/App/Lock.php":
+      """
+      <?php
+      namespace App;
+
+      interface Lock {
+          public function acquire(): bool;
+      }
+      """
+    And a class "src/App/Logged.php":
+      """
+      <?php
+      namespace App;
+
+      final class Logged implements Lock {
+          public function __construct(public readonly Lock $inner) {}
+          public function acquire(): bool { return $this->inner->acquire(); }
+      }
+      """
+    And a class "src/App/Guard.php":
+      """
+      <?php
+      namespace App;
+
+      class Guard {
+          public function __construct(public Lock $lock) {}
+      }
+      """
+    And a class "src/App/Bolt.php":
+      """
+      <?php
+      namespace App;
+
+      final class Bolt implements Lock {
+          public function acquire(): bool { return true; }
+      }
+      """
+    And a spec file "spec/App/Locks.spec.php":
+      """
+      <?php
+      describe('Locks', function () {
+          beforeEach(function (App\Lock $lock, App\Lock $spare) {
+              allow($lock->acquire())->toReturn(true);
+          });
+
+          this('lock', fn (App\Lock $lock) => new App\Logged($lock));
+          this('guard', fn (App\Lock $bolt) => new App\Guard($bolt));
+          this('bolt', fn () => new App\Bolt());
+          this('vault', fn (App\Lock $key) => new App\Guard($key));
+
+          it('keeps a this() on $this when its parameter has its name', function () {
+              expect($this->lock)->toBeAnInstanceOf(App\Logged::class);
+          });
+
+          it('hands every parameter of a name the same double', function (App\Lock $lock) {
+              expect($this->lock->inner)->toBe($lock);
+              expect($this->lock->acquire())->toBe(true);
+          });
+
+          it('hands a parameter a double, never the this() of its name', function (App\Guard $guard) {
+              expect($guard)->toBeAnInstanceOf(App\Guard::class);
+              expect($guard)->not()->toBe($this->guard);
+              expect($this->guard->lock)->not()->toBeAnInstanceOf(App\Bolt::class);
+          });
+
+          it('puts on $this the doubles a this() takes, and no hook or example parameter', function (App\Lock $other) {
+              expect($this->key)->toBe($this->vault->lock);
+              expect(isset($this->spare))->toBe(false);
+              expect(isset($this->other))->toBe(false);
+          });
+      });
+      """
+    When I run phpspec run
+    Then all examples should pass
+
   Scenario: An example that makes no expectation is reported as risky, and the run stays green
     Given a spec file "spec/App/Risky.spec.php":
       """

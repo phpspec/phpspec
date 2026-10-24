@@ -132,7 +132,7 @@ describe(UserService::class, function () {
 });
 ```
 
-Any parameter with a class or interface type hint will be automatically resolved via `mock()`. This is the preferred way to create mocks.
+Any parameter with a class or interface type hint will be automatically resolved via `mock()`. This is the preferred way to create mocks. A parameter is always a double, the same for every closure of the example that names it alike; [Hooks](hooks.md#type-hinted-mock-injection) has which of them sit on `$this`.
 
 ## Stubbing Return Values
 

@@ -69,9 +69,6 @@ class Context implements ExampleRegistry, Rebindable, Titled
     /** @var array<array{0: string, 1: ?string, 2: Closure}> stored this() bindings for per-example reset */
     private array $bindings = [];
 
-    /** @var array<string, object> mocks created by this() parameter injection, keyed by param name */
-    private array $injectedMocks = [];
-
     /** @var Subject shared state object accessible via $this in closures */
     private Subject $world;
 
@@ -274,16 +271,16 @@ class Context implements ExampleRegistry, Rebindable, Titled
         // its body printed, not to the terminal between two results.
         $setup = new CapturedOutput();
         $teardown = new CapturedOutput();
+        $arguments = new ExampleArguments($this->world, $this->boundNames());
         HeldCalls::forget();
 
         try {
             try {
-                $setup->around(function (): void {
-                    $this->reapplyBindings();
+                $setup->around(function () use ($arguments): void {
+                    $this->reapplyBindings($arguments);
                     foreach ($this->beforeEachHooks as $hook) {
-                        $hook(...$this->resolveClosureArgs($hook));
+                        $hook(...$arguments->for($hook));
                     }
-                    $this->world->__phpspec_injected_mocks = $this->injectedMocks;
                 });
 
                 $result = $example->run();
@@ -293,9 +290,9 @@ class Context implements ExampleRegistry, Rebindable, Titled
             $body = $result->getOutput();
 
             try {
-                $teardown->around(function (): void {
+                $teardown->around(function () use ($arguments): void {
                     foreach ($this->afterEachHooks as $hook) {
-                        $hook(...$this->resolveClosureArgs($hook));
+                        $hook(...$arguments->for($hook));
                     }
                 });
             } catch (PendingException|SkippedException $late) {
@@ -315,7 +312,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
 
             return $this->printed($example->failedInHook(new ExampleError($e->getMessage(), $e)), $setup->text(), '');
         } finally {
-            $this->forgetInjectedMocks();
+            $this->forget($arguments);
         }
 
         $coverage?->endExample($result->getTitle());
@@ -324,16 +321,14 @@ class Context implements ExampleRegistry, Rebindable, Titled
     }
 
     /**
-     * Takes the mocks this example was handed off the world, so no example
-     * after it, in this context or a nested one sharing the world, inherits a
-     * double that carries this example's stubs.
+     * Takes what this example was handed off the world, so no example after
+     * it, in this context or a nested one sharing the world, inherits a double
+     * that carries this example's stubs.
      */
-    private function forgetInjectedMocks(): void
+    private function forget(ExampleArguments $arguments): void
     {
-        foreach (array_keys($this->injectedMocks) as $name) {
-            unset($this->world->$name);
-        }
-
+        $arguments->forget();
+        $this->world->__phpspec_arguments = null;
         $this->world->__phpspec_pending_bindings = [];
     }
 
@@ -654,9 +649,9 @@ class Context implements ExampleRegistry, Rebindable, Titled
     /**
      * Evaluates an injection-style this() binding, resolving type-hinted mock parameters.
      */
-    private function evaluateInjection(Closure $setter): void
+    private function evaluateInjection(Closure $setter, ExampleArguments $arguments): void
     {
-        $args = $this->resolveClosureArgs($setter);
+        $args = $arguments->forThis($setter);
         if (!empty($args)) {
             $setter(...$args);
         }
@@ -669,60 +664,30 @@ class Context implements ExampleRegistry, Rebindable, Titled
      * them on $this before the value exists. An injection this() runs now, since
      * its doubles are all it is for.
      */
-    private function reapplyBindings(): void
+    private function reapplyBindings(ExampleArguments $arguments): void
     {
-        foreach ($this->bindings as $binding) {
-            if ($binding[1] !== null) {
-                unset($this->world->{$binding[1]});
-            }
+        foreach ($this->boundNames() as $property) {
+            unset($this->world->$property);
         }
-        $this->injectedMocks = [];
+        $this->world->__phpspec_arguments = $arguments;
         $this->world->__phpspec_pending_bindings = [];
 
         foreach ($this->bindings as [$kind, $property, $setter]) {
             if ($kind === 'named' && $property !== null) {
-                $args = $this->resolveClosureArgs($setter);
+                $args = $arguments->forThis($setter);
                 $this->world->__phpspec_pending_bindings[$property] = static fn(): mixed => $setter(...$args);
             } else {
-                $this->evaluateInjection($setter);
+                $this->evaluateInjection($setter, $arguments);
             }
         }
-
-        $this->world->__phpspec_injected_mocks = $this->injectedMocks;
     }
 
     /**
-     * Resolves type-hinted closure parameters to existing injected mocks, world properties,
-     * or new mock doubles. New mocks are stored in $injectedMocks only (not on World).
-     *
-     * @param Closure $closure closure whose parameters to resolve
-     * @return array<mixed> resolved arguments
-     * @throws ReflectionException
+     * @return list<string>
      */
-    private function resolveClosureArgs(Closure $closure): array
+    private function boundNames(): array
     {
-        $ref = new \ReflectionFunction($closure);
-        $args = [];
-        foreach ($ref->getParameters() as $param) {
-            $type = $param->getType();
-            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
-                $name = $param->getName();
-                $className = $type->getName();
-                if (isset($this->injectedMocks[$name]) && $this->injectedMocks[$name] instanceof $className) {
-                    $args[] = $this->injectedMocks[$name];
-                } elseif (isset($this->world->$name) && $this->world->$name instanceof $className) {
-                    $args[] = $this->world->$name;
-                } else {
-                    // A mock made for a parameter is the example's to stub and
-                    // verify too, under the parameter's name on $this.
-                    $mock = \PhpSpec\Mock\Double::getInstance($className);
-                    $this->injectedMocks[$name] = $mock;
-                    $this->world->$name = $mock;
-                    $args[] = $mock;
-                }
-            }
-        }
-        return $args;
+        return array_values(array_filter(array_column($this->bindings, 1), static fn(?string $property): bool => $property !== null));
     }
 
     private function numberedTitle(): string
