@@ -168,3 +168,26 @@ Feature: Lifecycle hooks
     When I run phpspec run
     Then the output should contain "pending() in afterAll comes after the examples ran; call it in beforeAll or in an example."
     And the exit code should be 1
+
+  Scenario: A function PhpSpec calls with no arguments is refused when it declares one
+    Given a spec file "spec/App/Vault.spec.php":
+      """
+      <?php
+      describe('Vault', function () {
+          beforeAll(function ($log) {});
+
+          it('opens', fn () => expect(1)->toBe(1));
+      });
+
+      describe('Box', function () {
+          context('when locked', function ($lock) {});
+
+          it('opens', fn () => expect(1)->toBe(1));
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "✘ Vault"
+    And the output should contain "✘ when locked"
+    And the output should contain "Arguments not allowed in this function, only this(), it(), beforeEach() and afterEach() can take doubles."
+    And the output should contain "✓ opens"
+    And the exit code should be 1

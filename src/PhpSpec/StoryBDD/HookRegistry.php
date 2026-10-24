@@ -14,6 +14,8 @@
 
 namespace PhpSpec\StoryBDD;
 
+use PhpSpec\ArgumentlessFunction;
+
 /**
  * @internal
  * Stores and executes lifecycle hooks for feature, scenario, and step events.
@@ -89,7 +91,7 @@ final class HookRegistry
     public function runBeforeFeature(): void
     {
         foreach ($this->beforeFeature as $hook) {
-            $hook();
+            (new ArgumentlessFunction($hook))();
         }
     }
 
@@ -102,7 +104,7 @@ final class HookRegistry
     public function runBeforeScenario(object $world): void
     {
         foreach ($this->beforeScenario as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 
@@ -115,7 +117,7 @@ final class HookRegistry
     public function runBeforeStep(object $world): void
     {
         foreach ($this->beforeStep as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 
@@ -160,7 +162,7 @@ final class HookRegistry
     public function runAfterFeature(): void
     {
         foreach ($this->afterFeature as $hook) {
-            $hook();
+            (new ArgumentlessFunction($hook))();
         }
     }
 
@@ -173,7 +175,7 @@ final class HookRegistry
     public function runAfterScenario(object $world): void
     {
         foreach ($this->afterScenario as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 
@@ -186,7 +188,7 @@ final class HookRegistry
     public function runAfterStep(object $world): void
     {
         foreach ($this->afterStep as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 

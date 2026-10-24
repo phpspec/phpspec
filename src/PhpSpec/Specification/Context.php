@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 use Closure;
+use PhpSpec\ArgumentlessFunction;
 use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
@@ -177,7 +178,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
         try {
             DispatcherRegistry::dispatcher()->dispatch(new ContextStarted($this->numberedTitle()), ContextStarted::NAME);
             DispatcherRegistry::dispatcher()->pushScope($this);
-            ($this->specBlock)();
+            (new ArgumentlessFunction($this->specBlock))();
             DispatcherRegistry::dispatcher()->popScope();
 
             $this->placeChildren();
@@ -190,7 +191,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
             if ($ownHooksRan) {
                 try {
                     foreach ($this->beforeAllHooks as $hook) {
-                        $hook();
+                        (new ArgumentlessFunction($hook))();
                     }
                 } catch (PendingException|SkippedException $raised) {
                     $signal = $raised;
@@ -228,7 +229,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
             if ($ownHooksRan) {
                 foreach ($this->afterAllHooks as $hook) {
                     try {
-                        $hook();
+                        (new ArgumentlessFunction($hook))();
                     } catch (PendingException|SkippedException $late) {
                         throw new ExampleError((new LateSignal($late, 'afterAll', 'the examples', 'beforeAll or in an example'))->sentence(), $late);
                     }
