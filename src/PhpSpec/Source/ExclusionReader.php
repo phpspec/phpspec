@@ -49,12 +49,6 @@ final class ExclusionReader
     /** @var array<int, true> lines that hold code: a function with a body, or the file's own statements */
     private array $code = [];
 
-    private int $declared = 0;
-
-    private int $declaredExcluded = 0;
-
-    private bool $ownCode = false;
-
     /**
      * @param Closure(string, string): bool $named
      */
@@ -76,7 +70,7 @@ final class ExclusionReader
         $lines = array_keys($this->excluded);
         sort($lines);
 
-        return new ExcludedLines($lines, $this->declared > 0 && $this->declared === $this->declaredExcluded && !$this->ownCode);
+        return new ExcludedLines($lines, array_diff_key($this->code, $this->excluded) === []);
     }
 
     private function readDeclarations(): void
@@ -119,7 +113,7 @@ final class ExclusionReader
                 $this->mark($this->declaring, $token->line, $this->tokens[$end]->line);
                 $i = $end;
             } elseif ($token->is(array_keys(self::KINDS)) && $this->declaresAt($i)) {
-                $classes[] = $this->classLike($i, $namespace, $marked, $doc, $class === null);
+                $classes[] = $this->classLike($i, $namespace, $marked, $doc);
                 $i = $this->bodyOpen($i);
             } elseif ($token->is(T_CLASS) && !$this->namesAClassAt($i)) {
                 $end = $this->matchingClose($this->bodyOpen($i));
@@ -127,8 +121,11 @@ final class ExclusionReader
                 $i = $end;
             } elseif ($token->is(T_FUNCTION) && $this->nameAfter($i) !== null) {
                 $i = $this->function($i, $class === null ? $namespace : $class['name'] . '::', $marked, $doc, $class === null);
+            } elseif ($class !== null && ($token->is([T_FUNCTION, T_FN]) || $token->id === 123)) {
+                $end = $this->endOfCodeOutsideMethods($i);
+                $this->mark($this->code, $token->line, $this->tokens[$end]->line);
+                $i = $end;
             } elseif ($class === null && !$token->is([123, ord('}'), ord(';')])) {
-                $this->ownCode = true;
                 $this->mark($this->code, $token->line, $token->line + substr_count($token->text, "\n"));
             }
 
@@ -143,7 +140,7 @@ final class ExclusionReader
      *
      * @return array{name: string, end: int}
      */
-    private function classLike(int $at, string $namespace, bool $marked, ?int $doc, bool $topLevel): array
+    private function classLike(int $at, string $namespace, bool $marked, ?int $doc): array
     {
         $kind = self::KINDS[$this->tokens[$at]->id];
         $name = $namespace . $this->nameAfter($at);
@@ -152,7 +149,7 @@ final class ExclusionReader
         $this->mark($this->declaring, $this->tokens[$at]->line, $this->tokens[$open]->line);
         $excluded = $kind === 'interface' || $marked || $this->tagged($doc) || ($this->named)('class', $name);
 
-        $this->declare($at, $end, $excluded, $doc, $topLevel);
+        $this->declare($at, $end, $excluded, $doc);
 
         return ['name' => $name, 'end' => $end];
     }
@@ -172,20 +169,15 @@ final class ExclusionReader
             $this->mark($this->code, $this->tokens[$at]->line, $this->tokens[$end]->line);
         }
 
-        $this->declare($at, $end, $excluded, $doc, $topLevel);
+        $this->declare($at, $end, $excluded, $doc);
 
         return $end;
     }
 
-    private function declare(int $at, int $end, bool $excluded, ?int $doc, bool $topLevel): void
+    private function declare(int $at, int $end, bool $excluded, ?int $doc): void
     {
         if ($doc !== null) {
             $this->attached[$doc] = true;
-        }
-
-        if ($topLevel) {
-            $this->declared++;
-            $this->declaredExcluded += $excluded ? 1 : 0;
         }
 
         if ($excluded) {
@@ -420,6 +412,43 @@ final class ExclusionReader
 
             if ($nesting === 0 && ($this->tokens[$i]->id === 123 || $text === ';')) {
                 return $i;
+            }
+        }
+
+        return count($this->tokens) - 1;
+    }
+
+    /**
+     * A class body holds code outside its methods in a property hook's
+     * block, a closure's body and an arrow function's expression.
+     */
+    private function endOfCodeOutsideMethods(int $at): int
+    {
+        if ($this->tokens[$at]->is(T_FN)) {
+            return $this->arrowEnd($at);
+        }
+
+        return $this->matchingClose($this->tokens[$at]->id === 123 ? $at : $this->bodyOpen($at));
+    }
+
+    /**
+     * The last token of an arrow function's expression: before the separator
+     * or the bracket that ends it.
+     */
+    private function arrowEnd(int $from): int
+    {
+        $nesting = 0;
+
+        for ($i = $from + 1; $i < count($this->tokens); $i++) {
+            $text = $this->tokens[$i]->text;
+            $nesting += match ($text) {
+                '(', '[', '{' => 1,
+                ')', ']', '}' => -1,
+                default => 0,
+            };
+
+            if ($nesting < 0 || ($nesting === 0 && in_array($text, [';', ','], true))) {
+                return $i - 1;
             }
         }
 

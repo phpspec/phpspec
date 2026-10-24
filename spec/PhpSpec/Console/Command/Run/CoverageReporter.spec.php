@@ -128,7 +128,7 @@ describe(CoverageReporter::class, function () {
             allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$read) {
                 $read[] = $path;
 
-                return "<?php\n";
+                return (string) file_get_contents($path);
             });
             $output = new BufferedOutput();
             $reporter = new CoverageReporter(new CoverageEngines(null, $php, ''), new Exclusions(['Excluded.php'], $fs, dirname($fixture)));

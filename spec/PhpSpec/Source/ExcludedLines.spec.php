@@ -187,9 +187,25 @@ describe(ExcludedLines::class, function () {
 
     context('the whole file', function () {
         it('goes when everything it declares is left out and it runs nothing of its own', function () {
-            expect(ExcludedLines::in("<?php\nnamespace App;\nuse X;\n#[\\PhpSpec\\ExcludeFromCoverage]\nclass A\n{\n}\n")->wholeFile())->toBeTrue();
+            expect(ExcludedLines::in("<?php\nnamespace App;\nuse X;\n#[\\PhpSpec\\ExcludeFromCoverage]\nclass A\n{\n    public function f(): int\n    {\n        return 1;\n    }\n}\n")->wholeFile())->toBeTrue();
             expect(ExcludedLines::in("<?php\nnamespace App;\n#[\\PhpSpec\\ExcludeFromCoverage]\nclass A\n{\n}\n\$x = 1;\n")->wholeFile())->toBeFalse();
-            expect(ExcludedLines::in("<?php\nnamespace App;\nclass A\n{\n}\n")->wholeFile())->toBeFalse();
+            expect(ExcludedLines::in("<?php\nnamespace App;\nclass A\n{\n    public function f(): int\n    {\n        return 1;\n    }\n}\n")->wholeFile())->toBeFalse();
+        });
+
+        it('goes when it holds no code at all, as a class with an empty body', function () {
+            expect(ExcludedLines::in("<?php\nnamespace App;\nfinal class Refused extends \\RuntimeException {}\n")->wholeFile())->toBeTrue();
+            expect(ExcludedLines::in("<?php\nnamespace App;\nenum Size\n{\n    case Small;\n}\n")->wholeFile())->toBeTrue();
+        });
+
+        it('stays when a class holds code outside its methods: a property hook, or a closure in a constant', function () {
+            expect(ExcludedLines::in("<?php\nclass HookOnly\n{\n    public string \$name {\n        get => 'Ann';\n    }\n}\n")->wholeFile())->toBeFalse();
+            expect(ExcludedLines::in("<?php\nclass Doubled\n{\n    public int \$n = 0 {\n        set(int \$v) {\n            \$this->n = \$v * 2;\n        }\n    }\n}\n")->wholeFile())->toBeFalse();
+            expect(ExcludedLines::in("<?php\nclass Twice\n{\n    public const F = static function (int \$x): int {\n        return \$x * 2;\n    };\n}\n")->wholeFile())->toBeFalse();
+            expect(ExcludedLines::in("<?php\nclass Thrice\n{\n    public const F = [static fn (int \$x): int => \$x * 3];\n}\n")->wholeFile())->toBeFalse();
+        });
+
+        it('goes when a class only adapts the traits it uses', function () {
+            expect(ExcludedLines::in("<?php\nclass Adapted\n{\n    use A, B {\n        A::f insteadof B;\n    }\n}\n")->wholeFile())->toBeTrue();
         });
     });
 

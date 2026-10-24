@@ -284,6 +284,183 @@ Feature: Coverage exclusions
     When I run phpspec run with coverage options "--coverage"
     Then the output should contain "Total: 100.0%"
 
+  Scenario: --coverage-min cannot be enforced while a source file no spec loaded is missing from coverage
+    Given a file "phpspec.json":
+      """
+      {
+          "autoload": {"App\\": "src/App"},
+          "coverage_exclude": ["src/App/Generated/"]
+      }
+      """
+    And a class "src/App/Greeter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Greeter
+      {
+          public function greet(string $name): string
+          {
+              return "Hello $name";
+          }
+      }
+      """
+    And a class "src/App/Untested.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Untested
+      {
+          public function run(): string
+          {
+              return 'never called';
+          }
+      }
+      """
+    And a class "src/App/Reports/Monthly.php":
+      """
+      <?php
+
+      namespace App\Reports;
+
+      class Monthly
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a class "src/App/Pricing.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Pricing
+      {
+          public function price(): int;
+      }
+      """
+    And a class "src/App/Named.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Named
+      {
+          public string $name {
+              get => 'Ann';
+          }
+      }
+      """
+    And a class "src/App/Generated/Mapper.php":
+      """
+      <?php
+
+      namespace App\Generated;
+
+      class Mapper
+      {
+          public function map(array $row): array
+          {
+              return array_values($row);
+          }
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+
+      describe(App\Greeter::class, function () {
+          it('greets', fn () => expect((new App\Greeter())->greet('Ann'))->toBe('Hello Ann'));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage-min=100"
+    Then the output should contain "Cannot enforce --coverage-min=100: coverage is incomplete."
+    And the output should contain "No spec loaded src/App/Reports/Monthly.php."
+    And the output should contain "No spec loaded src/App/Named.php."
+    And the output should contain "No spec loaded src/App/Untested.php."
+    And the output should not contain "Pricing.php"
+    And the output should not contain "Mapper.php"
+    And the output should not contain "meets the required"
+    And the exit code should be 1
+
+  Scenario: --coverage-min is enforced when every source file was loaded
+    Given a class "src/App/Greeter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Greeter
+      {
+          public function greet(string $name): string
+          {
+              return "Hello $name";
+          }
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+
+      describe(App\Greeter::class, function () {
+          it('greets', fn () => expect((new App\Greeter())->greet('Ann'))->toBe('Hello Ann'));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage-min=100"
+    Then the output should contain "Code coverage 100.0% meets the required 100.0%"
+    And the exit code should be 0
+
+  Scenario: The agent document names the source files no spec loaded
+    Given a class "src/App/Greeter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Greeter
+      {
+          public function greet(string $name): string
+          {
+              return "Hello $name";
+          }
+      }
+      """
+    And a class "src/App/Untested.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Untested
+      {
+          public function run(): string
+          {
+              return 'never called';
+          }
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+
+      describe(App\Greeter::class, function () {
+          it('greets', fn () => expect((new App\Greeter())->greet('Ann'))->toBe('Hello Ann'));
+      });
+      """
+    When I run phpspec run with coverage options "--format=agent --coverage-min=100"
+    Then the output should contain:
+      """
+      "met":false,"unloaded":["src/App/Untested.php"]
+      """
+    And the exit code should be 1
+
   Scenario: Guard leaves excluded code alone
     Given a class "src/App/Basket.php":
       """

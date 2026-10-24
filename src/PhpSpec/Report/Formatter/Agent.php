@@ -414,6 +414,10 @@ final class Agent extends AbstractFormatter
                 'required' => $this->coverage->required,
                 'met' => $this->coverage->met(),
             ];
+
+            if ($this->coverage->unloaded !== []) {
+                $summary['coverage']['unloaded'] = $this->coverage->unloaded;
+            }
         }
 
         // Present only when there is something to take, as with everything else
