@@ -14,6 +14,7 @@
 
 namespace PhpSpec\StoryBDD;
 
+use PhpSpec\ProjectRoot;
 use RuntimeException;
 
 /**
@@ -83,13 +84,9 @@ final class StepRegistry
     private static function locationOf(\Closure $callback): string
     {
         $reflection = new \ReflectionFunction($callback);
-        $file = $reflection->getFileName() ?: 'unknown';
-        $cwd = getcwd();
-        if (is_string($cwd) && str_starts_with($file, $cwd . DIRECTORY_SEPARATOR)) {
-            $file = substr($file, strlen($cwd) + 1);
-        }
+        $file = $reflection->getFileName();
 
-        return $file . ':' . ($reflection->getStartLine() ?: 0);
+        return ($file === false ? 'unknown' : ProjectRoot::here()->relative($file)) . ':' . ($reflection->getStartLine() ?: 0);
     }
 
     /**

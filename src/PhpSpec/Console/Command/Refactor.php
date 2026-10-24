@@ -40,6 +40,7 @@ use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use RuntimeException;
@@ -279,6 +280,6 @@ final class Refactor extends Command
 
     private function relative(string $file): string
     {
-        return ltrim(substr($file, strlen(getcwd() ?: '.')), '/\\');
+        return ProjectRoot::here()->relative($file);
     }
 }
