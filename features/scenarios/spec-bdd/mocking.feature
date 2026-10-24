@@ -1339,6 +1339,99 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double implements an abstract static method by refusing it, and keeps a concrete one
+    Given a class "src/App/Statics.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface FromData
+      {
+          public static function fromData(array $data): static;
+      }
+
+      interface Factory
+      {
+          public function make(): FromData;
+      }
+
+      abstract class Model
+      {
+          abstract public static function named(string $name): static;
+
+          public static function create(): static
+          {
+              return new static();
+          }
+
+          public function name(): string
+          {
+              return 'model';
+          }
+      }
+
+      interface Named
+      {
+          public static function named(string $name): static;
+      }
+
+      interface Instanced
+      {
+          public function named(string $name): static;
+      }
+
+      interface Source
+      {
+          public function both(): Named&Instanced;
+
+          public function title(): string;
+      }
+      """
+    And a spec file "spec/App/Statics.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Statics.php';
+
+      use App\Factory;
+      use App\FromData;
+      use App\Model;
+      use App\Source;
+
+      describe('Statics', function () {
+          it('doubles an interface with a static method, which refuses to be called', function () {
+              $data = mock(FromData::class);
+
+              expect($data)->toBeAnInstanceOf(FromData::class);
+              expect(fn() => $data::fromData([]))->toThrow(LogicException::class, 'App\FromData::fromData() is static, so no double can answer it.');
+          });
+
+          it('answers a method returning such an interface', function () {
+              expect(dummy(Factory::class)->make())->toBeAnInstanceOf(FromData::class);
+          });
+
+          it('keeps a static method the class implements, and refuses its abstract one', function () {
+              $model = mock(Model::class);
+
+              expect($model::create())->toBeAnInstanceOf(Model::class);
+              expect(fn() => $model::named('box'))->toThrow(LogicException::class, 'App\Model::named() is static, so no double can answer it.');
+          });
+
+          it('refuses only the call answering types declaring one method static and on an object', function () {
+              $source = dummy(Source::class);
+
+              expect($source->title())->toBe('');
+              expect(fn() => $source->both())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::both(): no double of App\Named&App\Instanced can be made. App\Named::named() is static and App\Instanced::named() is not.');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "4"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

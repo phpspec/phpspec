@@ -28,7 +28,8 @@ use UnitEnum;
  * A double's method, resolved from every declaration it implements: it takes
  * every call each declaration takes, a parameter by reference where every
  * declaration does, and returns a value every declared return type admits.
- * Where no value can be, it is declared never, and says why when called.
+ * Where no value can be, it is declared never, and says why when called. A
+ * static one is refused when called, since a double answers on an object.
  */
 final readonly class MethodContract
 {
@@ -49,6 +50,7 @@ final readonly class MethodContract
         public string $returnCode,
         public bool $byReference,
         public ?string $noValue,
+        public bool $static = false,
     ) {}
 
     /**
@@ -64,6 +66,15 @@ final readonly class MethodContract
         }
 
         $first = $declarations[0];
+
+        foreach ($declarations as $declaration) {
+            if ($declaration->isStatic() !== $first->isStatic()) {
+                [$static, $other] = $first->isStatic() ? [$first, $declaration] : [$declaration, $first];
+
+                throw new LogicException(sprintf('%s::%s() is static and %s::%s() is not.', $static->class, $static->getName(), $other->class, $other->getName()));
+            }
+        }
+
         [$returnType, $noValue] = self::returning($declarations, $own, $assumed);
         $code = $returnType === null ? '' : ($noValue === null ? $returnType->code() : 'never');
 
@@ -76,6 +87,7 @@ final readonly class MethodContract
             $code === '' ? '' : ': ' . $code,
             array_filter($declarations, static fn(ReflectionMethod $declaration): bool => $declaration->returnsReference()) !== [],
             $noValue,
+            $first->isStatic(),
         );
     }
 
@@ -90,7 +102,7 @@ final readonly class MethodContract
      */
     public static function satisfies(ReflectionMethod $method, ReflectionMethod $declaration, array $own, array $assumed = []): bool
     {
-        if (!$method->isPublic() || ($declaration->returnsReference() && !$method->returnsReference())) {
+        if (!$method->isPublic() || $method->isStatic() !== $declaration->isStatic() || ($declaration->returnsReference() && !$method->returnsReference())) {
             return false;
         }
 
@@ -117,6 +129,22 @@ final readonly class MethodContract
         }
 
         return true;
+    }
+
+    /**
+     * The code of a static method a double implements, refusing to be
+     * called, since a double answers on an object.
+     */
+    public function staticCode(): string
+    {
+        return sprintf(
+            '    public static function %s%s(%s)%s { throw new \\LogicException(%s); }',
+            $this->byReference ? '&' : '',
+            $this->name,
+            $this->parametersCode()[0],
+            $this->returnCode,
+            var_export(sprintf('%s::%s() is static, so no double can answer it.', ltrim($this->owner, '\\'), $this->name), true),
+        );
     }
 
     /**
@@ -201,6 +229,7 @@ final readonly class MethodContract
             $returnCode,
             $method->returnsReference(),
             null,
+            $method->isStatic(),
         );
     }
 

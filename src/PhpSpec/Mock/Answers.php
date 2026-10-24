@@ -243,6 +243,12 @@ final class Answers
         $methods = [];
 
         foreach ($contracts as $contract) {
+            if ($contract->static) {
+                $methods[] = $contract->staticCode();
+
+                continue;
+            }
+
             $methods[] = sprintf(
                 '    public function %s%s(%s)%s { throw $this->______PhpSpecUsed(%s, %s, \\func_get_args(), \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []); }',
                 $contract->byReference ? '&' : '',

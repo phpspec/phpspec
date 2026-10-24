@@ -50,6 +50,15 @@ interface MethodSetSpecNameOnly {
     public function name(): string;
 }
 
+abstract class MethodSetSpecModel {
+    abstract public static function named(string $name): static;
+    public static function create(): static { return new static(); }
+}
+
+interface MethodSetSpecCreating {
+    public static function create(): static;
+}
+
 interface MethodSetSpecByValue {
     public function fill(array $slots);
 }
@@ -120,6 +129,15 @@ describe(MethodSet::class, function () {
         $set = MethodSet::of($types, new NativeBase([$types[1]], static fn(string $interface): ?string => null, $types[0]));
 
         expect($set->refusal)->toBe('MethodSetSpecNameOnly::name() narrows a method MethodSetSpecHidden declares final.');
+    });
+
+    it('defines an abstract static method, and leaves one the class implements, to suit an interface too', function () {
+        $model = MethodSet::of([new ReflectionClass(MethodSetSpecModel::class)], null);
+        $types = [new ReflectionClass(MethodSetSpecModel::class), new ReflectionClass(MethodSetSpecCreating::class)];
+        $creating = MethodSet::of($types, new NativeBase([$types[1]], static fn(string $interface): ?string => null, $types[0]));
+
+        expect(array_map(fn(MethodContract $contract) => [$contract->name, $contract->static], $model->contracts))->toBe([['named', true]]);
+        expect(array_map(fn(MethodContract $contract) => $contract->name, $creating->contracts))->toBe(['named']);
     });
 
     it('refuses types no class can implement every declaration of', function () {

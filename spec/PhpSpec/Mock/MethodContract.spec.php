@@ -25,6 +25,14 @@ class MethodContractSpecGuarded {
     final protected function rewind(): void {}
 }
 
+interface MethodContractSpecMade {
+    public static function made(string $name): static;
+}
+
+interface MethodContractSpecMaking {
+    public function made(string $name): static;
+}
+
 interface MethodContractSpecFailure extends Throwable {
     public function getPrevious(): ?MethodContractSpecFailure;
 }
@@ -88,6 +96,19 @@ describe(MethodContract::class, function () {
 
         expect(MethodContract::satisfies($previous, new ReflectionMethod(Throwable::class, 'getPrevious'), []))->toBeTrue();
         expect(MethodContract::satisfies($previous, new ReflectionMethod(MethodContractSpecFailure::class, 'getPrevious'), []))->toBeFalse();
+    });
+
+    it('writes a static method refusing to be called, since a double answers on an object', function () {
+        $contract = MethodContract::of(MethodContractSpecMade::class, [new ReflectionMethod(MethodContractSpecMade::class, 'made')], [MethodContractSpecMade::class]);
+
+        expect($contract->static)->toBeTrue();
+        expect($contract->staticCode())->toContain('public static function made(mixed $name = null): static');
+        expect($contract->staticCode())->toContain("'MethodContractSpecMade::made() is static, so no double can answer it.'");
+    });
+
+    it('refuses declarations of one method static and on an object, which no class can implement', function () {
+        expect(fn() => MethodContract::of(MethodContractSpecMade::class, [new ReflectionMethod(MethodContractSpecMade::class, 'made'), new ReflectionMethod(MethodContractSpecMaking::class, 'made')], []))
+            ->toThrow(LogicException::class, 'MethodContractSpecMade::made() is static and MethodContractSpecMaking::made() is not.');
     });
 
     it('knows a method that is not public satisfies no declaration', function () {

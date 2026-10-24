@@ -758,6 +758,12 @@ PHP;
     {
         $mockMethods = [];
         foreach ($contracts as $contract) {
+            if ($contract->static) {
+                $mockMethods[] = $contract->staticCode();
+
+                continue;
+            }
+
             $owner = $contract->owner;
             $methodName = $contract->name;
             $returnedType = $contract->returnType;

@@ -194,7 +194,7 @@ final readonly class NativeBase
 
         $declaration = new ReflectionMethod($this->extends, $method);
 
-        return !$declaration->isPrivate() && !$declaration->isStatic() ? $declaration : null;
+        return $declaration->isPrivate() ? null : $declaration;
     }
 
     /**
@@ -402,7 +402,7 @@ final readonly class NativeBase
     /**
      * Why no class extending the class can implement the interfaces: it
      * declares static, and not private, a method one of them declares on an
-     * object.
+     * object, or on an object one of them declares static.
      *
      * @param ReflectionClass<object> $class
      * @param list<ReflectionClass<object>> $interfaces
@@ -411,14 +411,18 @@ final readonly class NativeBase
     {
         foreach ($interfaces as $interface) {
             foreach ($interface->getMethods() as $declaration) {
-                if ($declaration->isStatic() || !$class->hasMethod($declaration->getName())) {
+                if (!$class->hasMethod($declaration->getName()) || $class->getMethod($declaration->getName())->isPrivate()) {
                     continue;
                 }
 
                 $method = $class->getMethod($declaration->getName());
 
-                if ($method->isStatic() && !$method->isPrivate()) {
+                if ($method->isStatic() && !$declaration->isStatic()) {
                     return sprintf('%s declares %s() static, so no class extending it can implement %s::%s().', $class->getName(), $method->getName(), $declaration->class, $declaration->getName());
+                }
+
+                if (!$method->isStatic() && $declaration->isStatic()) {
+                    return sprintf('%s declares %s() on an object, so no class extending it can implement the static %s::%s().', $class->getName(), $method->getName(), $declaration->class, $declaration->getName());
                 }
             }
         }

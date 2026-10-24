@@ -67,9 +67,17 @@ cannot be that interface. A class is the class it
 names however it is spelled, through an alias or in another case, and an
 intersection one of its types already satisfies is answered as that type.
 
+A double inherits a static method the class implements. One it must implement,
+abstract in an interface or a class, is refused when called, since a double
+answers on an object, not on its class:
+
+```
+App\FromData::fromData() is static, so no double can answer it.
+```
+
 Declarations no class can implement together, a parameter one takes by
-reference and another by value, or a method narrowing one the base declares
-final, are refused: by `mock()` and `dummy()` at once, and as a return type only
+reference and another by value, a method one declares static and another on an
+object, or a method narrowing one the base declares final, are refused: by `mock()` and `dummy()` at once, and as a return type only
 when the method returning it is called:
 
 ```

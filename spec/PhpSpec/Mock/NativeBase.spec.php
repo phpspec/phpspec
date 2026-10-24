@@ -74,6 +74,12 @@ class NativeBaseNarrowable implements \IteratorAggregate {
 interface NativeBaseNarrowing extends \IteratorAggregate {
     public function getIterator(): NativeBaseNarrowable&NativeBaseNarrowing;
 }
+class NativeBaseMaking {
+    public function made(): string { return 'made'; }
+}
+interface NativeBaseMade {
+    public static function made(): string;
+}
 class NativeBaseStuck {
     final public function valid(): bool { return true; }
 }
@@ -209,6 +215,12 @@ describe(NativeBase::class, function () {
 
         expect($valued->conflict())->toBe('NativeBaseValued declares value() static, so no class extending it can implement NativeBaseHasValue::value().');
         expect($hidden->conflict())->toBeNull();
+    });
+
+    it('conflicts with a class declaring on an object what an interface declares static', function () {
+        $making = new NativeBase([new ReflectionClass(NativeBaseMade::class)], $this->nothingRefused, new ReflectionClass(NativeBaseMaking::class));
+
+        expect($making->conflict())->toBe('NativeBaseMaking declares made() on an object, so no class extending it can implement the static NativeBaseMade::made().');
     });
 
     it('refuses an Iterator whose valid() resolves to a type without false, without its conflicting', function () {
