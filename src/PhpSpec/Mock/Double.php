@@ -699,6 +699,15 @@ PHP;
     }
 
     /**
+     * Whether the type is a built-in interface or null, which a call nobody
+     * stubbed answers with null rather than a double.
+     */
+    private static function isNullableBuiltIn(?ReflectionType $type): bool
+    {
+        return $type instanceof ReflectionNamedType && $type->allowsNull() && interface_exists($type->getName()) && (new ReflectionClass($type->getName()))->isInternal();
+    }
+
+    /**
      * Determines whether a type allows null, including union types containing null.
      *
      * @param ?ReflectionType $type the reflection type to check
@@ -785,7 +794,7 @@ PHP;
             // Unique suffix for MockedMethodFor classes, includes parent class hash to avoid collisions
             $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($owner . '::' . $methodName), 0, 8) . '_' . uniqid();
             [$className, $refusedReturn, $answerTypes] = match (true) {
-                $contract->noValue !== null => [null, null, []],
+                $contract->noValue !== null, self::isNullableBuiltIn($returnedType) => [null, null, []],
                 $returnedType === null => [Answers::untypedClass($methodName, $wrapperSuffix), null, []],
                 default => Answers::classFor($returnedType, $methodName, $wrapperSuffix),
             };
@@ -794,9 +803,9 @@ PHP;
             if ($contract->noValue !== null) {
                 $return = 'throw new \\LogicException(' . var_export($contract->noValue, true) . ');';
             } elseif ($className !== null && $answerTypes !== []) {
-                $return = sprintf('$__ret = $this->______phpspec_lenient ? \\PhpSpec\\Mock\\Answers::dummy($this, %s, %s) : new \\%s($this); return $__ret;', var_export($methodName, true), var_export($answerTypes, true), $className);
+                $return = sprintf('$__ret = $this->______phpspec_lenient ? \\PhpSpec\\Mock\\Answers::dummy($this, %s, %s) : (new \\ReflectionClass(\\%s::class))->newInstanceWithoutConstructor()->______PhpSpecStandFor($this); return $__ret;', var_export($methodName, true), var_export($answerTypes, true), $className);
             } elseif ($className !== null) {
-                $return = '$__ret = new \\' . $className . '($this); return $__ret;';
+                $return = sprintf('$__ret = (new \\ReflectionClass(\\%s::class))->newInstanceWithoutConstructor()->______PhpSpecStandFor($this); return $__ret;', $className);
             } elseif ($isNullable && $simpleReturnName !== 'mixed') {
                 $return = self::returning('null');
             } elseif ($refusedReturn !== null && $returnedType !== null) {

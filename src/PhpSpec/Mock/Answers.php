@@ -298,8 +298,10 @@ final class Answers
 
     /**
      * An answer's class: a MatchableDouble standing for the call that
-     * answered it, of the class it extends and the interfaces it implements,
-     * initialised as a base PHP requires is.
+     * answered it, of the class it extends and the interfaces it implements.
+     * It declares no constructor, which a class it extends may keep final:
+     * it is made without one, then stands for the call, initialised as a base
+     * PHP requires is.
      *
      * @param list<string> $interfaces
      */
@@ -313,10 +315,12 @@ final class Answers
 class $className {$extends}implements $implements {
     use \\PhpSpec\\Mock\\MatchableDoubleBehaviour;
 
-    public function __construct(object \$mockedObject) {
+    public function ______PhpSpecStandFor(object \$mockedObject): static {
         $initialised
         \$this->______phpspec_mockedObject = \$mockedObject;
         \$this->______phpspec_methodName = '$methodName';
+
+        return \$this;
     }
 
     $methods

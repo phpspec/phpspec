@@ -212,7 +212,8 @@ A method nobody stubbed returns a default for its return type: `''`, `0`,
 returns (of the first a union of them names, a built-in interface such as
 `DateTimeInterface` or `Countable` included), an empty `iterable`, a
 `Closure`, an empty `Generator`, `true` or `false` for those types, the double
-itself for `static`, `self` and `parent`.
+itself for `static`, `self` and `parent`. A nullable class or interface of
+your own answers a double of it, a nullable built-in interface `null`.
 A method returning an interface no double can be (one only an enum can
 implement) is refused when it is called, with the reason. A method returning a final class hands the spec an
 instance of it built without its constructor, for `allow()` to replace. A

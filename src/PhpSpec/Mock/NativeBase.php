@@ -27,6 +27,7 @@ use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
+use SessionHandlerInterface;
 use Throwable;
 use Traversable;
 
@@ -36,7 +37,9 @@ use Traversable;
  * lets no plain class implement: an IteratorAggregate for a Traversable, an
  * Exception for a Throwable, a DateTimeImmutable for a DateTimeInterface.
  * A class the double extends instead keeps what it already is: an Error or a
- * DateTime, or a Traversable, and the serialization methods it has. A
+ * DateTime, or a Traversable, and the serialization methods it has, which a
+ * double otherwise brings, as it brings a session handler's create_sid() and
+ * validateId(), which PHP wants of one. A
  * Traversable interface makes a subclass of it an IteratorAggregate where its
  * getIterator() allows, else an Iterator. A class that cannot be what the
  * interfaces need conflicts with them, as no subclass of it can be. Only an enum can implement
@@ -102,8 +105,11 @@ final readonly class NativeBase
         $this->extends = $class?->getName() ?? ($throwable ? Exception::class : ($dated ? DateTimeImmutable::class : null));
         $this->implements = $iterator === null ? [] : [$iterator];
         $serializable = in_array('Serializable', $all, true);
+        $sessions = in_array(SessionHandlerInterface::class, $all, true);
         $this->code = ($serializable && !$declares('__serialize') ? 'public function __serialize(): array { return []; } ' : '')
-            . ($serializable && !$declares('__unserialize') ? 'public function __unserialize(array $data): void {}' : '');
+            . ($serializable && !$declares('__unserialize') ? 'public function __unserialize(array $data): void {} ' : '')
+            . ($sessions && !$declares('create_sid') ? "public function create_sid(): string { return ''; } " : '')
+            . ($sessions && !$declares('validateId') ? 'public function validateId(string $id): bool { return false; }' : '');
         $this->conflict = $contradiction ?? $unimplementable;
         $iterates = in_array('Iterator', $all, true) || $iterator === Iterator::class || ($class?->implementsInterface(Iterator::class) ?? false);
         $this->unending = $noEmptyIterator ?? ($this->conflict === null && $iterates ? $this->unending($class, $interfaces, $iterator === Iterator::class || $emptyIterator, [...($class === null ? [] : [$class->getName()]), ...$names], $assumed) : null);

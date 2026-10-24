@@ -21,26 +21,19 @@ use ReflectionMethod;
 /**
  * @internal
  * Whether PHP lets a plain class implement a built-in interface, which only a
- * class compiled against it can tell: an extension may refuse one, and that
- * refusal is a fatal no running php survives. So a throwaway class is compiled
- * in a child php, once per interface. The extensions bundled with PHP set no
- * such rule beyond the ones a double handles itself, so their interfaces are
- * taken without asking.
+ * class compiled against it can tell: any extension, a bundled one included,
+ * may refuse one in a release, and that refusal is a fatal no running php
+ * survives. So a throwaway class is compiled in a child php set up as this
+ * one, once per interface.
  */
 final class ImplementationProbe
 {
-    public const KNOWN_EXTENSIONS = ['Core', 'standard', 'SPL', 'Reflection', 'date', 'dom', 'json', 'random', 'session'];
-
     private const PROBE = 'PhpSpecProbe';
 
     /** @var array<string, string|null> by interface */
     private array $refusals = [];
 
-    /**
-     * @param list<string> $knownExtensions the extensions whose interfaces are taken without asking
-     */
     public function __construct(
-        private readonly array $knownExtensions = self::KNOWN_EXTENSIONS,
         private readonly ChildPhp $php = new ChildPhp(),
     ) {}
 
@@ -56,8 +49,7 @@ final class ImplementationProbe
             return $this->refusals[$interface];
         }
 
-        $reflection = new ReflectionClass($interface);
-        $fatal = in_array($reflection->getExtensionName(), $this->knownExtensions, true) ? null : $this->php->fatalOf($this->implementing($reflection));
+        $fatal = $this->php->fatalOf($this->implementing(new ReflectionClass($interface)));
 
         return $this->refusals[$interface] = $fatal === null ? null : str_replace(' ' . self::PROBE, '', $fatal);
     }

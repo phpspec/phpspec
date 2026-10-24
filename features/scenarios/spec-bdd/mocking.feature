@@ -1517,6 +1517,75 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double answers a class whose constructor is final, null for a nullable built-in interface, and a session handler without PHP's warnings
+    Given a class "src/App/Sources.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Shell
+      {
+          final public function __construct() {}
+
+          public function name(): string
+          {
+              return 'shell';
+          }
+      }
+
+      interface Source
+      {
+          public function shell(): Shell;
+
+          public function maybeNow(): ?\DateTimeInterface;
+
+          public function maybeSize(): ?\Countable;
+
+          public function session(): \SessionHandlerInterface;
+      }
+      """
+    And a spec file "spec/App/Sources.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Sources.php';
+
+      use App\Shell;
+      use App\Source;
+
+      describe('Sources', function () {
+          it('answers a class whose constructor is final', function () {
+              $source = mock(Source::class);
+              $shell = new Shell();
+              allow($source->shell())->toReturn($shell);
+
+              expect($source->shell())->toBe($shell);
+              expect(dummy(Source::class)->shell()->name())->toBe('');
+          });
+
+          it('answers null for a nullable built-in interface, and still takes a stub', function () {
+              $source = mock(Source::class);
+              $now = new DateTimeImmutable('2026-01-01');
+              allow($source->maybeNow())->toReturn($now);
+
+              expect($source->maybeNow())->toBe($now);
+              expect(dummy(Source::class)->maybeNow())->toBeNull();
+              expect(dummy(Source::class)->maybeSize())->toBeNull();
+          });
+
+          it('answers a session handler', function () {
+              expect(dummy(Source::class)->session())->toBeAnInstanceOf(SessionHandlerInterface::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "3"
+    And the summary should state "warnings" as "0"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """
