@@ -23,7 +23,8 @@ use ReflectionMethod;
  * The methods a double of some types defines, each resolved from every
  * declaration of it: the types' own, those of the interfaces the double's
  * base brings, and those of the class it extends, whose final methods the
- * double keeps, as it keeps a static one the class implements to suit them.
+ * double keeps, as it keeps a static or a built-in magic one the class
+ * implements to suit them.
  * When PHP lets no class implement them all, there are none, and the reason.
  */
 final readonly class MethodSet
@@ -59,7 +60,7 @@ final readonly class MethodSet
                 continue;
             }
 
-            if ($based !== null && $based->isStatic() && !$based->isAbstract() && array_filter($declarations, static fn(ReflectionMethod $declaration): bool => !MethodContract::satisfies($based, $declaration, $own)) === []) {
+            if ($based !== null && !$based->isAbstract() && ($based->isStatic() || ($based->isInternal() && str_starts_with($key, '__'))) && array_filter($declarations, static fn(ReflectionMethod $declaration): bool => !MethodContract::satisfies($based, $declaration, $own)) === []) {
                 continue;
             }
 
@@ -99,8 +100,8 @@ final readonly class MethodSet
 
         foreach ($declaring as [$owner, $type]) {
             foreach ($type->getMethods() as $method) {
-                // constructors, final, private and concrete static methods, and internal magic methods stay as declared
-                if ($method->getName() === '__construct' || $method->isFinal() || ($method->isStatic() && !$method->isAbstract()) || $method->isPrivate() || ($method->isInternal() && str_starts_with($method->getName(), '__'))) {
+                // constructors, final, private and concrete static methods, and concrete internal magic methods stay as declared
+                if ($method->getName() === '__construct' || $method->isFinal() || ($method->isStatic() && !$method->isAbstract()) || $method->isPrivate() || ($method->isInternal() && !$method->isAbstract() && str_starts_with($method->getName(), '__'))) {
                     continue;
                 }
 

@@ -593,6 +593,16 @@ Feature: Mocking
 
           public function title(): string;
       }
+
+      class Teller
+      {
+          public function __construct(private Source $source) {}
+
+          public function tally(): Tally
+          {
+              return $this->source->tally();
+          }
+      }
       """
     And a spec file "spec/App/Mixed.spec.php":
       """
@@ -603,6 +613,7 @@ Feature: Mocking
       use App\Paper;
       use App\Source;
       use App\Tally;
+      use App\Teller;
 
       describe('Mixed', function () {
           it('answers a class named through an alias or in another case as that class', function () {
@@ -626,7 +637,8 @@ Feature: Mocking
               allow($source->tally())->toReturn(new Tally());
 
               expect($source->tally()->count())->toBe(3);
-              expect(fn() => dummy(Source::class)->tally())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::tally(): App\Tally is final, so no double of it can be made. Use mock() instead of dummy() and stub App\Source::tally().');
+              expect(dummy(Source::class)->tally())->toBeAnInstanceOf(Tally::class);
+              expect(fn() => (new Teller(dummy(Source::class)))->tally())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::tally(): App\Tally is final, so no double of it can be made. Use mock() instead of dummy() and stub App\Source::tally().');
           });
 
           it('keeps a class that already is what the interface needs', function () {
@@ -1423,6 +1435,79 @@ Feature: Mocking
 
               expect($source->title())->toBe('');
               expect(fn() => $source->both())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Source::both(): no double of App\Named&App\Instanced can be made. App\Named::named() is static and App\Instanced::named() is not.');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "4"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
+  Scenario: A method returning a built-in interface answers with a double of it, and allow() stubs what the spec's own call names
+    Given a class "src/App/Clock.php":
+      """
+      <?php
+
+      namespace App;
+
+      final class Coin {}
+
+      interface Clock
+      {
+          public function now(): \DateTimeInterface;
+
+          public function size(): \Countable;
+
+          public function label(): \Stringable;
+
+          public function data(): \JsonSerializable;
+
+          public function failure(): \Throwable;
+
+          public function items(): \Traversable;
+
+          public function coin(): Coin;
+
+          public function lock(): \WeakMap;
+      }
+      """
+    And a spec file "spec/App/Clock.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Clock.php';
+
+      use App\Clock;
+      use App\Coin;
+
+      describe('Clock', function () {
+          it('stubs a method returning DateTimeInterface', function (Clock $clock) {
+              allow($clock->now())->toReturn(new DateTimeImmutable('2026-01-01'));
+
+              expect($clock->now()->format('Y'))->toBe('2026');
+          });
+
+          it('answers every built-in interface a method returns with a dummy of it', function () {
+              $clock = dummy(Clock::class);
+
+              expect($clock->now()->format('Y'))->toBe('');
+              expect(count($clock->size()))->toBe(0);
+              expect((string) $clock->label())->toBe('');
+              expect($clock->data()->jsonSerialize())->toBeNull();
+              expect($clock->failure())->toBeAnInstanceOf(Throwable::class);
+              expect(iterator_to_array($clock->items()))->toBe([]);
+          });
+
+          it('stubs a final return type on a mock that ignores the rest', function (Clock $clock) {
+              allow($clock->now())->toReturn(new DateTimeImmutable())->ignoreOthers();
+              allow($clock->coin())->toReturn(new Coin());
+
+              expect($clock->coin())->toBeAnInstanceOf(Coin::class);
+          });
+
+          it('refuses a return type no double can stand in for, giving no advice no stub could follow', function () {
+              expect(fn() => dummy(Clock::class)->lock())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of App\Clock::lock(): WeakMap is final, so no double of it can be made.');
           });
       });
       """

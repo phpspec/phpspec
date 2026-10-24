@@ -38,7 +38,7 @@ interface DoubleSpecTill {
 define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
 if (!function_exists('double_spec_outsider_reserves')) {
     register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
-    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\nfunction double_spec_outsider_greets(object \$double) { return \$double->greet(); }\nfunction double_spec_outsider_reads(object \$book) { return \$book->first()->next()->title(); }\n");
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\nfunction double_spec_outsider_greets(object \$double) { return \$double->greet(); }\nfunction double_spec_outsider_reads(object \$book) { return \$book->first()->next()->title(); }\nfunction double_spec_outsider_calls(object \$double, string \$method) { return \$double->\$method(); }\n");
     require DOUBLE_SPEC_OUTSIDER;
 }
 
@@ -672,7 +672,8 @@ describe(Double::class, function() {
             $deeper = dummy(DoubleSpecBook::class)->first()->next();
 
             expect(double_spec_refusal(fn() => allow($deeper->title())))->toBe('DoubleSpecPage::title() was stubbed on what dummy DoubleSpecBook::first()->next() answered. Use mock() instead of dummy() and stub DoubleSpecBook::first().');
-            expect(double_spec_refusal(fn() => $deeper->price()))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecPage::price(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecBook::first().');
+            expect($deeper->price())->toBeAnInstanceOf(DoubleSpecCoin::class);
+            expect(double_spec_refusal(fn() => double_spec_outsider_calls($deeper, 'price')))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecPage::price(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecBook::first().');
         });
 
         it("names a mock that ignores others as the double to stub the first call of the chain on", function () {
@@ -700,8 +701,9 @@ describe(Double::class, function() {
             expect(dummy(DoubleSpecStock::class)->reserve('tea', 2))->toBeFalse();
         });
 
-        it("says to use mock() instead when it cannot stand in for a final return type", function () {
-            expect(double_spec_refusal(fn() => dummy(DoubleSpecMachine::class)->coin()))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecMachine::coin(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecMachine::coin().');
+        it("says to use mock() instead when it cannot stand in for a final return type the code under spec calls", function () {
+            expect(dummy(DoubleSpecMachine::class)->coin())->toBeAnInstanceOf(DoubleSpecCoin::class);
+            expect(double_spec_refusal(fn() => double_spec_outsider_calls(dummy(DoubleSpecMachine::class), 'coin')))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecMachine::coin(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecMachine::coin().');
         });
     });
 
@@ -737,6 +739,11 @@ describe(Double::class, function() {
             expect($source->count())->toBe(0);
             expect(fn() => $source->fills())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of DoubleSpecPutSource::fills(): no double of DoubleSpecFillByValue&DoubleSpecFillByReference can be made. DoubleSpecFillByValue::fill() takes $slots by value and DoubleSpecFillByReference::fill() takes $slots by reference.');
         });
+    });
+
+    it("implements the built-in magic method an interface declares, and keeps one its base implements", function () {
+        expect((string) dummy(Stringable::class))->toBe('');
+        expect((string) dummy(DoubleSpecFailure::class))->toContain('DoubleSpecFailure');
     });
 
     it("tracks method calls", function() {
@@ -836,20 +843,16 @@ describe(Double::class, function() {
         expect($machine->coin())->toBe($coin);
     });
 
-    it("says why a dummy cannot stand in for a final return type", function() {
+    it("says why a lenient double cannot stand in for a final return type the code under spec calls, still handing the spec's own call one to stub", function() {
         $machine = Double::getInstance(DoubleSpecMachine::class);
         $machine->______PhpSpecBeLenient();
+        $coin = new DoubleSpecCoin(5);
 
-        try {
-            $machine->coin();
-        } catch (\LogicException $e) {
-            expect($e->getMessage())->toContain('DoubleSpecCoin is final');
-            expect($e->getMessage())->toContain('allow()');
+        expect(double_spec_refusal(fn() => double_spec_outsider_calls($machine, 'coin')))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecMachine::coin(): DoubleSpecCoin is final, so no double of it can be made. Stub the call with allow(), return an interface, or make the class non-final.');
 
-            return;
-        }
+        allow($machine->coin())->toReturn($coin);
 
-        expect(false)->toBeTrue();
+        expect(double_spec_outsider_calls($machine, 'coin'))->toBe($coin);
     });
 
     context("a call made from code outside the spec folder", function () {

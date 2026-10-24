@@ -46,7 +46,7 @@ use Traversable;
 final readonly class NativeBase
 {
     /** The built-in types a double's getIterator() answers with a stand-in of, which iterates as empty */
-    private const STANDING_IN = ['traversable', 'iterator', 'generator'];
+    public const STANDING_IN = ['traversable', 'iterator', 'generator'];
 
     /** The built-in interfaces it knows how a class can be */
     public const HANDLED = ['Traversable', 'Iterator', 'IteratorAggregate', 'Throwable', 'UnitEnum', 'BackedEnum', 'DateTimeInterface', 'Serializable'];

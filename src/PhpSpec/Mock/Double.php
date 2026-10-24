@@ -652,28 +652,28 @@ PHP;
      * explanation, where PHP alone would say a value of that type was expected
      * and none returned, and the way out the double offers.
      */
-    private static function unbuildableReturnCode(string $class, string $methodName, string $returnType): string
+    private static function unbuildableReturnCode(string $class, string $methodName, string $returnType, bool $stubbable): string
     {
         $why = class_exists($returnType) && (new ReflectionClass($returnType))->isFinal()
             ? "$returnType is final, so no double of it can be made"
             : "no double of $returnType can be made";
         $cannot = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): %s.', $class, $methodName, $why);
 
-        return 'throw new \\LogicException(' . var_export($cannot, true) . ' . $this->______PhpSpecWayOut(' . var_export($methodName, true) . '));';
+        return 'throw new \\LogicException(' . var_export($cannot, true) . ($stubbable ? ' . $this->______PhpSpecWayOut(' . var_export($methodName, true) . ')' : '') . ');';
     }
 
     /**
      * What a method returns when no double of its return type can be made: an
      * instance of the very class, built without its constructor, for allow()
      * to replace. A lenient double has nobody about to replace it, so it
-     * refuses instead.
+     * refuses the code under spec instead, still handing the spec's own call
+     * the instance its stub needs. A type no instance of which can be built
+     * this way is refused, with no advice a stub could not follow.
      */
     private static function placeholderReturnCode(string $class, string $methodName, string $returnType): string
     {
-        $refusal = self::unbuildableReturnCode($class, $methodName, $returnType);
-
         if (!class_exists($returnType) || (new ReflectionClass($returnType))->isInternal()) {
-            return $refusal;
+            return self::unbuildableReturnCode($class, $methodName, $returnType, false);
         }
 
         $placeholder = sprintf(
@@ -681,7 +681,7 @@ PHP;
             var_export($returnType, true),
         );
 
-        return "if (\$this->______phpspec_lenient) { $refusal } $placeholder";
+        return sprintf('if ($this->______phpspec_lenient && $__made) { %s } %s', self::unbuildableReturnCode($class, $methodName, $returnType, true), $placeholder);
     }
 
     /**

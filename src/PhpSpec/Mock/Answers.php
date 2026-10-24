@@ -212,9 +212,7 @@ final class Answers
 
     /**
      * Whether an answer of the types can be made at all: none of a final or
-     * readonly class, none of a built-in interface alone, which answers leave
-     * to its stand-in or refusal, nor of one in an intersection that the base
-     * PHP requires does not cover.
+     * readonly class, nor of a built-in type alone that a stand-in answers.
      *
      * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
      */
@@ -224,13 +222,7 @@ final class Answers
             return false;
         }
 
-        foreach ($types as $type) {
-            if ($type->isInterface() && $type->isInternal() && (count($types) === 1 || !in_array($type->getName(), NativeBase::HANDLED, true))) {
-                return false;
-            }
-        }
-
-        return true;
+        return count($types) > 1 || !$types[0]->isInternal() || !in_array(strtolower($types[0]->getName()), NativeBase::STANDING_IN, true);
     }
 
     /**

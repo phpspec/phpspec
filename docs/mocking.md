@@ -209,13 +209,17 @@ exception it would throw: `expect(fn () => $repo->find(1))->toThrow(...)`.
 
 A method nobody stubbed returns a default for its return type: `''`, `0`,
 `false`, `[]`, `null` where allowed, an answer of the class or interface it
-returns (of the first a union of them names), an empty `iterable`, a
+returns (of the first a union of them names, a built-in interface such as
+`DateTimeInterface` or `Countable` included), an empty `iterable`, a
 `Closure`, an empty `Generator`, `true` or `false` for those types, the double
 itself for `static`, `self` and `parent`.
 A method returning an interface no double can be (one only an enum can
 implement) is refused when it is called, with the reason. A method returning a final class hands the spec an
-instance of it built without its constructor, for `allow()` to replace; a
-lenient double has nobody about to replace it and says so instead.
+instance of it built without its constructor, for `allow()` to replace. A
+lenient double has nobody about to replace it, so it refuses the code under
+spec, still handing the spec's own call the instance `allow()` needs. A type no
+double nor instance can stand in for, such as an internal final class, is
+refused, saying why.
 
 An answer stands for the call that returned it, for `allow()` and `expect()`
 to take. A lenient double, a `dummy()` or one that ignores others, answers a
