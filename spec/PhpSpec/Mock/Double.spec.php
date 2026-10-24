@@ -747,22 +747,28 @@ describe(Double::class, function() {
         expect((string) dummy(DoubleSpecFailure::class))->toContain('DoubleSpecFailure');
     });
 
-    it("answers a return type of the newer built-in interfaces without a fatal, refusing only the call PHP refuses", function () {
-        if (interface_exists('Dom\\ParentNode')) {
-            eval('interface DoubleSpecParentSource { public function value(): \\Dom\\ParentNode; public function count(): int; }');
-            $parents = dummy('DoubleSpecParentSource');
-
-            expect($parents->count())->toBe(0);
-            expect($parents->value())->toBeAnInstanceOf('Dom\\ParentNode');
+    it("answers a return type of a DOM interface whose node class keeps its constructor final", function () {
+        if (!interface_exists('Dom\\ParentNode')) {
+            skip('Dom\\ParentNode is a PHP 8.4 interface.');
         }
 
-        if (interface_exists('Io\\Poll\\Handle')) {
-            eval('interface DoubleSpecHandleSource { public function value(): \\Io\\Poll\\Handle; public function count(): int; }');
-            $handles = mock('DoubleSpecHandleSource');
+        eval('interface DoubleSpecParentSource { public function value(): \\Dom\\ParentNode; public function count(): int; }');
+        $parents = dummy('DoubleSpecParentSource');
 
-            expect($handles->count())->toBe(0);
-            expect(fn() => $handles->value())->toThrow(LogicException::class);
+        expect($parents->count())->toBe(0);
+        expect($parents->value())->toBeAnInstanceOf('Dom\\ParentNode');
+    });
+
+    it("refuses only the call answering an interface PHP lets no user class implement", function () {
+        if (!interface_exists('Io\\Poll\\Handle')) {
+            skip('Io\\Poll\\Handle is a PHP 8.6 interface.');
         }
+
+        eval('interface DoubleSpecHandleSource { public function value(): \\Io\\Poll\\Handle; public function count(): int; }');
+        $handles = mock('DoubleSpecHandleSource');
+
+        expect($handles->count())->toBe(0);
+        expect(fn() => $handles->value())->toThrow(LogicException::class);
     });
 
     it("tracks method calls", function() {
