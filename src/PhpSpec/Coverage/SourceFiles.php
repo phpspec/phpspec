@@ -20,8 +20,9 @@ use PhpSpec\ProjectRoot;
 /**
  * @internal
  * The PHP files under a source directory. Coverage engines report only the
- * files a run loaded, so a file no spec loads is missing from the count
- * rather than counted as uncovered.
+ * files coverage was recorded for, so a file with none recorded during an
+ * example or scenario is missing from the count rather than counted as
+ * uncovered.
  */
 final readonly class SourceFiles
 {
@@ -32,28 +33,28 @@ final readonly class SourceFiles
     ) {}
 
     /**
-     * The files the run never loaded and coverage does not leave out, named
-     * from the project root.
+     * The files with no coverage recorded that coverage does not leave out,
+     * named from the project root.
      *
-     * @param array<string, mixed> $hits what the run loaded, by the path the engine gave
+     * @param array<string, mixed> $hits the coverage recorded, by the path the engine gave
      * @return list<string>
      */
-    public function unloaded(array $hits, Exclusions $exclusions): array
+    public function unrecorded(array $hits, Exclusions $exclusions): array
     {
-        $loaded = array_flip(array_map($this->root->relative(...), array_keys($hits)));
-        $unloaded = [];
+        $recorded = array_flip(array_map($this->root->relative(...), array_keys($hits)));
+        $unrecorded = [];
 
         foreach ($this->filesUnder($this->directory) as $file) {
             $name = $this->root->relative($file);
 
-            if (!isset($loaded[$name]) && !$exclusions->leavesOut($file)) {
-                $unloaded[] = $name;
+            if (!isset($recorded[$name]) && !$exclusions->leavesOut($file)) {
+                $unrecorded[] = $name;
             }
         }
 
-        sort($unloaded);
+        sort($unrecorded);
 
-        return $unloaded;
+        return $unrecorded;
     }
 
     /**

@@ -283,7 +283,7 @@ final class CoverageReporter
         $verdict = new CoverageVerdict(
             $totalExecutable > 0 ? ($totalCovered / $totalExecutable) * 100 : 0.0,
             (float) $options->coverageMin,
-            (new SourceFiles(new RealFilesystem(), realpath($options->srcPath) ?: $options->srcPath, ProjectRoot::here()))->unloaded($this->hits, $this->exclusions),
+            (new SourceFiles(new RealFilesystem(), realpath($options->srcPath) ?: $options->srcPath, ProjectRoot::here()))->unrecorded($this->hits, $this->exclusions),
         );
         $this->printJudgement($output, $verdict, $options->coverageMin);
 
@@ -292,11 +292,11 @@ final class CoverageReporter
 
     private function printJudgement(Output $output, CoverageVerdict $verdict, string $required): void
     {
-        if ($verdict->unloaded !== []) {
+        if ($verdict->unrecorded !== []) {
             $output->writeln(sprintf('<fg=red>Cannot enforce --coverage-min=%s: coverage is incomplete.</>', $required));
 
-            foreach ($verdict->unloaded as $file) {
-                $output->writeln(sprintf('<fg=red>No spec loaded %s.</>', $file));
+            foreach ($verdict->unrecorded as $file) {
+                $output->writeln(sprintf('<fg=red>No coverage was recorded for %s during an example or scenario.</>', $file));
             }
 
             return;

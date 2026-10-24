@@ -25,7 +25,7 @@ describe(SourceFiles::class, function () {
 
     $class = fn (string $name) => "<?php\nnamespace App;\nclass $name\n{\n    public function run(): int\n    {\n        return 1;\n    }\n}\n";
 
-    it('names the PHP files under it the run never loaded, from the project root, at any depth', function (Filesystem $fs) use ($tree, $class) {
+    it('names the PHP files under it with no coverage recorded, from the project root, at any depth', function (Filesystem $fs) use ($tree, $class) {
         $tree($fs, [
             '/app/src/Greeter.php' => $class('Greeter'),
             '/app/src/Untested.php' => $class('Untested'),
@@ -33,9 +33,9 @@ describe(SourceFiles::class, function () {
             '/app/src/README.md' => 'notes',
         ]);
 
-        $unloaded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unloaded(['/app/src/Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
+        $unrecorded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unrecorded(['/app/src/Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
 
-        expect($unloaded)->toBe(['src/Reports/Monthly.php', 'src/Untested.php']);
+        expect($unrecorded)->toBe(['src/Reports/Monthly.php', 'src/Untested.php']);
     });
 
     it('leaves out a file coverage leaves out, by the config or for having nothing to cover', function (Filesystem $fs) use ($tree, $class) {
@@ -44,16 +44,16 @@ describe(SourceFiles::class, function () {
             '/app/src/Pricing.php' => "<?php\nnamespace App;\ninterface Pricing\n{\n    public function price(): int;\n}\n",
         ]);
 
-        $unloaded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unloaded([], new Exclusions(['src/Generated/'], $fs, '/app'));
+        $unrecorded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unrecorded([], new Exclusions(['src/Generated/'], $fs, '/app'));
 
-        expect($unloaded)->toBe([]);
+        expect($unrecorded)->toBe([]);
     });
 
-    it('knows a loaded file however the engine spelled its path', function (Filesystem $fs) use ($tree, $class) {
+    it('knows a file with coverage recorded however the engine spelled its path', function (Filesystem $fs) use ($tree, $class) {
         $tree($fs, ['/app/src/Greeter.php' => $class('Greeter')]);
 
-        $unloaded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unloaded(['\\app\\src\\Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
+        $unrecorded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unrecorded(['\\app\\src\\Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
 
-        expect($unloaded)->toBe([]);
+        expect($unrecorded)->toBe([]);
     });
 });

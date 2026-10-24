@@ -12,7 +12,7 @@ describe(CoverageVerdict::class, function () {
         expect((new CoverageVerdict(89.9, 90.0))->met())->toBeFalse();
     });
 
-    it('cannot be met while a source file no spec loaded is missing from the count', function () {
+    it('cannot be met while a source file with no coverage recorded is missing from the count', function () {
         $verdict = new CoverageVerdict(100.0, 100.0, ['src/Untested.php']);
 
         expect($verdict->met())->toBeFalse();

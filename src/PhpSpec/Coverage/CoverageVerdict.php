@@ -26,22 +26,22 @@ final readonly class CoverageVerdict
     /**
      * @param float $percent executable source lines covered, as a percentage
      * @param float|null $required the --coverage-min threshold, or null when none was asked for
-     * @param list<string> $unloaded the source files no spec loaded, which the percentage cannot speak for
+     * @param list<string> $unrecorded the source files with no coverage recorded during an example or scenario, which the percentage cannot speak for
      */
     public function __construct(
         public float $percent,
         public ?float $required = null,
-        public array $unloaded = [],
+        public array $unrecorded = [],
     ) {}
 
     /**
      * Whether the run met what was asked of it. A run with no threshold has
-     * nothing to fall short of; one that left a source file unloaded cannot
-     * meet one.
+     * nothing to fall short of; one missing the coverage of a source file
+     * cannot meet one.
      */
     public function met(): bool
     {
-        return $this->required === null || ($this->unloaded === [] && $this->percent >= $this->required);
+        return $this->required === null || ($this->unrecorded === [] && $this->percent >= $this->required);
     }
 
     /**

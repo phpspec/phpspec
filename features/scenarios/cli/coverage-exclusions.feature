@@ -284,7 +284,7 @@ Feature: Coverage exclusions
     When I run phpspec run with coverage options "--coverage"
     Then the output should contain "Total: 100.0%"
 
-  Scenario: --coverage-min cannot be enforced while a source file no spec loaded is missing from coverage
+  Scenario: --coverage-min cannot be enforced while a source file has no coverage recorded during an example
     Given a file "phpspec.json":
       """
       {
@@ -382,9 +382,9 @@ Feature: Coverage exclusions
       """
     When I run phpspec run with coverage options "--coverage-min=100"
     Then the output should contain "Cannot enforce --coverage-min=100: coverage is incomplete."
-    And the output should contain "No spec loaded src/App/Reports/Monthly.php."
-    And the output should contain "No spec loaded src/App/Named.php."
-    And the output should contain "No spec loaded src/App/Untested.php."
+    And the output should contain "No coverage was recorded for src/App/Reports/Monthly.php during an example or scenario."
+    And the output should contain "No coverage was recorded for src/App/Named.php during an example or scenario."
+    And the output should contain "No coverage was recorded for src/App/Untested.php during an example or scenario."
     And the output should not contain "Pricing.php"
     And the output should not contain "Mapper.php"
     And the output should not contain "meets the required"
@@ -417,7 +417,7 @@ Feature: Coverage exclusions
     Then the output should contain "Code coverage 100.0% meets the required 100.0%"
     And the exit code should be 0
 
-  Scenario: The agent document names the source files no spec loaded
+  Scenario: The agent document names the source files with no coverage recorded
     Given a class "src/App/Greeter.php":
       """
       <?php
@@ -457,7 +457,7 @@ Feature: Coverage exclusions
     When I run phpspec run with coverage options "--format=agent --coverage-min=100"
     Then the output should contain:
       """
-      "met":false,"unloaded":["src/App/Untested.php"]
+      "met":false,"unrecorded":["src/App/Untested.php"]
       """
     And the exit code should be 1
 

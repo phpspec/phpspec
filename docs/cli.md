@@ -545,15 +545,16 @@ itself does not count. Every run counts the same way: coverage options can be
 combined with `--parallel`, whose workers collect coverage per example and the
 parent process merges their results before rendering the reports.
 
-The engines report only the files a run loaded, so a PHP file under the
-source directory that no spec loads is missing from the count rather than
-counted as uncovered. `--coverage-min` therefore judges a run only when it
-loaded every such file, except those coverage leaves out (see below); otherwise
-it names each file it is missing and fails:
+The engines report only the files coverage was recorded for, so a PHP file
+under the source directory with none recorded during an example or scenario is
+missing from the count rather than counted as uncovered. `--coverage-min`
+therefore judges a run only when coverage was recorded for every such file,
+except those coverage leaves out (see below); otherwise it names each file it
+is missing and fails:
 
 ```
 Cannot enforce --coverage-min=100: coverage is incomplete.
-No spec loaded src/Untested.php.
+No coverage was recorded for src/Untested.php during an example or scenario.
 ```
 
 The text, Clover and HTML reports cover only the files the run loaded.

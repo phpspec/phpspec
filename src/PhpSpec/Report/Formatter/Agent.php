@@ -415,8 +415,8 @@ final class Agent extends AbstractFormatter
                 'met' => $this->coverage->met(),
             ];
 
-            if ($this->coverage->unloaded !== []) {
-                $summary['coverage']['unloaded'] = $this->coverage->unloaded;
+            if ($this->coverage->unrecorded !== []) {
+                $summary['coverage']['unrecorded'] = $this->coverage->unrecorded;
             }
         }
 
