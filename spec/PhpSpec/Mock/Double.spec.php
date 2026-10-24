@@ -257,6 +257,7 @@ final class DoubleSpecFinalClass {
     public function greet(): string { return 'hello'; }
 }
 
+final readonly class DoubleSpecFinalReadonlyClass {}
 readonly class DoubleSpecReadonlyClass {
     public function __construct(public string $name) {}
 }
@@ -782,9 +783,20 @@ describe(Double::class, function() {
         expect($double->______PhpSpecNameOfClassDoubled())->toBe("\\DoubleSpecClass");
     });
 
-    it("auto-resolves constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecClassWithDeps::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecClassWithDeps::class);
+    it("doubles a class without running its constructor, whatever the constructor takes", function () {
+        $classes = [DoubleSpecClassWithDeps::class, DoubleSpecClassWithNullableDep::class, DoubleSpecClassWithEnumDep::class, DoubleSpecPrivateConstructor::class, DoubleSpecUntypedDep::class, DoubleSpecScalarDeps::class, DoubleSpecUnionDep::class, DoubleSpecIntersectionDep::class, DoubleSpecUnionClassDep::class, DoubleSpecOptionalParam::class, DoubleSpecThrowableDep::class, DoubleSpecUnionNullDep::class];
+
+        foreach ($classes as $class) {
+            expect(Double::getInstance($class))->toBeAnInstanceOf($class);
+        }
+    });
+
+    it("keeps the defaults a doubled class's properties declare, and leaves unset those its constructor sets", function () {
+        $double = Double::getInstance(DoubleSpecWithStackProperty::class);
+        $promoted = Double::getInstance(DoubleSpecClock::class);
+
+        expect((new ReflectionProperty(DoubleSpecWithStackProperty::class, 'stack'))->getValue($double))->toBe('');
+        expect((new ReflectionProperty(DoubleSpecClock::class, 'at'))->isInitialized($promoted))->toBeFalse();
     });
 
     it("is usable via the mock() function", function() {
@@ -1026,21 +1038,10 @@ describe(Double::class, function() {
         expect($result)->toBe('');
     });
 
-    it("auto-resolves nullable constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecClassWithNullableDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecClassWithNullableDep::class);
-    });
-
     it("handles enum return types", function() {
         $double = Double::getInstance(DoubleSpecEnumContract::class);
         $result = $double->getStatus();
         expect($result)->toBe(DoubleSpecStatus::Active);
-    });
-
-    it("auto-resolves enum constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecClassWithEnumDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecClassWithEnumDep::class);
-        expect($double->getStatus())->toBe(DoubleSpecStatus::Active);
     });
 
     it("throws when mock() is called with non-existent class", function() {
@@ -1072,26 +1073,6 @@ describe(Double::class, function() {
         $double = Double::getInstance(DoubleSpecMagic::class);
 
         expect(fn() => $double->anything())->not()->toThrow();
-    });
-
-    it("handles private constructor", function() {
-        $double = Double::getInstance(DoubleSpecPrivateConstructor::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecPrivateConstructor::class);
-    });
-
-    it("handles untyped constructor parameter", function() {
-        $double = Double::getInstance(DoubleSpecUntypedDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUntypedDep::class);
-    });
-
-    it("handles scalar constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecScalarDeps::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecScalarDeps::class);
-    });
-
-    it("handles union type constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecUnionDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUnionDep::class);
     });
 
     it("handles float return type", function() {
@@ -1193,16 +1174,6 @@ describe(Double::class, function() {
         expect($double)->toBeAnInstanceOf(DoubleSpecMultiScalarReturn::class);
     });
 
-    it("handles intersection type constructor dependency", function() {
-        // The mock of a single interface won't satisfy A&B, so construction errors
-        expect(fn() => Double::getInstance(DoubleSpecIntersectionDep::class))->toThrow(\TypeError::class);
-    });
-
-    it("handles union class constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecUnionClassDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUnionClassDep::class);
-    });
-
     it("handles union return type with only classes (no scalars)", function() {
         $double = Double::getInstance(DoubleSpecClassUnionReturn::class);
         expect($double)->toBeAnInstanceOf(DoubleSpecClassUnionReturn::class);
@@ -1216,21 +1187,6 @@ describe(Double::class, function() {
     it("handles intersection return type", function() {
         $double = Double::getInstance(DoubleSpecIntersectionReturn::class);
         expect($double)->toBeAnInstanceOf(DoubleSpecIntersectionReturn::class);
-    });
-
-    it("handles optional constructor parameters", function() {
-        $double = Double::getInstance(DoubleSpecOptionalParam::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecOptionalParam::class);
-    });
-
-    it("handles Throwable constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecThrowableDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecThrowableDep::class);
-    });
-
-    it("handles union-null syntax in constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecUnionNullDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUnionNullDep::class);
     });
 
     it("stubs return using callback on interface-return method via allow()", function(DoubleSpecContract $dep) {
@@ -1326,10 +1282,14 @@ describe(Double::class, function() {
         );
     });
 
-    it("refuses to double a readonly class the same way", function() {
+    it("refuses to double a readonly class, and a final readonly one, naming the ways out each has", function() {
         expect(fn() => Double::getInstance(DoubleSpecReadonlyClass::class))->toThrow(
             \LogicException::class,
-            "Cannot create a test double for readonly class DoubleSpecReadonlyClass. Extract an interface and type-hint against it, or make the class non-final.",
+            "Cannot create a test double for readonly class DoubleSpecReadonlyClass. Extract an interface and type-hint against it, or make the class not readonly.",
+        );
+        expect(fn() => Double::getInstance(DoubleSpecFinalReadonlyClass::class))->toThrow(
+            \LogicException::class,
+            "Cannot create a test double for final readonly class DoubleSpecFinalReadonlyClass. Extract an interface and type-hint against it, or make the class neither final nor readonly.",
         );
     });
 

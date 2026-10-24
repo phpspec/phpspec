@@ -22,7 +22,6 @@ use ReflectionIntersectionType;
 use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
-use Throwable;
 
 /**
  * @internal
@@ -84,11 +83,13 @@ final class Double
         }
 
         if (!$reflectionClass->isInterface() && ($reflectionClass->isFinal() || $reflectionClass->isReadOnly())) {
-            $modifier = $reflectionClass->isReadOnly() ? 'readonly' : 'final';
-            throw new LogicException(
-                "Cannot create a test double for $modifier class $class. "
-                    . 'Extract an interface and type-hint against it, or make the class non-final.',
-            );
+            [$modifier, $wayOut] = match (true) {
+                $reflectionClass->isFinal() && $reflectionClass->isReadOnly() => ['final readonly', 'neither final nor readonly'],
+                $reflectionClass->isFinal() => ['final', 'non-final'],
+                default => ['readonly', 'not readonly'],
+            };
+
+            throw new LogicException(sprintf('Cannot create a test double for %s class %s. Extract an interface and type-hint against it, or make the class %s.', $modifier, ltrim($class, '\\'), $wayOut));
         }
 
         [$base, $methods, $refusal] = self::planOf([$reflectionClass]);
@@ -252,8 +253,11 @@ PHP;
     }
 
     /**
-     * Instantiates the generated double class, resolving constructor dependencies
-     * with sensible defaults based on parameter types.
+     * Instantiates the generated double class. A double of a class is made
+     * without the class's constructor, which would run the application's
+     * initialization with arguments nobody gave: properties keep the defaults
+     * they declare, and those the constructor sets stay unset. A double of an
+     * interface built on a base PHP requires is initialised as that base is.
      *
      * @param ReflectionClass<object> $reflectionClass reflection of the original class
      * @param string $mockClassName the generated double class name
@@ -266,124 +270,9 @@ PHP;
             throw new LogicException("Generated double class '$mockClassName' does not exist.");
         }
 
-        $constructor = $reflectionClass->getConstructor();
+        $double = new ReflectionClass($mockClassName);
 
-        if ($constructor === null || count($constructor->getParameters()) === 0) {
-            $mockReflectionClass = new ReflectionClass($mockClassName);
-            return $mockReflectionClass->newInstance();
-        }
-
-        if (!$constructor->isPublic()) {
-            $mockReflectionClass = new ReflectionClass($mockClassName);
-            return $mockReflectionClass->newInstanceWithoutConstructor();
-        }
-
-        $dependencies = [];
-        foreach ($constructor->getParameters() as $parameter) {
-            if ($parameter->isOptional()) {
-                break;
-            }
-            $parameterType = $parameter->getType();
-            if ($parameterType === null) {
-                $dependencies[] = null;
-                continue;
-            }
-
-            // Nullable types: pass null
-            if (self::isNullableType($parameterType)) {
-                $dependencies[] = null;
-                continue;
-            }
-
-            // Union types: pick simplest value
-            if ($parameterType instanceof ReflectionUnionType) {
-                $dependencies[] = self::resolveUnionDefault($parameterType);
-                continue;
-            }
-
-            // Intersection types: try to mock first type
-            if ($parameterType instanceof ReflectionIntersectionType) {
-                $types = $parameterType->getTypes();
-                $first = $types[0];
-                if ($first instanceof ReflectionNamedType && !$first->isBuiltin()) {
-                    try {
-                        $dependencies[] = Double::getInstance($first->getName());
-                    } catch (Throwable) {
-                        $dependencies[] = null;
-                    }
-                } else {
-                    $dependencies[] = null;
-                }
-                continue;
-            }
-
-            if ($parameterType instanceof ReflectionNamedType) {
-                $dependencies[] = self::resolveNamedDefault($parameterType);
-            } else {
-                $dependencies[] = null;
-            }
-        }
-
-        $mockReflectionClass = new ReflectionClass($mockClassName);
-        return $mockReflectionClass->newInstanceArgs($dependencies);
-    }
-
-    /**
-     * Resolves a sensible default value for a named type (e.g. string => '', int => 0).
-     * Recursively creates doubles for class types and picks the first case for enums.
-     *
-     * @param ReflectionNamedType $type the named type to resolve a default for
-     * @return mixed a sensible default value for the type (e.g. '' for string, 0 for int, a double for classes)
-     * @throws ReflectionException
-     */
-    private static function resolveNamedDefault(ReflectionNamedType $type): mixed
-    {
-        $name = $type->getName();
-        return match ($name) {
-            'array' => [],
-            'string' => '',
-            'int' => 0,
-            'float' => 0.0,
-            'bool' => false,
-            'Closure' => function () {},
-            'Throwable' => new \Exception('mock'),
-            'mixed' => null,
-            default => enum_exists($name) ? $name::cases()[0] : Double::getInstance($name),
-        };
-    }
-
-    /**
-     * Resolves a default value for a union type by preferring null, then simple
-     * scalar types, then attempting to double the first class type.
-     *
-     * @param ReflectionUnionType $type the union type to resolve
-     * @return mixed null if nullable, a scalar default if possible, or a double for the first class type
-     */
-    private static function resolveUnionDefault(ReflectionUnionType $type): mixed
-    {
-        $typeNames = array_map(
-            fn(ReflectionNamedType|ReflectionIntersectionType $t) => $t instanceof ReflectionNamedType ? $t->getName() : (string) $t,
-            $type->getTypes(),
-        );
-        if (in_array('null', $typeNames)) {
-            return null;
-        }
-        $map = ['string' => '', 'int' => 0, 'float' => 0.0, 'bool' => false, 'array' => []];
-        foreach ($map as $name => $value) {
-            if (in_array($name, $typeNames)) {
-                return $value;
-            }
-        }
-        // Try first class type
-        foreach ($type->getTypes() as $t) {
-            if ($t instanceof ReflectionNamedType && !$t->isBuiltin()) {
-                try {
-                    return Double::getInstance($t->getName());
-                } catch (Throwable) {
-                }
-            }
-        }
-        return null;
+        return $reflectionClass->isInterface() ? $double->newInstance() : $double->newInstanceWithoutConstructor();
     }
 
     /**

@@ -1586,6 +1586,93 @@ Feature: Mocking
     And the summary should state "notices" as "0"
     And the summary should state "actionable" as "0"
 
+  Scenario: A double of a class is made without running its constructor
+    Given a class "src/App/Built.php":
+      """
+      <?php
+
+      namespace App;
+
+      final readonly class Money
+      {
+          public function __construct(public int $cents) {}
+      }
+
+      class Till
+      {
+          public function __construct(private Money $float) {}
+
+          public function total(): int
+          {
+              return $this->float->cents;
+          }
+      }
+
+      interface Rates
+      {
+          public function rate(): float;
+      }
+
+      class Converter
+      {
+          private float $rate;
+
+          public function __construct(Rates $rates)
+          {
+              $this->rate = $rates->rate();
+          }
+
+          public function convert(int $cents): int
+          {
+              return (int) ($cents * $this->rate);
+          }
+      }
+
+      class Guarded
+      {
+          public int $calls = 3;
+
+          public function __construct(public string $zone)
+          {
+              if ($zone === '') {
+                  throw new \InvalidArgumentException('A zone is needed.');
+              }
+          }
+      }
+      """
+    And a spec file "spec/App/Built.spec.php":
+      """
+      <?php
+
+      require_once __DIR__ . '/../../src/App/Built.php';
+
+      use App\Converter;
+      use App\Guarded;
+      use App\Till;
+
+      describe('Built', function () {
+          it('doubles a class whose constructor needs a readonly class', function () {
+              expect(mock(Till::class)->total())->toBe(0);
+          });
+
+          it('doubles a class whose constructor calls what it is given, refusing none of it', function () {
+              expect(mock(Converter::class)->convert(5))->toBe(0);
+          });
+
+          it('doubles a class whose constructor would refuse made-up arguments, keeping declared defaults', function () {
+              $guarded = mock(Guarded::class);
+
+              expect($guarded->calls)->toBe(3);
+              expect(fn() => $guarded->zone)->toThrow(Error::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "passing" as "3"
+    And the summary should state "deprecations" as "0"
+    And the summary should state "notices" as "0"
+    And the summary should state "actionable" as "0"
+
   Scenario: Verifying a method was called
     Given an interface "src/App/Logger.php":
       """

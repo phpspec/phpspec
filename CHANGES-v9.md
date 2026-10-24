@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed since rc.5
+ - A double of a class is made without running the class's constructor, where it used to run it with arguments PhpSpec made up. Properties keep the defaults they declare; a promoted property, or any other the constructor sets, stays uninitialised, so a final method that reads one needs a real instance. A double of an interface built on `DateTimeImmutable` or `Exception` is still initialised as that base is
+
 ## [9.0.0-rc.1](https://github.com/phpspec/phpspec/compare/8.3.1...9.0.0-rc.1)
 
 PhpSpec 9 is a rewrite. This is what it brings over PhpSpec 8.

@@ -16,7 +16,7 @@ This generates a dynamic subclass (or implementation, for interfaces) that:
 
 - Extends the original class (or implements the interface)
 - Overrides all methods to track calls
-- Auto-generates constructor dependencies recursively (using mocks/defaults)
+- Is made without running the class's constructor
 
 Some built-in interfaces PHP lets no plain class implement, so a double of an
 interface built on one is built the way PHP allows:
@@ -83,6 +83,13 @@ when the method returning it is called:
 ```
 Cannot create a test double for interface App\Failure. App\Failure::getPrevious() narrows a method Exception declares final.
 ```
+
+A double of a class never runs the class's constructor, which would run the
+application's initialization with arguments nobody gave. Its properties keep
+the defaults they declare; a promoted property, or any other the constructor
+sets, stays uninitialised, so a final method that reads one needs a real
+instance instead. A double of an interface built on `DateTimeImmutable` or
+`Exception` is initialised as that base is.
 
 ### Using `dummy()`
 
@@ -502,4 +509,3 @@ The mock system handles:
 
 - Final classes cannot be mocked (PHP reflection limitation)
 - Readonly classes cannot be mocked
-- Constructor dependency auto-resolution handles classes, interfaces, strings, arrays, and scalars
