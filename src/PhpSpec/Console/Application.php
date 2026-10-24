@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Console;
 
+use Composer\InstalledVersions;
+
 use function PhpSpec\attach;
 
 use PhpSpec\Browser\Browser;
@@ -59,15 +61,14 @@ final class Application extends BaseApplication
     private readonly array $argv;
 
     /**
-     * @param string $version the application version
      * @param array<int, string>|null $argv raw argv tokens; defaults to the process argv (in-process runners pass their own)
      */
-    public function __construct(string $version = 'UNKNOWN', ?array $argv = null)
+    public function __construct(?array $argv = null)
     {
         $globalArgv = $_SERVER['argv'] ?? null;
         $this->argv = $argv ?? (is_array($globalArgv) ? $globalArgv : []);
 
-        parent::__construct('phpspec', $version);
+        parent::__construct('phpspec', $this->installedVersion());
     }
 
     /**
@@ -219,5 +220,14 @@ final class Application extends BaseApplication
         if ($baseUrl !== null) {
             BrowserRegistry::init($baseUrl);
         }
+    }
+
+    private function installedVersion(): string
+    {
+        if (!InstalledVersions::isInstalled('phpspec/phpspec')) {
+            return 'UNKNOWN';
+        }
+
+        return InstalledVersions::getPrettyVersion('phpspec/phpspec') ?? 'UNKNOWN';
     }
 }

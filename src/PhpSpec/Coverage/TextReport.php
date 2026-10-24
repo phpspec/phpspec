@@ -43,7 +43,7 @@ final class TextReport
         }
 
         foreach ($data as $file => $lines) {
-            $counts = CoverageCollector::countLines($lines);
+            $counts = CoverageData::countLines($lines);
             $covered = $counts['covered'];
             $executable = $counts['executable'];
 

@@ -77,6 +77,33 @@ final readonly class Signature
     }
 
     /**
+     * The named arguments a variadic parameter collects, each held to its
+     * type as PHP holds it, numbered after the arguments given by position.
+     *
+     * @param array<string, mixed> $named the named arguments the variadic collected
+     * @param int $positional how many arguments the call gave by position
+     * @return array<string, mixed>
+     * @throws LogicException when a spec wrote a call that can never be made
+     * @throws TypeError when the code under spec made one
+     */
+    public function holdNamed(array $named, int $positional, string $file, int $line, bool $strict): array
+    {
+        $variadic = $this->typed === [] ? null : $this->typed[count($this->typed) - 1];
+        $written = ArrangingCode::includes($file);
+        $number = $positional;
+
+        foreach ($named as $name => $argument) {
+            $number++;
+
+            if ($variadic !== null) {
+                $named[$name] = $this->heldTo($variadic, $argument, '#' . $number, $written, $strict, $file, $line);
+            }
+        }
+
+        return $named;
+    }
+
+    /**
      * @param list<mixed> $arguments
      */
     private function holdWritten(array $arguments): void
@@ -119,24 +146,39 @@ final readonly class Signature
         foreach ($arguments as $position => $argument) {
             $parameter = $this->typed[$position] ?? ($this->takes === null && $this->typed !== [] ? $this->typed[count($this->typed) - 1] : null);
 
-            if ($parameter === null || $parameter[2] === null || $argument instanceof ArgumentMatcher) {
-                continue;
-            }
-
-            try {
-                $arguments[$position] = $strict ? (new StrictCall())($parameter[2], $argument) : ($parameter[2])($argument);
-            } catch (TypeError) {
-                $wrong = sprintf('%s(): Argument #%d ($%s) must be of type %s, %s given', $this->name(), $position + 1, $parameter[0], $parameter[1], get_debug_type($argument));
-
-                if ($written) {
-                    throw new LogicException($wrong . ', so a call written with it can never be made.');
-                }
-
-                throw new TypeError(sprintf('%s, called in %s on line %d', $wrong, ProjectRoot::here()->relative($file), $line));
+            if ($parameter !== null) {
+                $arguments[$position] = $this->heldTo($parameter, $argument, sprintf('#%d ($%s)', $position + 1, $parameter[0]), $written, $strict, $file, $line);
             }
         }
 
         return $arguments;
+    }
+
+    /**
+     * One argument held to its parameter's type, strictly where the calling
+     * file declares strict types, else coerced; a matcher stands for values
+     * and is held to nothing.
+     *
+     * @param array{string, string, Closure|null} $parameter
+     * @param string $argumentName the argument as PHP names it in an error: "#1 ($message)", or "#2" for a named one a variadic collected
+     */
+    private function heldTo(array $parameter, mixed $argument, string $argumentName, bool $written, bool $strict, string $file, int $line): mixed
+    {
+        if ($parameter[2] === null || $argument instanceof ArgumentMatcher) {
+            return $argument;
+        }
+
+        try {
+            return $strict ? (new StrictCall())($parameter[2], $argument) : ($parameter[2])($argument);
+        } catch (TypeError) {
+            $wrong = sprintf('%s(): Argument %s must be of type %s, %s given', $this->name(), $argumentName, $parameter[1], get_debug_type($argument));
+
+            if ($written) {
+                throw new LogicException($wrong . ', so a call written with it can never be made.');
+            }
+
+            throw new TypeError(sprintf('%s, called in %s on line %d', $wrong, ProjectRoot::here()->relative($file), $line));
+        }
     }
 
 

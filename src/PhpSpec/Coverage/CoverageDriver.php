@@ -22,12 +22,18 @@ namespace PhpSpec\Coverage;
 interface CoverageDriver
 {
     /**
-     * Starts a fresh line coverage collection cycle.
+     * Starts recording line coverage, or resumes recording after a pause.
      */
     public function start(): void;
 
     /**
-     * Stops the current collection cycle and returns the collected data.
+     * Stops recording, keeping what was recorded for the next stop().
+     */
+    public function pause(): void;
+
+    /**
+     * Stops recording and returns what was recorded since the last stop(),
+     * the next cycle starting from nothing.
      *
      * @return array<string, array<int, int>> file paths mapped to line-level hit counts
      */

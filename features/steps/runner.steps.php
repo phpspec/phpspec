@@ -33,14 +33,14 @@ if (!function_exists('_phpspec_exec')) {
     /**
      * @param string|list<string> $args a command line, or the arguments as a process takes them
      */
-    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $engine = 'off', ?string $answers = null): void
+    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $engine = 'off', ?string $answers = null, array $php = []): void
     {
         $switches = match ($engine) {
             'xdebug' => ['-d', 'xdebug.mode=coverage', '-d', 'pcov.enabled=0'],
             'pcov' => ['-d', 'pcov.enabled=1', '-d', 'xdebug.mode=off'],
             default => ['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off'],
         };
-        $cmd = [$world->phpBin, ...$switches, $world->phpspecBin, ...(is_array($args) ? $args : \PhpSpec\InProcessRunner::argv($args))];
+        $cmd = [$world->phpBin, ...$switches, ...$php, $world->phpspecBin, ...(is_array($args) ? $args : \PhpSpec\InProcessRunner::argv($args))];
 
         // The error stream goes to a file rather than a second pipe: reading
         // two pipes one after the other deadlocks once the child fills the one
@@ -196,10 +196,29 @@ when('I run phpspec run with coverage options {string}', function (string $optio
     _phpspec_exec_subprocess($this, 'run ' . $options, engine: 'xdebug');
 });
 
+given('php loads the Zend extension {string} only when its command line asks', function (string $file) {
+    $count = function (array $php) {
+        $process = proc_open([$this->phpBin, ...$php, '-r', 'echo count(get_loaded_extensions(true));'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $printed = stream_get_contents($pipes[1]);
+        stream_get_contents($pipes[2]);
+        proc_close($process);
+
+        return (int) $printed;
+    };
+
+    if ($count(['-d', 'zend_extension=' . $file]) !== $count([]) + 1) {
+        skip(sprintf('php loads %s whatever its command line asks, or cannot load it', $file));
+    }
+});
+
 given('PCOV is loaded', function () {
     if (!extension_loaded('pcov')) {
         skip('PCOV is not available');
     }
+});
+
+when('I run phpspec run under php {string} with option {string}', function (string $php, string $options) {
+    _phpspec_exec_subprocess($this, 'run ' . $options, php: \PhpSpec\InProcessRunner::argv($php));
 });
 
 when('I run phpspec run under PCOV with coverage options {string}', function (string $options) {

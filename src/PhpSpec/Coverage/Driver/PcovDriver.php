@@ -25,8 +25,8 @@ use PhpSpec\Coverage\CoverageDriver;
 
 /**
  * @internal
- * PCOV-backed coverage driver. Each start()/stop() pair reports the lines
- * executed since start() as 1 and the executable lines not reached as -1,
+ * PCOV-backed coverage driver. Each stop() reports the lines executed since
+ * the last one as 1 and the executable lines not reached as -1,
  * for every file PCOV has seen compiled; a line that cannot execute is not
  * listed. Requires PCOV enabled.
  */
@@ -35,6 +35,11 @@ final class PcovDriver implements CoverageDriver
     public function start(): void
     {
         start();
+    }
+
+    public function pause(): void
+    {
+        stop();
     }
 
     /**

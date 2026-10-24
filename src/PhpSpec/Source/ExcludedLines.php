@@ -20,9 +20,9 @@ use Closure;
  * @internal
  * The lines of a source file left out of coverage: every interface, the
  * classes, traits, enums, methods and functions marked #[ExcludeFromCoverage]
- * or @codeCoverageIgnore, or named by the configuration, and the lines a
- * @codeCoverageIgnore comment tags. Read from the tokens, so the file need
- * not load.
+ * or @codeCoverageIgnore, or named by the configuration, the lines a
+ * @codeCoverageIgnore comment tags, and the lines that only declare. Read from
+ * the tokens, so the file need not load.
  */
 final readonly class ExcludedLines
 {

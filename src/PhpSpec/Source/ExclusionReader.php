@@ -22,7 +22,9 @@ use PhpToken;
  * Reads a source file's tokens for what coverage leaves out. Declarations are
  * found by walking the tokens: a class, interface, trait or enum is followed
  * into its body for its methods, a function's body is stepped over whole. A
- * comment tag is then resolved against the statement it tags.
+ * comment tag is then resolved against the statement it tags. The lines that
+ * only declare, which an engine reports as run whenever the file loads, are
+ * left out too: a class header, a namespaced constant, the end of the file.
  */
 final class ExclusionReader
 {
@@ -41,6 +43,12 @@ final class ExclusionReader
     /** @var array<int, true> the docblocks a declaration took, which tag no line */
     private array $attached = [];
 
+    /** @var array<int, true> lines that only declare, left out unless they hold code too */
+    private array $declaring = [];
+
+    /** @var array<int, true> lines that hold code: a function with a body, or the file's own statements */
+    private array $code = [];
+
     private int $declared = 0;
 
     private int $declaredExcluded = 0;
@@ -58,6 +66,12 @@ final class ExclusionReader
     public function read(): ExcludedLines
     {
         $this->readDeclarations();
+        $this->readEnd();
+
+        foreach (array_keys(array_diff_key($this->declaring, $this->code)) as $line) {
+            $this->excluded[$line] = true;
+        }
+
         $this->readTags();
         $lines = array_keys($this->excluded);
         sort($lines);
@@ -100,15 +114,22 @@ final class ExclusionReader
                 [$i, $namespace] = $this->namespaceAt($i);
             } elseif ($token->is([T_USE, T_DECLARE])) {
                 $i = $this->statementEnd($i);
+            } elseif ($token->is(T_CONST) && $class === null) {
+                $end = $this->statementEnd($i);
+                $this->mark($this->declaring, $token->line, $this->tokens[$end]->line);
+                $i = $end;
             } elseif ($token->is(array_keys(self::KINDS)) && $this->declaresAt($i)) {
                 $classes[] = $this->classLike($i, $namespace, $marked, $doc, $class === null);
                 $i = $this->bodyOpen($i);
-            } elseif ($token->is(T_CLASS)) {
-                $i = $this->matchingClose($this->bodyOpen($i));
+            } elseif ($token->is(T_CLASS) && !$this->namesAClassAt($i)) {
+                $end = $this->matchingClose($this->bodyOpen($i));
+                $this->mark($this->code, $token->line, $this->tokens[$end]->line);
+                $i = $end;
             } elseif ($token->is(T_FUNCTION) && $this->nameAfter($i) !== null) {
                 $i = $this->function($i, $class === null ? $namespace : $class['name'] . '::', $marked, $doc, $class === null);
             } elseif ($class === null && !$token->is([123, ord('}'), ord(';')])) {
                 $this->ownCode = true;
+                $this->mark($this->code, $token->line, $token->line + substr_count($token->text, "\n"));
             }
 
             $marked = false;
@@ -126,7 +147,9 @@ final class ExclusionReader
     {
         $kind = self::KINDS[$this->tokens[$at]->id];
         $name = $namespace . $this->nameAfter($at);
-        $end = $this->matchingClose($this->bodyOpen($at));
+        $open = $this->bodyOpen($at);
+        $end = $this->matchingClose($open);
+        $this->mark($this->declaring, $this->tokens[$at]->line, $this->tokens[$open]->line);
         $excluded = $kind === 'interface' || $marked || $this->tagged($doc) || ($this->named)('class', $name);
 
         $this->declare($at, $end, $excluded, $doc, $topLevel);
@@ -144,6 +167,10 @@ final class ExclusionReader
         $open = $this->bodyOpen($at);
         $end = $this->tokens[$open]->text === ';' ? $open : $this->matchingClose($open);
         $excluded = $marked || $this->tagged($doc) || ($this->named)($topLevel ? 'function' : 'method', $name);
+
+        if ($this->tokens[$open]->text !== ';') {
+            $this->mark($this->code, $this->tokens[$at]->line, $this->tokens[$end]->line);
+        }
 
         $this->declare($at, $end, $excluded, $doc, $topLevel);
 
@@ -164,6 +191,23 @@ final class ExclusionReader
         if ($excluded) {
             $this->exclude($this->tokens[$at]->line, $this->tokens[$end]->line);
         }
+    }
+
+    /**
+     * The line the engine closes the file on: the one after the last when a
+     * newline ends the file, else the last.
+     */
+    private function readEnd(): void
+    {
+        $lastIndex = array_key_last($this->tokens);
+
+        if ($lastIndex === null) {
+            return;
+        }
+
+        $last = $this->tokens[$lastIndex];
+        $line = $last->line + substr_count($last->text, "\n");
+        $this->declaring[$line] = true;
     }
 
     /**
@@ -338,6 +382,13 @@ final class ExclusionReader
             && ($before === null || !$this->tokens[$before]->is([T_DOUBLE_COLON, T_NEW]));
     }
 
+    private function namesAClassAt(int $at): bool
+    {
+        $before = $this->significantBefore($at);
+
+        return $before !== null && $this->tokens[$before]->is(T_DOUBLE_COLON);
+    }
+
     private function nameAfter(int $at): ?string
     {
         $next = $this->significantAfter($at);
@@ -433,6 +484,16 @@ final class ExclusionReader
         }
 
         return null;
+    }
+
+    /**
+     * @param array<int, true> $lines
+     */
+    private function mark(array &$lines, int $from, int $to): void
+    {
+        for ($line = $from; $line <= $to; $line++) {
+            $lines[$line] = true;
+        }
     }
 
     private function exclude(int $from, int $to): void

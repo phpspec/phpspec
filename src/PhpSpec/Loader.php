@@ -21,6 +21,7 @@ use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\GherkinParser;
 use PhpSpec\StoryBDD\ScenarioLineSelector;
 use PhpSpec\StoryBDD\StepsFile;
+use PhpSpec\StoryBDD\StepsFileCache;
 use PhpSpec\StoryBDD\StepTypes;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
 use PhpSpec\StoryBDD\TagExpression;
@@ -64,10 +65,11 @@ final class Loader
         }
 
         $blocks = [];
+        $steps = new StepsFileCache();
 
         foreach ($this->targets($files) as $path => ['lines' => $lines, 'ids' => $ids]) {
             if ($this->runsAsFeatures($path)) {
-                $blocks = array_merge($blocks, $this->loadFeatures($path, $lines));
+                $blocks = array_merge($blocks, $this->loadFeatures($path, $steps, $lines));
             } else {
                 LineTargetRegistry::add($path, ...$lines);
                 LineTargetRegistry::addIds($path, ...$ids);
@@ -280,10 +282,11 @@ final class Loader
      * address.
      *
      * @param string $path directory or file containing .feature files
+     * @param StepsFileCache $steps the steps files this load has required, shared by every feature path it is given
      * @param list<int> $lines the line numbers from "file.feature:LINE" paths, none to load all scenarios
      * @return array<\PhpSpec\StoryBDD\Feature>
      */
-    private function loadFeatures(string $path, array $lines = []): array
+    private function loadFeatures(string $path, StepsFileCache $steps, array $lines = []): array
     {
         $parser = new GherkinParser();
         $featureFiles = [];
@@ -310,10 +313,11 @@ final class Loader
         // Fresh registry so prior spec execution can't pollute step definitions
         StoryBDDRegistry::init();
 
-        // Load step definitions into the fresh registry; ancestor and in-tree
-        // discovery can both find the same steps directory, so deduplicate.
-        // Dedupe by realpath, not the raw string: the same file can be
-        // reached through paths that differ only in slashes (e.g. a
+        // Hand the fresh registry what each steps file registers, each file
+        // required once per load however many paths find it; ancestor and
+        // in-tree discovery can both find the same steps directory, so
+        // deduplicate. Dedupe by realpath, not the raw string: the same file
+        // can be reached through paths that differ only in slashes (e.g. a
         // trailing slash on the run path yields "features//steps/x.php"
         // alongside "features/steps/x.php"), which array_unique wouldn't catch.
         $uniqueStepFiles = [];
@@ -322,7 +326,9 @@ final class Loader
         }
 
         foreach ($uniqueStepFiles as $stepFile) {
-            $this->requireFile($stepFile, false);
+            $definitions = $steps->definitions($stepFile);
+            StoryBDDRegistry::steps()->adopt($definitions['steps']);
+            StoryBDDRegistry::hooks()->adopt($definitions['hooks']);
         }
 
         $types = StepTypes::declaredIn(...$supportFiles);
@@ -369,7 +375,7 @@ final class Loader
         $files = $this->collectPhpFiles($supportDir);
 
         foreach ($files as $file) {
-            $this->requireFile($file, true);
+            $this->requireFile($file);
         }
 
         return $files;
@@ -378,10 +384,10 @@ final class Loader
     /**
      * @throws FileLoadException when the file does not parse or declares what cannot load
      */
-    private function requireFile(string $file, bool $once): void
+    private function requireFile(string $file): void
     {
         try {
-            $once ? require_once $file : require $file;
+            require_once $file;
         } catch (\Throwable $e) {
             throw new FileLoadException($file, $e);
         }

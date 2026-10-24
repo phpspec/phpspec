@@ -52,6 +52,52 @@ Feature: Story BDD with Gherkin
     And the output should not contain "Stack trace"
     And the exit code should be 1
 
+  Scenario: A steps file is loaded once, however many feature paths the run is given
+    Given a feature file "features/a/greeting.feature":
+      """
+      Feature: Greeting
+        Scenario: Hello
+          Given a greeter
+          Then it greets "Ann" with "Hello, Ann"
+          And the hooks ran once
+      """
+    And a feature file "features/b/welcome.feature":
+      """
+      Feature: Welcome
+        Scenario: Welcome back
+          Given a greeter
+          Then it greets "Bob" with "Hello, Bob"
+          And the hooks ran once
+      """
+    And a step file "features/steps/greeting.steps.php":
+      """
+      <?php
+
+      function greeter(): Closure
+      {
+          return fn(string $name): string => "Hello, $name";
+      }
+
+      beforeScenario(function () {
+          $this->hooks = ($this->hooks ?? 0) + 1;
+      });
+
+      given('a greeter', function () {
+          $this->greet = greeter();
+      });
+
+      then('it greets {string} with {string}', function (string $name, string $greeting) {
+          expect(($this->greet)($name))->toBe($greeting);
+      });
+
+      then('the hooks ran once', function () {
+          expect($this->hooks)->toBe(1);
+      });
+      """
+    When I run phpspec run in a fresh process with option "features/a features/b"
+    Then the exit code should be 0
+    And the output should contain "2 features, 2 scenarios"
+
   Scenario: Undefined steps are reported
     Given a feature file "features/missing.feature":
       """

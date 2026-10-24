@@ -275,3 +275,20 @@ Feature: Story BDD lifecycle hooks
     Then the output should contain "server would not stop (in afterFeature)"
     And the output should contain "2 scenarios, 2 steps (1 passed, 1 errored)"
     And the exit code should be 1
+
+  Scenario: A hook that declares an argument is refused
+    Given a feature file "features/lamp.feature":
+      """
+      Feature: Lamp
+        Scenario: Lit
+          Given a step
+      """
+    And a step file "features/steps/lamp.steps.php":
+      """
+      <?php
+      given("a step", function () {});
+      beforeScenario(function ($bulb) {});
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "Arguments not allowed in this function, only this(), it(), beforeEach() and afterEach() can take doubles. (in beforeScenario)"
+    And the exit code should be 1

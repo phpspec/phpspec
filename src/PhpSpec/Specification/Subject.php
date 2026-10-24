@@ -22,8 +22,8 @@ namespace PhpSpec\Specification;
 #[\AllowDynamicProperties]
 final class Subject implements World
 {
-    /** @var array<string, object> mocks created by this() parameter injection */
-    public array $__phpspec_injected_mocks = [];
+    /** What the closures of the running example are handed for their parameters, set while one runs */
+    public ?ExampleArguments $__phpspec_arguments = null;
 
     /** @var array<string, \Closure(): mixed> this() values not built yet, by property, each built when first read */
     public array $__phpspec_pending_bindings = [];

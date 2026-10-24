@@ -14,16 +14,14 @@
 
 namespace PhpSpec\Mock;
 
+use Closure;
 use LogicException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionIntersectionType;
-use ReflectionMethod;
 use ReflectionNamedType;
-use ReflectionParameter;
 use ReflectionType;
 use ReflectionUnionType;
-use Throwable;
 
 /**
  * @internal
@@ -36,12 +34,16 @@ final class Double
     /** @var array<string, array{mockClassName: string, reflectionClass: ReflectionClass<object>}> Cached class definitions by FQCN */
     private static array $classCache = [];
 
+    /** Whether PHP lets a plain class implement a built-in interface, asked once per interface in this process */
+    private static ?ImplementationProbe $probe = null;
+
     /**
      * Resets the class cache between in-process runs.
      */
     public static function resetCache(): void
     {
         self::$classCache = [];
+        Answers::reset();
     }
 
     /**
@@ -64,14 +66,6 @@ final class Double
             return self::generateDouble($cached['reflectionClass'], $cached['mockClassName']);
         }
 
-        // create a unique name for the double class using a hash of the FQCN
-        // to avoid collisions between classes with the same short name
-        $classHash = substr(md5($class), 0, 8);
-        $separator = strrpos($class, '\\');
-        $shortName = $separator === false ? $class : substr($class, $separator + 1);
-        $mockClassName = 'PhpspecDouble\\' . $shortName . '_Double_' . $classHash . '_' . uniqid();
-
-        // generate the methods for the double
         $reflectionClass = new ReflectionClass($class);
 
         if ($reflectionClass->isTrait()) {
@@ -89,45 +83,70 @@ final class Double
         }
 
         if (!$reflectionClass->isInterface() && ($reflectionClass->isFinal() || $reflectionClass->isReadOnly())) {
-            $modifier = $reflectionClass->isReadOnly() ? 'readonly' : 'final';
-            throw new LogicException(
-                "Cannot create a test double for $modifier class $class. "
-                    . 'Extract an interface and type-hint against it, or make the class non-final.',
-            );
+            [$modifier, $wayOut] = match (true) {
+                $reflectionClass->isFinal() && $reflectionClass->isReadOnly() => ['final readonly', 'neither final nor readonly'],
+                $reflectionClass->isFinal() => ['final', 'non-final'],
+                default => ['readonly', 'not readonly'],
+            };
+
+            throw new LogicException(sprintf('Cannot create a test double for %s class %s. Extract an interface and type-hint against it, or make the class %s.', $modifier, ltrim($class, '\\'), $wayOut));
         }
 
-        $methods = self::generateMethods($reflectionClass);
-        $undefinedMethodGuard = self::undefinedMethodGuard($reflectionClass, ltrim($class, '\\'));
+        [$base, $methods, $refusal] = self::planOf([$reflectionClass]);
 
-        // prefix class name with a namespace separator
-        $prefixedClass = $class;
-        if ($prefixedClass[0] !== '\\') {
-            $prefixedClass = '\\' . $prefixedClass;
+        if ($methods === null) {
+            throw new LogicException(sprintf('Cannot create a test double for %s %s. %s', $reflectionClass->isInterface() ? 'interface' : 'class', ltrim($class, '\\'), $refusal));
         }
+
+        $mockClassName = self::classOf([$reflectionClass], $base, $methods);
+
+        self::$classCache[$class] = [
+            'mockClassName' => $mockClassName,
+            'reflectionClass' => $reflectionClass,
+        ];
+
+        // create a double object and return
+        return self::generateDouble($reflectionClass, $mockClassName);
+    }
+
+    /**
+     * Generates the class of a double of the given types: a subclass of a
+     * class, or an implementation of interfaces on the base PHP requires for
+     * them.
+     *
+     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
+     * @return string the generated class name
+     * @throws ReflectionException
+     */
+    public static function classOf(array $types, ?NativeBase $base, MethodSet $methods): string
+    {
+        $names = array_map(static fn(ReflectionClass $type): string => $type->getName(), $types);
+        $doubledName = implode('&', $names);
+
+        // create a unique name for the double class using a hash of the FQCN
+        // to avoid collisions between classes with the same short name
+        $mockShortName = $types[0]->getShortName() . '_Double_' . substr(md5($doubledName), 0, 8) . '_' . uniqid();
+
+        $methods = self::generateMethods($methods->contracts) . ($base?->code() ?? '');
+        $undefinedMethodGuard = self::undefinedMethodGuard($types, $doubledName);
+        $doubled = var_export($doubledName, true);
+        $prefixedClass = '\\' . $doubledName;
 
         // make sure you are extending or implementing double class effectively
-        $extends = 'extends';
-        $implementsGenerated = 'implements \\PhpSpec\\Mock\\GeneratedDouble';
-        if ($reflectionClass->isInterface()) {
-            $extends = 'implements';
-            $implementsGenerated = ', \\PhpSpec\\Mock\\GeneratedDouble';
-        }
-
-        // Extract the short class name from the namespaced mock class name
-        /** @var int $nsSepPos */
-        $nsSepPos = strrpos($mockClassName, '\\');
-        $mockShortName = substr($mockClassName, $nsSepPos + 1);
-        $mockNamespace = substr($mockClassName, 0, $nsSepPos);
+        $interfaces = $types[0]->isInterface() ? $names : array_slice($names, 1);
+        $extends = $base?->extends() ?? ($types[0]->isInterface() ? null : '\\' . $names[0]);
+        $header = ($extends === null ? '' : 'extends ' . $extends . ' ') . 'implements ' . implode(', ', [...array_map(static fn(string $name): string => '\\' . $name, $interfaces), ...($base?->implements() ?? []), '\\PhpSpec\\Mock\\GeneratedDouble']);
 
         // put it all together and evaluate the double class template
         $mockClassCode = <<<PHP
 
-namespace $mockNamespace;
+namespace PhpspecDouble;
 
-class $mockShortName $extends $prefixedClass $implementsGenerated {
+class $mockShortName $header {
     private \$______phpspec_stack;
     private ?\PhpSpec\Mock\Stubs \$______phpspec_stubs = null;
     private \$______phpspec_lenient = false;
+    private \$______phpspec_dummy = false;
     private ?\PhpSpec\Mock\Declarations \$______phpspec_declared = null;
     private \$______phpspec_signatures = [];
     private \$______phpspec_returnTypes = [];
@@ -167,14 +186,41 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
         \$this->______phpspec_lenient = true;
     }
 
+    public function ______PhpSpecBeDummy(): void {
+        \$this->______phpspec_lenient = true;
+        \$this->______phpspec_dummy = true;
+    }
+
+    public function ______PhpSpecArrange(string \$method, string \$as): void {
+        if (\$this->______phpspec_dummy) {
+            throw new \LogicException(\sprintf('%s::%s() was %s on a dummy. Use mock() instead of dummy().', $doubled, \$method, \$as));
+        }
+    }
+
+    public function ______PhpSpecChainTo(string \$method): string {
+        return $doubled . '::' . \$method . '()';
+    }
+
+    public function ______PhpSpecStubAdvice(string \$method): string {
+        return \$this->______phpspec_dummy
+            ? 'Use mock() instead of dummy() and stub ' . \$this->______PhpSpecChainTo(\$method) . '.'
+            : 'Stub ' . \$this->______PhpSpecChainTo(\$method) . ' with a mock() instead.';
+    }
+
+    protected function ______PhpSpecWayOut(string \$method): string {
+        return \$this->______phpspec_dummy
+            ? ' ' . \$this->______PhpSpecStubAdvice(\$method)
+            : ' Stub the call with allow(), return an interface, or make the class non-final.';
+    }
+
     public function ______PhpSpecDeclare(string \$method, ?array \$args): void {
         (\$this->______phpspec_declared ??= new \PhpSpec\Mock\Declarations())->add(\$method, \$args);
     }
 
     private function ______PhpSpecHoldUnlessExpected(string \$method, array \$args, array \$frame): void {
         if (\$this->______phpspec_lenient
-            || (\$this->______phpspec_declared?->cover(\$method, \$args) ?? false)
-            || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')) {
+            || \PhpSpec\Mock\ArrangingCode::includes(\$frame['file'] ?? '')
+            || (\$this->______phpspec_declared?->cover(\$method, \$args) ?? false)) {
             return;
         }
 
@@ -186,32 +232,32 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
     }
 
     public function ______PhpSpecStubReturn(string \$method, mixed \$value, ?array \$args = null): void {
+        \$this->______PhpSpecArrange(\$method, 'stubbed');
         \$this->______PhpSpecStubs()->add(\$method, \$args, 'value', \$value);
     }
 
     public function ______PhpSpecStubReturnUsing(string \$method, callable \$callback, ?array \$args = null): void {
+        \$this->______PhpSpecArrange(\$method, 'stubbed');
         \$this->______PhpSpecStubs()->add(\$method, \$args, 'callback', \$callback);
     }
 
     public function ______PhpSpecStubThrow(string \$method, string|\Throwable \$exception, string \$message = '', ?array \$args = null): void {
+        \$this->______PhpSpecArrange(\$method, 'stubbed');
         \$this->______PhpSpecStubs()->add(\$method, \$args, 'throw', \$exception instanceof \Throwable ? ['throwable' => \$exception] : ['class' => \$exception, 'message' => \$message]);
     }
 }
 PHP;
         eval($mockClassCode);
 
-        self::$classCache[$class] = [
-            'mockClassName' => $mockClassName,
-            'reflectionClass' => $reflectionClass,
-        ];
-
-        // create a double object and return
-        return self::generateDouble($reflectionClass, $mockClassName);
+        return 'PhpspecDouble\\' . $mockShortName;
     }
 
     /**
-     * Instantiates the generated double class, resolving constructor dependencies
-     * with sensible defaults based on parameter types.
+     * Instantiates the generated double class. A double of a class is made
+     * without the class's constructor, which would run the application's
+     * initialization with arguments nobody gave: properties keep the defaults
+     * they declare, and those the constructor sets stay unset. A double of an
+     * interface built on a base PHP requires is initialised as that base is.
      *
      * @param ReflectionClass<object> $reflectionClass reflection of the original class
      * @param string $mockClassName the generated double class name
@@ -224,124 +270,9 @@ PHP;
             throw new LogicException("Generated double class '$mockClassName' does not exist.");
         }
 
-        $constructor = $reflectionClass->getConstructor();
+        $double = new ReflectionClass($mockClassName);
 
-        if ($constructor === null || count($constructor->getParameters()) === 0) {
-            $mockReflectionClass = new ReflectionClass($mockClassName);
-            return $mockReflectionClass->newInstance();
-        }
-
-        if (!$constructor->isPublic()) {
-            $mockReflectionClass = new ReflectionClass($mockClassName);
-            return $mockReflectionClass->newInstanceWithoutConstructor();
-        }
-
-        $dependencies = [];
-        foreach ($constructor->getParameters() as $parameter) {
-            if ($parameter->isOptional()) {
-                break;
-            }
-            $parameterType = $parameter->getType();
-            if ($parameterType === null) {
-                $dependencies[] = null;
-                continue;
-            }
-
-            // Nullable types: pass null
-            if (self::isNullableType($parameterType)) {
-                $dependencies[] = null;
-                continue;
-            }
-
-            // Union types: pick simplest value
-            if ($parameterType instanceof ReflectionUnionType) {
-                $dependencies[] = self::resolveUnionDefault($parameterType);
-                continue;
-            }
-
-            // Intersection types: try to mock first type
-            if ($parameterType instanceof ReflectionIntersectionType) {
-                $types = $parameterType->getTypes();
-                $first = $types[0];
-                if ($first instanceof ReflectionNamedType && !$first->isBuiltin()) {
-                    try {
-                        $dependencies[] = Double::getInstance($first->getName());
-                    } catch (Throwable) {
-                        $dependencies[] = null;
-                    }
-                } else {
-                    $dependencies[] = null;
-                }
-                continue;
-            }
-
-            if ($parameterType instanceof ReflectionNamedType) {
-                $dependencies[] = self::resolveNamedDefault($parameterType);
-            } else {
-                $dependencies[] = null;
-            }
-        }
-
-        $mockReflectionClass = new ReflectionClass($mockClassName);
-        return $mockReflectionClass->newInstanceArgs($dependencies);
-    }
-
-    /**
-     * Resolves a sensible default value for a named type (e.g. string => '', int => 0).
-     * Recursively creates doubles for class types and picks the first case for enums.
-     *
-     * @param ReflectionNamedType $type the named type to resolve a default for
-     * @return mixed a sensible default value for the type (e.g. '' for string, 0 for int, a double for classes)
-     * @throws ReflectionException
-     */
-    private static function resolveNamedDefault(ReflectionNamedType $type): mixed
-    {
-        $name = $type->getName();
-        return match ($name) {
-            'array' => [],
-            'string' => '',
-            'int' => 0,
-            'float' => 0.0,
-            'bool' => false,
-            'Closure' => function () {},
-            'Throwable' => new \Exception('mock'),
-            'mixed' => null,
-            default => enum_exists($name) ? $name::cases()[0] : Double::getInstance($name),
-        };
-    }
-
-    /**
-     * Resolves a default value for a union type by preferring null, then simple
-     * scalar types, then attempting to double the first class type.
-     *
-     * @param ReflectionUnionType $type the union type to resolve
-     * @return mixed null if nullable, a scalar default if possible, or a double for the first class type
-     */
-    private static function resolveUnionDefault(ReflectionUnionType $type): mixed
-    {
-        $typeNames = array_map(
-            fn(ReflectionNamedType|ReflectionIntersectionType $t) => $t instanceof ReflectionNamedType ? $t->getName() : (string) $t,
-            $type->getTypes(),
-        );
-        if (in_array('null', $typeNames)) {
-            return null;
-        }
-        $map = ['string' => '', 'int' => 0, 'float' => 0.0, 'bool' => false, 'array' => []];
-        foreach ($map as $name => $value) {
-            if (in_array($name, $typeNames)) {
-                return $value;
-            }
-        }
-        // Try first class type
-        foreach ($type->getTypes() as $t) {
-            if ($t instanceof ReflectionNamedType && !$t->isBuiltin()) {
-                try {
-                    return Double::getInstance($t->getName());
-                } catch (Throwable) {
-                }
-            }
-        }
-        return null;
+        return $reflectionClass->isInterface() ? $double->newInstance() : $double->newInstanceWithoutConstructor();
     }
 
     /**
@@ -353,7 +284,6 @@ PHP;
      */
     private static function getUnionReturnCode(ReflectionUnionType $type): string
     {
-        $clear = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; ';
         $typeNames = array_map(
             fn(ReflectionNamedType|ReflectionIntersectionType $t) => $t instanceof ReflectionNamedType ? $t->getName() : (string) $t,
             $type->getTypes(),
@@ -361,86 +291,36 @@ PHP;
 
         // If null is in the union, return null
         if (in_array('null', $typeNames)) {
-            return $clear . 'return null;';
+            return self::returning('null');
         }
 
         // Pick the simplest type to return
         $map = ['string' => "''", 'int' => '0', 'float' => '0.0', 'bool' => 'false', 'array' => '[]'];
         foreach ($map as $name => $value) {
             if (in_array($name, $typeNames)) {
-                return "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+                return self::returning($value);
             }
         }
 
-        return $clear . 'return null;';
-    }
-
-    /**
-     * Formats a ReflectionType into valid PHP type syntax for code generation.
-     * Handles named, union, and intersection types with proper namespace prefixing.
-     *
-     * @param ?ReflectionType $type the reflection type to format
-     * @return string the PHP type syntax (e.g. "?\\Foo\\Bar", "string|int")
-     */
-    private static function formatTypeSyntax(?ReflectionType $type): string
-    {
-        if ($type === null) {
-            return '';
-        }
-
-        if ($type instanceof ReflectionNamedType) {
-            $name = $type->getName();
-            if (!$type->isBuiltin() && $name !== 'self' && $name !== 'static' && $name !== 'parent') {
-                $name = '\\' . $name;
-            }
-            return $type->allowsNull() && $name !== 'mixed' && $name !== 'null' ? '?' . $name : $name;
-        }
-
-        if ($type instanceof ReflectionUnionType) {
-            $parts = [];
-            foreach ($type->getTypes() as $t) {
-                $formatted = self::formatTypeSyntax($t);
-                // Wrap intersection members in parentheses for DNF types (e.g. (A&B)|C)
-                if ($t instanceof ReflectionIntersectionType) {
-                    $formatted = '(' . $formatted . ')';
-                }
-                $parts[] = $formatted;
-            }
-            return implode('|', $parts);
-        }
-
-        if ($type instanceof ReflectionIntersectionType) {
-            $parts = [];
-            foreach ($type->getTypes() as $t) {
-                if (!$t instanceof ReflectionNamedType) {
-                    continue;
-                }
-                $name = $t->getName();
-                if (!$t->isBuiltin()) {
-                    $name = '\\' . $name;
-                }
-                $parts[] = $name;
-            }
-            return implode('&', $parts);
-        }
-
-        return (string) $type;
+        return self::returning('null');
     }
 
     /**
      * The code that holds a call to what the real method takes, before the
      * double answers it.
      */
-    private static function holdCode(string $class, ReflectionMethod $method): string
+    private static function holdCode(MethodContract $contract): string
     {
+        $takes = $contract->takes();
+
         return sprintf(
             "\$__frame = \\debug_backtrace(\\DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? []; \$__made = !\\PhpSpec\\Mock\\ArrangingCode::includes(\$__frame['file'] ?? ''); \$__given = (\$this->______phpspec_signatures[%2\$s] ??= new \\PhpSpec\\Mock\\Signature(%1\$s, %2\$s, %3\$d, %4\$s, %5\$s, %6\$s))->hold(\\func_get_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
-            var_export($class, true),
-            var_export($method->getName(), true),
-            $method->getNumberOfRequiredParameters(),
-            $method->isVariadic() ? 'null' : (string) $method->getNumberOfParameters(),
-            var_export(self::parameterList($method), true),
-            self::typedCode($method),
+            var_export($contract->owner, true),
+            var_export($contract->name, true),
+            $contract->required,
+            $takes === null ? 'null' : (string) $takes,
+            var_export(self::parameterList($contract), true),
+            self::typedCode($contract),
         );
     }
 
@@ -449,82 +329,94 @@ PHP;
      * taking that type alone, through which an argument is held to it as PHP
      * holds it; no closure for a parameter that takes anything.
      */
-    private static function typedCode(ReflectionMethod $method): string
+    private static function typedCode(MethodContract $contract): string
     {
         $typed = [];
 
-        foreach ($method->getParameters() as $parameter) {
-            $type = $parameter->getType();
-            $taking = $type === null || ($type instanceof ReflectionNamedType && $type->getName() === 'mixed')
-                ? 'null'
-                : sprintf('static fn(%s $value) => $value', self::typeIn($type, $method));
-            $typed[] = sprintf('[%s, %s, %s]', var_export($parameter->getName(), true), var_export((string) $type, true), $taking);
+        foreach ($contract->parameters as $parameter) {
+            $taking = $parameter->takes === null ? 'null' : sprintf('static fn(%s $value) => $value', $parameter->takes);
+            $typed[] = sprintf('[%s, %s, %s]', var_export($parameter->name, true), var_export($parameter->declared, true), $taking);
         }
 
         return '[' . implode(', ', $typed) . ']';
     }
 
     /**
-     * A type as code outside the class that declares it: self and parent
-     * named for the classes they stand for.
-     */
-    private static function typeIn(ReflectionType $type, ReflectionMethod $method): string
-    {
-        $declaring = $method->getDeclaringClass();
-        $parent = $declaring->getParentClass();
-
-        return (string) preg_replace_callback(
-            '/(?<![\\\\\w])(self|parent)(?![\\\\\w])/',
-            static fn(array $word): string => '\\' . ($word[1] === 'self' || $parent === false ? $declaring->getName() : $parent->getName()),
-            self::formatTypeSyntax($type),
-        );
-    }
-
-    /**
      * The code for a call's arguments with the defaults it left out filled
-     * in, so a call is matched as the call it is however it was written.
+     * in, and the named arguments a variadic collected after them, so a call
+     * is matched as the call it is however it was written.
      *
-     * @param list<ReflectionParameter> $parameters
+     * @param list<ContractParameter> $parameters
      */
-    private static function argumentsCode(array $parameters, bool $held): string
+    private static function argumentsCode(array $parameters): string
     {
         $named = [];
 
         foreach ($parameters as $parameter) {
-            if ($parameter->isVariadic() || ($parameter->isOptional() && !$parameter->isDefaultValueAvailable())) {
+            if ($parameter->variadic || ($parameter->optional && !$parameter->hasDefault())) {
                 break;
             }
 
-            $named[] = '$' . $parameter->getName();
+            $named[] = '$' . $parameter->name;
         }
 
-        if ($held) {
-            return $named === [] ? '$__given' : sprintf('\\array_merge($__given, \\array_slice([%s], \\count($__given)))', implode(', ', $named));
+        $positional = $named === [] ? '$__given' : sprintf('\\array_merge($__given, \\array_slice([%s], \\count($__given)))', implode(', ', $named));
+
+        return self::variadicOf($parameters) === null ? $positional : sprintf('\\array_merge(%s, $__named)', $positional);
+    }
+
+    /**
+     * @param list<ContractParameter> $parameters
+     */
+    private static function variadicOf(array $parameters): ?ContractParameter
+    {
+        $last = end($parameters);
+
+        return $last !== false && $last->variadic ? $last : null;
+    }
+
+    /**
+     * The named arguments a variadic parameter collected, which PHP leaves out
+     * of func_get_args(), held to the parameter's type; nothing for a method
+     * with no variadic.
+     *
+     * @param list<ContractParameter> $parameters
+     */
+    private static function namedCode(array $parameters, string $methodName): string
+    {
+        $variadic = self::variadicOf($parameters);
+
+        if ($variadic === null) {
+            return '';
         }
 
-        if ($named === []) {
-            return '\\func_get_args()';
-        }
+        // Copied out, so the call is recorded as it was made: a by-reference
+        // variadic holds the caller's variables, and only a stub's callback is
+        // handed those.
+        $collected = sprintf("\\array_map(static fn(\$value) => \$value, \\array_filter(\$%s, '\\is_string', \\ARRAY_FILTER_USE_KEY))", $variadic->name);
 
-        return sprintf('\\array_merge([%s], \\array_slice(\\func_get_args(), %d))', implode(', ', $named), count($named));
+        return sprintf(
+            "\$__named = \$this->______phpspec_signatures[%s]->holdNamed(%s, \\func_num_args(), \$__frame['file'] ?? '', \$__frame['line'] ?? 0, \$this->______PhpSpecStrictIn(\$__frame['file'] ?? ''));",
+            var_export($methodName, true),
+            $collected,
+        );
     }
 
     /**
      * The parameter list as the method declares it, for a message.
      */
-    private static function parameterList(ReflectionMethod $method): string
+    private static function parameterList(MethodContract $contract): string
     {
         $listed = [];
 
-        foreach ($method->getParameters() as $parameter) {
-            $type = $parameter->getType();
+        foreach ($contract->parameters as $parameter) {
             $listed[] = ltrim(sprintf(
                 '%s %s%s$%s%s',
-                $type === null ? '' : (string) $type,
-                $parameter->isPassedByReference() ? '&' : '',
-                $parameter->isVariadic() ? '...' : '',
-                $parameter->getName(),
-                $parameter->isDefaultValueAvailable() ? ' = ' . self::shownDefault($parameter->getDefaultValue()) : '',
+                $parameter->declared,
+                $parameter->byReference ? '&' : '',
+                $parameter->variadic ? '...' : '',
+                $parameter->name,
+                $parameter->hasDefault() ? ' = ' . self::shownDefault($parameter->default()) : '',
             ));
         }
 
@@ -564,13 +456,13 @@ PHP;
      */
     private static function getBuiltinReturnCode(string $typeName): ?string
     {
-        $returning = static fn(string $value): string => "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+        $returning = self::returning(...);
 
         return match ($typeName) {
             'string' => $returning("''"),
             'void' => 'return;',
             'never' => "throw new \\RuntimeException('Mock method should not be called');",
-            'mixed' => 'return null;',
+            'mixed' => $returning('null'),
             'array', 'iterable' => $returning('[]'),
             'int' => $returning('0'),
             'float' => $returning('0.0'),
@@ -582,37 +474,95 @@ PHP;
             'object' => $returning('new \\stdClass()'),
             'callable', 'Closure' => $returning('static fn() => null'),
             'Generator' => $returning('(static fn() => yield from [])()'),
+            'Traversable', 'Iterator' => $returning('new \\ArrayIterator([])'),
             default => null,
         };
     }
 
     /**
+     * Why PHP refuses a plain class implementing a built-in interface, asked
+     * of a child php once per interface in this process.
+     *
+     * @return Closure(class-string): ?string
+     */
+    private static function refusedBy(): Closure
+    {
+        return (self::$probe ??= new ImplementationProbe())->refusal(...);
+    }
+
+    /**
+     * What a method returns when PHP lets no double be its return type: the
+     * reason, said when the method is called.
+     */
+    private static function refusedReturnCode(string $class, string $methodName, string $returnType, string $why): string
+    {
+        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no double of %s can be made. %s', ltrim($class, '\\'), $methodName, ltrim($returnType, '\\'), $why);
+
+        return 'throw new \\LogicException(' . var_export($message, true) . ');';
+    }
+
+    /**
+     * Returns a value through a variable, as a method returning by reference
+     * must, and keeps it as the last value a double returned.
+     */
+    private static function returning(string $value): string
+    {
+        return "\$__ret = $value; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
+    }
+
+    /**
+     * The arguments a stub's callback is handed, each one the method takes by
+     * reference handed as that reference, so what the callback writes into it
+     * reaches the caller; none when the method takes nothing by reference.
+     * The reference first takes the argument as it was held, so the caller's
+     * variable is converted to the parameter's type as PHP converts it.
+     *
+     * @param list<ContractParameter> $parameters
+     */
+    private static function passingCode(array $parameters): string
+    {
+        $references = '';
+
+        foreach ($parameters as $parameter) {
+            if (!$parameter->byReference) {
+                continue;
+            }
+
+            $references .= $parameter->variadic
+                ? sprintf(' foreach (\\array_keys($%1$s) as $__key) { $__at = \\is_int($__key) ? %2$d + $__key : $__key; if (\\array_key_exists($__at, $__passing)) { $%1$s[$__key] = $__passing[$__at]; $__passing[$__at] = &$%1$s[$__key]; } }', $parameter->name, $parameter->position)
+                : sprintf(' if (\\array_key_exists(%2$d, $__passing)) { $%1$s = $__passing[%2$d]; $__passing[%2$d] = &$%1$s; }', $parameter->name, $parameter->position);
+        }
+
+        return $references === '' ? '' : '$__passing = $__args;' . $references;
+    }
+
+    /**
      * What a method returns when nothing can stand in for its return type: an
      * explanation, where PHP alone would say a value of that type was expected
-     * and none returned.
+     * and none returned, and the way out the double offers.
      */
-    private static function unbuildableReturnCode(string $class, string $methodName, string $returnType): string
+    private static function unbuildableReturnCode(string $class, string $methodName, string $returnType, bool $stubbable): string
     {
         $why = class_exists($returnType) && (new ReflectionClass($returnType))->isFinal()
             ? "$returnType is final, so no double of it can be made"
             : "no double of $returnType can be made";
-        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): %s. Stub the call with allow(), return an interface, or make the class non-final.', $class, $methodName, $why);
+        $cannot = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): %s.', $class, $methodName, $why);
 
-        return 'throw new \\LogicException(' . var_export($message, true) . ');';
+        return 'throw new \\LogicException(' . var_export($cannot, true) . ($stubbable ? ' . $this->______PhpSpecWayOut(' . var_export($methodName, true) . ')' : '') . ');';
     }
 
     /**
      * What a method returns when no double of its return type can be made: an
      * instance of the very class, built without its constructor, for allow()
      * to replace. A lenient double has nobody about to replace it, so it
-     * refuses instead.
+     * refuses the code under spec instead, still handing the spec's own call
+     * the instance its stub needs. A type no instance of which can be built
+     * this way is refused, with no advice a stub could not follow.
      */
-    private static function placeholderReturnCode(string $class, string $methodName, string $returnType, bool $mayBeLenient): string
+    private static function placeholderReturnCode(string $class, string $methodName, string $returnType): string
     {
-        $refusal = self::unbuildableReturnCode($class, $methodName, $returnType);
-
         if (!class_exists($returnType) || (new ReflectionClass($returnType))->isInternal()) {
-            return $refusal;
+            return self::unbuildableReturnCode($class, $methodName, $returnType, false);
         }
 
         $placeholder = sprintf(
@@ -620,7 +570,7 @@ PHP;
             var_export($returnType, true),
         );
 
-        return $mayBeLenient ? "if (\$this->______phpspec_lenient) { $refusal } $placeholder" : $placeholder;
+        return sprintf('if ($this->______phpspec_lenient && $__made) { %s } %s', self::unbuildableReturnCode($class, $methodName, $returnType, true), $placeholder);
     }
 
     /**
@@ -635,6 +585,15 @@ PHP;
             return !$type->isBuiltin();
         }
         return false;
+    }
+
+    /**
+     * Whether the type is a built-in interface or null, which a call nobody
+     * stubbed answers with null rather than a double.
+     */
+    private static function isNullableBuiltIn(?ReflectionType $type): bool
+    {
+        return $type instanceof ReflectionNamedType && $type->allowsNull() && interface_exists($type->getName()) && (new ReflectionClass($type->getName()))->isInternal();
     }
 
     /**
@@ -667,12 +626,14 @@ PHP;
      * see what the spec asked of App\Clock rather than of a generated double.
      * A type with a __call of its own keeps it.
      *
-     * @param ReflectionClass<object> $reflectionClass
+     * @param list<ReflectionClass<object>> $types
      */
-    private static function undefinedMethodGuard(ReflectionClass $reflectionClass, string $doubled): string
+    private static function undefinedMethodGuard(array $types, string $doubled): string
     {
-        if ($reflectionClass->hasMethod('__call')) {
-            return '';
+        foreach ($types as $type) {
+            if ($type->hasMethod('__call')) {
+                return '';
+            }
         }
 
         return <<<PHP
@@ -685,250 +646,101 @@ PHP;
     /**
      * Generates PHP method code strings for all overridable methods on a class.
      * Each generated method records calls, checks for stubs/throws, and returns
-     * type-appropriate defaults or MatchableDouble wrappers for chaining.
+     * a type-appropriate default, or an answer of the type it returns.
      *
-     * @param ReflectionClass<object> $reflectionClass the class whose methods to generate
-     * @param int $depth recursion depth to prevent infinite loops on circular return types
+     * @param list<MethodContract> $contracts the methods, each resolved from every declaration of it
      * @return string the generated PHP method code
      * @throws ReflectionException
      */
-    private static function generateMethods(ReflectionClass $reflectionClass, int $depth = 0): string
+    private static function generateMethods(array $contracts): string
     {
-        if ($depth > 3) {
-            return '';
-        }
-
-        // get the reflection methods
-        $methods = $reflectionClass->getMethods();
-
-        // for each reflection method generate the method code as a string
-        //  - make it return an instance of the hinted returned type
         $mockMethods = [];
-        foreach ($methods as $method) {
+        foreach ($contracts as $contract) {
+            if ($contract->static) {
+                $mockMethods[] = $contract->staticCode();
 
-            // ignore constructors, final methods, static methods, and internal magic methods
-            if ($method->getName() === '__construct'
-                || $method->isFinal()
-                || $method->isStatic()
-                || ($method->isInternal() && str_starts_with($method->getName(), '__'))) {
                 continue;
             }
 
-            // get method properties
-            $methodName = $method->getName();
-            $parameters = $method->getParameters();
-            // Tentative return types (e.g. JsonSerializable::jsonSerialize(): mixed) are not
-            // exposed via getReturnType(); declaring them explicitly avoids the PHP deprecation
-            // about incompatible/missing return types on internal interfaces.
-            $returnedType = $method->getReturnType() ?? $method->getTentativeReturnType();
-
-            // format return type syntax using helper
-            $returnedTypeSyntax = '';
-            $isClassReturn = self::isClassReturnType($returnedType);
+            $owner = $contract->owner;
+            $methodName = $contract->name;
+            $returnedType = $contract->returnType;
             $simpleReturnName = self::getSimpleReturnTypeName($returnedType);
             $isNullable = self::isNullableType($returnedType);
-            $isCompoundType = $returnedType instanceof ReflectionUnionType || $returnedType instanceof ReflectionIntersectionType;
+            $isEnum = self::isClassReturnType($returnedType) && $simpleReturnName !== null && enum_exists($simpleReturnName);
 
-            if ($returnedType !== null) {
-                $returnedTypeSyntax = ': ' . self::typeIn($returnedType, $method);
-            }
-
-            // get method parameters
-            // All parameters get defaults so mocks can be called with no args
-            // (needed for allow($mock->method())->toReturn(...) stub setup)
-            $paramStrings = [];
-            foreach ($parameters as $parameter) {
-                // Use mixed for all params so ArgumentMatcher objects can be passed
-                // (parameter contravariance allows widening in an implementing class)
-                $typeStr = 'mixed ';
-                if ($parameter->isVariadic()) {
-                    $paramStr = $typeStr . '...$' . $parameter->getName();
-                } elseif ($parameter->isOptional() && $parameter->isDefaultValueAvailable()) {
-                    $paramStr = $typeStr . '$' . $parameter->getName() . ' = ' . var_export($parameter->getDefaultValue(), true);
-                } else {
-                    $paramStr = $typeStr . '$' . $parameter->getName() . ' = null';
-                }
-                $paramStrings[] = $paramStr;
-            }
-            $paramString = implode(', ', $paramStrings);
-            $arguments = self::argumentsCode($parameters, $depth === 0);
-            $hold = $depth === 0 ? self::holdCode($reflectionClass->getName(), $method) : '';
-            $holdAnswer = $depth === 0 && $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s, self::class))->holdAnswer($__ret);', var_export($reflectionClass->getName(), true), var_export($methodName, true)) : '';
+            [$paramString, $defaults] = $contract->parametersCode();
+            $passing = self::passingCode($contract->parameters);
+            $callWith = $passing === '' ? '$__args' : '$__passing';
+            $called = $contract->byReference
+                ? "\$__cb = \$__match['data']; if ((new \\ReflectionFunction(\\Closure::fromCallable(\$__cb)))->returnsReference()) { \$__ret = &\$__cb(...$callWith); } else { \$__ret = \$__cb(...$callWith); }"
+                : "\$__ret = (\$__match['data'])(...$callWith);";
+            $arguments = self::argumentsCode($contract->parameters);
+            $named = self::namedCode($contract->parameters, $methodName);
+            $hold = self::holdCode($contract);
+            $holdAnswer = $returnedType !== null ? sprintf('($this->______phpspec_returnTypes[%2$s] ??= new \\PhpSpec\\Mock\\ReturnType(%1$s, %2$s, self::class))->holdAnswer($__ret);', var_export($owner, true), var_export($methodName, true)) : '';
 
             // Unique suffix for MockedMethodFor classes, includes parent class hash to avoid collisions
-            $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($reflectionClass->getName() . '::' . $methodName), 0, 8) . '_' . uniqid();
-
-            // make a class that is returned
-            // implementing the Matchable interface
-            // whilst extending the returned type
-            $className = null;
-            $isEnum = $isClassReturn && $simpleReturnName && enum_exists($simpleReturnName);
-            $returnTypeFqcn = $isClassReturn && $simpleReturnName ? '\\' . $simpleReturnName : null;
-            if ($isClassReturn && !$isEnum && $depth === 0 && $returnTypeFqcn !== null && (class_exists($returnTypeFqcn) || interface_exists($returnTypeFqcn))) {
-                $returnedTypeReflected = new ReflectionClass($returnTypeFqcn);
-                $templateMethods = '';
-
-                if (count($returnedTypeReflected->getMethods())) {
-                    $templateMethods = self::generateMethods($returnedTypeReflected, $depth + 1);
-                }
-                $template = '';
-                if ($returnedTypeReflected->isInterface() && !$returnedTypeReflected->isInternal()) {
-                    $className = 'MockedMethodFor' . $wrapperSuffix;
-                    $template = <<<PHP
-class $className implements \PhpSpec\Mock\MatchableDouble, $returnTypeFqcn {
-    use \PhpSpec\Mock\MatchableDoubleBehaviour;
-
-    public function __construct(object \$mockedObject) {
-        \$this->______phpspec_mockedObject = \$mockedObject;
-        \$this->______phpspec_methodName = '$methodName';
-    }
-
-    $templateMethods
-}
-PHP;
-                } elseif (class_exists($returnTypeFqcn, false) && !$returnedTypeReflected->isFinal() && !$returnedTypeReflected->isReadOnly()) {
-                    $className = 'MockedMethodFor' . $wrapperSuffix;
-                    $template = <<<PHP
-class $className extends $returnTypeFqcn implements \PhpSpec\Mock\MatchableDouble {
-    use \PhpSpec\Mock\MatchableDoubleBehaviour;
-
-    public function __construct(?object \$mockedObject = null) {
-        if (\$mockedObject !== null) {
-            \$this->______phpspec_mockedObject = \$mockedObject;
-            \$this->______phpspec_methodName = '$methodName';
-        }
-    }
-
-    $templateMethods
-}
-PHP;
-                }
-                try {
-                    eval($template);
-                } catch (Throwable) {
-                    $className = null;
-                }
-            }
-
-            // For intersection return types, generate a wrapper implementing ALL interfaces
-            if ($returnedType instanceof ReflectionIntersectionType && $depth === 0 && !isset($className)) {
-                $interfaceList = [];
-                $canGenerate = true;
-                foreach ($returnedType->getTypes() as $t) {
-                    if (!$t instanceof ReflectionNamedType || $t->isBuiltin()) {
-                        $canGenerate = false;
-                        break;
-                    }
-                    $tName = $t->getName();
-                    if (!interface_exists($tName)) {
-                        $canGenerate = false;
-                        break;
-                    }
-                    $tReflection = new ReflectionClass($tName);
-                    if ($tReflection->isInternal()) {
-                        $canGenerate = false;
-                        break;
-                    }
-                    $interfaceList[] = '\\' . $tName;
-                }
-                if ($canGenerate && count($interfaceList) > 0) {
-                    $className = 'MockedMethodFor' . $wrapperSuffix;
-                    $interfacesStr = implode(', ', $interfaceList);
-                    // Gather methods from all interfaces for the template
-                    $allInterfaceReflections = [];
-                    foreach ($interfaceList as $iface) {
-                        /** @var class-string $ifaceClassName */
-                        $ifaceClassName = ltrim($iface, '\\');
-                        $allInterfaceReflections[] = new ReflectionClass($ifaceClassName);
-                    }
-                    $combinedTemplateMethods = '';
-                    foreach ($allInterfaceReflections as $ifaceReflection) {
-                        if (count($ifaceReflection->getMethods())) {
-                            $combinedTemplateMethods .= self::generateMethods($ifaceReflection, $depth + 1) . "\n";
-                        }
-                    }
-                    $template = <<<PHP
-class $className implements \PhpSpec\Mock\MatchableDouble, $interfacesStr {
-    use \PhpSpec\Mock\MatchableDoubleBehaviour;
-
-    public function __construct(object \$mockedObject) {
-        \$this->______phpspec_mockedObject = \$mockedObject;
-        \$this->______phpspec_methodName = '$methodName';
-    }
-
-    $combinedTemplateMethods
-}
-PHP;
-                    try {
-                        eval($template);
-                    } catch (Throwable) {
-                        $className = null;
-                    }
-                }
-            }
-
-            // for methods with no return type (and not union/intersection), generate a MatchableDouble wrapper
-            if ($returnedType === null && $depth === 0) {
-                $className = 'MockedMethodFor' . $wrapperSuffix;
-                $template = <<<PHP
-class $className implements \PhpSpec\Mock\MatchableDouble {
-    use \PhpSpec\Mock\MatchableDoubleBehaviour;
-
-    public function __construct(object \$mockedObject) {
-        \$this->______phpspec_mockedObject = \$mockedObject;
-        \$this->______phpspec_methodName = '$methodName';
-    }
-}
-PHP;
-                eval($template);
-            }
+            $wrapperSuffix = ucfirst($methodName) . '_' . substr(md5($owner . '::' . $methodName), 0, 8) . '_' . uniqid();
+            [$className, $refusedReturn, $answerTypes] = match (true) {
+                $contract->noValue !== null, self::isNullableBuiltIn($returnedType) => [null, null, []],
+                $returnedType === null => [Answers::untypedClass($methodName, $wrapperSuffix), null, []],
+                default => Answers::classFor($returnedType, $methodName, $wrapperSuffix),
+            };
 
             $return = '';
-            if ($isNullable && $simpleReturnName !== 'mixed' && !isset($className)) {
-                // Nullable types can just return null, clear mock state
-                $return = '\\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return null;';
-            } elseif ($isCompoundType && !isset($className)) {
-                // Union/intersection types: return null if nullable, else pick simplest
-                if ($returnedType instanceof ReflectionUnionType) {
-                    $return = self::getUnionReturnCode($returnedType);
-                } else {
-                    $return = 'return null;';
-                }
-            } elseif (isset($className)) {
-                $return = 'return new \\' . $className . '($this);';
+            if ($contract->noValue !== null) {
+                $return = 'throw new \\LogicException(' . var_export($contract->noValue, true) . ');';
+            } elseif ($className !== null && $answerTypes !== []) {
+                $return = sprintf('$__ret = $this->______phpspec_lenient ? \\PhpSpec\\Mock\\Answers::dummy($this, %s, %s) : (new \\ReflectionClass(\\%s::class))->newInstanceWithoutConstructor()->______PhpSpecStandFor($this); return $__ret;', var_export($methodName, true), var_export($answerTypes, true), $className);
+            } elseif ($className !== null) {
+                $return = sprintf('$__ret = (new \\ReflectionClass(\\%s::class))->newInstanceWithoutConstructor()->______PhpSpecStandFor($this); return $__ret;', $className);
+            } elseif ($isNullable && $simpleReturnName !== 'mixed') {
+                $return = self::returning('null');
+            } elseif ($refusedReturn !== null && $returnedType !== null) {
+                $return = self::refusedReturnCode($owner, $methodName, (string) $returnedType, $refusedReturn);
+            } elseif ($returnedType instanceof ReflectionUnionType) {
+                $return = self::getUnionReturnCode($returnedType);
+            } elseif ($returnedType instanceof ReflectionIntersectionType) {
+                $return = self::returning('null');
             } elseif ($isEnum) {
-                $return = "return \\{$simpleReturnName}::cases()[0];";
+                $return = "\$__ret = \\{$simpleReturnName}::cases()[0]; return \$__ret;";
             } elseif ($simpleReturnName !== null) {
                 $return = self::getBuiltinReturnCode($simpleReturnName)
-                    ?? self::placeholderReturnCode($reflectionClass->getName(), $methodName, $simpleReturnName, $depth === 0);
+                    ?? self::placeholderReturnCode($owner, $methodName, $simpleReturnName);
             }
 
             $guard = '';
-            if ($depth === 0 && $simpleReturnName !== 'never') {
+            if ($simpleReturnName !== 'never') {
                 $guard = "if (\$__match === null) { \$this->______PhpSpecHoldUnlessExpected('$methodName', \$__args, \$__frame); }";
             }
 
             $stubCheck = '';
-            $throwCheck = '';
             if ($simpleReturnName === 'void') {
-                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
+                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made);"
                     . " if (\$__match !== null && \$__match['type'] === 'withheld') { \\PhpSpec\\Mock\\Expectation::\$withheld = \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); \$__match = null; }"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { (\$__match['data'])(...\$__args); }"
+                    . " if (\$__match['type'] === 'callback') { (\$__match['data'])(...$callWith); }"
                     . ' \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
             } elseif ($simpleReturnName !== 'never') {
-                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made ?? true);"
+                $stubCheck = "\$__match = \\PhpSpec\\Mock\\ArgumentMatcher::among(\$__args) ? null : \$this->______PhpSpecStubs()->answer('$methodName', \$__args, \$__made);"
                     . " if (\$__match !== null && \$__match['type'] === 'withheld') { \\PhpSpec\\Mock\\Expectation::\$withheld = \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); \$__match = null; }"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { \$__ret = (\$__match['data'])(...\$__args); $holdAnswer \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
+                    . " if (\$__match['type'] === 'callback') { $called $holdAnswer \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; }"
                     . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 
+            $byReference = $contract->byReference ? '&' : '';
+            $returnTypeCode = $contract->returnCode;
+
             // put it all together
             $mockMethods[] = <<<PHP
-    public function $methodName($paramString)$returnedTypeSyntax {
+    public function {$byReference}$methodName($paramString)$returnTypeCode {
+        $defaults
         $hold
+        $named
         \$__args = $arguments;
+        $passing
         \$this->______PhpSpecWasCalledWith('$methodName', \$__args);
         $stubCheck
         $guard
@@ -938,5 +750,28 @@ PHP;
         }
 
         return implode("\n", $mockMethods);
+    }
+
+    /**
+     * What a double of the types is built on, and the methods it defines; or
+     * why no class can be the types.
+     *
+     * @param non-empty-list<ReflectionClass<object>> $types a class first, if any, then interfaces
+     * @param list<string>|null $emptyIteratorAfter when the double answers a dummy aggregate's getIterator(), the combinations of types being iterated already; null otherwise
+     * @param bool $iterated whether the double iterates by itself, where one that refuses every call never does
+     * @return array{0: NativeBase|null, 1: MethodSet|null, 2: string|null}
+     */
+    public static function planOf(array $types, ?array $emptyIteratorAfter = null, bool $iterated = true): array
+    {
+        $interfaces = array_values(array_filter($types, static fn(ReflectionClass $type): bool => $type->isInterface()));
+        $base = $interfaces === [] && $emptyIteratorAfter === null ? null : new NativeBase($interfaces, self::refusedBy(), $types[0]->isInterface() ? null : $types[0], [], $emptyIteratorAfter);
+
+        if ($base?->refusal($iterated) !== null) {
+            return [null, null, $base->refusal($iterated)];
+        }
+
+        $methods = MethodSet::of($types, $base);
+
+        return $methods->refusal === null ? [$base, $methods, null] : [null, null, $methods->refusal];
     }
 }

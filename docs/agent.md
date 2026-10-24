@@ -144,7 +144,9 @@ the call the spec wanted with the calls the double received, arguments included:
 
 `arguments` are the ones the expectation was written with, `[]` for a call
 written with none, and an argument matcher reads as it was written: `any()`,
-`cetera()`, `type(string)`, `anInstanceOf(App\Task)`.
+`cetera()`, `type(string)`, `anInstanceOf(App\Task)`. A named argument a
+variadic parameter collected keeps its name, so a call written
+`log('hi', user: 'ann')` reads `{"0": "hi", "user": "ann"}`.
 
 A **story step** that failed an expectation reports the same block, on the step
 inside `steps` (with `at`, the `file:line` of the expectation in your step file)
@@ -298,8 +300,9 @@ tests, it leaves the exit code at `0`.
 
 A run that never started (a missing bootstrap, an unknown format, a config that
 cannot be taken, an option `run` does not take or one missing its value), that
-was narrowed by `--filter`, `--tags` or paths to nothing at all, or that died
-partway (a parse error, a class that fails to compile) still answers. It emits a
+was narrowed by `--filter`, `--tags` or paths to nothing at all, that died
+partway (a parse error, a class that fails to compile), or whose coverage is
+incomplete because a parallel worker never handed its part over, still answers. It emits a
 `fatal` line of `{ "message", "at", "remedy"? }`, keeps whatever it managed to
 collect, and counts 1 in `actionable`. `remedy` is present when the way past is
 known: a run that wanted coverage and found no engine on gets the same command

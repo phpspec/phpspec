@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Parallel;
 
+use PhpSpec\Process\ChildPhp;
 use PhpSpec\Results;
 use PhpSpec\StopConditions;
 
@@ -32,6 +33,9 @@ final class ParallelRunner
     /** @var array<int, string> partial coverage state files assigned to workers */
     private array $coveragePartials = [];
 
+    /** @var list<WorkerProcess> */
+    private array $processes = [];
+
     /**
      * @param string[] $paths spec file paths to run
      * @param int|null $workers number of worker processes (null = auto-detect CPU count)
@@ -41,7 +45,7 @@ final class ParallelRunner
      * @param list<string> $childOptions the options the run was started with that set up the project, forwarded to every worker
      * @param string|null $filter the title filter to forward to workers
      * @param string|null $tags the tag expression to forward to workers
-     * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off
+     * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off, after the settings it takes from this process
      */
     public function __construct(
         private readonly array $paths,
@@ -70,6 +74,17 @@ final class ParallelRunner
     }
 
     /**
+     * Why the coverage of each worker that never handed it over was lost, once
+     * the stream has been fully consumed.
+     *
+     * @return list<string>
+     */
+    public function lostCoverage(): array
+    {
+        return array_values(array_filter(array_map(static fn(WorkerProcess $process): ?string => $process->lostCoverage(), $this->processes)));
+    }
+
+    /**
      * Yields results as they complete from worker processes.
      *
      * @return \Generator<Results>
@@ -80,6 +95,7 @@ final class ParallelRunner
             return;
         }
 
+        $phpOptions = [...(new ChildPhp())->options(), ...$this->phpOptions];
         $workerCount = min($this->workers, count($this->paths));
         $partitions = array_fill(0, $workerCount, []);
         foreach ($this->paths as $i => $path) {
@@ -98,8 +114,9 @@ final class ParallelRunner
                 $this->coveragePartials[] = $coveragePartial;
             }
 
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $this->phpOptions);
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions);
             $processes[] = $process;
+            $this->processes[] = $process;
 
             $fiber = new \Fiber(function () use ($process) {
                 $process->start();
@@ -176,5 +193,4 @@ final class ParallelRunner
         $resolved = realpath($argv0);
         return $resolved !== false ? $resolved : $argv0;
     }
-
 }

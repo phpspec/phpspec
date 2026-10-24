@@ -298,6 +298,28 @@ describe(Loader::class, function () {
         }
     });
 
+    it("loads a steps file once for every feature path it is given, so a function it declares is declared once", function () {
+        $root = sys_get_temp_dir() . '/phpspec_loader_twice_' . uniqid();
+        $function = 'loader_twice_' . uniqid();
+        mkdir($root . '/features/a', 0777, true);
+        mkdir($root . '/features/b', 0777, true);
+        mkdir($root . '/features/steps', 0777, true);
+        file_put_contents($root . '/features/a/one.feature', "Feature: One\n  Scenario: First\n    Given a shared step\n");
+        file_put_contents($root . '/features/b/two.feature', "Feature: Two\n  Scenario: Second\n    Given a shared step\n");
+        file_put_contents($root . '/features/steps/shared.steps.php', "<?php\nfunction {$function}(): bool { return true; }\ngiven('a shared step', function () { expect({$function}())->toBeTrue(); });\n");
+
+        try {
+            $suite = (new Loader(featuresPath: $root . '/features'))->load($root . '/features/a,' . $root . '/features/b');
+
+            foreach ($suite->getSpecifications() as $feature) {
+                expect($feature->run()->getResults()[0]->getResults()[0]->isPassed())->toBeTrue();
+            }
+            expect($suite->getSpecifications())->toHaveCount(2);
+        } finally {
+            exec('rm -rf ' . escapeshellarg($root));
+        }
+    });
+
     it("finds step definitions anywhere under the features root", function () {
         $root = sys_get_temp_dir() . '/phpspec_loader_root_' . uniqid();
         mkdir($root . '/features/checkout', 0777, true);

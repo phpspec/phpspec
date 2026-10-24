@@ -4,6 +4,7 @@ use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Mock\UnexpectedCallException;
+use PhpSpec\ProjectRoot;
 
 interface DoubleSpecContract {
     public function doSomething(): string;
@@ -37,8 +38,24 @@ interface DoubleSpecTill {
 define('DOUBLE_SPEC_OUTSIDER', sys_get_temp_dir() . '/phpspec_double_spec_outsider_' . getmypid() . '.php');
 if (!function_exists('double_spec_outsider_reserves')) {
     register_shutdown_function(static fn() => @unlink(DOUBLE_SPEC_OUTSIDER));
-    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\nfunction double_spec_outsider_greets(object \$double) { return \$double->greet(); }\n");
+    file_put_contents(DOUBLE_SPEC_OUTSIDER, "<?php\nfunction double_spec_outsider_reserves(object \$stock) { return \$stock->reserve('tea', 2); }\nfunction double_spec_outsider_reserves_nothing(object \$stock) { return \$stock->reserve(); }\nfunction double_spec_outsider_pays(object \$till, int \$amount, string ...\$currency) { return \$till->pay(\$amount, ...\$currency); }\nfunction double_spec_outsider_reserves_with(object \$stock, mixed ...\$arguments) { return \$stock->reserve(...\$arguments); }\nfunction double_spec_outsider_finds(object \$till, int \$id) { return \$till->find(\$id); }\nfunction double_spec_outsider_greets(object \$double) { return \$double->greet(); }\nfunction double_spec_outsider_reads(object \$book) { return \$book->first()->next()->title(); }\nfunction double_spec_outsider_calls(object \$double, string \$method) { return \$double->\$method(); }\n");
     require DOUBLE_SPEC_OUTSIDER;
+}
+
+define('DOUBLE_SPEC_FILE', ProjectRoot::here()->relative(__FILE__));
+
+// The message of what the call throws.
+if (!function_exists('double_spec_refusal')) {
+    function double_spec_refusal(Closure $call): string
+    {
+        try {
+            $call();
+        } catch (LogicException $e) {
+            return $e->getMessage();
+        }
+
+        return '';
+    }
 }
 
 // The same, in a file that declares strict types.
@@ -212,21 +229,6 @@ interface DoubleSpecIntersectionReturn {
     public function get(): DoubleSpecIntersectA&DoubleSpecIntersectB;
 }
 
-interface DoubleSpecDeep4 {
-    public function leaf(): string;
-}
-interface DoubleSpecDeep3 {
-    public function next(): DoubleSpecDeep4;
-}
-interface DoubleSpecDeep2 {
-    public function next(): DoubleSpecDeep3;
-}
-interface DoubleSpecDeep1 {
-    public function next(): DoubleSpecDeep2;
-}
-interface DoubleSpecDeepRoot {
-    public function next(): DoubleSpecDeep1;
-}
 
 class DoubleSpecOptionalParam {
     public function __construct(private string $required, private string $optional = 'default') {}
@@ -255,8 +257,98 @@ final class DoubleSpecFinalClass {
     public function greet(): string { return 'hello'; }
 }
 
+final readonly class DoubleSpecFinalReadonlyClass {}
 readonly class DoubleSpecReadonlyClass {
     public function __construct(public string $name) {}
+}
+
+interface DoubleSpecByReference {
+    public function set(array &$mapping): void;
+    public function fill(&...$slots): int;
+    public function &all(): array;
+    public function &maybe(): ?array;
+    public function &anything(): mixed;
+    public function &status(): DoubleSpecStatus;
+    public function &contract(): DoubleSpecContract;
+    public function &loose();
+    public function &either(): int|string;
+    public function &orNull(): int|string|null;
+    public function take(int &$value): mixed;
+    public function log(string $message, int ...$context): void;
+}
+
+class DoubleSpecHolder {
+    public function &get(): array { static $held = []; return $held; }
+}
+
+class DoubleSpecUsesHolder {
+    public function __construct(private DoubleSpecHolder $holder) {}
+}
+
+class DoubleSpecClock {
+    public function __construct(public int $at = 0) {}
+}
+
+interface DoubleSpecNewDefault {
+    public function at(DoubleSpecClock $clock = new DoubleSpecClock(), array $clocks = [new DoubleSpecClock(5)]): int;
+    public function maybe(?DoubleSpecClock $clock = new DoubleSpecClock(9), int $mode = 0): ?int;
+}
+
+interface DoubleSpecBag extends \Traversable {}
+interface DoubleSpecFailure extends \Throwable {}
+interface DoubleSpecMoment extends \DateTimeInterface {}
+interface DoubleSpecLabelled extends \UnitEnum {}
+interface DoubleSpecPayload extends \Serializable {}
+interface DoubleSpecSized {
+    public function size(): int;
+}
+interface DoubleSpecNativeSource {
+    public function bag(): DoubleSpecBag;
+    public function failure(): DoubleSpecFailure;
+    public function moment(): DoubleSpecMoment;
+    public function label(): DoubleSpecLabelled;
+    public function counted(): DoubleSpecBag&DoubleSpecSized;
+    public function name(): string;
+}
+interface DoubleSpecNarrowBag extends \Traversable {
+    public function getIterator(): \ArrayIterator;
+}
+interface DoubleSpecHalfPayload extends \Serializable {
+    public function __unserialize(array $data): void;
+}
+interface DoubleSpecNarrowFailure extends \Throwable {
+    public function getPrevious(): ?DoubleSpecNarrowFailure;
+}
+interface DoubleSpecShortPut {
+    public function put(string $key): int;
+}
+interface DoubleSpecLongPut {
+    public function put(string $key, string $value = 'none'): int|string;
+}
+interface DoubleSpecFillByValue {
+    public function fill(array $slots);
+}
+interface DoubleSpecFillByReference {
+    public function fill(array &$slots);
+}
+interface DoubleSpecPutSource {
+    public function puts(): DoubleSpecShortPut&DoubleSpecLongPut;
+    public function fills(): DoubleSpecFillByValue&DoubleSpecFillByReference;
+    public function count(): int;
+}
+interface DoubleSpecPage {
+    public function title(): string;
+    public function next(): DoubleSpecPage;
+    public function line(int $number): string;
+    public function price(): DoubleSpecCoin;
+}
+interface DoubleSpecNumbered {
+    public function number(): int;
+}
+interface DoubleSpecBook {
+    public function first(): DoubleSpecPage;
+    public function numbered(): DoubleSpecPage&DoubleSpecNumbered;
+    public function either(): DoubleSpecCoin|DoubleSpecPage;
 }
 
 describe(Double::class, function() {
@@ -269,6 +361,414 @@ describe(Double::class, function() {
     it("creates a double of a class", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         expect($double)->toBeAnInstanceOf(DoubleSpecClass::class);
+    });
+
+    context("a method that takes or returns by reference, or defaults to what only runs", function () {
+        it("stands in for an argument taken by reference, a variadic one among them", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $map = ['version' => 1];
+            $slot = 1;
+
+            $double->set($map);
+
+            expect($double->fill($slot))->toBe(0);
+        });
+
+        it("returns by reference on every path without a notice", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $raised = [];
+            set_error_handler(function (int $level, string $message) use (&$raised): bool {
+                $raised[] = $message;
+
+                return true;
+            });
+
+            try {
+                $double->all();
+                $double->maybe();
+                $double->anything();
+                $double->status();
+                $double->contract();
+                $double->loose();
+                $double->either();
+                $double->orNull();
+            } finally {
+                restore_error_handler();
+            }
+
+            expect($raised)->toBe([]);
+        });
+
+        it("doubles a class returning by reference, and a class that takes one in its constructor", function () {
+            expect(Double::getInstance(DoubleSpecHolder::class)->get())->toBe([]);
+            expect(Double::getInstance(DoubleSpecUsesHolder::class))->toBeAnInstanceOf(DoubleSpecUsesHolder::class);
+        });
+
+        it("hands a callback each default built with new, built afresh on each call", function () {
+            $double = Double::getInstance(DoubleSpecNewDefault::class);
+            $seen = [];
+            allow($double->at())->toReturnUsing(function (DoubleSpecClock $clock, array $clocks) use (&$seen): int {
+                $seen[] = $clock;
+
+                return $clock->at + $clocks[0]->at;
+            });
+
+            expect($double->at())->toBe(5);
+            expect($double->at())->toBe(5);
+            expect($seen[0])->not()->toBe($seen[1]);
+        });
+
+        it("builds a default left out before a named argument, and keeps a null given for it", function () {
+            $double = Double::getInstance(DoubleSpecNewDefault::class);
+            allow($double->maybe(any(), any()))->toReturnUsing(fn(?DoubleSpecClock $clock, int $mode): ?int => $clock === null ? null : $clock->at + $mode);
+
+            expect($double->maybe(mode: 1))->toBe(10);
+            expect($double->maybe(null, 1))->toBeNull();
+        });
+
+        it("writes back through an argument a callback takes by reference", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = any();
+            allow($double->set($anything))->toReturnUsing(function (array &$mapping): void {
+                $mapping['seen'] = true;
+            });
+            $mapping = [];
+
+            $double->set($mapping);
+
+            expect($mapping)->toBe(['seen' => true]);
+        });
+
+        it("writes back through each argument a by-reference variadic takes", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = cetera();
+            allow($double->fill($anything))->toReturnUsing(function (&...$slots): int {
+                foreach ($slots as &$slot) {
+                    $slot++;
+                }
+
+                return count($slots);
+            });
+            $first = 1;
+            $second = 2;
+
+            expect($double->fill($first, $second))->toBe(2);
+            expect([$first, $second])->toBe([2, 3]);
+        });
+
+        it("hands back the reference a callback returns by reference", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $store = ['a' => 1];
+            allow($double->all())->toReturnUsing(function &() use (&$store): array {
+                return $store;
+            });
+
+            $all = &$double->all();
+            $all['b'] = 2;
+
+            expect($store)->toBe(['a' => 1, 'b' => 2]);
+        });
+
+        it("converts a scalar it takes by reference, for the callback and the caller, as PHP does", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = any();
+            allow($double->take($anything))->toReturnUsing(fn($value) => $value);
+            $value = '7';
+
+            expect($double->take($value))->toBe(7);
+            expect($value)->toBe(7);
+        });
+
+        it("records the named arguments a variadic collects, held to its type", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+
+            $double->log('hi', user: '7');
+
+            expect($double->log('hi', user: 7))->toHaveBeenCalled();
+            expect($double->log('hi', user: 8))->not()->toHaveBeenCalled();
+            expect($double->log('hi', 7))->not()->toHaveBeenCalled();
+        });
+
+        it("hands a callback the named arguments a by-reference variadic collects, as references", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = cetera();
+            allow($double->fill($anything))->toReturnUsing(function (&...$slots): int {
+                foreach ($slots as &$slot) {
+                    $slot++;
+                }
+
+                return count($slots);
+            });
+            $first = 1;
+            $second = 2;
+
+            expect($double->fill($first, second: $second))->toBe(2);
+            expect([$first, $second])->toBe([2, 3]);
+        });
+
+        it("records the named arguments a by-reference variadic collects as they were when the call was made", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $anything = cetera();
+            allow($double->fill($anything))->toReturnUsing(function (&...$slots): int {
+                foreach ($slots as &$slot) {
+                    $slot = 9;
+                }
+
+                return 0;
+            });
+            $value = 1;
+
+            $double->fill(first: $value);
+            $value = 2;
+
+            $one = 1;
+            expect($double->fill(first: $one))->toHaveBeenCalled();
+        });
+
+        it("keeps a stub declared with a named by-reference argument to the value it was declared with", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            $pattern = 1;
+            allow($double->fill(first: $pattern))->toReturn(5);
+            $pattern = 2;
+
+            $one = 1;
+            expect($double->fill(first: $one))->toBe(5);
+        });
+
+        it("hands back a copy of a value stubbed with toReturn, never the value itself", function () {
+            $double = Double::getInstance(DoubleSpecByReference::class);
+            allow($double->all())->toReturn(['a' => 1]);
+
+            $all = &$double->all();
+            $all['b'] = 2;
+
+            expect($double->all())->toBe(['a' => 1]);
+        });
+
+        if (PHP_VERSION_ID >= 80500) {
+            it("hands a callback a default closure", function () {
+                if (!interface_exists('DoubleSpecClosureDefault')) {
+                    eval('interface DoubleSpecClosureDefault { public function run(\\Closure $then = static function (): int { return 9; }): int; }');
+                }
+                $double = Double::getInstance('DoubleSpecClosureDefault');
+
+                allow($double->run())->toReturnUsing(fn(\Closure $then): int => $then());
+
+                expect($double->run())->toBe(9);
+            });
+        }
+    });
+
+    context("an interface built on one PHP lets no plain class implement", function () {
+        it("is an IteratorAggregate when built on Traversable, iterating as stubbed or empty", function () {
+            $bag = Double::getInstance(DoubleSpecBag::class);
+            allow($bag->getIterator())->toReturn(new ArrayIterator([1, 2]));
+
+            expect(iterator_to_array($bag))->toBe([1, 2]);
+            expect(iterator_to_array(dummy(DoubleSpecBag::class)))->toBe([]);
+        });
+
+        it("is an Exception when built on Throwable, keeping what Exception declares final", function () {
+            $failure = Double::getInstance(DoubleSpecFailure::class);
+
+            expect($failure)->toBeAnInstanceOf(Exception::class);
+            expect($failure->getMessage())->toBe('');
+            expect(fn() => throw $failure)->toThrow(DoubleSpecFailure::class);
+        });
+
+        it("is a DateTimeImmutable when built on DateTimeInterface, its methods stubbed", function () {
+            $moment = Double::getInstance(DoubleSpecMoment::class);
+            allow($moment->format('Y'))->toReturn('2026');
+
+            expect($moment)->toBeAnInstanceOf(DateTimeImmutable::class);
+            expect($moment->format('Y'))->toBe('2026');
+        });
+
+        it("refuses one only an enum can implement, saying why", function () {
+            expect(fn() => Double::getInstance(DoubleSpecLabelled::class))
+                ->toThrow(LogicException::class, 'Cannot create a test double for interface DoubleSpecLabelled. Only an enum can implement UnitEnum.');
+        });
+
+        it("stands in for each as a return type, refusing the enum-only one only when it is called", function () {
+            $source = dummy(DoubleSpecNativeSource::class);
+
+            expect($source->bag())->toBeAnInstanceOf(DoubleSpecBag::class);
+            expect($source->failure())->toBeAnInstanceOf(DoubleSpecFailure::class);
+            expect($source->moment())->toBeAnInstanceOf(DoubleSpecMoment::class);
+            expect($source->counted())->toBeAnInstanceOf(DoubleSpecSized::class);
+            expect($source->name())->toBe('');
+            expect(fn() => $source->label())
+                ->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of DoubleSpecNativeSource::label(): no double of DoubleSpecLabelled can be made. Only an enum can implement UnitEnum.');
+        });
+
+        it("doubles one built on Serializable without the deprecation", function () {
+            $raised = [];
+            set_error_handler(function (int $level, string $message) use (&$raised): bool {
+                $raised[] = $message;
+
+                return true;
+            });
+
+            try {
+                Double::getInstance(DoubleSpecPayload::class);
+            } finally {
+                restore_error_handler();
+            }
+
+            expect($raised)->toBe([]);
+        });
+    });
+
+    context("what a call nobody stubbed answers, of a class or interface", function () {
+        it("is of that type, refusing to be used, naming the call it answered", function () {
+            $page = Double::getInstance(DoubleSpecBook::class)->first();
+
+            expect($page)->toBeAnInstanceOf(DoubleSpecPage::class);
+            expect(double_spec_refusal(fn() => $page->line(3)))->toBe(sprintf('DoubleSpecPage::line(3) was called on what DoubleSpecBook::first() answered, at %s:%d. Stub DoubleSpecBook::first().', DOUBLE_SPEC_FILE, __LINE__));
+        });
+
+        it("is of every type an intersection names, each refusing to be used", function () {
+            $numbered = Double::getInstance(DoubleSpecBook::class)->numbered();
+
+            expect(double_spec_refusal(fn() => $numbered->number()))->toContain('DoubleSpecNumbered::number() was called on what DoubleSpecBook::numbered() answered');
+            expect(double_spec_refusal(fn() => $numbered->title()))->toContain('DoubleSpecPage::title() was called on what DoubleSpecBook::numbered() answered');
+        });
+
+        it("is of the first type of a union that can have one", function () {
+            expect(double_spec_refusal(fn() => Double::getInstance(DoubleSpecBook::class)->either()->title()))->toContain('DoubleSpecPage::title() was called on what DoubleSpecBook::either() answered');
+        });
+    });
+
+    context("what a dummy answers of a class or interface", function () {
+        it("is a dummy of it, so a chain is answered with defaults at any depth", function () {
+            $page = dummy(DoubleSpecBook::class)->first();
+
+            expect($page)->toBeAnInstanceOf(DoubleSpecPage::class);
+            expect($page->next()->next()->line(3))->toBe('');
+        });
+
+        it("is a dummy of every type an intersection names", function () {
+            $numbered = dummy(DoubleSpecBook::class)->numbered();
+
+            expect($numbered->number())->toBe(0);
+            expect($numbered->title())->toBe('');
+        });
+
+        it("is a dummy of the first type of a union that can have one", function () {
+            expect(dummy(DoubleSpecBook::class)->either()->title())->toBe('');
+        });
+
+        it("refuses a stub or an expectation, naming the call a mock() should answer instead", function () {
+            $page = dummy(DoubleSpecBook::class)->first();
+            $refusal = 'DoubleSpecPage::next() was %s on what dummy DoubleSpecBook::first() answered. Use mock() instead of dummy() and stub DoubleSpecBook::first().';
+
+            expect(double_spec_refusal(fn() => allow($page->next())))->toBe(sprintf($refusal, 'stubbed'));
+            expect(double_spec_refusal(fn() => $page->next()->toReturn(dummy(DoubleSpecPage::class))))->toBe(sprintf($refusal, 'stubbed'));
+            expect(double_spec_refusal(fn() => expect($page->next())->toReturn(dummy(DoubleSpecPage::class))))->toBe(sprintf($refusal, 'stubbed'));
+            expect(double_spec_refusal(fn() => expect($page->next())->toBeCalled()))->toBe(sprintf($refusal, 'expected'));
+            expect(double_spec_refusal(fn() => expect($page->next())->toHaveBeenCalled()))->toBe(sprintf($refusal, 'checked'));
+        });
+
+        it("names the chain that led to it, and the first call of it as the one to stub", function () {
+            $deeper = dummy(DoubleSpecBook::class)->first()->next();
+
+            expect(double_spec_refusal(fn() => allow($deeper->title())))->toBe('DoubleSpecPage::title() was stubbed on what dummy DoubleSpecBook::first()->next() answered. Use mock() instead of dummy() and stub DoubleSpecBook::first().');
+            expect($deeper->price())->toBeAnInstanceOf(DoubleSpecCoin::class);
+            expect(double_spec_refusal(fn() => double_spec_outsider_calls($deeper, 'price')))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecPage::price(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecBook::first().');
+        });
+
+        it("names a mock that ignores others as the double to stub the first call of the chain on", function () {
+            $book = Double::getInstance(DoubleSpecBook::class);
+            $book->______PhpSpecBeLenient();
+
+            expect(double_spec_refusal(fn() => allow($book->first()->title())))->toBe('DoubleSpecPage::title() was stubbed on what dummy DoubleSpecBook::first() answered. Stub DoubleSpecBook::first() with a mock() instead.');
+        });
+    });
+
+    context("a dummy", function () {
+        it("refuses a stub or an expectation on any method", function () {
+            $book = dummy(DoubleSpecBook::class);
+            $stock = dummy(DoubleSpecStock::class);
+            $refusal = '%s() was %s on a dummy. Use mock() instead of dummy().';
+
+            expect(double_spec_refusal(fn() => allow($stock->reserve('tea', 2))->toReturn(true)))->toBe(sprintf($refusal, 'DoubleSpecStock::reserve', 'stubbed'));
+            expect(double_spec_refusal(fn() => allow($book->first())))->toBe(sprintf($refusal, 'DoubleSpecBook::first', 'stubbed'));
+            expect(double_spec_refusal(fn() => $book->first()->toReturn(dummy(DoubleSpecPage::class))))->toBe(sprintf($refusal, 'DoubleSpecBook::first', 'stubbed'));
+            expect(double_spec_refusal(fn() => expect($stock->reserve('tea', 2))->toBeCalled()))->toBe(sprintf($refusal, 'DoubleSpecStock::reserve', 'expected'));
+            expect(double_spec_refusal(fn() => expect($book->first())->toHaveBeenCalled()))->toBe(sprintf($refusal, 'DoubleSpecBook::first', 'checked'));
+        });
+
+        it("still has what it answered judged as any value", function () {
+            expect(dummy(DoubleSpecStock::class)->reserve('tea', 2))->toBeFalse();
+        });
+
+        it("says to use mock() instead when it cannot stand in for a final return type the code under spec calls", function () {
+            expect(dummy(DoubleSpecMachine::class)->coin())->toBeAnInstanceOf(DoubleSpecCoin::class);
+            expect(double_spec_refusal(fn() => double_spec_outsider_calls(dummy(DoubleSpecMachine::class), 'coin')))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecMachine::coin(): DoubleSpecCoin is final, so no double of it can be made. Use mock() instead of dummy() and stub DoubleSpecMachine::coin().');
+        });
+    });
+
+    context("types declaring one method differently", function () {
+        it("doubles an interface narrowing the getIterator() its base brings", function () {
+            $bag = Double::getInstance(DoubleSpecNarrowBag::class);
+            allow($bag->getIterator())->toReturn(new ArrayIterator([1]));
+
+            expect(iterator_to_array($bag))->toBe([1]);
+            expect(fn() => allow($bag->getIterator())->toReturn(new EmptyIterator()))->toThrow(LogicException::class, 'DoubleSpecNarrowBag::getIterator() returns ArrayIterator, so it cannot return EmptyIterator.');
+        });
+
+        it("doubles a Serializable interface declaring one of the methods its base brings", function () {
+            expect(Double::getInstance(DoubleSpecHalfPayload::class))->toBeAnInstanceOf(DoubleSpecHalfPayload::class);
+        });
+
+        it("refuses at once a double no class can be", function () {
+            expect(fn() => Double::getInstance(DoubleSpecNarrowFailure::class))->toThrow(LogicException::class, 'Cannot create a test double for interface DoubleSpecNarrowFailure. DoubleSpecNarrowFailure::getPrevious() narrows a method Exception declares final.');
+        });
+
+        it("answers with a double taking every call each declaration takes, and holds what it returns to every one of them", function () {
+            $puts = dummy(DoubleSpecPutSource::class)->puts();
+            $stub = Double::getInstance(DoubleSpecPutSource::class)->puts();
+
+            expect($puts->put('cover'))->toBe(0);
+            expect($puts->put('cover', 'blue'))->toBe(0);
+            expect(double_spec_refusal(fn() => $stub->put('cover', 'blue')))->toContain('DoubleSpecShortPut::put("cover", "blue") was called on what DoubleSpecPutSource::puts() answered');
+        });
+
+        it("refuses only the call answering what no class can be", function () {
+            $source = dummy(DoubleSpecPutSource::class);
+
+            expect($source->count())->toBe(0);
+            expect(fn() => $source->fills())->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of DoubleSpecPutSource::fills(): no double of DoubleSpecFillByValue&DoubleSpecFillByReference can be made. DoubleSpecFillByValue::fill() takes $slots by value and DoubleSpecFillByReference::fill() takes $slots by reference.');
+        });
+    });
+
+    it("implements the built-in magic method an interface declares, and keeps one its base implements", function () {
+        expect((string) dummy(Stringable::class))->toBe('');
+        expect((string) dummy(DoubleSpecFailure::class))->toContain('DoubleSpecFailure');
+    });
+
+    it("answers a return type of a DOM interface whose node class keeps its constructor final", function () {
+        if (!interface_exists('Dom\\ParentNode')) {
+            skip('Dom\\ParentNode is a PHP 8.4 interface.');
+        }
+
+        eval('interface DoubleSpecParentSource { public function value(): \\Dom\\ParentNode; public function count(): int; }');
+        $parents = dummy('DoubleSpecParentSource');
+
+        expect($parents->count())->toBe(0);
+        expect($parents->value())->toBeAnInstanceOf('Dom\\ParentNode');
+    });
+
+    it("refuses only the call answering an interface PHP lets no user class implement", function () {
+        if (!interface_exists('Io\\Poll\\Handle')) {
+            skip('Io\\Poll\\Handle is a PHP 8.6 interface.');
+        }
+
+        eval('interface DoubleSpecHandleSource { public function value(): \\Io\\Poll\\Handle; public function count(): int; }');
+        $handles = mock('DoubleSpecHandleSource');
+
+        expect($handles->count())->toBe(0);
+        expect(fn() => $handles->value())->toThrow(LogicException::class);
     });
 
     it("tracks method calls", function() {
@@ -289,9 +789,20 @@ describe(Double::class, function() {
         expect($double->______PhpSpecNameOfClassDoubled())->toBe("\\DoubleSpecClass");
     });
 
-    it("auto-resolves constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecClassWithDeps::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecClassWithDeps::class);
+    it("doubles a class without running its constructor, whatever the constructor takes", function () {
+        $classes = [DoubleSpecClassWithDeps::class, DoubleSpecClassWithNullableDep::class, DoubleSpecClassWithEnumDep::class, DoubleSpecPrivateConstructor::class, DoubleSpecUntypedDep::class, DoubleSpecScalarDeps::class, DoubleSpecUnionDep::class, DoubleSpecIntersectionDep::class, DoubleSpecUnionClassDep::class, DoubleSpecOptionalParam::class, DoubleSpecThrowableDep::class, DoubleSpecUnionNullDep::class];
+
+        foreach ($classes as $class) {
+            expect(Double::getInstance($class))->toBeAnInstanceOf($class);
+        }
+    });
+
+    it("keeps the defaults a doubled class's properties declare, and leaves unset those its constructor sets", function () {
+        $double = Double::getInstance(DoubleSpecWithStackProperty::class);
+        $promoted = Double::getInstance(DoubleSpecClock::class);
+
+        expect((new ReflectionProperty(DoubleSpecWithStackProperty::class, 'stack'))->getValue($double))->toBe('');
+        expect((new ReflectionProperty(DoubleSpecClock::class, 'at'))->isInitialized($promoted))->toBeFalse();
     });
 
     it("is usable via the mock() function", function() {
@@ -368,20 +879,16 @@ describe(Double::class, function() {
         expect($machine->coin())->toBe($coin);
     });
 
-    it("says why a dummy cannot stand in for a final return type", function() {
+    it("says why a lenient double cannot stand in for a final return type the code under spec calls, still handing the spec's own call one to stub", function() {
         $machine = Double::getInstance(DoubleSpecMachine::class);
         $machine->______PhpSpecBeLenient();
+        $coin = new DoubleSpecCoin(5);
 
-        try {
-            $machine->coin();
-        } catch (\LogicException $e) {
-            expect($e->getMessage())->toContain('DoubleSpecCoin is final');
-            expect($e->getMessage())->toContain('allow()');
+        expect(double_spec_refusal(fn() => double_spec_outsider_calls($machine, 'coin')))->toBe('PhpSpec cannot stand in for the return type of DoubleSpecMachine::coin(): DoubleSpecCoin is final, so no double of it can be made. Stub the call with allow(), return an interface, or make the class non-final.');
 
-            return;
-        }
+        allow($machine->coin())->toReturn($coin);
 
-        expect(false)->toBeTrue();
+        expect(double_spec_outsider_calls($machine, 'coin'))->toBe($coin);
     });
 
     context("a call made from code outside the spec folder", function () {
@@ -452,6 +959,26 @@ describe(Double::class, function() {
             expect(double_spec_outsider_reserves($stock))->toBeFalse();
         });
 
+        it("refuses a chain nobody declared at its first call, before the use of what that call answered", function () {
+            $book = Double::getInstance(DoubleSpecBook::class);
+
+            expect(fn() => double_spec_outsider_reads($book))->toThrow(UnexpectedCallException::class);
+
+            expect(HeldCalls::take()?->getMessage())->toContain('DoubleSpecBook::first() was called but not expected');
+        });
+
+        it("holds the use of what a declared call answered, so code that catches it still fails", function () {
+            $book = Double::getInstance(DoubleSpecBook::class);
+            allow($book->first());
+
+            try {
+                double_spec_outsider_reads($book);
+            } catch (UnexpectedCallException) {
+            }
+
+            expect(HeldCalls::take()?->getMessage())->toContain('DoubleSpecPage::next() was called on what DoubleSpecBook::first() answered, at ' . str_replace('\\', '/', realpath(DOUBLE_SPEC_OUTSIDER)));
+        });
+
         it("answers every call with a default once made lenient", function () {
             $stock = Double::getInstance(DoubleSpecStock::class);
             $stock->______PhpSpecBeLenient();
@@ -517,21 +1044,10 @@ describe(Double::class, function() {
         expect($result)->toBe('');
     });
 
-    it("auto-resolves nullable constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecClassWithNullableDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecClassWithNullableDep::class);
-    });
-
     it("handles enum return types", function() {
         $double = Double::getInstance(DoubleSpecEnumContract::class);
         $result = $double->getStatus();
         expect($result)->toBe(DoubleSpecStatus::Active);
-    });
-
-    it("auto-resolves enum constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecClassWithEnumDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecClassWithEnumDep::class);
-        expect($double->getStatus())->toBe(DoubleSpecStatus::Active);
     });
 
     it("throws when mock() is called with non-existent class", function() {
@@ -563,26 +1079,6 @@ describe(Double::class, function() {
         $double = Double::getInstance(DoubleSpecMagic::class);
 
         expect(fn() => $double->anything())->not()->toThrow();
-    });
-
-    it("handles private constructor", function() {
-        $double = Double::getInstance(DoubleSpecPrivateConstructor::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecPrivateConstructor::class);
-    });
-
-    it("handles untyped constructor parameter", function() {
-        $double = Double::getInstance(DoubleSpecUntypedDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUntypedDep::class);
-    });
-
-    it("handles scalar constructor dependencies", function() {
-        $double = Double::getInstance(DoubleSpecScalarDeps::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecScalarDeps::class);
-    });
-
-    it("handles union type constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecUnionDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUnionDep::class);
     });
 
     it("handles float return type", function() {
@@ -684,16 +1180,6 @@ describe(Double::class, function() {
         expect($double)->toBeAnInstanceOf(DoubleSpecMultiScalarReturn::class);
     });
 
-    it("handles intersection type constructor dependency", function() {
-        // The mock of a single interface won't satisfy A&B, so construction errors
-        expect(fn() => Double::getInstance(DoubleSpecIntersectionDep::class))->toThrow(\TypeError::class);
-    });
-
-    it("handles union class constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecUnionClassDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUnionClassDep::class);
-    });
-
     it("handles union return type with only classes (no scalars)", function() {
         $double = Double::getInstance(DoubleSpecClassUnionReturn::class);
         expect($double)->toBeAnInstanceOf(DoubleSpecClassUnionReturn::class);
@@ -707,26 +1193,6 @@ describe(Double::class, function() {
     it("handles intersection return type", function() {
         $double = Double::getInstance(DoubleSpecIntersectionReturn::class);
         expect($double)->toBeAnInstanceOf(DoubleSpecIntersectionReturn::class);
-    });
-
-    it("handles deep nesting hitting depth limit", function() {
-        $double = Double::getInstance(DoubleSpecDeepRoot::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecDeepRoot::class);
-    });
-
-    it("handles optional constructor parameters", function() {
-        $double = Double::getInstance(DoubleSpecOptionalParam::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecOptionalParam::class);
-    });
-
-    it("handles Throwable constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecThrowableDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecThrowableDep::class);
-    });
-
-    it("handles union-null syntax in constructor dependency", function() {
-        $double = Double::getInstance(DoubleSpecUnionNullDep::class);
-        expect($double)->toBeAnInstanceOf(DoubleSpecUnionNullDep::class);
     });
 
     it("stubs return using callback on interface-return method via allow()", function(DoubleSpecContract $dep) {
@@ -822,10 +1288,14 @@ describe(Double::class, function() {
         );
     });
 
-    it("refuses to double a readonly class the same way", function() {
+    it("refuses to double a readonly class, and a final readonly one, naming the ways out each has", function() {
         expect(fn() => Double::getInstance(DoubleSpecReadonlyClass::class))->toThrow(
             \LogicException::class,
-            "Cannot create a test double for readonly class DoubleSpecReadonlyClass. Extract an interface and type-hint against it, or make the class non-final.",
+            "Cannot create a test double for readonly class DoubleSpecReadonlyClass. Extract an interface and type-hint against it, or make the class not readonly.",
+        );
+        expect(fn() => Double::getInstance(DoubleSpecFinalReadonlyClass::class))->toThrow(
+            \LogicException::class,
+            "Cannot create a test double for final readonly class DoubleSpecFinalReadonlyClass. Extract an interface and type-hint against it, or make the class neither final nor readonly.",
         );
     });
 

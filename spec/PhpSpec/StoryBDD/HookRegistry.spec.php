@@ -85,6 +85,21 @@ describe(HookRegistry::class, function () {
         expect($calls)->toBe([]);
     });
 
+    it("adopts another registry's hooks after its own, in order", function () {
+        $hooks = new HookRegistry();
+        $other = new HookRegistry();
+        $order = [];
+        $hooks->addBeforeScenario(function () use (&$order) { $order[] = 'own'; });
+        $other->addBeforeScenario(function () use (&$order) { $order[] = 'adopted'; });
+        $other->addAfterStep(function () use (&$order) { $order[] = 'adopted after a step'; });
+
+        $hooks->adopt($other);
+        $hooks->runBeforeScenario(new StepWorld());
+        $hooks->runAfterStep(new StepWorld());
+
+        expect($order)->toBe(['own', 'adopted', 'adopted after a step']);
+    });
+
     it("runs multiple hooks in order", function () {
         $hooks = new HookRegistry();
         $order = [];

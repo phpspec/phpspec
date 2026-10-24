@@ -145,13 +145,6 @@ describe(Example::class, function() {
         expect($example->getMatches())->toHaveCount(0);
     });
 
-    it("tracks doubles", function() {
-        $example = new Example("doubles test", function() {});
-        $example->addDouble(new \stdClass());
-        // No getter for doubles, just ensure it doesn't error
-        expect($example)->toBeAnInstanceOf(Example::class);
-    });
-
     it("returns skipped result when closure throws SkippedException", function() {
         $example = new Example("skipped via skip()", function() {
             skip("not applicable");

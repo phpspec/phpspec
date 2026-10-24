@@ -2,7 +2,6 @@
 
 use PhpSpec\Console\Command\Run\CoverageReporter;
 use PhpSpec\Coverage\CoverageAdapter;
-use PhpSpec\Coverage\CoverageCollector;
 use PhpSpec\Coverage\CoverageDriver;
 use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
@@ -16,6 +15,17 @@ use PhpSpec\Filesystem;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(CoverageReporter::class, function () {
+
+    // The run's own collector, when coverage of this suite is being taken,
+    // is out of the way of these examples and put back after each.
+    beforeEach(function () {
+        $this->collecting = CoverageRegistry::collector();
+        CoverageRegistry::reset();
+    });
+
+    afterEach(function () {
+        $this->collecting === null ? CoverageRegistry::reset() : CoverageRegistry::activate($this->collecting);
+    });
 
     context('start', function () {
 
@@ -49,22 +59,39 @@ describe(CoverageReporter::class, function () {
             }
         });
 
-        // A whole-suite collection asks the engine itself, so this runs under
-        // the engine this process has, and never beside a live collection.
+        // Collecting asks the engine itself, so these run under the engine
+        // this process has, and never beside a live collection.
         $live = new LivePhpRuntime();
 
-        if ((new CoverageEngines(null, $live, ''))->inThisProcess(['src']) instanceof CoverageAdapter && !CoverageCollector::isCollecting()) {
+        if ((new CoverageEngines(null, $live, ''))->inThisProcess(['src']) instanceof CoverageAdapter && CoverageRegistry::collector() === null) {
 
-            it('starts a whole-suite collection with the engine this process has', function () use ($live) {
-                $output = new BufferedOutput();
+            it('collects inside each example with the engine this process has, crediting none', function () use ($live) {
                 $reporter = new CoverageReporter(new CoverageEngines(null, $live, ''));
 
                 expect($reporter->start(['src']))->toBeNull();
-                expect($reporter->adapter())->toBeAnInstanceOf(CoverageAdapter::class);
-                expect(CoverageCollector::isCollecting())->toBeTrue();
+                $collector = CoverageRegistry::collector();
+                $collector->beginSpec('spec/Probe.spec.php');
+                $collector->beginExample();
+                $collector->endExample('probes');
+                $reporter->report(new BufferedOutput(), new CoverageOptions(srcPath: 'src'));
 
-                $reporter->report($output, new CoverageOptions(srcPath: 'src'));
-                expect(CoverageCollector::isCollecting())->toBeFalse();
+                expect($reporter->adapter())->toBeAnInstanceOf(CoverageAdapter::class);
+                expect($reporter->hits())->not()->toBeEmpty();
+                expect($collector->getTests())->toBe([]);
+                expect(CoverageRegistry::collector())->toBeNull();
+            });
+
+            it('credits each example when asked to collect per example', function () use ($live) {
+                $reporter = new CoverageReporter(new CoverageEngines(null, $live, ''));
+
+                $reporter->start(['src'], perExample: true);
+                $collector = CoverageRegistry::collector();
+                $collector->beginSpec('spec/Probe.spec.php');
+                $collector->beginExample();
+                $collector->endExample('probes');
+                $reporter->report(new BufferedOutput(), new CoverageOptions(srcPath: 'src'));
+
+                expect($collector->getTests())->toHaveKey('spec/Probe.spec.php::probes');
             });
 
         }
@@ -161,7 +188,7 @@ describe(CoverageReporter::class, function () {
         it('returns a verdict that demands exit code 1 when coverage is below the minimum', function (CoverageDriver $driver) {
             $fixture = (string) realpath(__DIR__ . '/../../../Coverage/Driver/fixtures/covered_probe.php');
             allow($driver->start());
-            allow($driver->stop())->toReturn([$fixture => [3 => 1, 4 => -1]]);
+            allow($driver->stop())->toReturn([$fixture => [3 => -1]]);
             $collector = new PerExampleCollector($driver);
             $collector->beginSpec('spec/PhpSpec/Coverage/JsonReport.spec.php');
             $collector->beginExample();
@@ -179,7 +206,7 @@ describe(CoverageReporter::class, function () {
 
                 expect($verdict->met())->toBeFalse();
                 expect($verdict->exitCode())->toBe(1);
-                expect($verdict->percent)->toBe(50.0);
+                expect($verdict->percent)->toBe(0.0);
                 expect($output->fetch())->toContain('below the required');
             } finally {
                 CoverageRegistry::reset();
@@ -213,6 +240,25 @@ describe(CoverageReporter::class, function () {
                     unlink($partialPath);
                 }
             }
+        });
+
+        it('refuses to report when part of the coverage never arrived, saying why', function (CoverageDriver $driver) {
+            allow($driver->start());
+            allow($driver->stop())->toReturn([]);
+            CoverageRegistry::activate(new PerExampleCollector($driver));
+            $unreadable = sys_get_temp_dir() . '/phpspec_partial_' . uniqid() . '.json';
+            file_put_contents($unreadable, '{"tests": ');
+            $output = new BufferedOutput();
+            $reporter = $this->reporter;
+
+            $reporter->mergePartials([$unreadable], ['Coverage is incomplete: a worker exited with code 255 before handing over its coverage.']);
+            $refusal = $reporter->report($output, new CoverageOptions(srcPath: 'src', showText: true, coverageMin: '90'));
+
+            expect($refusal)->toBeAnInstanceOf(CoverageRefusal::class);
+            expect($refusal->reason)->toBe("Coverage is incomplete: a worker exited with code 255 before handing over its coverage.\nCoverage is incomplete: a worker handed over coverage that could not be read.");
+            expect($output->fetch())->toBe('');
+            expect(file_exists($unreadable))->toBeFalse();
+            expect(CoverageRegistry::collector())->toBeNull();
         });
 
         it('merges partial state files into the active collector and removes them', function (CoverageDriver $driver, CoverageDriver $workerDriver) {

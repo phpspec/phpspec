@@ -93,6 +93,35 @@ describe(WorkerProcess::class, function () {
         });
     });
 
+    context('coverage', function () {
+        it('loses nothing when its coverage arrived, or when none was asked for', function () {
+            $partial = (string) tempnam(sys_get_temp_dir(), 'phpspec_partial_');
+
+            try {
+                expect((new WorkerProcess(['spec/A.spec.php'], '/dev/null', $partial))->lostCoverage())->toBeNull();
+                expect((new WorkerProcess(['spec/A.spec.php'], '/dev/null'))->lostCoverage())->toBeNull();
+            } finally {
+                unlink($partial);
+            }
+        });
+
+        it('says it exited before handing over its coverage, with what it said', function () {
+            $worker = new WorkerProcess(['spec/A.spec.php'], '/dev/null', sys_get_temp_dir() . '/phpspec_never_' . uniqid() . '.json');
+            (new \ReflectionProperty($worker, 'stderr'))->setValue($worker, "PHP Fatal error:  Allowed memory size exhausted\n");
+            (new \ReflectionProperty($worker, 'exitCode'))->setValue($worker, 255);
+
+            expect($worker->lostCoverage())->toBe("Coverage is incomplete: a worker exited with code 255 before handing over its coverage.\nPHP Fatal error:  Allowed memory size exhausted");
+        });
+
+        it('says it was stopped with the run before handing over its coverage', function () {
+            $worker = new WorkerProcess(['spec/A.spec.php'], '/dev/null', sys_get_temp_dir() . '/phpspec_never_' . uniqid() . '.json');
+
+            $worker->terminate();
+
+            expect($worker->lostCoverage())->toBe('Coverage is incomplete: a worker was stopped with the run before handing over its coverage.');
+        });
+    });
+
     context('buildCommand', function () {
         it('runs under the php options it is given, before the binary, and asks for the wire format', function () {
             $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', phpOptions: ['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off']);

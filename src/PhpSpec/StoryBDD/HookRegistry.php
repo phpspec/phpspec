@@ -14,6 +14,8 @@
 
 namespace PhpSpec\StoryBDD;
 
+use PhpSpec\ArgumentlessFunction;
+
 /**
  * @internal
  * Stores and executes lifecycle hooks for feature, scenario, and step events.
@@ -68,6 +70,20 @@ final class HookRegistry
     }
 
     /**
+     * Takes another registry's hooks after its own, in the order they were
+     * added there.
+     */
+    public function adopt(self $other): void
+    {
+        array_push($this->beforeFeature, ...$other->beforeFeature);
+        array_push($this->beforeScenario, ...$other->beforeScenario);
+        array_push($this->beforeStep, ...$other->beforeStep);
+        array_push($this->afterFeature, ...$other->afterFeature);
+        array_push($this->afterScenario, ...$other->afterScenario);
+        array_push($this->afterStep, ...$other->afterStep);
+    }
+
+    /**
      * Executes all registered before-feature hooks in registration order.
      *
      * @return void
@@ -75,7 +91,7 @@ final class HookRegistry
     public function runBeforeFeature(): void
     {
         foreach ($this->beforeFeature as $hook) {
-            $hook();
+            (new ArgumentlessFunction($hook))();
         }
     }
 
@@ -88,7 +104,7 @@ final class HookRegistry
     public function runBeforeScenario(object $world): void
     {
         foreach ($this->beforeScenario as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 
@@ -101,7 +117,7 @@ final class HookRegistry
     public function runBeforeStep(object $world): void
     {
         foreach ($this->beforeStep as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 
@@ -146,7 +162,7 @@ final class HookRegistry
     public function runAfterFeature(): void
     {
         foreach ($this->afterFeature as $hook) {
-            $hook();
+            (new ArgumentlessFunction($hook))();
         }
     }
 
@@ -159,7 +175,7 @@ final class HookRegistry
     public function runAfterScenario(object $world): void
     {
         foreach ($this->afterScenario as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 
@@ -172,7 +188,7 @@ final class HookRegistry
     public function runAfterStep(object $world): void
     {
         foreach ($this->afterStep as $hook) {
-            $hook->call($world);
+            (new ArgumentlessFunction($hook))->callOn($world);
         }
     }
 

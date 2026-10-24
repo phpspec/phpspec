@@ -6,7 +6,7 @@ if (PHP_VERSION_ID < 80300) {
     exit(1);
 }
 
-(function ($version) {
+(function () {
 
     if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
         require $autoload;
@@ -28,6 +28,6 @@ if (PHP_VERSION_ID < 80300) {
         exit(1);
     }
 
-    (new PhpSpec\Console\Application($version))->run();
+    (new PhpSpec\Console\Application())->run();
 
-})('9.0.0-RC4');
+})();

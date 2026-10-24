@@ -464,14 +464,22 @@ vendor/bin/phpspec run --parallel        # one worker per CPU core
 vendor/bin/phpspec run --parallel=4      # four workers
 ```
 
-Each worker runs a slice of the spec files in its own process and reports each
-result back whole, over PhpSpec's own wire (`--format=wire`, one JSON line per
-spec or feature); the parent renders them as they arrive, in whichever format
+Each worker runs a slice of the spec files in its own process, set up as the
+run was: the same php settings, and the extensions its command line loaded.
+`php -d memory_limit=1G -d extension=pcov vendor/bin/phpspec run --parallel`
+gives every worker a 1G ceiling and PCOV. Extensions go over by name, so one
+loaded from a path outside `extension_dir` reaches a worker only if
+`extension_dir` holds it too. A worker reports each result back whole, over
+PhpSpec's own wire (`--format=wire`, one JSON line per spec or feature); the
+parent renders them as they arrive, in whichever format
 was asked for, with everything a single process would show: a failure's values
 and code, an error's site, what an example printed. A worker that dies is
 reported as an error on the file it was running, naming its exit code. Coverage
 (`--coverage*`) composes with `--parallel`: workers collect per-example
-coverage and the parent merges it. `--format=agent` is parallel-safe too: the
+coverage and the parent merges it. A worker whose coverage never reaches the
+parent, because it died or the run stopped it, fails the run with the reason
+and what the worker said, rather than a smaller number. `--format=agent` is
+parallel-safe too: the
 parent emits each event as a worker reports it, so entries arrive in completion
 order rather than file order.
 
@@ -525,15 +533,25 @@ coverage mode (`xdebug.mode=coverage`). With nothing named in the config, the
 run takes PCOV when it is enabled, else Xdebug;
 [`coverage_adapter`](configuration.md#coverage_adapter) names one. A run that
 cannot collect says which engine it needs and the command that switches it on.
-Coverage options can be combined with `--parallel`: workers collect coverage
-per example and the parent process merges their results before rendering the
-reports.
+Xdebug records only the source directory and the directories guard reads,
+from the moment the run starts collecting; PCOV records its `pcov.directory`.
+
+A line counts as covered when an example or a scenario runs it. That includes
+an example's `this` bindings and `beforeEach`/`afterEach` hooks, a scenario's
+background and `beforeScenario`/`afterScenario` hooks, and a closure declared
+in `describe` that an example calls. Code that runs only in
+`beforeAll`/`afterAll`, `beforeFeature`/`afterFeature` or the `describe` body
+itself does not count. Every run counts the same way: coverage options can be
+combined with `--parallel`, whose workers collect coverage per example and the
+parent process merges their results before rendering the reports.
 
 #### Excluding code from coverage
 
-Interfaces never count. Anything else can be left out, so its lines neither
-count towards the percentage, `--coverage-min` included, nor appear in any
-report, and guard never asks for an example of it.
+Interfaces never count, and neither do the lines that only declare: a class's
+header, a namespaced constant and the end of the file, which the engines report
+as run whenever the file loads. Anything else can be left out, so its lines
+neither count towards the percentage, `--coverage-min` included, nor appear in
+any report, and guard never asks for an example of it.
 
 A class, interface, trait, enum, method or function leaves itself out with an
 attribute, or with the docblock tag PHPUnit reads:
@@ -608,11 +626,14 @@ change while the integration is being finalised.
 ```
 
 - **Test identifiers** are `<spec file>::<context titles joined with " > ">`,
-  at example granularity. All paths are relative to the project root.
+  at example granularity, and `<feature file>::<feature title> > <scenario title>`
+  for a scenario, an outline's row carrying its values as the run reports it
+  (`features/cart.feature::Cart > adds (1, 2)`). All paths are relative to the
+  project root; `spec_file` names the feature file for a scenario.
 - **`time`** is the example's wall-clock duration in seconds and **`memory`**
   its peak memory usage in bytes, both measured across the example *and* its
-  `this`/`beforeEach`/`afterEach` hooks, so setup code counts as covered by the
-  example that ran it.
+  `this`/`beforeEach`/`afterEach` hooks (a scenario's background and scenario
+  hooks), so setup code counts as covered by the example that ran it.
 - **`checksum`**/**`spec_checksum`** are MD5 hashes of the file contents,
   letting consumers detect stale coverage data.
 - **`lines`** holds what ran; **`executable`** holds what there was to run, so a
@@ -625,8 +646,6 @@ change while the integration is being finalised.
   absent. The key is the bare method name, except when two classes in the same
   file declare it, in which case that name is fully qualified
   (`App\Card::pay`) so a lookup finds nothing rather than the wrong range.
-- Code executed only in `beforeAll`/`afterAll` hooks is not attributed to any
-  example.
 
 ## Exit Codes
 

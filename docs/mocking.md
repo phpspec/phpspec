@@ -16,19 +16,102 @@ This generates a dynamic subclass (or implementation, for interfaces) that:
 
 - Extends the original class (or implements the interface)
 - Overrides all methods to track calls
-- Auto-generates constructor dependencies recursively (using mocks/defaults)
+- Is made without running the class's constructor
+
+Some built-in interfaces PHP lets no plain class implement, so a double of an
+interface built on one is built the way PHP allows:
+
+| Built on | The double | |
+|---|---|---|
+| `Traversable` | is an `IteratorAggregate` | its `getIterator()` iterates nothing unless stubbed: `allow($bag->getIterator())->toReturn(new ArrayIterator([...]))` |
+| `Throwable` | extends `Exception` | it can be thrown; `getMessage()` and the other methods `Exception` declares final answer as an `Exception` does, and cannot be stubbed |
+| `DateTimeInterface` | extends `DateTimeImmutable` | its methods are stubbed as any other |
+| `UnitEnum` | cannot be made | only an enum can implement it, so `mock()` and `dummy()` refuse it, saying so |
+
+An extension may refuse a plain class too: PhpSpec asks PHP once per run, and
+a double PHP refuses is refused with PHP's reason:
+
+```
+Cannot create a test double for interface App\Labelled. Only an enum can implement UnitEnum.
+```
+
+A double of several interfaces, such as what a method returning `Wide&Narrow`
+answers, takes every call each of them declares, and returns what every
+declared return type admits. A method returning `Traversable` in one and
+`ArrayIterator` in the other returns `ArrayIterator`, and one returning
+`Countable` and `Traversable` returns `Countable&Traversable`. The same holds
+between an interface and the base a double of it is built on. Where no value
+can satisfy every return type, such as `int` and `string`, or two classes
+neither extends, the method is refused when called:
+
+```
+App\Sized::size() returns int and App\Named::size() returns string, so no value can be returned for both.
+```
+
+A class named with interfaces, such as what a method returning `Base&HasValue`
+answers, keeps what it is: its final methods, and an `Error` or a `DateTime` it
+already extends where an interface needs a `Throwable` or a
+`DateTimeInterface`, the serialization methods it has, and the iterator it
+already is. A subclass of it adds what it can for a `Traversable` interface: an
+`IteratorAggregate` where its `getIterator()` allows one, so stubbing
+`getIterator()` rules `foreach`, else an `Iterator`. A double iterating as an
+`Iterator` is refused where its `valid()` is final, or resolves to a type
+without `false`, since no double of it could end the iteration. What a dummy
+aggregate's `getIterator()` answers iterates as empty: an aggregate whose own
+`getIterator()` leads to an `Iterator` without coming back to an aggregate on
+the way, else an empty `Iterator`, trying each type of a union in turn. Where
+none can be, iterating the dummy is refused, saying what keeps it from one, and
+a `mock()` can still stub the call. A class
+declaring static, and not private, a method an interface declares on an object
+cannot be that interface. A class is the class it
+names however it is spelled, through an alias or in another case, and an
+intersection one of its types already satisfies is answered as that type.
+
+A double inherits a static method the class implements. One it must implement,
+abstract in an interface or a class, is refused when called, since a double
+answers on an object, not on its class:
+
+```
+App\FromData::fromData() is static, so no double can answer it.
+```
+
+Declarations no class can implement together, a parameter one takes by
+reference and another by value, a method one declares static and another on an
+object, or a method narrowing one the base declares final, are refused: by `mock()` and `dummy()` at once, and as a return type only
+when the method returning it is called:
+
+```
+Cannot create a test double for interface App\Failure. App\Failure::getPrevious() narrows a method Exception declares final.
+```
+
+A double of a class never runs the class's constructor, which would run the
+application's initialization with arguments nobody gave. Its properties keep
+the defaults they declare; a promoted property, or any other the constructor
+sets, stays uninitialised, so a final method that reads one needs a real
+instance instead. A double of an interface built on `DateTimeImmutable` or
+`Exception` is initialised as that base is.
 
 ### Using `dummy()`
 
 A double from `mock()` is strict: a call to it that the spec never declared,
 made from the code under spec, fails the example unless a `toHaveBeenCalled()`
-after the act checks it. `dummy()` makes a
-lenient double for a collaborator whose calls do not matter, a logger passed
-along for instance. It answers every call with a default for the return type
-and still takes stubs:
+after the act checks it. `dummy()` makes a double that stands in for the real
+thing with no behaviour, for a collaborator whose calls do not matter, a logger
+passed along for instance:
 
 ```php
 $logger = dummy(Logger::class);
+```
+
+Every call returns a default for its return type, and a method returning a
+class or interface answers a dummy of it, so a chain the code under spec
+follows is answered with defaults at any depth. A dummy takes no stub or
+expectation, and neither does what it answered. A spec that needs one needs a
+`mock()`, which ends a stub in `ignoreOthers()` when only some calls matter:
+
+```
+App\Book::pages() was stubbed on a dummy. Use mock() instead of dummy().
+App\Page::title() was stubbed on what dummy App\Book::first()->next() answered. Use mock() instead of dummy() and stub App\Book::first().
 ```
 
 ### Type-Hinted Mock Injection
@@ -49,7 +132,7 @@ describe(UserService::class, function () {
 });
 ```
 
-Any parameter with a class or interface type hint will be automatically resolved via `mock()`. This is the preferred way to create mocks.
+Any parameter with a class or interface type hint will be automatically resolved via `mock()`. This is the preferred way to create mocks. A parameter is always a double, the same for every closure of the example that names it alike; [Hooks](hooks.md#type-hinted-mock-injection) has which of them sit on `$this`.
 
 ## Stubbing Return Values
 
@@ -79,6 +162,20 @@ App\Counter::count() returns int, so it cannot return string "three".
 
 What a `toReturnUsing()` callback answers is held the same way when the call
 is made.
+
+A callback is handed the call's arguments as PHP hands them to the real
+method. One the method takes by reference reaches the callback as that
+reference, so what the callback writes into it reaches the caller. A method
+that returns by reference hands back the reference a callback returns by
+reference. A value given to `toReturn()` is always handed back as a copy:
+
+```php
+allow($cache->get('key', $anything))->toReturnUsing(function (string $key, ?array &$metadata): string {
+    $metadata = ['hit' => true];
+
+    return 'value';
+});
+```
 
 ### `allow()` + `toThrow()`
 
@@ -118,11 +215,35 @@ exception it would throw: `expect(fn () => $repo->find(1))->toThrow(...)`.
 ### What an unstubbed call returns
 
 A method nobody stubbed returns a default for its return type: `''`, `0`,
-`false`, `[]`, `null` where allowed, a double of a class or interface it
-returns, an empty `iterable`, a `Closure`, an empty `Generator`, `true` or
-`false` for those types, the double itself for `static`, `self` and `parent`. A method returning a final class hands the spec an
-instance of it built without its constructor, for `allow()` to replace; a
-`dummy()` has nobody about to replace it and says so instead.
+`false`, `[]`, `null` where allowed, an answer of the class or interface it
+returns (of the first a union of them names, a built-in interface such as
+`DateTimeInterface` or `Countable` included), an empty `iterable`, a
+`Closure`, an empty `Generator`, `true` or `false` for those types, the double
+itself for `static`, `self` and `parent`. A nullable class or interface of
+your own answers a double of it, a nullable built-in interface `null`.
+A method returning an interface no double can be (one only an enum can
+implement) is refused when it is called, with the reason. A method returning a final class hands the spec an
+instance of it built without its constructor, for `allow()` to replace. A
+lenient double has nobody about to replace it, so it refuses the code under
+spec, still handing the spec's own call the instance `allow()` needs. A type no
+double nor instance can stand in for, such as an internal final class, is
+refused, saying why.
+
+An answer stands for the call that returned it, for `allow()` and `expect()`
+to take. A lenient double, a `dummy()` or one that ignores others, answers a
+dummy. A strict double's answer is not for use: a call on it is refused, naming
+the call to stub, and the code under spec catching the refusal still fails the
+example. A chain the code under spec follows is stubbed one call at a time,
+each with a double of its own:
+
+```php
+allow($book->first())->toReturn($page);
+allow($page->next())->toReturn($second);
+```
+
+```
+App\Page::next() was called on what App\Book::first() answered, at src/App/Reader.php:8. Stub App\Book::first().
+```
 
 ## Calls the spec never declared
 
@@ -167,9 +288,8 @@ App\Stock::reserve(): Argument #2 ($quantity) must be of type int, string given,
 
 The spec file itself is free to call anything: that is how `allow()` and
 `expect()` reach the call they declare. A collaborator whose calls do not
-matter is a `dummy()`. A double that was injected by type hint, which
-`dummy()` cannot make, is left lenient for the rest by ending a stub in
-`ignoreOthers()`:
+matter is a `dummy()`. A stub that stubs only what matters, and answers the
+rest with defaults, ends a stub in `ignoreOthers()`:
 
 ```php
 beforeEach(function (Filesystem $fs) {
@@ -380,7 +500,7 @@ The mock system handles:
 - **Classes**: generates a subclass
 - **Interfaces**: generates an implementation
 - **Nullable types** (`?Foo`): wraps return with null handling
-- **Union types** (`Foo|Bar`): uses the first mockable type
+- **Union types** (`Foo|Bar`): answers with the first type that can have an answer
 - **Intersection types** (`Foo&Bar`): creates a combined implementation
 - **Enum types**: returns the first case as default
 - **Scalar return types** (`string`, `int`, `float`, `bool`, `array`): returns type-appropriate defaults
@@ -389,5 +509,3 @@ The mock system handles:
 
 - Final classes cannot be mocked (PHP reflection limitation)
 - Readonly classes cannot be mocked
-- Constructor dependency auto-resolution handles classes, interfaces, strings, arrays, and scalars
-- Circular type dependencies are capped at depth 3

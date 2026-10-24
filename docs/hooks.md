@@ -123,6 +123,16 @@ describe(Notifier::class, function () {
 
 Any parameter with a class or interface type hint that can be mocked will be resolved automatically via `mock()`.
 
+A parameter is always a double, never a this() value, and every closure of an example that names a parameter alike, hooks included, is handed the same one: above, the example's `$mailer` is the notifier's. The doubles a this() takes also sit on `$this` under their names, so `$this->mailer` is that double too; the parameters of a hook or an example do not. A this() keeps its own name on `$this`, even when it takes a parameter of that name:
+
+```php
+this('lock', fn (Lock $lock) => new LoggedLock($lock));
+
+it('logs', function (Lock $lock) {
+    // $this->lock is the LoggedLock, and $lock the double it wraps
+});
+```
+
 ## Hook Execution Order
 
 For a given example, hooks execute in this order:

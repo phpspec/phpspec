@@ -106,11 +106,6 @@ final readonly class ArgumentMatcher
     }
 
     /**
-     * Tests whether the given actual value satisfies this matcher's constraint.
-     *
-     * @param mixed $actual the value to test against
-     */
-    /**
      * The matcher as it is written in a spec, for a report that names what was
      * wanted: any(), type(string), anInstanceOf(App\Task).
      */
@@ -125,8 +120,17 @@ final readonly class ArgumentMatcher
         };
     }
 
+    /**
+     * Whether the value satisfies this matcher's constraint. A matcher given
+     * in a value's place, as in a call a spec writes to declare another, is
+     * no value: it matches an equal matcher alone, never reaching a predicate.
+     */
     public function matches(mixed $actual): bool
     {
+        if ($actual instanceof self) {
+            return $actual == $this;
+        }
+
         return match ($this->type) {
             'any', 'cetera' => true,
             'type' => get_debug_type($actual) === $this->value || ($actual instanceof $this->value),

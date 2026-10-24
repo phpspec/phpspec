@@ -87,6 +87,9 @@ final class Run extends Command implements InternalOptions
     /** @var array<int, string> partial coverage state files written by parallel workers */
     private array $coveragePartials = [];
 
+    /** @var list<string> why the coverage of each worker that never handed it over was lost */
+    private array $coverageLost = [];
+
     /** What this run could generate, scanned once and shared by everything that reports it. */
     private ?GenerationCandidates $candidates = null;
 
@@ -380,6 +383,10 @@ final class Run extends Command implements InternalOptions
 
         if ($coverageReporter) {
             $verdict = $this->reportCoverage($input, $prose, $coverageReporter);
+
+            if ($verdict instanceof CoverageRefusal) {
+                return $this->refused($prose, $formatter, $verdict);
+            }
 
             if ($verdict !== null) {
                 // The gate's verdict belongs in the document as much as in the
@@ -748,8 +755,8 @@ final class Run extends Command implements InternalOptions
             return null;
         }
 
-        // Parallel runs also collect per example: workers dump raw per-example
-        // state and the parent merges it, which serves every report format.
+        // The JSON report names the example that ran each line, and parallel
+        // workers dump the same state for the parent to merge.
         $perExample = $input->getOption('coverage-json') !== null
             || $input->getOption('coverage-partial') !== null
             || $input->getOption('parallel') !== false;
@@ -1033,6 +1040,7 @@ final class Run extends Command implements InternalOptions
 
         if ($parallelRunner !== null) {
             $this->coveragePartials = $parallelRunner->getCoveragePartials();
+            $this->coverageLost = $parallelRunner->lostCoverage();
         }
 
         $results = new SuiteResult($accumulated);
@@ -1221,14 +1229,15 @@ final class Run extends Command implements InternalOptions
      * @param Input $input the console input for coverage report options
      * @param Output $output the console output for report rendering
      * @param CoverageReporter $reporter the active coverage reporter
-     * @return CoverageVerdict|null what the run covered, or null when nothing was collected
+     * @return CoverageVerdict|CoverageRefusal|null what the run covered, why it cannot say, or null when nothing was collected
      * @throws DOMException
      */
-    private function reportCoverage(Input $input, Output $output, CoverageReporter $reporter): ?CoverageVerdict
+    private function reportCoverage(Input $input, Output $output, CoverageReporter $reporter): CoverageVerdict|CoverageRefusal|null
     {
         if ($this->coveragePartials !== []) {
-            $reporter->mergePartials($this->coveragePartials);
+            $reporter->mergePartials($this->coveragePartials, $this->coverageLost);
             $this->coveragePartials = [];
+            $this->coverageLost = [];
         }
 
         return $reporter->report($output, new CoverageOptions(

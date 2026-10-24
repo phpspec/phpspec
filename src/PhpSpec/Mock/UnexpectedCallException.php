@@ -18,8 +18,8 @@ use LogicException;
 use PhpSpec\ProjectRoot;
 
 /**
- * A call on a double, made from outside the spec code, that no allow() or
- * expect() declared.
+ * A call nothing declared: one on a double, made from outside the spec code,
+ * or one on what a double answered to a call nobody stubbed, made anywhere.
  */
 final class UnexpectedCallException extends LogicException
 {
@@ -35,6 +35,26 @@ final class UnexpectedCallException extends LogicException
             self::describeAll($arguments),
             ProjectRoot::here()->relative($file),
             $line,
+        ));
+    }
+
+    /**
+     * What a double answered to a call nobody stubbed is there to be handed
+     * along, never used.
+     *
+     * @param array<int, mixed> $arguments
+     * @param string $answered the call that answered, written as the spec writes it
+     */
+    public static function onAnswer(string $class, string $method, array $arguments, string $file, int $line, string $answered): self
+    {
+        return new self(sprintf(
+            '%1$s::%2$s(%3$s) was called on what %6$s answered, at %4$s:%5$d. Stub %6$s.',
+            ltrim($class, '\\'),
+            $method,
+            self::describeAll($arguments),
+            ProjectRoot::here()->relative($file),
+            $line,
+            ltrim($answered, '\\'),
         ));
     }
 

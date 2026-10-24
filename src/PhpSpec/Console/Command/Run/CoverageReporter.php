@@ -17,7 +17,7 @@ namespace PhpSpec\Console\Command\Run;
 use DOMException;
 use PhpSpec\Coverage\CloverReport;
 use PhpSpec\Coverage\CoverageAdapter;
-use PhpSpec\Coverage\CoverageCollector;
+use PhpSpec\Coverage\CoverageData;
 use PhpSpec\Coverage\CoverageEngines;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageRefusal;
@@ -36,20 +36,20 @@ use Symfony\Component\Console\Output\OutputInterface as Output;
 /**
  * @internal
  * Manages the complete code coverage lifecycle: the choice of engine,
- * collection start/stop, report rendering (text, Clover XML, HTML, JSON), and
- * minimum threshold enforcement. Collection runs in one of two modes:
- * whole-suite (one aggregate collection around the entire run) or per-example
- * (the runner cycles collection around each example so coverage can be
- * attributed to it).
+ * collection, report rendering (text, Clover XML, HTML, JSON), and minimum
+ * threshold enforcement. The runner cycles collection around each example and
+ * scenario, so only what they run counts; per example, it also credits each
+ * line to the example that ran it.
  */
 final class CoverageReporter
 {
-    private ?CoverageCollector $collector = null;
-
     private ?CoverageAdapter $adapter = null;
 
     /** @var array<string, array<int, int>> the lines the last run exercised, by absolute path */
     private array $hits = [];
+
+    /** @var list<string> why part of the run's coverage never arrived */
+    private array $lost = [];
 
     private readonly Exclusions $exclusions;
 
@@ -85,14 +85,11 @@ final class CoverageReporter
     }
 
     /**
-     * Picks the engine and starts coverage collection.
-     *
-     * In per-example mode no collection is started here; instead a collector
-     * is activated in the CoverageRegistry and the runner cycles it around
-     * each example.
+     * Picks the engine and activates a collector in the CoverageRegistry,
+     * which the runner cycles around each example and scenario.
      *
      * @param list<string> $traced the directories the run reports on
-     * @param bool $perExample whether to collect coverage per example
+     * @param bool $perExample whether to credit each line to the example that ran it
      * @return CoverageRefusal|null null once collection started, or why it could not
      */
     public function start(array $traced, bool $perExample = false): ?CoverageRefusal
@@ -104,65 +101,55 @@ final class CoverageReporter
         }
 
         $this->adapter = $adapter;
-
-        if ($perExample) {
-            CoverageRegistry::activate(new PerExampleCollector($adapter->driver()));
-
-            return null;
-        }
-
-        $this->collector = new CoverageCollector($adapter->driver());
-        $this->collector->start();
+        CoverageRegistry::activate(new PerExampleCollector($adapter->driver($traced), crediting: $perExample));
 
         return null;
     }
 
     /**
-     * Stops collection and renders all requested coverage reports.
+     * Ends collection and renders all requested coverage reports.
      *
-     * When a per-example collector is active and a partial path is set (the
-     * parallel worker case), the raw collector state is dumped there instead
-     * of rendering any report.
+     * When a partial path is set (the parallel worker case), the raw collector
+     * state is dumped there instead of rendering any report.
      *
      * @param Output $output the console output
      * @param CoverageOptions $options the requested reports and their destinations
-     * @return CoverageVerdict|null what the run covered, or null when nothing was
-     *                              collected or the state was only dumped for a worker
+     * @return CoverageVerdict|CoverageRefusal|null what the run covered, why it cannot say
+     *                                              when part of its coverage never arrived,
+     *                                              or null when nothing was collected or the
+     *                                              state was only dumped for a worker
      * @throws DOMException
      */
-    public function report(Output $output, CoverageOptions $options): ?CoverageVerdict
+    public function report(Output $output, CoverageOptions $options): CoverageVerdict|CoverageRefusal|null
     {
-        $perExampleCollector = CoverageRegistry::collector();
+        $collector = CoverageRegistry::collector();
 
-        if ($perExampleCollector !== null) {
-            CoverageRegistry::reset();
-
-            if ($options->partialPath !== null) {
-                $this->writePartial($perExampleCollector, $options->partialPath);
-
-                return null;
-            }
-
-            // Kept unfiltered and absolute: the reports want the source
-            // directory's view, guard wants the project's, and guard bounds
-            // the paths itself.
-            $this->hits = $perExampleCollector->getAggregate();
-            $covData = $this->reported($options->srcPath);
-
-            if ($options->jsonPath !== null) {
-                $this->renderJson($output, $perExampleCollector, $options->srcPath, $options->jsonPath);
-            }
-
-            return $this->renderReports($output, $covData, $options);
-        }
-
-        if ($this->collector === null) {
+        if ($collector === null) {
             return null;
         }
 
-        $this->collector->stop();
-        $this->hits = $this->collector->getData();
+        CoverageRegistry::reset();
+        $collector->finish();
+
+        if ($this->lost !== []) {
+            return new CoverageRefusal(implode("\n", $this->lost));
+        }
+
+        if ($options->partialPath !== null) {
+            $this->writePartial($collector, $options->partialPath);
+
+            return null;
+        }
+
+        // Kept unfiltered and absolute: the reports want the source
+        // directory's view, guard wants the project's, and guard bounds the
+        // paths itself.
+        $this->hits = $collector->getAggregate();
         $covData = $this->reported($options->srcPath);
+
+        if ($options->jsonPath !== null) {
+            $this->renderJson($output, $collector, $options->srcPath, $options->jsonPath);
+        }
 
         return $this->renderReports($output, $covData, $options);
     }
@@ -179,22 +166,21 @@ final class CoverageReporter
         $source = ProjectRoot::at($srcPath);
         $inSource = array_filter($this->hits, $source->holds(...), ARRAY_FILTER_USE_KEY);
 
-        return CoverageCollector::filterData($this->exclusions->appliedTo($inSource), $srcPath);
+        return CoverageData::filterData($this->exclusions->appliedTo($inSource), $srcPath);
     }
 
     /**
      * Merges partial collector state files produced by parallel workers into
-     * the active per-example collector, removing each file once applied.
+     * the active per-example collector, removing each file once applied. What
+     * never arrived, or arrived unreadable, leaves the run nothing to report.
      *
      * @param array<int, string> $paths partial state file paths written by workers
+     * @param list<string> $lost why the coverage of each worker that never handed it over was lost
      */
-    public function mergePartials(array $paths): void
+    public function mergePartials(array $paths, array $lost = []): void
     {
+        $this->lost = [...$this->lost, ...$lost];
         $collector = CoverageRegistry::collector();
-
-        if ($collector === null) {
-            return;
-        }
 
         foreach ($paths as $path) {
             if (!is_file($path)) {
@@ -202,12 +188,15 @@ final class CoverageReporter
             }
 
             $state = json_decode((string) file_get_contents($path), true);
+            unlink($path);
 
-            if (is_array($state)) {
-                $collector->applyState($state);
+            if (!is_array($state)) {
+                $this->lost[] = 'Coverage is incomplete: a worker handed over coverage that could not be read.';
+
+                continue;
             }
 
-            unlink($path);
+            $collector?->applyState($state);
         }
     }
 
@@ -281,7 +270,7 @@ final class CoverageReporter
         $totalExecutable = 0;
 
         foreach ($covData as $lines) {
-            $counts = CoverageCollector::countLines($lines);
+            $counts = CoverageData::countLines($lines);
             $totalCovered += $counts['covered'];
             $totalExecutable += $counts['executable'];
         }

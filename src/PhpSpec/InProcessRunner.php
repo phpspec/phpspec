@@ -73,7 +73,7 @@ final class InProcessRunner
         chdir($projectDir);
 
         try {
-            $app = new Application('9.0.0', self::argv($args));
+            $app = new Application(self::argv($args));
             $app->setAutoExit(false);
             $app->setCatchExceptions(true);
 

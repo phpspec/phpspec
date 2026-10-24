@@ -61,11 +61,4 @@ interface ExampleResultRegistry
      * Checks whether an error has been recorded for the current example.
      */
     public function isError(): bool;
-
-    /**
-     * Registers a mock double created during example execution.
-     *
-     * @param mixed $double the mock double instance
-     */
-    public function addDouble(mixed $double): void;
 }
