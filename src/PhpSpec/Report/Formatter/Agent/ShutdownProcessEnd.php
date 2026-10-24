@@ -15,6 +15,7 @@
 namespace PhpSpec\Report\Formatter\Agent;
 
 use Closure;
+use PhpSpec\ExcludeFromCoverage;
 
 /**
  * @internal
@@ -22,6 +23,7 @@ use Closure;
  * raised. Only the errors that end a process are reported; a warning the run
  * survived is the example's business, not the document's.
  */
+#[ExcludeFromCoverage]
 final class ShutdownProcessEnd implements ProcessEnd
 {
     private const ENDS_THE_PROCESS = E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR;

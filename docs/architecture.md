@@ -118,10 +118,6 @@ Subscribers (in `EventDispatcher/Subscriber/`) react to events:
 - **`SpecificationSubscriber`**: Resets the subscribed `Specification` on `SpecificationStarted`, so each spec file builds its tree from a clean slate.
 - **`ExampleSubscriber`**: Collects `MatchCreated` closures, executes them on `ExampleRunned`, and builds the `ExampleResult`. Handles `ExampleErrored`.
 
-### Listeners
-
-- **`LogListener`**: Logs all `Loggable` events with timestamps. Useful for debugging.
-
 ## Story BDD Pipeline
 
 ### Feature Loading
@@ -215,7 +211,7 @@ When coverage is enabled (via `--coverage` flags), `CoverageEngines` picks the e
 
 ## Code Generation
 
-The autoloader (`CodeGeneration\Autoloader`) intercepts class-not-found errors and offers interactive generation:
+After a run, `Console\Command\Run\CodeGenerator` offers to generate what the examples found missing:
 
 - `ClassGenerator`: generates PHP class files
 - `InterfaceGenerator`: generates PHP interface files (from mock errors)
