@@ -3,23 +3,17 @@
 /**
  * Sanity-checks a release for consistency.
  *
- * Verifies that the version in bin/phpspec matches the composer.json
- * branch alias and has a corresponding CHANGES.md entry.
+ * Verifies that the version being released, given as the only argument,
+ * matches the composer.json branch alias and has a CHANGES.md entry.
  */
 
-// Get the version reported by bin/phpspec
-$binary = file_get_contents('bin/phpspec');
-if ($binary === false || !preg_match_all('/(?<major>[5-9])\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<suffix>-[0-9A-Za-z.]+)?/', $binary, $matches) || count($matches[0]) !== 1) {
-    echo "👎 could not read version from binary file\n";
+$version = $argv[1] ?? '';
+if (!preg_match('/^(?<major>[5-9])\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<suffix>-[0-9A-Za-z.]+)?$/', $version, $matches)) {
+    echo "👎 usage: php check-release.php <version>, e.g. 9.0.0-rc.6\n";
     exit(1);
 }
 
-[
-    0 => [0 => $version],
-    'major' => [0 => $major],
-    'minor' => [0 => $minor],
-    'patch' => [0 => $patch],
-] = $matches;
+['major' => $major, 'minor' => $minor] = $matches;
 
 echo "Verifying version $version\n";
 
@@ -37,7 +31,7 @@ if (!preg_match("/$major\.$minor\.x-dev/", $composer, $matches)) {
 
 echo "👍 composer.json contains branch alias {$matches[0]}\n";
 
-// Check CHANGES.md heading: the version the binary reports, pre-release suffix included
+// Check CHANGES.md heading: the version being released, pre-release suffix included
 $changelog = file_get_contents('CHANGES.md');
 if ($changelog === false) {
     echo "👎 could not read CHANGES.md\n";

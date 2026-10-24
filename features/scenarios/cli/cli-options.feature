@@ -6,6 +6,10 @@ Feature: CLI options
   Background:
     Given a PSR-4 project with "spec" and "src" directories
 
+  Scenario: --version names the version Composer installed
+    When I run phpspec command "--version" in a fresh process
+    Then the output should name the phpspec version Composer installed
+
   Scenario: Stop on first failure
     Given a spec file "spec/App/AAFirstFail.spec.php":
       """

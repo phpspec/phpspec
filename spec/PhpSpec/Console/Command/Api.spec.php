@@ -1,5 +1,7 @@
 <?php
 
+use Composer\InstalledVersions;
+use PhpSpec\Console\Application;
 use PhpSpec\Console\Command\Api;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -64,11 +66,11 @@ describe(Api::class, function () {
     });
 
     it('carries the version of the application it runs in', function () {
-        $tester = new CommandTester((new \PhpSpec\Console\Application('9.9.9'))->find('api'));
+        $tester = new CommandTester((new Application())->find('api'));
         $tester->execute(['--format' => 'agent']);
         $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
 
-        expect($document['version'])->toBe('9.9.9');
+        expect($document['version'])->toBe(InstalledVersions::getPrettyVersion('phpspec/phpspec'));
     });
 
     it('prints the same surface as prose by default', function () {

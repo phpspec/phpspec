@@ -1,5 +1,6 @@
 <?php
 
+use Composer\InstalledVersions;
 use PhpSpec\StoryBDD\StepsFile;
 
 /**
@@ -54,6 +55,14 @@ then('the output should contain {string}', function (string $text) {
         throw new \RuntimeException(
             "Expected output to contain \"{$text}\".\nOutput:\n{$this->output}",
         );
+    }
+});
+
+then('the output should name the phpspec version Composer installed', function () {
+    $version = 'phpspec ' . InstalledVersions::getPrettyVersion('phpspec/phpspec');
+
+    if (!str_contains($this->output, $version)) {
+        throw new \RuntimeException("Expected output to contain \"{$version}\".\nOutput:\n{$this->output}");
     }
 });
 

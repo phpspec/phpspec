@@ -1,5 +1,6 @@
 <?php
 
+use Composer\InstalledVersions;
 use PhpSpec\Console\Application;
 use PhpSpec\Console\Command\Describe;
 use PhpSpec\Console\Command\Pair;
@@ -12,11 +13,11 @@ describe(Application::class, function() {
     this("application", fn() => new Application());
     it("instantiates", fn() => expect($this->application)->toBeAnInstanceOf(Application::class));
 
-    it("is named phpspec and carries the version it was given as its version", function () {
-        $application = new Application('9.9.9');
+    it("is named phpspec and carries the version Composer installed", function () {
+        $application = new Application();
 
         expect($application->getName())->toBe('phpspec');
-        expect($application->getVersion())->toBe('9.9.9');
+        expect($application->getVersion())->toBe(InstalledVersions::getPrettyVersion('phpspec/phpspec'));
     });
 
     it("has a describe command", function () {
