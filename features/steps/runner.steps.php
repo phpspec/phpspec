@@ -250,6 +250,12 @@ given('php loads the Zend extension {string} only when its command line asks', f
     }
 });
 
+given('PHP is at least {string}', function (string $version) {
+    if (version_compare(PHP_VERSION, $version, '<')) {
+        skip(sprintf('PHP %s is older than %s', PHP_VERSION, $version));
+    }
+});
+
 given('PCOV is loaded', function () {
     if (!extension_loaded('pcov')) {
         skip('PCOV is not available');

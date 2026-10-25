@@ -558,7 +558,12 @@ in `describe` that an example calls. Code that runs only in
 `beforeAll`/`afterAll`, `beforeFeature`/`afterFeature` or the `describe` body
 itself does not count. Every run counts the same way: coverage options can be
 combined with `--parallel`, whose workers collect coverage per example and the
-parent process merges their results before rendering the reports.
+parent process merges their results before rendering the reports. Workers can
+compile a file differently: PHP folds a class constant into its value when the
+class is already loaded, so a line can be code in one worker and none in
+another. A line one worker ran is covered. A line nobody ran is not counted
+when a worker left it out of a function, method, closure or hook it otherwise
+recorded.
 
 The engines report only the files coverage was recorded for, so a PHP file
 under the source directory with none recorded during an example or scenario is

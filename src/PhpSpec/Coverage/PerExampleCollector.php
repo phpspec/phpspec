@@ -27,8 +27,11 @@ final class PerExampleCollector
     /** @var array<string, array<int, array<string, true>>> file path => line number => set of test identifiers */
     private array $lines = [];
 
-    /** @var array<string, array<int, int>> line hit data merged across all cycles, in raw driver shape */
+    /** @var array<string, array<int, int>> line hit data merged across this process's cycles, in raw driver shape */
     private array $aggregate = [];
+
+    /** @var list<array<string, array<int, int>>> what each process that handed over its state recorded */
+    private array $handedOver = [];
 
     /** @var array<string, array{time: float, memory: int, spec_file: string}> per-test metadata keyed by test identifier */
     private array $tests = [];
@@ -174,14 +177,22 @@ final class PerExampleCollector
     }
 
     /**
-     * Returns line hit data merged across all example cycles, which the text,
-     * Clover and HTML reports render.
+     * Returns line hit data merged across all example cycles and every
+     * process that handed over its state, which the text, Clover and HTML
+     * reports render.
      *
      * @return array<string, array<int, int>> file paths mapped to line-level hit counts
      */
     public function getAggregate(): array
     {
-        return $this->aggregate;
+        $recordings = new Recordings();
+        $recordings->add($this->aggregate);
+
+        foreach ($this->handedOver as $recorded) {
+            $recordings->add($recorded);
+        }
+
+        return $recordings->merged();
     }
 
     /**
@@ -234,8 +245,9 @@ final class PerExampleCollector
 
     /**
      * Merges state exported by another collector (e.g. from a parallel worker)
-     * into this one. Line attributions are unioned without duplicates and
-     * aggregate hits are merged keeping the highest value per line.
+     * into this one. Line attributions are unioned without duplicates, and
+     * what the other process recorded is kept apart from this one's, to be
+     * merged by what each of them compiled.
      *
      * @param array{tests?: array<string, array{time: float, memory: int, spec_file: string}>, lines?: array<string, array<int, list<int>>>, aggregate?: array<string, array<int, int>>} $state state produced by toArray()
      */
@@ -255,7 +267,7 @@ final class PerExampleCollector
             }
         }
 
-        $this->aggregated($state['aggregate'] ?? []);
+        $this->handedOver[] = $state['aggregate'] ?? [];
     }
 
     /**

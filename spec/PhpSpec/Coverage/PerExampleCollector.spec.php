@@ -182,4 +182,32 @@ describe(PerExampleCollector::class, function () {
         expect($collector->getTests())->toHaveKey('spec/App/Greeter.spec.php::greets');
         expect($collector->getTests())->toHaveKey('spec/App/Calculator.spec.php::adds');
     });
+
+    it('merges what another process recorded by what each of them compiled', function (CoverageDriver $driver, CoverageDriver $otherDriver) {
+        $file = sys_get_temp_dir() . '/phpspec_recorded_' . uniqid() . '.php';
+        file_put_contents($file, "<?php\nfunction filtered(\$id) {\n    return [\n        'id' => \$id,\n        'on' => ON,\n    ];\n}\n");
+
+        try {
+            allow($driver->start());
+            allow($driver->stop())->toReturn([$file => [3 => 1, 4 => 1, 6 => 1]]);
+            $collector = new PerExampleCollector($driver);
+            $collector->beginSpec('spec/Filtered.spec.php');
+            $collector->beginExample();
+            $collector->endExample('filters');
+
+            allow($otherDriver->start());
+            allow($otherDriver->stop())->toReturn([$file => [3 => -1, 4 => -1, 5 => -1, 6 => -1]]);
+            $other = new PerExampleCollector($otherDriver);
+            $other->beginSpec('spec/Other.spec.php');
+            $other->beginExample();
+            $other->endExample('does not filter');
+
+            $collector->applyState($other->toArray());
+
+            expect($collector->getAggregate()[$file])->toBe([3 => 1, 4 => 1, 6 => 1, 5 => -2]);
+            expect($collector->toArray()['aggregate'][$file])->toBe([3 => 1, 4 => 1, 6 => 1]);
+        } finally {
+            unlink($file);
+        }
+    });
 });
