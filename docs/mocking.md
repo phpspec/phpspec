@@ -257,6 +257,9 @@ allow($page->next())->toReturn($second);
 App\Page::next() was called on what App\Book::first() answered, at src/App/Reader.php:8. Stub App\Book::first().
 ```
 
+A spec that wants defaults from the answer returns a dummy, and the double
+stays strict: `allow($book->first())->toReturn(dummy(App\Page::class))`.
+
 ## Calls the spec never declared
 
 A double is strict towards the code under spec. A call that no `allow()` or
