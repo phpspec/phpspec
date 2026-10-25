@@ -24,6 +24,7 @@ use PhpSpec\EventDispatcher\Event\ContextStarted;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Mock\HeldCalls;
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Results;
@@ -272,6 +273,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
         // its body printed, not to the terminal between two results.
         $setup = new CapturedOutput();
         $teardown = new CapturedOutput();
+        DoubleLabels::start();
         $arguments = new ExampleArguments($this->world, $this->boundNames());
         HeldCalls::forget();
 

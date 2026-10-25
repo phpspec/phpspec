@@ -20,6 +20,7 @@ use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\OwnCode;
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
@@ -209,6 +210,7 @@ final readonly class Feature implements SpecBlock
      */
     private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld): ScenarioResult
     {
+        DoubleLabels::start();
         $world = new StepWorld();
         $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');
 

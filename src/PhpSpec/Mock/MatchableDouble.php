@@ -25,7 +25,7 @@ interface MatchableDouble
     /**
      * Returns the test double instance this call was made on.
      */
-    public function ______PhpSpecGetDouble(): mixed;
+    public function ______PhpSpecGetDouble(): object;
 
     /**
      * Returns the method name that was called.

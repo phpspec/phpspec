@@ -306,6 +306,28 @@ beforeEach(function (Filesystem $fs) {
 });
 ```
 
+## How a failure names a double
+
+A failure names a double by the type it stands for and a number, with the
+parameter names it was handed under:
+
+```
+Expected App\Context double #2 ($second) to be App\Context double #1 ($first)
+```
+
+An example numbers its doubles in the order it makes them: a parameter's when
+the first closure naming it runs, and one from `mock()` or `dummy()` where it
+is called. What a double answered is named by where it came from, and numbered
+when a failure first shows it:
+
+```
+App\Page double #3 (from App\Book double #1->first())
+```
+
+A double keeps its number for the whole example, and every format shows the
+same one, whichever worker ran the example. Each example and each scenario
+numbers from one.
+
 ## Verifying Method Calls
 
 Stub and verify the same call in any order: a stubbed call still records

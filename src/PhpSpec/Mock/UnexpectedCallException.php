@@ -15,6 +15,7 @@
 namespace PhpSpec\Mock;
 
 use LogicException;
+use PhpSpec\ObjectName;
 use PhpSpec\ProjectRoot;
 
 /**
@@ -79,7 +80,7 @@ final class UnexpectedCallException extends LogicException
         }
 
         if (is_object($argument)) {
-            return get_debug_type($argument);
+            return ObjectName::of($argument);
         }
 
         if (is_array($argument)) {

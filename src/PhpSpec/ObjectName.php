@@ -14,6 +14,9 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Mock\GeneratedDouble;
+use PhpSpec\Mock\MatchableDouble;
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Report\ReportedObject;
 use Stringable;
 use Throwable;
@@ -24,7 +27,8 @@ use UnitEnum;
  * How an object appears in a failure: by what it is, never by which instance it
  * happens to be. An object id changes between runs, so a report that carries one
  * cannot be compared with the same report from the run before it, and it tells
- * the reader nothing they can act on either.
+ * the reader nothing they can act on either. Doubles of one type are told
+ * apart by the number each was made with, which every run gives alike.
  *
  * One statement of the rule, for every place a value is shown: the failure
  * message, the array it sits in, and the agent document.
@@ -34,13 +38,18 @@ final class ObjectName
     private const STRING_MAX = 60;
 
     /**
-     * The name to show for an object: an enum by its case, anything that can
-     * describe itself by that description, and everything else by its class.
+     * The name to show for an object: a double by its type and number, an
+     * enum by its case, anything that can describe itself by that
+     * description, and everything else by its class.
      */
     public static function of(object $value): string
     {
         if ($value instanceof ReportedObject) {
             return $value->name;
+        }
+
+        if ($value instanceof GeneratedDouble || $value instanceof MatchableDouble) {
+            return DoubleLabels::of($value);
         }
 
         if ($value instanceof UnitEnum) {

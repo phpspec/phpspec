@@ -808,3 +808,31 @@ Feature: Story BDD with Gherkin
     When I run phpspec run in a fresh process with option "features/library.feature"
     Then the exit code should be 1
     And the output should contain "book() takes 2 captures, the step has 1 left."
+
+  Scenario: Each scenario numbers the doubles its steps make from one
+    Given an interface "src/App/Context.php":
+      """
+      <?php
+      namespace App;
+
+      interface Context {}
+      """
+    And a feature file "features/contexts.feature":
+      """
+      Feature: Contexts
+        Scenario: First
+          Then two contexts are the same
+
+        Scenario: Second
+          Then two contexts are the same
+      """
+    And a step file "features/steps/contexts.steps.php":
+      """
+      <?php
+      then("two contexts are the same", function () {
+          expect(mock(App\Context::class))->toBe(mock(App\Context::class));
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should contain "Context double #1 to be "
+    And the output should not contain "Context double #3"

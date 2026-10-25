@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\ObjectName;
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Report\ReportedObject;
 use PhpSpec\Report\Typed;
 
@@ -8,6 +9,8 @@ final class TypedPoint
 {
     public function __construct(public int $x, public int $y) {}
 }
+
+interface TypedShape {}
 
 describe(Typed::class, function () {
 
@@ -30,5 +33,19 @@ describe(Typed::class, function () {
         expect(Typed::value($reported))->toBe('TypedPoint{x: 1, y: 2}');
         expect(Typed::value(['at' => $reported]))->toBe('[at => TypedPoint{x: 1, y: 2}]');
         expect(ObjectName::of($reported))->toBe('TypedPoint');
+    });
+
+    it("shows a double by its name alone, never by what it holds inside", function () {
+        $saved = DoubleLabels::save();
+        DoubleLabels::start();
+
+        try {
+            $shape = mock(TypedShape::class);
+
+            expect(Typed::value($shape))->toBe('TypedShape double #1');
+            expect(ObjectName::of($shape))->toBe('TypedShape double #1');
+        } finally {
+            DoubleLabels::restore($saved);
+        }
     });
 });

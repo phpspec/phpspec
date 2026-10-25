@@ -6,6 +6,9 @@ use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\InProcessResult;
 use PhpSpec\InProcessRunner;
+use PhpSpec\Report\DoubleLabels;
+
+interface InProcessRunnerSpecClock {}
 
 describe(InProcessRunner::class, function () {
     this("inProcessRunner", fn() => new InProcessRunner());
@@ -24,6 +27,28 @@ describe(InProcessRunner::class, function () {
             expect(isset($_ENV['SHELL_VERBOSITY']) || isset($_SERVER['SHELL_VERBOSITY']))->toBe(false);
         } finally {
             unlink($project . '/spec/Quiet.spec.php');
+            rmdir($project . '/spec');
+            rmdir($project);
+        }
+    });
+    it("leaves the doubles of the example it runs in their numbers, the inner run numbering its own from one", function () {
+        $project = sys_get_temp_dir() . '/phpspec_labels_' . uniqid();
+        mkdir($project . '/spec', 0777, true);
+        file_put_contents($project . '/spec/Inner.spec.php', '<?php interface InnerSpecClock {} describe("Inner", function () { it("compares", function (InnerSpecClock $clock) { expect(mock(InnerSpecClock::class))->toBe($clock); }); });');
+        $saved = DoubleLabels::save();
+        DoubleLabels::start();
+
+        try {
+            $outer = mock(InProcessRunnerSpecClock::class);
+
+            $inner = InProcessRunner::run($project, 'run');
+
+            expect($inner->output)->toContain('Expected InnerSpecClock double #2 to be InnerSpecClock double #1 ($clock)');
+            expect(DoubleLabels::of($outer))->toBe('InProcessRunnerSpecClock double #1');
+            expect(DoubleLabels::of(mock(InProcessRunnerSpecClock::class)))->toBe('InProcessRunnerSpecClock double #2');
+        } finally {
+            DoubleLabels::restore($saved);
+            unlink($project . '/spec/Inner.spec.php');
             rmdir($project . '/spec');
             rmdir($project);
         }

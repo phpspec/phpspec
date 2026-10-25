@@ -32,7 +32,7 @@ trait MatchableDoubleBehaviour
     /** @var string The method name this wrapper represents */
     private string $______phpspec_methodName;
 
-    public function ______PhpSpecGetDouble(): mixed
+    public function ______PhpSpecGetDouble(): object
     {
         return $this->______phpspec_mockedObject;
     }
