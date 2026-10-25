@@ -3398,3 +3398,75 @@ Feature: Mocking
       """
     When I run the spec
     Then all examples should pass
+
+  Scenario: A method returning an interface only an enum can implement answers a case of an enum implementing it, loaded when first needed
+    Given an interface "src/App/Labelled.php":
+      """
+      <?php
+      namespace App;
+
+      interface Labelled extends \BackedEnum {}
+      """
+    And a class "src/App/Status.php":
+      """
+      <?php
+      namespace App;
+
+      enum Status: string implements Labelled {
+          case Draft = 'draft';
+          case Sent = 'sent';
+      }
+      """
+    And an interface "src/App/LabelSource.php":
+      """
+      <?php
+      namespace App;
+
+      interface LabelSource {
+          public function label(): Labelled;
+      }
+      """
+    And a class "src/App/Badge.php":
+      """
+      <?php
+      namespace App;
+
+      final class Badge {
+          public function __construct(private LabelSource $source) {}
+
+          public function show(): string {
+              return $this->source->label()->name;
+          }
+      }
+      """
+    And a spec file "spec/App/Badge.spec.php":
+      """
+      <?php
+
+      use App\Badge;
+      use App\Labelled;
+      use App\LabelSource;
+      use App\Status;
+
+      describe(Badge::class, function () {
+          it('shows the label it was stubbed with', function (LabelSource $source) {
+              allow($source->label())->toReturn(Status::Sent);
+
+              expect((new Badge($source))->show())->toBe('Sent');
+          });
+
+          it('shows the first case for a label nobody stubbed', function () {
+              expect((new Badge(dummy(LabelSource::class)))->show())->toBe('Draft');
+          });
+
+          it('still makes no double of the interface itself', function () {
+              $refusal = 'Cannot create a test double for interface App\Labelled. Only an enum can implement UnitEnum.';
+
+              expect(fn () => mock(Labelled::class))->toThrow(LogicException::class, $refusal);
+              expect(fn () => dummy(Labelled::class))->toThrow(LogicException::class, $refusal);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/App/Badge.spec.php"
+    Then the output should contain "1 spec, 3 examples (3 passed)"
+    And the exit code should be 0

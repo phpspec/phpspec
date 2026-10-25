@@ -26,7 +26,7 @@ interface built on one is built the way PHP allows:
 | `Traversable` | is an `IteratorAggregate` | its `getIterator()` iterates nothing unless stubbed: `allow($bag->getIterator())->toReturn(new ArrayIterator([...]))` |
 | `Throwable` | extends `Exception` | it can be thrown; `getMessage()` and the other methods `Exception` declares final answer as an `Exception` does, and cannot be stubbed |
 | `DateTimeInterface` | extends `DateTimeImmutable` | its methods are stubbed as any other |
-| `UnitEnum` | cannot be made | only an enum can implement it, so `mock()` and `dummy()` refuse it, saying so |
+| `UnitEnum` | cannot be made | only an enum can implement it, so `mock()` and `dummy()` refuse it, saying so; a method returning it answers a case of an enum implementing it (see below) |
 
 An extension may refuse a plain class too: PhpSpec asks PHP once per run, and
 a double PHP refuses is refused with PHP's reason:
@@ -233,8 +233,11 @@ of your own classes and interfaces that allows `null` answers as it would
 without `null` (`Page|Book|null` a `Page` double, `Book|Page|null` a `Book`
 one), and `null` when none of them can have a double; one that also holds a
 scalar or a built-in type answers `null`. A stub can still return `null`.
-A method returning an interface no double can be (one only an enum can
-implement) is refused when it is called, with the reason. A method returning a final class hands the spec an
+A method returning an interface only an enum can implement answers, as one
+returning that enum would, the first case of the first enum by name that
+implements it: one already loaded, or one declared in the source of the
+interface's own namespace, read for it and loaded to check it. With no such
+enum it is refused when it is called, with the reason. A method returning a final class hands the spec an
 instance of it built without its constructor, for `allow()` to replace. A
 lenient double has nobody about to replace it, so it refuses the code under
 spec, still handing the spec's own call the instance `allow()` needs. A type no

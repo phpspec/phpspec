@@ -23,6 +23,7 @@ use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
 use Throwable;
+use UnitEnum;
 
 /**
  * @internal
@@ -36,9 +37,29 @@ final class Answers
     /** @var array<string, class-string<DummyAnswer>> The class of a dummy answer, by the types it is of */
     private static array $dummies = [];
 
+    /** @var array<string, UnitEnum|null> What answers for an interface only an enum can implement, by the interface */
+    private static array $enumCases = [];
+
     public static function reset(): void
     {
         self::$dummies = [];
+        self::$enumCases = [];
+    }
+
+    /**
+     * What a double answers to a call of a method returning an interface
+     * only an enum can implement: the first case of the first enum, by name,
+     * implementing it, or null when none is found.
+     *
+     * @param class-string $interface
+     */
+    public static function enumCase(string $interface): ?UnitEnum
+    {
+        if (!array_key_exists($interface, self::$enumCases)) {
+            self::$enumCases[$interface] = EnumImplementers::here()->firstCaseOf($interface);
+        }
+
+        return self::$enumCases[$interface];
     }
 
     /**

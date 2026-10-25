@@ -302,6 +302,19 @@ interface DoubleSpecPayload extends \Serializable {}
 interface DoubleSpecSized {
     public function size(): int;
 }
+interface DoubleSpecShaded extends \UnitEnum {}
+enum DoubleSpecShade: string implements DoubleSpecShaded {
+    case Light = 'light';
+    case Dark = 'dark';
+}
+enum DoubleSpecAShade implements DoubleSpecShaded {
+    case Pale;
+}
+interface DoubleSpecShadeSource {
+    public function shade(): DoubleSpecShaded;
+    public function maybe(): ?DoubleSpecShaded;
+    public function backed(): \BackedEnum;
+}
 interface DoubleSpecNativeSource {
     public function bag(): DoubleSpecBag;
     public function failure(): DoubleSpecFailure;
@@ -609,7 +622,24 @@ describe(Double::class, function() {
             expect($source->counted())->toBeAnInstanceOf(DoubleSpecSized::class);
             expect($source->name())->toBe('');
             expect(fn() => $source->label())
-                ->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of DoubleSpecNativeSource::label(): no double of DoubleSpecLabelled can be made. Only an enum can implement UnitEnum.');
+                ->toThrow(LogicException::class, 'PhpSpec cannot stand in for the return type of DoubleSpecNativeSource::label(): no double of DoubleSpecLabelled can be made. Only an enum can implement UnitEnum, and no enum implementing DoubleSpecLabelled was found.');
+        });
+
+        it("answers the first case of the first enum, by name, implementing one only an enum can implement, a mock as a dummy", function () {
+            expect(Double::getInstance(DoubleSpecShadeSource::class)->shade())->toBe(DoubleSpecAShade::Pale);
+            expect(dummy(DoubleSpecShadeSource::class)->shade())->toBe(DoubleSpecAShade::Pale);
+        });
+
+        it("takes a stub of any case implementing it, and answers null where it allows null", function () {
+            $source = mock(DoubleSpecShadeSource::class);
+            allow($source->shade())->toReturn(DoubleSpecShade::Dark);
+
+            expect($source->shade())->toBe(DoubleSpecShade::Dark);
+            expect(dummy(DoubleSpecShadeSource::class)->maybe())->toBeNull();
+        });
+
+        it("looks for no enum to answer PHP's own BackedEnum with", function () {
+            expect(fn() => dummy(DoubleSpecShadeSource::class)->backed())->toThrow(LogicException::class);
         });
 
         it("doubles one built on Serializable without the deprecation", function () {
