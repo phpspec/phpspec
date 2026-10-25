@@ -88,12 +88,12 @@ final class HtmlReport
                 <td><a href="$linkFile">$safeFile</a></td>
                 <td><div class="bar"><span class="$grade" style="width:$width%"></span></div></td>
                 <td class="num">{$info['covered']}/{$info['executable']}</td>
-                <td class="num">{$this->fmt($info['pct'])}</td>
+                <td class="num">{$this->fmt(new Percentage($info['covered'], $info['executable']))}</td>
             </tr>
             ROW;
         }
 
-        $meta = sprintf('%d/%d lines · %s', $totalCovered, $totalExecutable, $this->fmt($totalPct));
+        $meta = sprintf('%d/%d lines · %s', $totalCovered, $totalExecutable, $this->fmt(new Percentage($totalCovered, $totalExecutable)));
 
         $body = HtmlTheme::header('Coverage', $meta)
             . HtmlTheme::meter($totalPct)
@@ -106,7 +106,7 @@ final class HtmlReport
                 "<footer class=\"summary\">\n<p>Total: %d/%d lines covered (%s)</p>\n</footer>\n",
                 $totalCovered,
                 $totalExecutable,
-                $this->fmt($totalPct),
+                $this->fmt(new Percentage($totalCovered, $totalExecutable)),
             )
             . "</main>\n";
 
@@ -155,7 +155,7 @@ final class HtmlReport
         $safeFile = htmlspecialchars($file, ENT_QUOTES);
         $counts = CoverageData::countLines($lineData);
         $pct = $counts['executable'] > 0 ? ($counts['covered'] / $counts['executable']) * 100 : 0;
-        $meta = sprintf('%d/%d lines · %s', $counts['covered'], $counts['executable'], $this->fmt($pct));
+        $meta = sprintf('%d/%d lines · %s', $counts['covered'], $counts['executable'], $this->fmt(new Percentage($counts['covered'], $counts['executable'])));
 
         $body = HtmlTheme::header('Coverage', $meta)
             . HtmlTheme::meter($pct)
@@ -204,14 +204,8 @@ final class HtmlReport
         return 'lo';
     }
 
-    /**
-     * Formats a percentage value for display.
-     *
-     * @param float $pct the percentage to format
-     * @return string the formatted percentage string (e.g. "85.3%")
-     */
-    private function fmt(float $pct): string
+    private function fmt(Percentage $percentage): string
     {
-        return sprintf('%.1f%%', $pct);
+        return $percentage->cut() . '%';
     }
 }

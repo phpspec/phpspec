@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Coverage\CoverageVerdict;
+use PhpSpec\Coverage\Percentage;
 use PhpSpec\Report\Formatter\Agent;
 use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
@@ -300,7 +301,7 @@ describe(Agent::class, function () {
         $formatter->begin();
         $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]));
         $formatter->end(new SuiteResult([]));
-        $formatter->covered(new CoverageVerdict(24.34, 90.0));
+        $formatter->covered(new CoverageVerdict(new Percentage(2434, 10000), 90.0));
         $formatter->publish();
         $doc = $stream($output->fetch());
 
@@ -356,7 +357,7 @@ describe(Agent::class, function () {
         $formatter = new Agent($output);
         $formatter->begin();
         $formatter->end(new SuiteResult([]));
-        $formatter->covered(new CoverageVerdict(72.5));
+        $formatter->covered(new CoverageVerdict(new Percentage(725, 1000)));
         $formatter->publish();
         $doc = $stream($output->fetch());
 

@@ -574,6 +574,14 @@ No coverage was recorded for src/Untested.php during an example or scenario.
 
 The text, Clover and HTML reports cover only the files the run loaded.
 
+A percentage is cut, never rounded up: 2502 of 2503 lines is 99.9%, not
+100.0%. Beside `--coverage-min` it is cut to the places the threshold is
+written to, one at least, so it reads below the threshold exactly when it is:
+
+```
+Code coverage 66.6% is below the required 66.7%
+```
+
 #### Excluding code from coverage
 
 Interfaces never count, and neither do the lines that only declare: a class's

@@ -27,6 +27,7 @@ use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Coverage\HtmlReport;
 use PhpSpec\Coverage\JsonReport;
 use PhpSpec\Coverage\JsonReportBuilder;
+use PhpSpec\Coverage\Percentage;
 use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\Coverage\SourceFiles;
 use PhpSpec\Coverage\TextReport;
@@ -277,11 +278,11 @@ final class CoverageReporter
         }
 
         if ($options->coverageMin === null) {
-            return new CoverageVerdict($totalExecutable > 0 ? ($totalCovered / $totalExecutable) * 100 : 0.0);
+            return new CoverageVerdict(new Percentage($totalCovered, $totalExecutable));
         }
 
         $verdict = new CoverageVerdict(
-            $totalExecutable > 0 ? ($totalCovered / $totalExecutable) * 100 : 0.0,
+            new Percentage($totalCovered, $totalExecutable),
             (float) $options->coverageMin,
             (new SourceFiles(new RealFilesystem(), realpath($options->srcPath) ?: $options->srcPath, ProjectRoot::here()))->unrecorded($this->hits, $this->exclusions),
         );
@@ -303,7 +304,7 @@ final class CoverageReporter
         }
 
         $output->writeln($verdict->met()
-            ? sprintf('<fg=green>Code coverage %.1f%% meets the required %.1f%%</>', $verdict->percent, $verdict->required)
-            : sprintf('<fg=red>Code coverage %.1f%% is below the required %.1f%%</>', $verdict->percent, $verdict->required));
+            ? sprintf('<fg=green>Code coverage %s%% meets the required %s%%</>', $verdict->shown(), $verdict->shownRequired())
+            : sprintf('<fg=red>Code coverage %s%% is below the required %s%%</>', $verdict->shown(), $verdict->shownRequired()));
     }
 }

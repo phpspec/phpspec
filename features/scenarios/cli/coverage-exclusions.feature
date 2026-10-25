@@ -461,6 +461,41 @@ Feature: Coverage exclusions
       """
     And the exit code should be 1
 
+  Scenario: A percentage is cut, never rounded up to the threshold it falls short of
+    Given a class "src/App/Meter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Meter
+      {
+          public function read(): int
+          {
+              $reading = 2;
+
+              return $reading;
+          }
+
+          public function reset(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Meter.spec.php":
+      """
+      <?php
+
+      describe(App\Meter::class, function () {
+          it('reads', fn () => expect((new App\Meter())->read())->toBe(2));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage --coverage-min=66.7"
+    Then the output should contain "Total: 66.6% (2/3)"
+    And the output should contain "Code coverage 66.6% is below the required 66.7%"
+    And the exit code should be 1
+
   Scenario: Guard leaves excluded code alone
     Given a class "src/App/Basket.php":
       """

@@ -410,7 +410,7 @@ final class Agent extends AbstractFormatter
 
         if ($this->coverage !== null) {
             $summary['coverage'] = [
-                'percent' => round($this->coverage->percent, 1),
+                'percent' => (float) $this->coverage->shown(),
                 'required' => $this->coverage->required,
                 'met' => $this->coverage->met(),
             ];

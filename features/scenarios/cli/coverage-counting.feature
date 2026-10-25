@@ -116,7 +116,7 @@ Feature: What coverage counts
     Then the output should contain "App/Basket.php ... 100.0% (1/1)"
     And the output should contain "App/Shelf.php .... 100.0% (1/1)"
     And the output should contain "App/Clock.php ....   0.0%"
-    And the output should contain "Total: 66.7% (2/3)"
+    And the output should contain "Total: 66.6% (2/3)"
 
     Examples:
       | coverage                                 |
