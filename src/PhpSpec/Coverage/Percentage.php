@@ -44,9 +44,19 @@ final readonly class Percentage
         return intdiv($units, $scale) . '.' . str_pad((string) ($units % $scale), $places, '0', STR_PAD_LEFT);
     }
 
-    public function reaches(float $threshold): bool
+    /**
+     * Whether it is the threshold or more. No executable lines reach no
+     * threshold above zero.
+     */
+    public function reaches(float $percent): bool
     {
-        return $this->covered * 100 >= $threshold * $this->executable;
+        if ($this->executable === 0) {
+            return $percent <= 0.0;
+        }
+
+        $threshold = new Threshold($percent);
+
+        return $this->covered * 100 * 10 ** $threshold->places() >= $threshold->units() * $this->executable;
     }
 
     public function complete(): bool

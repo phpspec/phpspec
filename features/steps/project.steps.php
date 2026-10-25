@@ -131,6 +131,23 @@ given('a library file {string} outside the project, loaded by {string}:', functi
     file_put_contents($loader, (is_file($loader) ? '' : "<?php\n") . 'require_once ' . var_export($full, true) . ";\n", FILE_APPEND);
 });
 
+// A class too long to write out: one method a line, each answering its number,
+// so a spec can cover exactly as many lines as it calls.
+given('a class {string} of {int} one-line methods', function (string $path, int $count) {
+    $full = $this->projectDir . '/' . $path;
+    if (!is_dir(dirname($full))) {
+        mkdir(dirname($full), 0777, true);
+    }
+
+    $methods = '';
+    for ($i = 1; $i <= $count; $i++) {
+        $methods .= "    public function m$i(): int { return $i; }\n";
+    }
+
+    $namespace = trim(str_replace('/', '\\', dirname(substr($path, strlen('src/')))), '\\.');
+    file_put_contents($full, "<?php\n\nnamespace $namespace;\n\nclass " . basename($path, '.php') . "\n{\n$methods}\n");
+});
+
 given('a class {string}:', function (string $path, string $content) {
     $full = $this->projectDir . '/' . $path;
     $dir = dirname($full);

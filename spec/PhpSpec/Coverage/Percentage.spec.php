@@ -11,13 +11,18 @@ describe(Percentage::class, function () {
         expect((new Percentage(29, 100))->cut())->toBe('29.0');
     });
 
-    it('is nothing of nothing', function () {
+    it('is nothing of nothing, which reaches no threshold above zero', function () {
         expect((new Percentage(0, 0))->cut())->toBe('0.0');
         expect((new Percentage(0, 0))->value())->toBe(0.0);
+        expect((new Percentage(0, 0))->reaches(100.0))->toBeFalse();
+        expect((new Percentage(0, 0))->reaches(0.0))->toBeTrue();
     });
 
     it('reaches a threshold by the counts, with no float in the way', function () {
         expect((new Percentage(29, 100))->reaches(29.0))->toBeTrue();
+        expect((new Percentage(9018, 10000))->reaches(90.18))->toBeTrue();
+        expect((new Percentage(161, 250))->reaches(64.4))->toBeTrue();
+        expect((new Percentage(9017, 10000))->reaches(90.18))->toBeFalse();
         expect((new Percentage(2502, 2503))->reaches(99.95))->toBeTrue();
         expect((new Percentage(2502, 2503))->reaches(100.0))->toBeFalse();
     });

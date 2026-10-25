@@ -496,6 +496,48 @@ Feature: Coverage exclusions
     And the output should contain "Code coverage 66.6% is below the required 66.7%"
     And the exit code should be 1
 
+  Scenario: A threshold written with decimals is reached exactly by as many lines
+    Given a class "src/App/Wide.php" of 250 one-line methods
+    And a spec file "spec/App/Wide.spec.php":
+      """
+      <?php
+
+      describe(App\Wide::class, function () {
+          it('answers', function () {
+              $wide = new App\Wide();
+
+              foreach (range(1, 161) as $i) {
+                  expect($wide->{'m' . $i}())->toBe($i);
+              }
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--coverage --coverage-min=64.4"
+    Then the output should contain "Total: 64.4% (161/250)"
+    And the output should contain "Code coverage 64.4% meets the required 64.4%"
+    And the exit code should be 0
+
+  Scenario: A run with no executable lines reaches no threshold above zero
+    Given a class "src/App/Marker.php":
+      """
+      <?php
+
+      namespace App;
+
+      final class Marker {}
+      """
+    And a spec file "spec/App/Marker.spec.php":
+      """
+      <?php
+
+      describe(App\Marker::class, function () {
+          it('is made', fn () => expect(new App\Marker())->toBeAnInstanceOf(App\Marker::class));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage-min=100"
+    Then the output should contain "Code coverage 0.0% is below the required 100.0%"
+    And the exit code should be 1
+
   Scenario: Guard leaves excluded code alone
     Given a class "src/App/Basket.php":
       """

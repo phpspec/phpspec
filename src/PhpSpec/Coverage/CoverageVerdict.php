@@ -71,9 +71,6 @@ final readonly class CoverageVerdict
 
     private function places(): int
     {
-        $written = $this->required === null ? '' : (string) $this->required;
-        $point = strpos($written, '.');
-
-        return max(1, $point === false ? 0 : strlen($written) - $point - 1);
+        return max(1, $this->required === null ? 0 : (new Threshold($this->required))->places());
     }
 }
