@@ -3312,3 +3312,89 @@ Feature: Mocking
       calls before a nested run that fails","state":"error"
       """
     And the output should contain "Handler::handle(2) was called but not expected"
+
+  Scenario: A union of the project's own types that allows null answers like the union without null, and null when none can
+    Given an interface "src/App/Page.php":
+      """
+      <?php
+      namespace App;
+
+      interface Page {
+          public function title(): string;
+      }
+      """
+    And an interface "src/App/Book.php":
+      """
+      <?php
+      namespace App;
+
+      interface Book {
+          public function title(): string;
+      }
+      """
+    And a class "src/App/Token.php":
+      """
+      <?php
+      namespace App;
+
+      final class Token {}
+      """
+    And a class "src/App/Stamp.php":
+      """
+      <?php
+      namespace App;
+
+      final class Stamp {}
+      """
+    And an interface "src/App/Shelf.php":
+      """
+      <?php
+      namespace App;
+
+      interface Shelf {
+          public function either(): Page|Book|null;
+          public function reversed(): Book|Page|null;
+          public function past(): Token|Page|null;
+          public function neither(): Token|Stamp|null;
+          public function worded(): string|Page|null;
+          public function counted(): ?\Countable;
+      }
+      """
+    And a spec file "spec/App/Shelf.spec.php":
+      """
+      <?php
+
+      use App\Book;
+      use App\Page;
+      use App\Shelf;
+
+      describe(Shelf::class, function () {
+          it('answers the first type of the union that can have one, a mock as a dummy', function (Shelf $shelf) {
+              foreach ([$shelf, dummy(Shelf::class)] as $double) {
+                  $either = $double->either();
+                  $reversed = $double->reversed();
+                  $past = $double->past();
+
+                  expect($either instanceof Page)->toBeTrue();
+                  expect($reversed instanceof Book)->toBeTrue();
+                  expect($past instanceof Page)->toBeTrue();
+              }
+          });
+
+          it('answers null when no type of the union can have one, or the union holds a scalar or a built-in type', function (Shelf $shelf) {
+              foreach ([$shelf, dummy(Shelf::class)] as $double) {
+                  expect($double->neither())->toBeNull();
+                  expect($double->worded())->toBeNull();
+                  expect($double->counted())->toBeNull();
+              }
+          });
+
+          it('answers null when stubbed so', function (Shelf $shelf) {
+              allow($shelf->either())->toReturn(null);
+
+              expect($shelf->either())->toBeNull();
+          });
+      });
+      """
+    When I run the spec
+    Then all examples should pass

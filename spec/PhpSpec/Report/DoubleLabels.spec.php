@@ -40,6 +40,10 @@ interface DoubleLabelsSpecOrder {
     public function both(): DoubleLabelsSpecPage&DoubleLabelsSpecBook;
 
     public function bothOrIndex(): (DoubleLabelsSpecPage&DoubleLabelsSpecBook)|DoubleLabelsSpecIndex;
+
+    public function maybeEither(): DoubleLabelsSpecPage|DoubleLabelsSpecBook|null;
+
+    public function maybeBoth(): (DoubleLabelsSpecPage&DoubleLabelsSpecBook)|null;
 }
 
 describe(DoubleLabels::class, function () {
@@ -110,6 +114,8 @@ describe(DoubleLabels::class, function () {
         expect(DoubleLabels::of($order->both()))->toBe('DoubleLabelsSpecPage&DoubleLabelsSpecBook double #5 (from DoubleLabelsSpecOrder double #1->both())');
         expect(DoubleLabels::of($dummy->either()))->toBe('DoubleLabelsSpecPage|DoubleLabelsSpecBook double #6 (from DoubleLabelsSpecOrder double #2->either())');
         expect(DoubleLabels::of($order->bothOrIndex()))->toBe('(DoubleLabelsSpecPage&DoubleLabelsSpecBook)|DoubleLabelsSpecIndex double #7 (from DoubleLabelsSpecOrder double #1->bothOrIndex())');
+        expect(DoubleLabels::of($order->maybeEither()))->toBe('DoubleLabelsSpecPage|DoubleLabelsSpecBook double #8 (from DoubleLabelsSpecOrder double #1->maybeEither())');
+        expect(DoubleLabels::of($order->maybeBoth()))->toBe('DoubleLabelsSpecPage&DoubleLabelsSpecBook double #9 (from DoubleLabelsSpecOrder double #1->maybeBoth())');
     });
 
     it('starts each book at one, and puts a saved book back whole, its count included', function () {

@@ -104,7 +104,9 @@ final class Answers
      * a class or an interface, or a union of them alone: one of the first type
      * that can have one, there to be handed along, refusing to be used, and
      * the types of each member that can have one, in order, for a lenient
-     * double to answer a dummy of the first that suits instead.
+     * double to answer a dummy of the first that suits instead. A union that
+     * allows null answers as it would without null when every other member
+     * is the project's own, and null otherwise.
      * With no class, the reason PHP lets no class be the type, when it gives
      * one.
      *
@@ -112,9 +114,12 @@ final class Answers
      */
     public static function classFor(ReflectionType $type, string $methodName, string $suffix): array
     {
-        $members = $type instanceof ReflectionUnionType
-            ? ($type->allowsNull() || self::holdsScalar($type) ? [] : $type->getTypes())
-            : [$type];
+        $members = match (true) {
+            !$type instanceof ReflectionUnionType => [$type],
+            self::holdsScalar($type) => [],
+            $type->allowsNull() => self::ownTypesBesidesNull($type),
+            default => $type->getTypes(),
+        };
         $refusal = null;
         $className = null;
         $alternatives = [];
@@ -283,6 +288,38 @@ final class Answers
         usort($types, static fn(ReflectionClass $one, ReflectionClass $other): int => $one->isInterface() <=> $other->isInterface());
 
         return $types === [] ? null : $types;
+    }
+
+    /**
+     * The members of a union besides null, when each names classes or
+     * interfaces of the project's own, and none otherwise.
+     *
+     * @return list<ReflectionType>
+     */
+    private static function ownTypesBesidesNull(ReflectionUnionType $type): array
+    {
+        $members = [];
+
+        foreach ($type->getTypes() as $member) {
+            if ($member instanceof ReflectionNamedType && $member->getName() === 'null') {
+                continue;
+            }
+
+            foreach ($member instanceof ReflectionIntersectionType ? $member->getTypes() : [$member] as $named) {
+                if (!$named instanceof ReflectionNamedType || $named->isBuiltin() || self::builtIn($named->getName())) {
+                    return [];
+                }
+            }
+
+            $members[] = $member;
+        }
+
+        return $members;
+    }
+
+    private static function builtIn(string $name): bool
+    {
+        return (class_exists($name) || interface_exists($name)) && (new ReflectionClass($name))->isInternal();
     }
 
     private static function holdsScalar(ReflectionUnionType $type): bool

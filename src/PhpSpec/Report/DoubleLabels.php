@@ -16,9 +16,11 @@ namespace PhpSpec\Report;
 
 use PhpSpec\Mock\GeneratedDouble;
 use PhpSpec\Mock\MatchableDouble;
+use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
+use ReflectionUnionType;
 use WeakMap;
 
 /**
@@ -148,9 +150,8 @@ final class DoubleLabels
     }
 
     /**
-     * A return type as the reader wrote it, a nullable one without its null,
-     * and mixed where none was written. A union allowing null answers null,
-     * never an answer to name.
+     * A return type as the reader wrote it, without the null a nullable one
+     * allows, and mixed where none was written.
      */
     private static function declared(?ReflectionType $type): string
     {
@@ -158,6 +159,18 @@ final class DoubleLabels
             return 'mixed';
         }
 
-        return $type instanceof ReflectionNamedType ? $type->getName() : (string) $type;
+        if ($type instanceof ReflectionNamedType) {
+            return $type->getName();
+        }
+
+        if (!$type instanceof ReflectionUnionType) {
+            return (string) $type;
+        }
+
+        $members = array_values(array_filter($type->getTypes(), static fn(ReflectionType $member): bool => (string) $member !== 'null'));
+
+        return count($members) === 1
+            ? (string) $members[0]
+            : implode('|', array_map(static fn(ReflectionType $member): string => $member instanceof ReflectionIntersectionType ? '(' . $member . ')' : (string) $member, $members));
     }
 }
