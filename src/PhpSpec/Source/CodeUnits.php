@@ -27,8 +27,9 @@ final class CodeUnits
 {
     public const FILE = 0;
 
-    private const OPENS = [T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES, 123];
     private const TYPES = [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED, T_NAME_RELATIVE, T_ARRAY, T_CALLABLE, T_NS_SEPARATOR];
+
+    private readonly Tokens $stream;
 
     /** @var list<PhpToken> */
     private readonly array $tokens;
@@ -38,7 +39,8 @@ final class CodeUnits
 
     public function __construct(string $source)
     {
-        $this->tokens = array_values(PhpToken::tokenize($source));
+        $this->stream = Tokens::of($source);
+        $this->tokens = $this->stream->list;
         $this->own($this->units());
     }
 
@@ -65,13 +67,13 @@ final class CodeUnits
 
         foreach ($this->tokens as $at => $token) {
             if ($token->is(T_FUNCTION) && !$this->importedAt($at)) {
-                $open = $this->bodyOpen($at);
+                $open = $this->stream->bodyOpen($at);
 
                 if ($this->tokens[$open]->text !== ';') {
-                    $units[] = [$at, $this->matchingClose($open)];
+                    $units[] = [$at, $this->stream->matchingClose($open)];
                 }
             } elseif ($token->is(T_FN)) {
-                $units[] = [$at, $this->arrowEnd($at)];
+                $units[] = [$at, $this->stream->arrowEnd($at)];
             } elseif ($token->is(T_VARIABLE) && $this->declaresAPropertyAt($at)) {
                 array_push($units, ...$this->hooksOf($at));
             }
@@ -116,7 +118,7 @@ final class CodeUnits
 
     private function importedAt(int $at): bool
     {
-        $before = $this->significantBefore($at);
+        $before = $this->stream->significantBefore($at);
 
         return $before !== null && $this->tokens[$before]->is(T_USE);
     }
@@ -127,7 +129,7 @@ final class CodeUnits
      */
     private function declaresAPropertyAt(int $at): bool
     {
-        for ($i = $this->significantBefore($at); $i !== null; $i = $this->significantBefore($i)) {
+        for ($i = $this->stream->significantBefore($at); $i !== null; $i = $this->stream->significantBefore($i)) {
             $token = $this->tokens[$i];
 
             if ($token->is(self::TYPES) || in_array($token->text, ['?', '|', '&', '(', ')'], true)) {
@@ -155,7 +157,7 @@ final class CodeUnits
         }
 
         $hooks = [];
-        $close = $this->matchingClose($list);
+        $close = $this->stream->matchingClose($list);
 
         for ($i = $list + 1; $i < $close; $i++) {
             $token = $this->tokens[$i];
@@ -184,7 +186,7 @@ final class CodeUnits
             $token = $this->tokens[$i];
 
             if ($token->is(T_FUNCTION)) {
-                $i = $this->matchingClose($this->bodyOpen($i));
+                $i = $this->stream->matchingClose($this->stream->bodyOpen($i));
 
                 continue;
             }
@@ -213,10 +215,10 @@ final class CodeUnits
      */
     private function hookEnd(int $name): int
     {
-        $next = $this->significantAfter($name);
+        $next = $this->stream->significantAfter($name);
 
         if ($next !== null && $this->tokens[$next]->text === '(') {
-            $next = $this->significantAfter($this->matchingBracket($next));
+            $next = $this->stream->significantAfter($this->matchingBracket($next));
         }
 
         if ($next === null) {
@@ -224,7 +226,7 @@ final class CodeUnits
         }
 
         if ($this->tokens[$next]->id === 123) {
-            return $this->matchingClose($next);
+            return $this->stream->matchingClose($next);
         }
 
         $nesting = 0;
@@ -239,69 +241,6 @@ final class CodeUnits
 
             if ($nesting < 0 || ($nesting === 0 && $text === ';')) {
                 return $nesting < 0 ? $i - 1 : $i;
-            }
-        }
-
-        return count($this->tokens) - 1;
-    }
-
-    /**
-     * Where the body after a declaration opens, or the semicolon a method
-     * without one ends on.
-     */
-    private function bodyOpen(int $from): int
-    {
-        $nesting = 0;
-
-        for ($i = $from + 1; $i < count($this->tokens); $i++) {
-            $text = $this->tokens[$i]->text;
-            $nesting += match ($text) {
-                '(', '[' => 1,
-                ')', ']' => -1,
-                default => 0,
-            };
-
-            if ($nesting === 0 && ($this->tokens[$i]->id === 123 || $text === ';')) {
-                return $i;
-            }
-        }
-
-        return count($this->tokens) - 1;
-    }
-
-    /**
-     * The last token of an arrow function's expression: before the separator
-     * or the bracket that ends it.
-     */
-    private function arrowEnd(int $from): int
-    {
-        $nesting = 0;
-
-        for ($i = $from + 1; $i < count($this->tokens); $i++) {
-            $text = $this->tokens[$i]->text;
-            $nesting += match ($text) {
-                '(', '[', '{' => 1,
-                ')', ']', '}' => -1,
-                default => 0,
-            };
-
-            if ($nesting < 0 || ($nesting === 0 && in_array($text, [';', ','], true))) {
-                return $i - 1;
-            }
-        }
-
-        return count($this->tokens) - 1;
-    }
-
-    private function matchingClose(int $open): int
-    {
-        $depth = 0;
-
-        for ($i = $open; $i < count($this->tokens); $i++) {
-            if ($this->tokens[$i]->is(self::OPENS)) {
-                $depth++;
-            } elseif ($this->tokens[$i]->text === '}' && --$depth === 0) {
-                return $i;
             }
         }
 
@@ -329,28 +268,6 @@ final class CodeUnits
         }
 
         return count($this->tokens) - 1;
-    }
-
-    private function significantBefore(int $at): ?int
-    {
-        for ($i = $at - 1; $i >= 0; $i--) {
-            if (!$this->tokens[$i]->isIgnorable()) {
-                return $i;
-            }
-        }
-
-        return null;
-    }
-
-    private function significantAfter(int $at): ?int
-    {
-        for ($i = $at + 1; $i < count($this->tokens); $i++) {
-            if (!$this->tokens[$i]->isIgnorable()) {
-                return $i;
-            }
-        }
-
-        return null;
     }
 
     /**
