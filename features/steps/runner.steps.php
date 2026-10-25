@@ -27,13 +27,14 @@ if (!function_exists('_phpspec_exec')) {
             }
         }
 
-        _phpspec_exec_subprocess($world, $args, $interactive);
+        _phpspec_exec_subprocess($world, $args, $interactive, env: $interactive ? ['SHELL_INTERACTIVE' => '1'] : []);
     }
 
     /**
      * @param string|list<string> $args a command line, or the arguments as a process takes them
+     * @param array<string, string> $env what to set in the environment phpspec runs in, over this one's
      */
-    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $engine = 'off', ?string $answers = null, array $php = []): void
+    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $engine = 'off', ?string $answers = null, array $php = [], array $env = []): void
     {
         $switches = match ($engine) {
             'xdebug' => ['-d', 'xdebug.mode=coverage', '-d', 'pcov.enabled=0'],
@@ -52,7 +53,7 @@ if (!function_exists('_phpspec_exec')) {
             2 => ['file', $errorFile, 'w'],
         ];
 
-        $process = proc_open($cmd, $descriptors, $pipes, $world->projectDir);
+        $process = proc_open($cmd, $descriptors, $pipes, $world->projectDir, [...array_diff_key(getenv(), ['SHELL_INTERACTIVE' => true]), ...$env]);
 
         if ($answers !== null) {
             fwrite($pipes[0], implode("\n", array_map('trim', explode(',', $answers))) . "\n");
@@ -71,6 +72,38 @@ if (!function_exists('_phpspec_exec')) {
         // Kept apart as well: a machine-readable format owns standard output
         // alone, and PHP's own error text belongs on the error stream.
         $world->stdout = $stdout;
+    }
+
+    /**
+     * Runs phpspec with an input that stays open and never says anything, and
+     * fails the step when phpspec is still waiting on it after a while.
+     */
+    function _phpspec_exec_with_silent_input(object $world, string $args, int $patience = 20): void
+    {
+        $outputFile = (string) tempnam(sys_get_temp_dir(), 'phpspec_stdout_');
+        $errorFile = (string) tempnam(sys_get_temp_dir(), 'phpspec_stderr_');
+        $cmd = [$world->phpBin, '-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off', $world->phpspecBin, ...\PhpSpec\InProcessRunner::argv($args)];
+        $process = proc_open($cmd, [0 => ['pipe', 'r'], 1 => ['file', $outputFile, 'w'], 2 => ['file', $errorFile, 'w']], $pipes, $world->projectDir, array_diff_key(getenv(), ['SHELL_INTERACTIVE' => true]));
+
+        $deadline = microtime(true) + $patience;
+        while (($status = proc_get_status($process))['running'] && microtime(true) < $deadline) {
+            usleep(50000);
+        }
+
+        if ($status['running']) {
+            proc_terminate($process);
+        }
+
+        fclose($pipes[0]);
+        proc_close($process);
+        $world->exitCode = $status['exitcode'];
+        $world->output = file_get_contents($outputFile) . file_get_contents($errorFile);
+        unlink($outputFile);
+        unlink($errorFile);
+
+        if ($status['running']) {
+            throw new \RuntimeException(sprintf("phpspec was still waiting on its input after %d seconds.\nOutput:\n%s", $patience, $world->output));
+        }
     }
 }
 
@@ -126,6 +159,12 @@ when('I accept the offers phpspec made with option {string}', function (string $
 // this suite down with it, so it always gets a process of its own.
 when('I run phpspec run in a fresh process with option {string}', function (string $options) {
     _phpspec_exec_subprocess($this, 'run ' . $options);
+});
+
+// A pipe is no terminal, so a run attended at one is stood in for by the
+// override a person piping answers on purpose would set.
+when('I run phpspec run in a fresh process as if at a terminal', function () {
+    _phpspec_exec_subprocess($this, 'run', env: ['SHELL_INTERACTIVE' => '1']);
 });
 
 when('I run phpspec run in a fresh process', function () {
@@ -243,7 +282,7 @@ when('I run phpspec describe {string} with option {string}', function (string $c
 });
 
 when('I run phpspec describe {string} answering {string}', function (string $class, string $answers) {
-    _phpspec_exec_subprocess($this, 'describe ' . $class, answers: $answers);
+    _phpspec_exec_subprocess($this, 'describe ' . $class, answers: $answers, env: ['SHELL_INTERACTIVE' => '1']);
 });
 
 // -- Exemplify command -------------------------------------------------
@@ -269,7 +308,23 @@ when('I run phpspec run {string} and answer {string} to generation prompts', fun
 });
 
 when('I run phpspec run {string} answering {string}', function (string $path, string $answers) {
-    _phpspec_exec_subprocess($this, 'run ' . $path, answers: $answers);
+    _phpspec_exec_subprocess($this, 'run ' . $path, answers: $answers, env: ['SHELL_INTERACTIVE' => '1']);
+});
+
+when('I pipe {string} into phpspec run', function (string $answers) {
+    _phpspec_exec_subprocess($this, 'run', answers: $answers);
+});
+
+when('I pipe {string} into phpspec run with option {string} and SHELL_INTERACTIVE=1', function (string $answers, string $options) {
+    _phpspec_exec_subprocess($this, 'run ' . $options, answers: $answers, env: ['SHELL_INTERACTIVE' => '1']);
+});
+
+when('I run phpspec run with an input that never answers', function () {
+    _phpspec_exec_with_silent_input($this, 'run');
+});
+
+when('I run phpspec run with option {string} and an input that never answers', function (string $options) {
+    _phpspec_exec_with_silent_input($this, 'run ' . $options);
 });
 
 // -- Implementation steps (bdd-workflow) --------------------------------

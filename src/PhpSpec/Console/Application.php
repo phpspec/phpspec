@@ -48,6 +48,7 @@ use Symfony\Component\Console\Exception\ExceptionInterface as ConsoleException;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -109,6 +110,20 @@ final class Application extends BaseApplication
             }
 
             return $this->refuse($input, $output, $e->getMessage());
+        }
+    }
+
+    /**
+     * Asks nobody when no terminal is there to answer: an input that is a pipe
+     * or a file may stay open and never say anything. SHELL_INTERACTIVE=1
+     * lets answers piped on purpose through, and --no-interaction wins over it.
+     */
+    protected function configureIO(InputInterface $input, OutputInterface $output): void
+    {
+        parent::configureIO($input, $output);
+
+        if (getenv('SHELL_INTERACTIVE') !== '1' && !stream_isatty($this->answersFrom($input))) {
+            $input->setInteractive(false);
         }
     }
 
@@ -220,6 +235,21 @@ final class Application extends BaseApplication
         if ($baseUrl !== null) {
             BrowserRegistry::init($baseUrl);
         }
+    }
+
+    /**
+     * Where a question's answer is read: the input's own stream when it has
+     * one, else the standard input.
+     *
+     * @return resource
+     */
+    private function answersFrom(InputInterface $input)
+    {
+        if ($input instanceof StreamableInputInterface && $input->getStream() !== null) {
+            return $input->getStream();
+        }
+
+        return STDIN;
     }
 
     private function installedVersion(): string

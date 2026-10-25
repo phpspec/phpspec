@@ -102,6 +102,18 @@ describe(Refactor::class, function () {
             expect($this->replay->requests)->toHaveCount(1);
         });
 
+        it('shows the plan and writes nothing with no terminal to ask, a missing terminal being no consent', function () {
+            $tester = ($this->run)([
+                ($this->plan)('Introduce a DiscountPolicy abstraction'),
+                ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\nnamespace App\\Checkout;\n\ninterface DiscountPolicy {}\n"]),
+            ], [$this->green, $this->green], interactive: false, attended: false);
+
+            expect($tester->getStatusCode())->toBe(0);
+            expect($tester->getDisplay())->toContain('Introduce a DiscountPolicy abstraction');
+            expect($tester->getDisplay())->toContain('Nothing was written: there is nobody to answer. Run with --no-interaction to carry out the plan.');
+            expect($this->project->files)->not()->toHaveKey($this->cwd . '/src/App/Checkout/DiscountPolicy.php');
+        });
+
         it('wraps the model\'s reason to decline as it wraps the plan\'s', function () {
             $reason = 'CheckoutService already delegates its pricing and its discounts to collaborators named for their roles, and every method reads as one step of the checkout.';
             $tester = ($this->run)([new Response('', [new ToolCall('d', 'decline_refactoring', ['reason' => $reason])])], [$this->green]);
@@ -163,7 +175,7 @@ describe(Refactor::class, function () {
                 ($this->plan)('Introduce a DiscountPolicy abstraction', 'Use it in CheckoutService'),
                 ($this->step)(['src/App/Checkout/DiscountPolicy.php' => "<?php\nnamespace App\\Checkout;\n\ninterface DiscountPolicy {}\n"]),
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php\nnamespace App\\Checkout;\n\nfinal class CheckoutService { /* policy */ }\n"]),
-            ], [$this->green, $this->green, $this->green], attended: false);
+            ], [$this->green, $this->green, $this->green], options: ['--no-interaction' => true], attended: false);
             $display = $tester->getDisplay(true);
 
             expect($tester->getStatusCode())->toBe(0);
@@ -186,7 +198,7 @@ describe(Refactor::class, function () {
                 ($this->plan)('Use a DiscountPolicy in CheckoutService'),
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // broken\n"]),
                 ($this->step)(['src/App/Checkout/CheckoutService.php' => "<?php // still broken\n"]),
-            ], [$this->green, $broken, $broken], attended: false);
+            ], [$this->green, $broken, $broken], options: ['--no-interaction' => true], attended: false);
 
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('Specs failed ✘, asking for a fix...');

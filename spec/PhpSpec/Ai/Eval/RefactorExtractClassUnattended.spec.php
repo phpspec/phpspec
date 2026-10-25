@@ -2,6 +2,7 @@
 
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor;
+use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
 require_once __DIR__ . '/../ReplayProvider.php';
@@ -24,8 +25,10 @@ describe('E16 refactor: three collaborators extracted spec first with nobody ask
         $this->steps = array_map(fn(array $round): array => $round['response']['tool_calls'][0]['arguments'], array_slice($this->recording['turns'][0]['rounds'], 1));
         $this->refactor = function (): CommandTester {
             $command = new Refactor(new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]), $this->world, $this->suite, ReplayProvider::fromConversation($this->recording));
+            $app = new Application('phpspec-test', '1.0');
+            $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($command);
             $tester = new CommandTester($command);
-            $tester->execute(['target' => 'Brew\\DrinkPricer'], ['interactive' => false]);
+            $tester->execute(['target' => 'Brew\\DrinkPricer', '--no-interaction' => true], ['interactive' => false]);
 
             return $tester;
         };

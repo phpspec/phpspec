@@ -16,7 +16,11 @@ Or send a single prompt without entering the REPL:
 vendor/bin/phpspec pair --prompt "write a spec for a Calculator that adds two numbers"
 ```
 
-The pair command requires an interactive terminal. It sets up a split-screen layout with a scrolling content area and a fixed input line at the bottom.
+The pair command requires an interactive terminal. It sets up a split-screen layout with a scrolling content area and a fixed input line at the bottom. To feed a session from a pipe, set `SHELL_INTERACTIVE=1`:
+
+```bash
+printf '/run\n/exit\n' | SHELL_INTERACTIVE=1 vendor/bin/phpspec pair
+```
 
 ### Session greeting
 
@@ -230,9 +234,9 @@ chooser:
 
 A single keypress decides: `1`/`2`/`3`, or the shortcuts `y` (yes), `a`
 (always) and `n` or `Esc` (no); no Enter needed. The arrow keys move the
-highlight and Enter confirms it. When input is piped rather than a terminal,
-the chooser reads one answer line instead (digits or y/a/n; empty defaults to
-yes), so scripted sessions keep working.
+highlight and Enter confirms it. When input is piped with `SHELL_INTERACTIVE=1`
+rather than typed at a terminal, the chooser reads one answer line instead
+(digits or y/a/n; empty defaults to yes), so scripted sessions keep working.
 
 Option 2 is remembered per question kind for the rest of the session:
 answer "always" to class creation and PhpSpec stops asking about classes,
@@ -381,8 +385,10 @@ steps without asking.
 
 `--no-interaction` asks nothing: the plan and the diffs go unshown, and each
 step prints the files it wrote and the suite's verdict. `pair --prompt
-"/refactor ..."` runs the same way. Piped input that runs out before an
-answer writes nothing and points to `--no-interaction`.
+"/refactor ..."` runs the same way. With no terminal to ask and no
+`--no-interaction`, the plan is shown and nothing is written, the run saying how
+to carry it out unattended: a missing terminal is no consent. Piped input that
+runs out before an answer writes nothing either.
 
 ```
 $ vendor/bin/phpspec refactor DrinkPricer --no-interaction

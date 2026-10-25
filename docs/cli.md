@@ -508,6 +508,21 @@ vendor/bin/phpspec run --accept-offers --fake     # ...and fill empty methods wi
 
 See [Coding Agents](agent.md) for the offer format and the full agent workflow.
 
+#### Questions need a terminal
+
+PhpSpec asks its questions only at a terminal. When the standard input is a
+pipe or a file, as under `docker compose exec -T`, in a CI step or after
+`cmd |`, it asks nothing: an offer is declined and the run says how to take it,
+so a run whose input stays open and silent finishes rather than waiting. A
+missing terminal is never taken for a yes. To answer from a pipe on purpose,
+set `SHELL_INTERACTIVE=1`; `--no-interaction` wins over it. `--accept-offers`
+takes every offer with or without a terminal.
+
+```bash
+vendor/bin/phpspec run --accept-offers                      # take every offer, no questions
+printf 'y\n' | SHELL_INTERACTIVE=1 vendor/bin/phpspec run   # answer the first question with yes
+```
+
 ### Code Coverage
 
 | Option | Description |

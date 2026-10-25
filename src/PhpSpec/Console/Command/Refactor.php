@@ -140,10 +140,12 @@ final class Refactor extends Command
      * Asks for the plan and carries it out step by step. Somebody attending
      * the run sees the plan and is asked to go ahead, and then before each
      * step; with --no-interaction nobody is asked and the plan goes unshown.
+     * A run with no terminal to ask, and no --no-interaction, shows the plan
+     * and writes nothing: a missing terminal is no consent.
      */
     private function refactorStepByStep(Input $input, Output $output, RefactorTarget $target, RefactorModel $model, SpecSuite $suite, SuiteCheck $baseline, RefactorJournal $journal): int
     {
-        $attended = $input->isInteractive();
+        $attended = !$input->hasParameterOption(['--no-interaction', '-n'], true);
         $progress = new Progress($output);
 
         $output->writeln('');
@@ -156,7 +158,9 @@ final class Refactor extends Command
             return 0;
         }
 
-        $consent = $attended ? $this->consent ?? new Consent('Run with --no-interaction to %s.') : new Consent('', Generation::Accepts);
+        $consent = $attended
+            ? $this->consent ?? new Consent('Run with --no-interaction to %s.', $input->isInteractive() ? Generation::Asks : Generation::Declines)
+            : new Consent('', Generation::Accepts);
 
         if ($attended) {
             $this->showPlan($output, $plan, $progress);
