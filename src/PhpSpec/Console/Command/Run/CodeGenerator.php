@@ -33,6 +33,7 @@ use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Results;
 use PhpSpec\StoryBDD\StepVocabulary;
+use ReflectionClass;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
@@ -104,11 +105,35 @@ final readonly class CodeGenerator
             $this->scanner->collectMissingSpecClasses($results),
             $this->scanner->collectMissingStepClasses($results),
             $this->scanner->collectMissingMockTypes($results),
-            $this->scanner->collectUndefinedMockInterfaceMethods($results),
-            $this->scanner->collectUndefinedClassMethods($results),
-            $this->emptyOnes($this->scanner->collectFakeableMethods($results)),
+            $this->ownOnes($this->scanner->collectUndefinedMockInterfaceMethods($results)),
+            $this->ownOnes($this->scanner->collectUndefinedClassMethods($results)),
+            $this->emptyOnes($this->ownOnes($this->scanner->collectFakeableMethods($results))),
             $this->steps->defaultFile(),
         );
+    }
+
+    /**
+     * The methods of the project's own types: one outside the source path is
+     * a library's, never the run's to change. A type no autoloader finds is
+     * written where the layout places it, in the source.
+     *
+     * @template T of array{className: string}
+     * @param array<T> $methods
+     * @return list<T>
+     */
+    private function ownOnes(array $methods): array
+    {
+        return array_values(array_filter($methods, function (array $method): bool {
+            $type = $method['className'];
+
+            if (!class_exists($type) && !interface_exists($type) && !trait_exists($type) && !enum_exists($type)) {
+                return true;
+            }
+
+            $file = (new ReflectionClass($type))->getFileName();
+
+            return $file !== false && $this->layout->holds($file);
+        }));
     }
 
     /**

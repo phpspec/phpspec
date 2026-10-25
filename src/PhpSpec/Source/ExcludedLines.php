@@ -52,8 +52,8 @@ final readonly class ExcludedLines
     }
 
     /**
-     * Whether the file has nothing left to cover: everything it declares is
-     * left out, interfaces included, and it runs no code of its own.
+     * Whether the file has nothing left to cover: no function body outside
+     * what is left out, interfaces included, and no code of its own.
      */
     public function wholeFile(): bool
     {

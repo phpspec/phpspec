@@ -27,7 +27,9 @@ use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Coverage\HtmlReport;
 use PhpSpec\Coverage\JsonReport;
 use PhpSpec\Coverage\JsonReportBuilder;
+use PhpSpec\Coverage\Percentage;
 use PhpSpec\Coverage\PerExampleCollector;
+use PhpSpec\Coverage\SourceFiles;
 use PhpSpec\Coverage\TextReport;
 use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
@@ -275,17 +277,34 @@ final class CoverageReporter
             $totalExecutable += $counts['executable'];
         }
 
-        $verdict = new CoverageVerdict(
-            $totalExecutable > 0 ? ($totalCovered / $totalExecutable) * 100 : 0.0,
-            $options->coverageMin !== null ? (float) $options->coverageMin : null,
-        );
-
-        if ($verdict->required !== null) {
-            $output->writeln($verdict->met()
-                ? sprintf('<fg=green>Code coverage %.1f%% meets the required %.1f%%</>', $verdict->percent, $verdict->required)
-                : sprintf('<fg=red>Code coverage %.1f%% is below the required %.1f%%</>', $verdict->percent, $verdict->required));
+        if ($options->coverageMin === null) {
+            return new CoverageVerdict(new Percentage($totalCovered, $totalExecutable));
         }
 
+        $verdict = new CoverageVerdict(
+            new Percentage($totalCovered, $totalExecutable),
+            (float) $options->coverageMin,
+            (new SourceFiles(new RealFilesystem(), realpath($options->srcPath) ?: $options->srcPath, ProjectRoot::here()))->unrecorded($this->hits, $this->exclusions),
+        );
+        $this->printJudgement($output, $verdict, $options->coverageMin);
+
         return $verdict;
+    }
+
+    private function printJudgement(Output $output, CoverageVerdict $verdict, string $required): void
+    {
+        if ($verdict->unrecorded !== []) {
+            $output->writeln(sprintf('<fg=red>Cannot enforce --coverage-min=%s: coverage is incomplete.</>', $required));
+
+            foreach ($verdict->unrecorded as $file) {
+                $output->writeln(sprintf('<fg=red>No coverage was recorded for %s during an example or scenario.</>', $file));
+            }
+
+            return;
+        }
+
+        $output->writeln($verdict->met()
+            ? sprintf('<fg=green>Code coverage %s%% meets the required %s%%</>', $verdict->shown(), $verdict->shownRequired())
+            : sprintf('<fg=red>Code coverage %s%% is below the required %s%%</>', $verdict->shown(), $verdict->shownRequired()));
     }
 }

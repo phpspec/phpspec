@@ -128,14 +128,14 @@ describe(CoverageReporter::class, function () {
             allow($fs->read(any()))->toReturnUsing(function (string $path) use (&$read) {
                 $read[] = $path;
 
-                return "<?php\n";
+                return (string) file_get_contents($path);
             });
             $output = new BufferedOutput();
             $reporter = new CoverageReporter(new CoverageEngines(null, $php, ''), new Exclusions(['Excluded.php'], $fs, dirname($fixture)));
 
             $verdict = $reporter->report($output, new CoverageOptions(srcPath: dirname($fixture), showText: true));
 
-            expect($verdict->percent)->toBe(100.0);
+            expect($verdict->percentage->value())->toBe(100.0);
             expect($output->fetch())->not()->toContain('Excluded.php');
             expect($reporter->hits())->toHaveKey($excluded);
             expect($read)->toBe([dirname($fixture) . '/covered_probe.php']);
@@ -167,7 +167,7 @@ describe(CoverageReporter::class, function () {
 
                 expect($verdict->met())->toBeTrue();
                 expect($verdict->exitCode())->toBeNull();
-                expect($verdict->percent)->toBe(100.0);
+                expect($verdict->percentage->value())->toBe(100.0);
                 expect($verdict->required)->toBe(100.0);
                 expect(file_exists($dir . '/clover.xml'))->toBeTrue();
                 expect(file_exists($dir . '/html/index.html'))->toBeTrue();
@@ -206,7 +206,7 @@ describe(CoverageReporter::class, function () {
 
                 expect($verdict->met())->toBeFalse();
                 expect($verdict->exitCode())->toBe(1);
-                expect($verdict->percent)->toBe(0.0);
+                expect($verdict->percentage->value())->toBe(0.0);
                 expect($output->fetch())->toContain('below the required');
             } finally {
                 CoverageRegistry::reset();

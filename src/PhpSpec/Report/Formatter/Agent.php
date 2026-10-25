@@ -410,10 +410,14 @@ final class Agent extends AbstractFormatter
 
         if ($this->coverage !== null) {
             $summary['coverage'] = [
-                'percent' => round($this->coverage->percent, 1),
+                'percent' => (float) $this->coverage->shown(),
                 'required' => $this->coverage->required,
                 'met' => $this->coverage->met(),
             ];
+
+            if ($this->coverage->unrecorded !== []) {
+                $summary['coverage']['unrecorded'] = $this->coverage->unrecorded;
+            }
         }
 
         // Present only when there is something to take, as with everything else

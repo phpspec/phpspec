@@ -635,14 +635,20 @@ final class CommandDispatcher
     /**
      * Refactors as `phpspec refactor` does: in a session the plan and each
      * step are asked through the pair chooser, and a single --prompt carries
-     * the plan out unattended.
+     * the plan out unattended, saying --no-interaction as the command line
+     * would.
      */
     private function handleRefactor(string $argument): int
     {
         $consent = new Consent('Run phpspec refactor --no-interaction to %s.', chooser: $this->chooser);
+        $refactor = ($this->refactor)($consent);
+
+        if ($this->application !== null) {
+            $refactor->setApplication($this->application);
+        }
 
         try {
-            $this->failed = ($this->refactor)($consent)->run($this->typed($argument), $this->output->getOutput()) !== 0;
+            $this->failed = $refactor->run($this->typed($this->interactive ? $argument : trim($argument . ' --no-interaction')), $this->output->getOutput()) !== 0;
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }

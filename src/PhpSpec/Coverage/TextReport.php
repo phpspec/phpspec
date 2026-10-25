@@ -54,16 +54,15 @@ final class TextReport
                 continue;
             }
 
-            $pct = ($covered / $executable) * 100;
+            $percentage = new Percentage($covered, $executable);
             $dots = str_repeat('.', max(1, $maxLen - strlen($file) + 3));
-            $color = $pct === 100.0 ? 'green' : ($pct >= 50 ? 'yellow' : 'red');
 
             $output->writeln(sprintf(
-                '  %s %s <fg=%s>%5.1f%%</> (%d/%d)',
+                '  %s %s <fg=%s>%5s%%</> (%d/%d)',
                 $file,
                 $dots,
-                $color,
-                $pct,
+                $this->colourOf($percentage),
+                $percentage->cut(),
                 $covered,
                 $executable,
             ));
@@ -72,12 +71,11 @@ final class TextReport
         $output->writeln('');
 
         if ($totalExecutable > 0) {
-            $totalPct = ($totalCovered / $totalExecutable) * 100;
-            $color = $totalPct === 100.0 ? 'green' : ($totalPct >= 50 ? 'yellow' : 'red');
+            $total = new Percentage($totalCovered, $totalExecutable);
             $output->writeln(sprintf(
-                '  Total: <fg=%s>%.1f%%</> (%d/%d)',
-                $color,
-                $totalPct,
+                '  Total: <fg=%s>%s%%</> (%d/%d)',
+                $this->colourOf($total),
+                $total->cut(),
                 $totalCovered,
                 $totalExecutable,
             ));
@@ -86,5 +84,10 @@ final class TextReport
         }
 
         $output->writeln('');
+    }
+
+    private function colourOf(Percentage $percentage): string
+    {
+        return $percentage->complete() ? 'green' : ($percentage->value() >= 50 ? 'yellow' : 'red');
     }
 }

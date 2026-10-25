@@ -75,6 +75,14 @@ answers on an object, not on its class:
 App\FromData::fromData() is static, so no double can answer it.
 ```
 
+A method a type declares only by an `@method` tag, on itself, a parent class
+or an interface, as libraries do for a method they keep for a later major
+version, is a method of its double too: stubbed, expected and spied on like
+any other. It takes any arguments and returns any value, since the tag's types
+are the docblock's rather than PHP's. A tag reading `@method static Foo
+make()` declares a static one, refused when called like the one above;
+`@method static make()` is a method on the object that returns `static`.
+
 Declarations no class can implement together, a parameter one takes by
 reference and another by value, a method one declares static and another on an
 object, or a method narrowing one the base declares final, are refused: by `mock()` and `dummy()` at once, and as a return type only

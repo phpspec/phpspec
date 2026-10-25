@@ -228,6 +228,76 @@ Feature: Code generation
     Then no file "src/App/Basket.php" should be generated
     And the output should contain "Nothing was written"
 
+  # An input that stays open and never says anything, as docker compose exec -T
+  # or a CI step leaves one: a question that waited on it would wait for ever.
+  Scenario: A run whose input is no terminal asks nobody, and finishes
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run with an input that never answers
+    Then no file "src/App/Basket.php" should be generated
+    And the output should contain "Nothing was written: there is nobody to answer."
+    And the exit code should be 1
+
+  Scenario: --accept-offers writes without a terminal
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers" and an input that never answers
+    Then a file "src/App/Basket.php" should be generated
+
+  Scenario: Answers piped without SHELL_INTERACTIVE=1 are not read
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I pipe "y" into phpspec run
+    Then no file "src/App/Basket.php" should be generated
+    And the output should contain "Nothing was written: there is nobody to answer."
+
+  Scenario: --no-interaction wins over SHELL_INTERACTIVE=1
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I pipe "y" into phpspec run with option "--no-interaction" and SHELL_INTERACTIVE=1
+    Then no file "src/App/Basket.php" should be generated
+    And the output should contain "Nothing was written"
+
   Scenario: Generate an interface from mock error
     Given a spec file "spec/App/Service.spec.php":
       """
@@ -259,6 +329,54 @@ Feature: Code generation
     When I run phpspec run with option "--accept-offers"
     And I run phpspec run with option "--accept-offers"
     Then the file "src/App/Catalogue.php" should contain "public function priceOf($argument1);"
+
+  Scenario: Nothing is offered on a type outside the source path
+    Given a file "third_party/Shelf/Store.php":
+      """
+      <?php
+      namespace Shelf;
+
+      interface Store
+      {
+          public function flush(): void;
+      }
+      """
+    And a file "third_party/Shelf/Ledger.php":
+      """
+      <?php
+      namespace Shelf;
+
+      class Ledger
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Accounts.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/../../third_party/Shelf/Store.php';
+      require_once __DIR__ . '/../../third_party/Shelf/Ledger.php';
+
+      describe('App\Accounts', function () {
+          it('flushes in a transaction', function (Shelf\Store $store) {
+              allow($store->wrapInTransaction(any()))->toReturn(1);
+          });
+
+          it('sums', function () {
+              expect((new Shelf\Ledger())->subtotal())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the output should contain "Call to undefined method Shelf\Store::wrapInTransaction()"
+    And the output should contain "Call to undefined method Shelf\Ledger::subtotal()"
+    And the output should not contain "to interface Shelf\Store"
+    And the output should not contain "Shelf\Ledger::subtotal() for you"
+    And the file "third_party/Shelf/Store.php" should not contain "wrapInTransaction"
+    And the file "third_party/Shelf/Ledger.php" should not contain "subtotal"
 
   Scenario: Generate an interface from a type-hinted injection
     Given a spec file "spec/App/Service.spec.php":

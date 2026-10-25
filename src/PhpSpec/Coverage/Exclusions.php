@@ -62,13 +62,11 @@ final class Exclusions
         $kept = [];
 
         foreach ($data as $file => $lines) {
-            $relative = $this->relative($file);
-
-            if ($this->pathExcluded($relative) || $this->linesOf($relative)->wholeFile()) {
+            if ($this->leavesOut($file)) {
                 continue;
             }
 
-            $left = array_diff_key($lines, array_flip($this->linesOf($relative)->lines()));
+            $left = array_diff_key($lines, array_flip($this->linesOf($this->relative($file))->lines()));
 
             if ($left !== []) {
                 $kept[$file] = $left;
@@ -76,6 +74,18 @@ final class Exclusions
         }
 
         return $kept;
+    }
+
+    /**
+     * Whether the whole file is left out: the config names it, or it has
+     * nothing left to cover. The file is named in full or from the project
+     * root.
+     */
+    public function leavesOut(string $file): bool
+    {
+        $relative = $this->relative($file);
+
+        return $this->pathExcluded($relative) || $this->linesOf($relative)->wholeFile();
     }
 
     /**
@@ -110,8 +120,9 @@ final class Exclusions
     {
         if (!isset($this->read[$relative])) {
             $path = rtrim($this->baseDir, '/\\') . '/' . $relative;
-            $source = $this->filesystem->exists($path) ? $this->filesystem->read($path) : '';
-            $this->read[$relative] = ExcludedLines::in($source, $this->named(...));
+            $this->read[$relative] = $this->filesystem->exists($path)
+                ? ExcludedLines::in($this->filesystem->read($path), $this->named(...))
+                : new ExcludedLines([], false);
         }
 
         return $this->read[$relative];

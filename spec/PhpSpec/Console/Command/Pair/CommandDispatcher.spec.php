@@ -1037,6 +1037,42 @@ describe(CommandDispatcher::class, function () {
             expect($this->buffer->fetch())->toContain('it broke');
         });
 
+        it('refactors unattended when the dispatcher may ask nobody, as pair --prompt runs, by saying --no-interaction', function () {
+            $cwd = getcwd();
+            $project = new RefactorWorldFilesystem();
+            $project->write($cwd . '/src/App/Till.php', "<?php\nnamespace App;\n\nfinal class Till {}\n");
+            $project->write($cwd . '/spec/App/Till.spec.php', "<?php\n");
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('p', 'propose_plan', ['technique' => 'Extract Class', 'rationale' => 'Till prints.', 'steps' => [['title' => 'Introduce Printer', 'doing' => 'Introducing Printer']]])]),
+                new Response('', [new ToolCall('s', 'propose_step', ['files' => [['path' => 'src/App/Printer.php', 'content' => "<?php // printer\n"]], 'red' => false])]),
+            ]);
+            $suite = new class implements SpecSuite {
+                public function check(): SuiteCheck
+                {
+                    return SuiteCheck::fromStream('{"event":"summary","actionable":0}');
+                }
+            };
+            $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'test-key']]);
+            $dispatcher = new CommandDispatcher(
+                new SpecGenerator('spec', $project),
+                new ClassGenerator(SourceLayout::under('src'), $project),
+                $config,
+                $this->pairOutput,
+                false,
+                $project,
+                $this->app,
+                specRunner: $this->specRunner,
+                refactor: fn(Consent $consent): Refactor => new Refactor($config, $project, $suite, $replay, $consent),
+            );
+
+            expect($dispatcher->dispatch('/refactor Till'))->toBe(CommandDispatcher::CONTINUE);
+
+            $output = $this->buffer->fetch();
+            expect($output)->not()->toContain('Would you like to proceed?');
+            expect($output)->toContain('Refactoring done: Extract Class');
+            expect($project->files[$cwd . '/src/App/Printer.php'] ?? null)->toBe("<?php // printer\n");
+        });
+
         it('refactors asking through the chooser, where always applies the remaining steps', function () {
             $cwd = getcwd();
             $project = new RefactorWorldFilesystem();

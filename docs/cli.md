@@ -508,6 +508,21 @@ vendor/bin/phpspec run --accept-offers --fake     # ...and fill empty methods wi
 
 See [Coding Agents](agent.md) for the offer format and the full agent workflow.
 
+#### Questions need a terminal
+
+PhpSpec asks its questions only at a terminal. When the standard input is a
+pipe or a file, as under `docker compose exec -T`, in a CI step or after
+`cmd |`, it asks nothing: an offer is declined and the run says how to take it,
+so a run whose input stays open and silent finishes rather than waiting. A
+missing terminal is never taken for a yes. To answer from a pipe on purpose,
+set `SHELL_INTERACTIVE=1`; `--no-interaction` wins over it. `--accept-offers`
+takes every offer with or without a terminal.
+
+```bash
+vendor/bin/phpspec run --accept-offers                      # take every offer, no questions
+printf 'y\n' | SHELL_INTERACTIVE=1 vendor/bin/phpspec run   # answer the first question with yes
+```
+
 ### Code Coverage
 
 | Option | Description |
@@ -544,6 +559,31 @@ in `describe` that an example calls. Code that runs only in
 itself does not count. Every run counts the same way: coverage options can be
 combined with `--parallel`, whose workers collect coverage per example and the
 parent process merges their results before rendering the reports.
+
+The engines report only the files coverage was recorded for, so a PHP file
+under the source directory with none recorded during an example or scenario is
+missing from the count rather than counted as uncovered. `--coverage-min`
+therefore judges a run only when coverage was recorded for every such file,
+except those coverage leaves out (see below); otherwise it names each file it
+is missing and fails:
+
+```
+Cannot enforce --coverage-min=100: coverage is incomplete.
+No coverage was recorded for src/Untested.php during an example or scenario.
+```
+
+The text, Clover and HTML reports cover only the files the run loaded.
+
+The engines do not report a property hook that never runs: such a hook counts
+neither as covered nor as uncovered, and PCOV reports none at all.
+
+A percentage is cut, never rounded up: 2502 of 2503 lines is 99.9%, not
+100.0%. Beside `--coverage-min` it is cut to the places the threshold is
+written to, one at least, so it reads below the threshold exactly when it is:
+
+```
+Code coverage 66.6% is below the required 66.7%
+```
 
 #### Excluding code from coverage
 

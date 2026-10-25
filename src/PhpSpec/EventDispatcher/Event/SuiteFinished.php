@@ -15,27 +15,18 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 
 /**
  * @internal
  * Dispatched when the suite finishes execution.
  */
-final readonly class SuiteFinished implements Event, Loggable
+final readonly class SuiteFinished implements Event
 {
-    use LogDateTime;
     public const NAME = 'suite.finished';
 
     /** {@inheritdoc} */
     public function getName(): string
     {
         return self::NAME;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow($this->getName());
     }
 }

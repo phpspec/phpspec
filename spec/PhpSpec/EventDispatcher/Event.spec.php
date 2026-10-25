@@ -27,84 +27,76 @@ use PhpSpec\Mock\MockedMethod;
 describe("Event classes", function() {
 
     context("ContextCreated", function() {
-        it("returns its name, title, context, and log", function() {
+        it("returns its name, title, and context", function() {
             $ctx = new Context("MyContext", function() {});
             $event = new ContextCreated("MyContext", $ctx);
             expect($event->getName())->toBe('context.created');
             expect($event->getTitle())->toBe("MyContext");
             expect($event->getContext())->toBe($ctx);
-            expect($event->getLog())->toContain("context.created - MyContext");
         });
     });
 
     context("ContextRunned", function() {
-        it("returns its name, title, context, and log", function() {
+        it("returns its name, title, and context", function() {
             $ctx = new Context("MyContext", function() {});
             $event = new ContextRan("MyContext", $ctx);
             expect($event->getName())->toBe('context.ran');
             expect($event->getTitle())->toBe("MyContext");
             expect($event->getContext())->toBe($ctx);
-            expect($event->getLog())->toContain("context.ran - MyContext");
         });
     });
 
     context("ContextStarted", function() {
-        it("returns its name, title, and log", function() {
+        it("returns its name and title", function() {
             $event = new ContextStarted("MyContext");
             expect($event->getName())->toBe('context.started');
             expect($event->getTitle())->toBe("MyContext");
-            expect($event->getLog())->toContain("context.started - MyContext");
         });
     });
 
     context("ContextModified", function() {
-        it("returns its name, property, setter, and log", function() {
+        it("returns its name, property, and setter", function() {
             $setter = fn() => 42;
             $event = new ContextModified("myProp", $setter);
             expect($event->getName())->toBe('context.modified');
             expect($event->getProperty())->toBe("myProp");
             expect($event->getSetter())->toBe($setter);
-            expect($event->getLog())->toContain("context.modified - myProp");
         });
     });
 
     context("ExampleCreated", function() {
-        it("returns its name, title, example, and log", function() {
+        it("returns its name, title, and example", function() {
             $ex = new Example("does something", function() {});
             $event = new ExampleCreated("does something", $ex);
             expect($event->getName())->toBe('example.created');
             expect($event->getTitle())->toBe("does something");
             expect($event->getExample())->toBe($ex);
-            expect($event->getLog())->toContain("example.created - does something");
         });
     });
 
     context("ExampleErrored", function() {
-        it("returns its name, title, error, and log", function() {
+        it("returns its name, title, and error", function() {
             $error = new ExampleError("broke", new \RuntimeException("broke"));
             $event = new ExampleErrored("my test", $error);
             expect($event->getName())->toBe('example.errored');
             expect($event->getTitle())->toBe("my test");
             expect($event->getError())->toBeAnInstanceOf(ExampleError::class);
-            expect($event->getLog())->toContain("example.errored - my test");
         });
     });
 
     context("ExampleRunned", function() {
-        it("returns its name, title, and log", function() {
+        it("returns its name and title", function() {
             $event = new ExampleRunned("my test");
             expect($event->getName())->toBe('example.runned');
             expect($event->getTitle())->toBe("my test");
-            expect($event->getLog())->toContain("example.runned - my test");
         });
     });
 
     context("ExampleStarted", function() {
-        it("returns its name, title, and log", function() {
+        it("returns its name and title", function() {
             $event = new ExampleStarted("my test");
             expect($event->getName())->toBe('example.started');
             expect($event->getTitle())->toBe("my test");
-            expect($event->getLog())->toContain("example.started - my test");
         });
     });
 
@@ -151,47 +143,42 @@ describe("Event classes", function() {
     });
 
     context("SpecificationStarted", function() {
-        it("returns its name, path, and log", function() {
+        it("returns its name and path", function() {
             $event = new SpecificationStarted("/path/to/spec.php");
             expect($event->getName())->toBe('specification.started');
             expect($event->getPath())->toBe("/path/to/spec.php");
-            expect($event->getLog())->toContain("specification.started - /path/to/spec.php");
         });
     });
 
     context("SpecificationFinished", function() {
-        it("returns its name, title, and log", function() {
+        it("returns its name and title", function() {
             $event = new SpecificationFinished("Calculator");
             expect($event->getName())->toBe('specification.finished');
             expect($event->getTitle())->toBe("Calculator");
-            expect($event->getLog())->toContain("specification.finished - Calculator");
         });
     });
 
     context("SuiteStarted", function() {
-        it("returns its name and log", function() {
+        it("returns its name", function() {
             $event = new SuiteStarted();
             expect($event->getName())->toBe('suite.started');
-            expect($event->getLog())->toContain("suite.started");
         });
     });
 
     context("SuiteFinished", function() {
-        it("returns its name and log", function() {
+        it("returns its name", function() {
             $event = new SuiteFinished();
             expect($event->getName())->toBe('suite.finished');
-            expect($event->getLog())->toContain("suite.finished");
         });
     });
 
     context("ExampleCompleted", function() {
-        it("returns its name, title, result, and log", function() {
+        it("returns its name, title, and result", function() {
             $result = new ExampleResult("does something", []);
             $event = new ExampleCompleted("does something", $result);
             expect($event->getName())->toBe('example.completed');
             expect($event->getTitle())->toBe("does something");
             expect($event->getResult())->toBe($result);
-            expect($event->getLog())->toContain("example.completed - does something");
         });
     });
 

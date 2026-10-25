@@ -311,9 +311,3 @@ PhpSpec's code generation creates a natural BDD workflow:
 4. **Run again**: PhpSpec offers to generate the `add()` method
 5. **Implement**: fill in the real logic (or use `--fake` for a quick pass)
 6. **Repeat**: add more examples, drive the design through specs
-
-The autoloader is registered in `vendor/bin/phpspec`:
-
-```php
-spl_autoload_register([\PhpSpec\CodeGeneration\Autoloader::class, 'autoload']);
-```

@@ -16,16 +16,13 @@ namespace PhpSpec\EventDispatcher\Event;
 
 use Closure;
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 
 /**
  * @internal
  * Dispatched when a context is modified, such as when a this() hook or beforeEach is added.
  */
-final readonly class ContextModified implements Event, Loggable
+final readonly class ContextModified implements Event
 {
-    use LogDateTime;
     public const NAME = 'context.modified';
 
     /**
@@ -54,14 +51,5 @@ final readonly class ContextModified implements Event, Loggable
     public function getSetter(): Closure
     {
         return $this->setter;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow(
-            $this->getName() . ' - ' .
-            $this->getProperty(),
-        );
     }
 }

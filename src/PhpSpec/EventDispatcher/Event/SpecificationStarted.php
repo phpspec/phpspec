@@ -15,16 +15,13 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 
 /**
  * @internal
  * Dispatched when a specification file begins loading, before its DSL is evaluated.
  */
-final readonly class SpecificationStarted implements Event, Loggable
+final readonly class SpecificationStarted implements Event
 {
-    use LogDateTime;
     public const NAME = 'specification.started';
 
     /**
@@ -44,11 +41,5 @@ final readonly class SpecificationStarted implements Event, Loggable
     public function getPath(): string
     {
         return $this->path;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow($this->getName() . ' - ' . $this->getPath());
     }
 }

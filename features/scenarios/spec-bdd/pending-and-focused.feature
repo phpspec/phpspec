@@ -67,7 +67,7 @@ Feature: Pending and focused examples
           });
       });
       """
-    When I run phpspec run in a fresh process
+    When I run phpspec run in a fresh process as if at a terminal
     Then all examples should pass
     And the output should contain "1 pass"
     And the output should contain "Focused: 1 example left out by fit() or fdescribe()."
@@ -125,7 +125,7 @@ Feature: Pending and focused examples
           });
       });
       """
-    When I run phpspec run in a fresh process
+    When I run phpspec run in a fresh process as if at a terminal
     Then all examples should pass
     And the output should contain "Focused: 1 example left out"
 

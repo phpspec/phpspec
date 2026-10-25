@@ -39,12 +39,19 @@ describe(Exclusions::class, function () {
         expect(array_keys($kept))->toBe(['/app/src/Clock.php']);
     });
 
-    it('leaves out a declaration the config names, and a file left with no lines', function (Filesystem $fs) use ($sources, $clock) {
-        $sources($fs, ['/app/src/Clock.php' => $clock]);
+    it('leaves out a declaration the config names, and a file left with no lines', function (Filesystem $fs) use ($sources) {
+        $sources($fs, ['/app/src/Clock.php' => "<?php\nnamespace App;\nclass Clock\n{\n    public function now(): int\n    {\n        return time();\n    }\n    public function today(): int\n    {\n        return 1;\n    }\n}\n"]);
         $exclusions = new Exclusions(['App\Clock::today'], $fs, '/app');
 
-        expect($exclusions->appliedTo(['/app/src/Clock.php' => [8 => 0, 12 => 1, 14 => 1]]))->toBe(['/app/src/Clock.php' => [14 => 1]]);
-        expect($exclusions->appliedTo(['/app/src/Clock.php' => [8 => 0, 12 => 1]]))->toBe([]);
+        expect($exclusions->appliedTo(['/app/src/Clock.php' => [7 => 0, 11 => 1]]))->toBe(['/app/src/Clock.php' => [7 => 0]]);
+        expect($exclusions->appliedTo(['/app/src/Clock.php' => [11 => 1]]))->toBe([]);
+    });
+
+    it('leaves out a file whose every function is left out', function (Filesystem $fs) use ($sources, $clock) {
+        $sources($fs, ['/app/src/Clock.php' => $clock]);
+
+        expect((new Exclusions(['App\Clock::today'], $fs, '/app'))->leavesOut('/app/src/Clock.php'))->toBeTrue();
+        expect((new Exclusions([], $fs, '/app'))->leavesOut('/app/src/Clock.php'))->toBeFalse();
     });
 
     it('serves the per-test lines of the JSON report as it serves hits', function (Filesystem $fs) use ($sources, $clock) {

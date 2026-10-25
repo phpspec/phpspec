@@ -24,21 +24,41 @@ namespace PhpSpec\Coverage;
 final readonly class CoverageVerdict
 {
     /**
-     * @param float $percent executable source lines covered, as a percentage
+     * @param Percentage $percentage executable source lines covered
      * @param float|null $required the --coverage-min threshold, or null when none was asked for
+     * @param list<string> $unrecorded the source files with no coverage recorded during an example or scenario, which the percentage cannot speak for
      */
     public function __construct(
-        public float $percent,
+        public Percentage $percentage,
         public ?float $required = null,
+        public array $unrecorded = [],
     ) {}
 
     /**
      * Whether the run met what was asked of it. A run with no threshold has
-     * nothing to fall short of.
+     * nothing to fall short of; one missing the coverage of a source file
+     * cannot meet one.
      */
     public function met(): bool
     {
-        return $this->required === null || $this->percent >= $this->required;
+        return $this->required === null || ($this->unrecorded === [] && $this->percentage->reaches($this->required));
+    }
+
+    /**
+     * The percentage cut to the places the threshold is written to, one at
+     * least, so it reads below the threshold exactly when it is.
+     */
+    public function shown(): string
+    {
+        return $this->percentage->cut($this->places());
+    }
+
+    /**
+     * The threshold to the same places as the percentage beside it.
+     */
+    public function shownRequired(): ?string
+    {
+        return $this->required === null ? null : number_format($this->required, $this->places(), '.', '');
     }
 
     /**
@@ -47,5 +67,10 @@ final readonly class CoverageVerdict
     public function exitCode(): ?int
     {
         return $this->met() ? null : 1;
+    }
+
+    private function places(): int
+    {
+        return max(1, $this->required === null ? 0 : (new Threshold($this->required))->places());
     }
 }

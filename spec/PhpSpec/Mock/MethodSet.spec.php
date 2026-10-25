@@ -67,6 +67,20 @@ interface MethodSetSpecByReference {
     public function fill(array &$slots);
 }
 
+/** @method void reset() */
+interface MethodSetSpecRepository {}
+
+/**
+ * @method mixed transactional(callable $work)
+ * @method static make()
+ * @method static MethodSetSpecStore open(string $dsn)
+ * @method string title()
+ * @method array<int, MethodSetSpecStore> all(array{limit: int} $options = [])
+ */
+interface MethodSetSpecStore extends MethodSetSpecRepository {
+    public function title(): string;
+}
+
 describe(MethodSet::class, function () {
 
     this('base', fn() => static fn(string ...$interfaces): NativeBase => new NativeBase(
@@ -144,5 +158,25 @@ describe(MethodSet::class, function () {
         $set = MethodSet::of([new ReflectionClass(MethodSetSpecByValue::class), new ReflectionClass(MethodSetSpecByReference::class)], null);
 
         expect($set->refusal)->toBe('MethodSetSpecByValue::fill() takes $slots by value and MethodSetSpecByReference::fill() takes $slots by reference.');
+    });
+
+    it('defines a method only an @method tag declares, on the type or an ancestor, static as the tag says', function () {
+        $set = MethodSet::of([new ReflectionClass(MethodSetSpecStore::class)], null);
+        $tagged = [];
+
+        foreach ($set->contracts as $contract) {
+            $tagged[$contract->name] = [$contract->static, $contract->returnCode, $contract->takes()];
+        }
+
+        ksort($tagged);
+
+        expect($tagged)->toBe([
+            'all' => [false, ': mixed', null],
+            'make' => [false, ': mixed', null],
+            'open' => [true, ': mixed', null],
+            'reset' => [false, ': mixed', null],
+            'title' => [false, ': string', 0],
+            'transactional' => [false, ': mixed', null],
+        ]);
     });
 });

@@ -15,16 +15,13 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 
 /**
  * @internal
  * Dispatched when a specification file finishes execution.
  */
-final readonly class SpecificationFinished implements Event, Loggable
+final readonly class SpecificationFinished implements Event
 {
-    use LogDateTime;
     public const NAME = 'specification.finished';
 
     /**
@@ -46,11 +43,5 @@ final readonly class SpecificationFinished implements Event, Loggable
     public function getTitle(): string
     {
         return $this->title;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow($this->getName() . ' - ' . $this->title);
     }
 }

@@ -75,7 +75,46 @@ final readonly class MethodSet
             }
         }
 
+        foreach (self::taggedIn($types) as $key => [$owner, $name, $static]) {
+            if (!isset($declared[$key]) && $base?->declaration($key) === null && array_filter($types, static fn(ReflectionClass $type): bool => $type->hasMethod($name)) === []) {
+                $contracts[] = MethodContract::tagged($owner, $name, $static);
+            }
+        }
+
         return new self($contracts, null);
+    }
+
+    /**
+     * The methods @method tags declare on the types, their parents and their
+     * interfaces, by lower-cased name: the doubled type that carries the tag,
+     * the name, and whether it is static. A lone static before the name is
+     * what it returns, as phpstan reads it: @method static static create() is
+     * static, @method static create() is not.
+     *
+     * @param non-empty-list<ReflectionClass<object>> $types
+     * @return array<string, array{string, string, bool}>
+     */
+    private static function taggedIn(array $types): array
+    {
+        $tagged = [];
+
+        foreach ($types as $type) {
+            $documented = [$type, ...array_values($type->getInterfaces())];
+
+            for ($parent = $type->getParentClass(); $parent !== false; $parent = $parent->getParentClass()) {
+                $documented[] = $parent;
+            }
+
+            foreach ($documented as $declaring) {
+                preg_match_all('/@method\s+([^\n(]*?)\b([A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*)\s*\(/', (string) $declaring->getDocComment(), $tags, PREG_SET_ORDER);
+
+                foreach ($tags as [, $before, $name]) {
+                    $tagged[strtolower($name)] ??= [$type->getName(), $name, preg_match('/^static\s+\S/', $before) === 1];
+                }
+            }
+        }
+
+        return $tagged;
     }
 
     /**

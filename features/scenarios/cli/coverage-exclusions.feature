@@ -284,6 +284,260 @@ Feature: Coverage exclusions
     When I run phpspec run with coverage options "--coverage"
     Then the output should contain "Total: 100.0%"
 
+  Scenario: --coverage-min cannot be enforced while a source file has no coverage recorded during an example
+    Given a file "phpspec.json":
+      """
+      {
+          "autoload": {"App\\": "src/App"},
+          "coverage_exclude": ["src/App/Generated/"]
+      }
+      """
+    And a class "src/App/Greeter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Greeter
+      {
+          public function greet(string $name): string
+          {
+              return "Hello $name";
+          }
+      }
+      """
+    And a class "src/App/Untested.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Untested
+      {
+          public function run(): string
+          {
+              return 'never called';
+          }
+      }
+      """
+    And a class "src/App/Reports/Monthly.php":
+      """
+      <?php
+
+      namespace App\Reports;
+
+      class Monthly
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a class "src/App/Pricing.php":
+      """
+      <?php
+
+      namespace App;
+
+      interface Pricing
+      {
+          public function price(): int;
+      }
+      """
+    And a class "src/App/Named.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Named
+      {
+          public string $name {
+              get => 'Ann';
+          }
+      }
+      """
+    And a class "src/App/Generated/Mapper.php":
+      """
+      <?php
+
+      namespace App\Generated;
+
+      class Mapper
+      {
+          public function map(array $row): array
+          {
+              return array_values($row);
+          }
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+
+      describe(App\Greeter::class, function () {
+          it('greets', fn () => expect((new App\Greeter())->greet('Ann'))->toBe('Hello Ann'));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage-min=100"
+    Then the output should contain "Cannot enforce --coverage-min=100: coverage is incomplete."
+    And the output should contain "No coverage was recorded for src/App/Reports/Monthly.php during an example or scenario."
+    And the output should contain "No coverage was recorded for src/App/Named.php during an example or scenario."
+    And the output should contain "No coverage was recorded for src/App/Untested.php during an example or scenario."
+    And the output should not contain "Pricing.php"
+    And the output should not contain "Mapper.php"
+    And the output should not contain "meets the required"
+    And the exit code should be 1
+
+  Scenario: --coverage-min is enforced when every source file was loaded
+    Given a class "src/App/Greeter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Greeter
+      {
+          public function greet(string $name): string
+          {
+              return "Hello $name";
+          }
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+
+      describe(App\Greeter::class, function () {
+          it('greets', fn () => expect((new App\Greeter())->greet('Ann'))->toBe('Hello Ann'));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage-min=100"
+    Then the output should contain "Code coverage 100.0% meets the required 100.0%"
+    And the exit code should be 0
+
+  Scenario: The agent document names the source files with no coverage recorded
+    Given a class "src/App/Greeter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Greeter
+      {
+          public function greet(string $name): string
+          {
+              return "Hello $name";
+          }
+      }
+      """
+    And a class "src/App/Untested.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Untested
+      {
+          public function run(): string
+          {
+              return 'never called';
+          }
+      }
+      """
+    And a spec file "spec/App/Greeter.spec.php":
+      """
+      <?php
+
+      describe(App\Greeter::class, function () {
+          it('greets', fn () => expect((new App\Greeter())->greet('Ann'))->toBe('Hello Ann'));
+      });
+      """
+    When I run phpspec run with coverage options "--format=agent --coverage-min=100"
+    Then the output should contain:
+      """
+      "met":false,"unrecorded":["src/App/Untested.php"]
+      """
+    And the exit code should be 1
+
+  Scenario: A percentage is cut, never rounded up to the threshold it falls short of
+    Given a class "src/App/Meter.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Meter
+      {
+          public function read(): int
+          {
+              $reading = 2;
+
+              return $reading;
+          }
+
+          public function reset(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Meter.spec.php":
+      """
+      <?php
+
+      describe(App\Meter::class, function () {
+          it('reads', fn () => expect((new App\Meter())->read())->toBe(2));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage --coverage-min=66.7"
+    Then the output should contain "Total: 66.6% (2/3)"
+    And the output should contain "Code coverage 66.6% is below the required 66.7%"
+    And the exit code should be 1
+
+  Scenario: A threshold written with decimals is reached exactly by as many lines
+    Given a class "src/App/Wide.php" of 250 one-line methods
+    And a spec file "spec/App/Wide.spec.php":
+      """
+      <?php
+
+      describe(App\Wide::class, function () {
+          it('answers', function () {
+              $wide = new App\Wide();
+
+              foreach (range(1, 161) as $i) {
+                  expect($wide->{'m' . $i}())->toBe($i);
+              }
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--coverage --coverage-min=64.4"
+    Then the output should contain "Total: 64.4% (161/250)"
+    And the output should contain "Code coverage 64.4% meets the required 64.4%"
+    And the exit code should be 0
+
+  Scenario: A run with no executable lines reaches no threshold above zero
+    Given a class "src/App/Marker.php":
+      """
+      <?php
+
+      namespace App;
+
+      final class Marker {}
+      """
+    And a spec file "spec/App/Marker.spec.php":
+      """
+      <?php
+
+      describe(App\Marker::class, function () {
+          it('is made', fn () => expect(new App\Marker())->toBeAnInstanceOf(App\Marker::class));
+      });
+      """
+    When I run phpspec run with coverage options "--coverage-min=100"
+    Then the output should contain "Code coverage 0.0% is below the required 100.0%"
+    And the exit code should be 1
+
   Scenario: Guard leaves excluded code alone
     Given a class "src/App/Basket.php":
       """
