@@ -235,9 +235,12 @@ one), and `null` when none of them can have a double; one that also holds a
 scalar or a built-in type answers `null`. A stub can still return `null`.
 A method returning an interface only an enum can implement answers, as one
 returning that enum would, the first case of the first enum by name that
-implements it: one already loaded, or one declared in the source of the
-interface's own namespace, read for it and loaded to check it. With no such
-enum it is refused when it is called, with the reason. A method returning a final class hands the spec an
+implements it, directly or through an interface extending it. That enum is one
+already loaded, or one the project's source declares: in the directories
+Composer and the `autoload` configuration load the project's classes from,
+and under the interface's own namespace. The source is read for its
+declarations, and only an enum that could be one is loaded, to check it. With
+no such enum the method is refused when it is called, with the reason. A method returning a final class hands the spec an
 instance of it built without its constructor, for `allow()` to replace. A
 lenient double has nobody about to replace it, so it refuses the code under
 spec, still handing the spec's own call the instance `allow()` needs. A type no

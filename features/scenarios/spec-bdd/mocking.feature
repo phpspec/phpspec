@@ -3470,3 +3470,82 @@ Feature: Mocking
     When I run phpspec run in a fresh process with option "spec/App/Badge.spec.php"
     Then the output should contain "1 spec, 3 examples (3 passed)"
     And the exit code should be 0
+
+  Scenario: An enum in a directory the configuration maps answers for an interface it implements through a child, while still unloaded
+    Given a phpspec.yaml config:
+      """
+      autoload:
+        App\: contracts/
+        Domain\: domain/
+      """
+    And a file "contracts/Labelled.php":
+      """
+      <?php
+      namespace App;
+
+      interface Labelled extends \BackedEnum {}
+      """
+    And a file "contracts/Child.php":
+      """
+      <?php
+      namespace App;
+
+      interface Child extends Labelled {}
+      """
+    And a file "domain/Status.php":
+      """
+      <?php
+      namespace Domain;
+
+      use App\Child;
+
+      enum Status: string implements Child {
+          case Draft = 'draft';
+          case Sent = 'sent';
+      }
+      """
+    And a file "contracts/LabelSource.php":
+      """
+      <?php
+      namespace App;
+
+      interface LabelSource {
+          public function label(): Labelled;
+      }
+      """
+    And a file "contracts/Badge.php":
+      """
+      <?php
+      namespace App;
+
+      final class Badge {
+          public function __construct(private LabelSource $source) {}
+
+          public function show(): string {
+              return $this->source->label()->name;
+          }
+      }
+      """
+    And a spec file "spec/App/Badge.spec.php":
+      """
+      <?php
+
+      use App\Badge;
+      use App\LabelSource;
+      use Domain\Status;
+
+      describe(Badge::class, function () {
+          it('shows the label it was stubbed with', function (LabelSource $source) {
+              allow($source->label())->toReturn(Status::Sent);
+
+              expect((new Badge($source))->show())->toBe('Sent');
+          });
+
+          it('shows the first case for a label nobody stubbed', function () {
+              expect((new Badge(dummy(LabelSource::class)))->show())->toBe('Draft');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/App/Badge.spec.php"
+    Then the output should contain "1 spec, 2 examples (2 passed)"
+    And the exit code should be 0

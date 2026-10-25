@@ -16,35 +16,72 @@ namespace PhpSpec\Mock;
 
 use Composer\Autoload\ClassLoader;
 use FilesystemIterator;
-use PhpSpec\Source\Tokens;
+use PhpSpec\OwnCode;
+use PhpSpec\Source\Declarations;
+use PhpSpec\Source\ProjectAutoloader;
 use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use SplFileInfo;
 use Throwable;
+use UnexpectedValueException;
 use UnitEnum;
 
 /**
  * @internal
  * The enums implementing an interface only an enum can implement: those
- * already loaded, and those declared in the source of the interface's own
- * namespace, found by reading the files that name it and loading only an
- * enum declared there to check it.
+ * already loaded, and those declared in the project's source, the
+ * interface's own namespace's included. Their declarations are read for
+ * every interface extending it, at any depth, and only an enum implementing
+ * one of them is loaded, to check it. Each file is read once.
  */
-final readonly class EnumImplementers
+final class EnumImplementers
 {
-    /**
-     * @param list<string> $skipped directories never searched
-     */
-    public function __construct(private array $skipped = []) {}
+    /** @var array<string, Declarations> what each file read declares */
+    private array $read = [];
 
     /**
-     * Leaves out the directories the Composer autoloaders keep libraries in.
+     * @param list<string> $roots the directories and files searched for any interface
+     * @param list<string> $skipped directories never searched
+     */
+    public function __construct(
+        private readonly array $roots = [],
+        private readonly array $skipped = [],
+    ) {}
+
+    /**
+     * Searches what the registered autoloaders load the project's own
+     * classes from, and never the directories Composer keeps libraries in.
      */
     public static function here(): self
     {
-        return new self(array_keys(ClassLoader::getRegisteredLoaders()));
+        return self::of(spl_autoload_functions(), OwnCode::here());
+    }
+
+    /**
+     * Searches what the autoloaders load the project's own classes from:
+     * the directories the configuration names, and Composer's, prefixed or
+     * not, and its classmap files, each under the project and outside its
+     * libraries.
+     *
+     * @param array<mixed> $autoloaders as spl_autoload_functions() lists them
+     */
+    public static function of(array $autoloaders, OwnCode $own): self
+    {
+        $roots = [];
+
+        foreach ($autoloaders as $autoloader) {
+            if ($autoloader instanceof ProjectAutoloader) {
+                array_push($roots, ...$autoloader->directories());
+            } elseif (is_array($autoloader) && ($autoloader[0] ?? null) instanceof ClassLoader) {
+                array_push($roots, ...self::composerPaths($autoloader[0]));
+            }
+        }
+
+        $roots = array_filter(array_map(self::real(...), $roots), $own->holds(...));
+
+        return new self(array_values(array_unique($roots)), array_keys(ClassLoader::getRegisteredLoaders()));
     }
 
     /**
@@ -70,6 +107,20 @@ final readonly class EnumImplementers
     }
 
     /**
+     * @return list<string>
+     */
+    private static function composerPaths(ClassLoader $composer): array
+    {
+        return [
+            ...array_merge([], ...array_values($composer->getPrefixesPsr4())),
+            ...$composer->getFallbackDirsPsr4(),
+            ...array_merge([], ...array_values($composer->getPrefixes())),
+            ...$composer->getFallbackDirs(),
+            ...array_values($composer->getClassMap()),
+        ];
+    }
+
+    /**
      * @return list<class-string<UnitEnum>>
      */
     private function loaded(string $interface): array
@@ -78,8 +129,8 @@ final readonly class EnumImplementers
     }
 
     /**
-     * The enums declared under the interface's namespace that implement it,
-     * each loaded to check it.
+     * The enums the source declares implementing the interface, or one
+     * extending it, each loaded to check it.
      *
      * @param class-string $interface
      * @return list<class-string<UnitEnum>>
@@ -87,24 +138,64 @@ final readonly class EnumImplementers
     private function declared(string $interface): array
     {
         $file = (new ReflectionClass($interface))->getFileName();
-
-        if ($file === false || !is_file($file)) {
-            return [];
-        }
-
-        $short = substr(strrchr('\\' . $interface, '\\') ?: $interface, 1);
+        $roots = $file === false || !is_file($file) ? $this->roots : [...$this->roots, $this->namespaceRoot($interface, $file)];
+        $interfaces = [];
         $enums = [];
 
-        foreach ($this->sourceFiles($this->namespaceRoot($interface, $file)) as $source) {
-            foreach ($this->enumsNaming($source, $short) as $enum) {
-                if ($this->implements($enum, $interface)) {
-                    /** @var class-string<UnitEnum> $enum */
-                    $enums[] = $enum;
-                }
+        foreach ($this->sourceFiles($roots) as $source) {
+            $declared = $this->declarationsOf($source);
+            $interfaces += $declared->interfaces();
+            $enums += $declared->enums();
+        }
+
+        $extending = $this->extending($interface, $interfaces);
+        $found = [];
+
+        foreach ($enums as $enum => $implemented) {
+            if (array_intersect($implemented, $extending) !== [] && $this->implements($enum, $interface)) {
+                /** @var class-string<UnitEnum> $enum */
+                $found[] = $enum;
             }
         }
 
-        return $enums;
+        return $found;
+    }
+
+    /**
+     * The interface and every interface extending it, at any depth: those
+     * loaded, and those the source declares, lower-cased as PHP compares
+     * names.
+     *
+     * @param array<string, list<string>> $declared interface to the interfaces it extends
+     * @return list<string>
+     */
+    private function extending(string $interface, array $declared): array
+    {
+        $extending = [strtolower(ltrim($interface, '\\')) => true];
+
+        foreach (get_declared_interfaces() as $loaded) {
+            if (is_subclass_of($loaded, $interface)) {
+                $extending[strtolower($loaded)] = true;
+            }
+        }
+
+        do {
+            $grew = false;
+
+            foreach ($declared as $name => $parents) {
+                if (!isset($extending[$name]) && array_intersect_key(array_flip($parents), $extending) !== []) {
+                    $extending[$name] = true;
+                    $grew = true;
+                }
+            }
+        } while ($grew);
+
+        return array_map('strval', array_keys($extending));
+    }
+
+    private function declarationsOf(string $file): Declarations
+    {
+        return $this->read[$file] ??= new Declarations((string) file_get_contents($file));
     }
 
     /**
@@ -126,84 +217,70 @@ final readonly class EnumImplementers
     }
 
     /**
-     * @return iterable<string> the PHP files under the directory, none in a directory left out
+     * Each PHP file under the directories, or given itself, once, none in a
+     * directory left out, and none that declares no interface or enum.
+     *
+     * @param list<string> $roots
+     * @return list<string>
      */
-    private function sourceFiles(string $root): iterable
+    private function sourceFiles(array $roots): array
     {
         $skipped = array_map(self::real(...), $this->skipped);
+        $files = [];
+
+        foreach ($roots as $root) {
+            foreach (is_file($root) ? [new SplFileInfo($root)] : $this->under($root, $skipped) as $entry) {
+                $files[self::real($entry->getPathname())] = true;
+            }
+        }
+
+        return array_values(array_filter(array_map('strval', array_keys($files)), function (string $file): bool {
+            if (isset($this->read[$file])) {
+                return true;
+            }
+
+            $source = (string) file_get_contents($file);
+
+            return stripos($source, 'interface') !== false || stripos($source, 'enum') !== false;
+        }));
+    }
+
+    /**
+     * The PHP files under a directory, none in a directory left out or one
+     * that cannot be read.
+     *
+     * @param list<string> $skipped
+     * @return iterable<SplFileInfo>
+     */
+    private function under(string $root, array $skipped): iterable
+    {
+        if (!is_dir($root) || in_array(self::real($root), $skipped, true)) {
+            return [];
+        }
+
+        try {
+            $directory = new RecursiveDirectoryIterator(self::real($root), FilesystemIterator::SKIP_DOTS);
+        } catch (UnexpectedValueException) {
+            return [];
+        }
+
         $searched = new RecursiveCallbackFilterIterator(
-            new RecursiveDirectoryIterator(self::real($root), FilesystemIterator::SKIP_DOTS),
+            $directory,
             static fn(SplFileInfo $entry): bool => $entry->isDir()
                 ? !str_starts_with($entry->getFilename(), '.') && !in_array(self::real($entry->getPathname()), $skipped, true)
                 : $entry->getExtension() === 'php',
         );
 
-        foreach (new RecursiveIteratorIterator($searched) as $entry) {
-            if ($entry instanceof SplFileInfo) {
-                yield $entry->getPathname();
-            }
-        }
+        /** @var iterable<SplFileInfo> */
+        return new RecursiveIteratorIterator($searched, RecursiveIteratorIterator::LEAVES_ONLY, RecursiveIteratorIterator::CATCH_GET_CHILD);
     }
 
     /**
-     * The enums a file declares with an implements clause, when the file
-     * names the interface at all: in that clause, an import or a name that
-     * holds it.
-     *
-     * @return list<string>
+     * A path as one spelling whichever way it was reached, links resolved.
      */
-    private function enumsNaming(string $file, string $short): array
+    private static function real(string $path): string
     {
-        $source = file_get_contents($file);
-
-        if ($source === false || stripos($source, 'enum') === false || stripos($source, $short) === false) {
-            return [];
-        }
-
-        $tokens = Tokens::of($source);
-        $namespace = '';
-        $enums = [];
-
-        foreach ($tokens->list as $at => $token) {
-            if ($token->is(T_NAMESPACE)) {
-                $namespace = $this->namespaceAt($tokens, $at);
-            } elseif ($token->is(T_ENUM) && $this->implementsAfter($tokens, $at)) {
-                $name = $tokens->significantAfter($at);
-
-                if ($name !== null) {
-                    $enums[] = ltrim($namespace . '\\' . $tokens->list[$name]->text, '\\');
-                }
-            }
-        }
-
-        return $enums;
-    }
-
-    private function namespaceAt(Tokens $tokens, int $at): string
-    {
-        $name = $tokens->significantAfter($at);
-
-        return $name !== null && $tokens->list[$name]->is([T_STRING, T_NAME_QUALIFIED]) ? $tokens->list[$name]->text : '';
-    }
-
-    private function implementsAfter(Tokens $tokens, int $at): bool
-    {
-        for ($i = $at + 1; $i < count($tokens->list) && $tokens->list[$i]->id !== 123; $i++) {
-            if ($tokens->list[$i]->is(T_IMPLEMENTS)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * A directory as one path spells it whichever way it was reached, links
-     * resolved.
-     */
-    private static function real(string $directory): string
-    {
-        return rtrim(str_replace('\\', '/', realpath($directory) ?: $directory), '/');
+        return rtrim(str_replace('\\', '/', realpath($path) ?: $path), '/');
     }
 
     private function implements(string $enum, string $interface): bool

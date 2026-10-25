@@ -37,29 +37,59 @@ final class Answers
     /** @var array<string, class-string<DummyAnswer>> The class of a dummy answer, by the types it is of */
     private static array $dummies = [];
 
-    /** @var array<string, UnitEnum|null> What answers for an interface only an enum can implement, by the interface */
+    /** @var array<string, UnitEnum> What answers for an interface only an enum can implement, by the interface */
     private static array $enumCases = [];
 
+    /** @var array<string, string> How many classes and interfaces were loaded when none was found, by the interface */
+    private static array $enumMisses = [];
+
+    private static ?EnumImplementers $enumImplementers = null;
+
+    /**
+     * Forgets what was made and found, the source read with it, as a run in
+     * the same process starts.
+     */
     public static function reset(): void
     {
         self::$dummies = [];
         self::$enumCases = [];
+        self::$enumMisses = [];
+        self::$enumImplementers = null;
     }
 
     /**
      * What a double answers to a call of a method returning an interface
      * only an enum can implement: the first case of the first enum, by name,
-     * implementing it, or null when none is found.
+     * implementing it, or null when none is found. A case found is kept for
+     * the run; none found is looked for again once a class or an interface
+     * has loaded since.
      *
      * @param class-string $interface
      */
     public static function enumCase(string $interface): ?UnitEnum
     {
-        if (!array_key_exists($interface, self::$enumCases)) {
-            self::$enumCases[$interface] = EnumImplementers::here()->firstCaseOf($interface);
+        if (isset(self::$enumCases[$interface])) {
+            return self::$enumCases[$interface];
         }
 
-        return self::$enumCases[$interface];
+        if ((self::$enumMisses[$interface] ?? null) === self::loadedCount()) {
+            return null;
+        }
+
+        $case = (self::$enumImplementers ??= EnumImplementers::here())->firstCaseOf($interface);
+
+        if ($case === null) {
+            self::$enumMisses[$interface] = self::loadedCount();
+
+            return null;
+        }
+
+        return self::$enumCases[$interface] = $case;
+    }
+
+    private static function loadedCount(): string
+    {
+        return count(get_declared_classes()) . '/' . count(get_declared_interfaces());
     }
 
     /**

@@ -18,6 +18,7 @@ use BackedEnum;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Coverage\CoverageAdapter;
+use PhpSpec\Source\ProjectAutoloader;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -844,38 +845,14 @@ final class Configuration
     }
 
     /**
-     * Registers PSR-4 autoloaders from the "autoload" config map (prefix => baseDir).
+     * Registers the autoloader of the project's classes: PSR-4 from the
+     * "autoload" config map (prefix => baseDir), then the source layout.
      */
     public function registerAutoloaders(): void
     {
         $autoload = $this->get('autoload');
-        if (is_array($autoload)) {
-            spl_autoload_register(function (string $class) use ($autoload) {
-                foreach ($autoload as $prefix => $baseDir) {
-                    if (str_starts_with($class, $prefix)) {
-                        $relativeClass = substr($class, strlen($prefix));
-                        $file = rtrim($baseDir, '/') . '/' . str_replace('\\', '/', $relativeClass) . '.php';
-                        if (file_exists($file)) {
-                            require $file;
-                            return;
-                        }
-                    }
-                }
-            });
-        }
 
-        $layout = $this->getSourceLayout();
-        $root = rtrim($this->rootDir, '/');
-
-        spl_autoload_register(static function (string $class) use ($layout, $root): void {
-            foreach ($layout->candidateFilesFor($class) as $file) {
-                if (file_exists($root . DIRECTORY_SEPARATOR . $file)) {
-                    require $root . DIRECTORY_SEPARATOR . $file;
-
-                    return;
-                }
-            }
-        });
+        spl_autoload_register(new ProjectAutoloader(is_array($autoload) ? $autoload : [], $this->getSourceLayout(), rtrim($this->rootDir, '/')));
     }
 
     /**
