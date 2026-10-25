@@ -6,6 +6,7 @@ use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\InProcessResult;
 use PhpSpec\InProcessRunner;
+use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Report\DoubleLabels;
 
 interface InProcessRunnerSpecClock {}
@@ -50,6 +51,29 @@ describe(InProcessRunner::class, function () {
             DoubleLabels::restore($saved);
             unlink($project . '/spec/Inner.spec.php');
             rmdir($project . '/spec');
+            rmdir($project);
+        }
+    });
+    it("keeps what the inner run did outside its examples, its doubles and the calls it held, out of the example it runs in", function () {
+        $project = sys_get_temp_dir() . '/phpspec_outside_' . uniqid();
+        mkdir($project . '/spec', 0777, true);
+        mkdir($project . '/src', 0777, true);
+        file_put_contents($project . '/src/Caller.php', '<?php interface OutsideSpecHandler { public function handle(): void; } final class OutsideSpecCaller { public static function call(OutsideSpecHandler $handler): void { $handler->handle(); } }');
+        file_put_contents($project . '/spec/Inner.spec.php', '<?php require_once __DIR__ . "/../src/Caller.php"; describe("Inner", function () { beforeAll(function () { OutsideSpecCaller::call(mock(OutsideSpecHandler::class)); }); it("passes", fn () => expect(true)->toBeTrue()); });');
+        $outer = mock(InProcessRunnerSpecClock::class);
+        $named = DoubleLabels::of($outer);
+
+        try {
+            InProcessRunner::run($project, 'run');
+
+            expect(HeldCalls::take())->toBeNull();
+            expect(DoubleLabels::of($outer))->toBe($named);
+            expect(DoubleLabels::of(mock(InProcessRunnerSpecClock::class)))->toBe(str_replace('#1', '#2', $named));
+        } finally {
+            unlink($project . '/spec/Inner.spec.php');
+            unlink($project . '/src/Caller.php');
+            rmdir($project . '/spec');
+            rmdir($project . '/src');
             rmdir($project);
         }
     });

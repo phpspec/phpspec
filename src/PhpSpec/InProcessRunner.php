@@ -21,6 +21,7 @@ use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Mock\ArrangingCode;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\Expectation as MockExpectation;
+use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Report\DoubleLabels;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
 use ReflectionClass;
@@ -58,6 +59,7 @@ final class InProcessRunner
         $savedCoverage = CoverageRegistry::collector();
         $savedArranging = [ArrangingCode::roots(), ArrangingCode::loadedFiles()];
         $savedLabels = DoubleLabels::save();
+        $savedHeld = HeldCalls::save();
         $savedVerbosity = [getenv('SHELL_VERBOSITY'), $_ENV['SHELL_VERBOSITY'] ?? null, $_SERVER['SHELL_VERBOSITY'] ?? null];
 
         // Reset for inner run — fresh Dispatcher for the nested Application
@@ -71,6 +73,7 @@ final class InProcessRunner
         BrowserRegistry::reset();
         CoverageRegistry::reset();
         DoubleLabels::start();
+        HeldCalls::forget();
 
         $savedCwdStr = is_string($savedCwd) ? $savedCwd : $projectDir;
         chdir($projectDir);
@@ -96,6 +99,7 @@ final class InProcessRunner
             StoryBDDRegistry::restoreState($savedStoryBDD);
             BrowserRegistry::restoreState($savedBrowser);
             DoubleLabels::restore($savedLabels);
+            HeldCalls::restore($savedHeld);
             ArrangingCode::reset();
             ArrangingCode::under(...$savedArranging[0]);
             ArrangingCode::loaded(...$savedArranging[1]);

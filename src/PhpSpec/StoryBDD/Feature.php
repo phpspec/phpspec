@@ -193,10 +193,13 @@ final readonly class Feature implements SpecBlock
     {
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();
+        $outerLabels = DoubleLabels::save();
+        DoubleLabels::start();
 
         try {
             return $this->runScenarioWithHooks($scenario, $featureHeld);
         } finally {
+            DoubleLabels::restore($outerLabels);
             $coverage?->endExample($scenario->title);
         }
     }
@@ -210,7 +213,6 @@ final readonly class Feature implements SpecBlock
      */
     private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld): ScenarioResult
     {
-        DoubleLabels::start();
         $world = new StepWorld();
         $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');
 

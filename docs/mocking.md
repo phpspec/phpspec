@@ -317,8 +317,9 @@ Expected App\Context double #2 ($second) to be App\Context double #1 ($first)
 
 An example numbers its doubles in the order it makes them: a parameter's when
 the first closure naming it runs, and one from `mock()` or `dummy()` where it
-is called. What a double answered is named by where it came from, and numbered
-when a failure first shows it:
+is called. What a double answered is named by the type its call declares
+(`mixed` for none) and by where it came from, and numbered when a failure
+first shows it:
 
 ```
 App\Page double #3 (from App\Book double #1->first())

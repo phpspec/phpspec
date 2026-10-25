@@ -5,6 +5,9 @@ use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
+use PhpSpec\Mock\HeldCalls;
+use PhpSpec\Mock\UnexpectedCallException;
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Specification\Context;
 use PhpSpec\Specification\Subject;
 use PhpSpec\Result\ContextResult;
@@ -30,6 +33,24 @@ describe(Context::class, function() {
         $result = $ctx->run();
         expect($result)->toBeAnInstanceOf(ContextResult::class);
         expect($result->getTitle())->toBe("test context");
+    });
+
+    it("leaves the example it runs inside its doubles' names and the calls it holds", function () {
+        $outer = mock(ContextSpecMailer::class);
+        $named = DoubleLabels::of($outer);
+        HeldCalls::hold($outer, 'send', ['hi'], new UnexpectedCallException('send("hi") was called'));
+        $ctx = new Context("nested", function () {
+            it("makes and calls its own doubles", function (ContextSpecMailer $mailer) {
+                mock(ContextSpecMailer::class);
+                expect(1)->toBe(2);
+            });
+        });
+        $ctx->setWorld(new Subject());
+
+        $ctx->run();
+
+        expect(DoubleLabels::of($outer))->toBe($named);
+        expect(HeldCalls::take()?->getMessage())->toBe('send("hi") was called');
     });
 
     it("collects nested examples", function() {

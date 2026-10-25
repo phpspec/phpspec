@@ -16,7 +16,9 @@ namespace PhpSpec\Report;
 
 use PhpSpec\Mock\GeneratedDouble;
 use PhpSpec\Mock\MatchableDouble;
-use ReflectionClass;
+use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionType;
 use WeakMap;
 
 /**
@@ -129,34 +131,33 @@ final class DoubleLabels
     }
 
     /**
-     * The type a double stands for: the one it was made of, or for what a
-     * mock answered, the class it extends or else the interfaces it
-     * implements, none of them one another names.
+     * The type a double stands for: what an answer's call declares, never the
+     * base it is built on, and for any other double the type it was made of.
      */
     private function typeOf(object $double): string
     {
+        if ($double instanceof MatchableDouble) {
+            return self::declared((new ReflectionMethod($double->______PhpSpecGetDouble(), $double->______PhpSpecGetMethod()))->getReturnType());
+        }
+
         if ($double instanceof GeneratedDouble) {
             return ltrim($double->______PhpSpecNameOfClassDoubled(), '\\');
         }
 
-        $class = new ReflectionClass($double);
-        $parent = $class->getParentClass();
+        return $double::class;
+    }
 
-        if ($parent !== false) {
-            return $parent->getName();
+    /**
+     * A return type as the reader wrote it, a nullable one without its null,
+     * and mixed where none was written. A union allowing null answers null,
+     * never an answer to name.
+     */
+    private static function declared(?ReflectionType $type): string
+    {
+        if ($type === null) {
+            return 'mixed';
         }
 
-        $interfaces = array_filter($class->getInterfaceNames(), static fn(string $interface): bool => !str_starts_with($interface, 'PhpSpec\\Mock\\'));
-        $own = array_filter($interfaces, static function (string $interface) use ($interfaces): bool {
-            foreach ($interfaces as $other) {
-                if (is_subclass_of($other, $interface)) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-
-        return implode('&', $own);
+        return $type instanceof ReflectionNamedType ? $type->getName() : (string) $type;
     }
 }

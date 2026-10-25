@@ -319,6 +319,8 @@ Feature: Error reporting
 
       interface Book {
           public function first(): Page;
+
+          public function opened(): \DateTimeInterface;
       }
       """
     And a class "src/App/Dispatcher.php":
@@ -366,6 +368,12 @@ Feature: Error reporting
               expect($first)->toBe($book->first());
           });
 
+          it('compares what a mock answered on a base PHP requires', function (Book $book, Context $first) {
+              allow($book->opened());
+
+              expect($first)->toBe($book->opened());
+          });
+
           it('compares what a dummy answered down a chain', function (Context $first) {
               $book = dummy(Book::class);
 
@@ -385,6 +393,7 @@ Feature: Error reporting
     And the output should contain "got: App\Handler::handle(App\Context double #3 ($second))"
     And the output should contain "Expected App\Context double #2 to be App\Context double #1 ($first)"
     And the output should contain "Expected App\Context double #2 ($first) to be App\Page double #3 (from App\Book double #1->first())"
+    And the output should contain "Expected App\Context double #2 ($first) to be DateTimeInterface double #3 (from App\Book double #1->opened())"
     And the output should contain "Expected App\Context double #1 ($first) to be App\Page double #3 (from App\Book double #2->first()->next())"
     And the output should contain "App\Handler::handle(App\Context double #2 ($first)) was called but not expected"
     And the output should not contain "PhpspecDouble"

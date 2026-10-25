@@ -22,11 +22,14 @@ use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\StopConditions;
 use PhpSpec\StopRegistry;
+use PhpSpec\Report\DoubleLabels;
 
 final class FeatureSpecMoney
 {
     public function __construct(public int $pence) {}
 }
+
+interface FeatureSpecClock {}
 
 describe(Feature::class, function () {
 
@@ -64,6 +67,22 @@ describe(Feature::class, function () {
         expect($steps[0]->isPassed())->toBeTrue();
         expect($steps[1]->isPassed())->toBeTrue();
         expect($steps[2]->isPassed())->toBeTrue();
+    });
+
+    it("numbers the doubles of each scenario from one, and leaves the example it runs inside its doubles' names", function () {
+        $outer = mock(FeatureSpecClock::class);
+        $named = DoubleLabels::of($outer);
+        $shown = [];
+        $registry = new StepRegistry();
+        $registry->addStep("a clock", function () use (&$shown) {
+            $shown[] = DoubleLabels::of(mock(FeatureSpecClock::class));
+        });
+        $scenario = fn (string $title) => new ScenarioNode($title, [new StepNode('Given', 'a clock')]);
+
+        (new Feature('test.feature', new FeatureNode('Clocks', '', null, [$scenario('One'), $scenario('Two')]), $registry, new HookRegistry()))->run();
+
+        expect($shown)->toBe(['FeatureSpecClock double #1', 'FeatureSpecClock double #1']);
+        expect(DoubleLabels::of($outer))->toBe($named);
     });
 
     it("records how long each step ran, and nothing for a step it never ran", function () {

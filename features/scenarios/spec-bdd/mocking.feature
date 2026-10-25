@@ -3235,3 +3235,80 @@ Feature: Mocking
       """
     When I run phpspec run
     Then all examples should pass
+  Scenario: A call nothing declared still fails its example after a run nested inside the example
+    Given an interface "src/App/Handler.php":
+      """
+      <?php
+      namespace App;
+
+      interface Handler {
+          public function handle(int $cups): string;
+      }
+      """
+    And a class "src/App/Caller.php":
+      """
+      <?php
+      namespace App;
+
+      final class Caller {
+          public function __construct(private Handler $handler) {}
+
+          public function call(): void {
+              $this->handler->handle(2);
+          }
+      }
+      """
+    And a spec file "spec/App/Caller.spec.php":
+      """
+      <?php
+
+      use App\Caller;
+      use App\Handler;
+      use PhpSpec\InProcessRunner;
+      use PhpSpec\Specification\Context;
+      use PhpSpec\Specification\Subject;
+
+      function nested_context(bool $passing): void
+      {
+          $context = new Context('Nested', function () use ($passing) {
+              it('runs inside', fn () => expect($passing)->toBeTrue());
+          });
+          $context->setWorld(new Subject());
+          $context->run();
+      }
+
+      describe(Caller::class, function () {
+          it('calls before a nested context that passes', function (Handler $handler) {
+              (new Caller($handler))->call();
+              nested_context(true);
+          });
+
+          it('calls before a nested context that fails', function (Handler $handler) {
+              (new Caller($handler))->call();
+              nested_context(false);
+          });
+
+          it('calls before a nested run that fails', function (Handler $handler) {
+              (new Caller($handler))->call();
+              $project = sys_get_temp_dir() . '/phpspec_nested_' . uniqid();
+              mkdir($project . '/spec', 0777, true);
+              file_put_contents($project . '/spec/Inner.spec.php', '<?php describe("Inner", function () { it("fails", fn () => expect(1)->toBe(2)); });');
+              InProcessRunner::run($project, 'run');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/App/Caller.spec.php --format=agent"
+    Then the exit code should be 1
+    And the output should contain:
+      """
+      calls before a nested context that passes","state":"error"
+      """
+    And the output should contain:
+      """
+      calls before a nested context that fails","state":"error"
+      """
+    And the output should contain:
+      """
+      calls before a nested run that fails","state":"error"
+      """
+    And the output should contain "Handler::handle(2) was called but not expected"
