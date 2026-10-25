@@ -13,7 +13,7 @@ describe(EnumImplementers::class, function () {
         $root = sys_get_temp_dir() . '/phpspec_enums_' . $namespace;
 
         foreach ($files as $path => $code) {
-            $file = $root . '/' . $path;
+            $file = $root . '/' . str_replace('NS', $namespace, $path);
 
             if (!is_dir(dirname($file))) {
                 mkdir(dirname($file), 0777, true);
@@ -108,6 +108,29 @@ describe(EnumImplementers::class, function () {
             expect(EnumImplementers::of([[$composer, 'loadClass'], $configured], $own)->firstCaseOf($namespace . '\\Labelled'))->toBe(constant($namespace . 'Alt\\Alpha::First'));
             expect(enum_exists($namespace . 'Lib\\Aaron', false))->toBeFalse();
         } finally {
+            ($this->cleanUp)($root, $loader);
+        }
+    });
+
+    it('searches the project root when Composer falls back to it, and still no library under it', function () {
+        [$namespace, $root, $loader] = ($this->project)([
+            'contracts/Labelled.php' => "<?php\nnamespace NS;\ninterface Labelled extends \\UnitEnum {}\n",
+            'NSDomain/Status.php' => "<?php\nnamespace NSDomain;\nenum Status implements \\NS\\Labelled { case Sent; }\n",
+            'vendor/lib/Aaron.php' => "<?php\nnamespace NSLib;\nenum Aaron implements \\NS\\Labelled { case Library; }\n",
+        ], ['' => 'contracts/', 'Lib' => 'vendor/lib/']);
+        $composer = new ClassLoader($root . '/vendor');
+        $composer->addPsr4($namespace . '\\', $root . '/contracts');
+        $composer->addPsr4($namespace . 'Lib\\', $root . '/vendor/lib');
+        $composer->addPsr4('', $root);
+        $composer->register();
+
+        try {
+            $own = new OwnCode(ProjectRoot::at($root), [ProjectRoot::at($root . '/vendor')]);
+
+            expect(EnumImplementers::of([[$composer, 'loadClass']], $own)->firstCaseOf($namespace . '\\Labelled'))->toBe(constant($namespace . 'Domain\\Status::Sent'));
+            expect(enum_exists($namespace . 'Lib\\Aaron', false))->toBeFalse();
+        } finally {
+            $composer->unregister();
             ($this->cleanUp)($root, $loader);
         }
     });

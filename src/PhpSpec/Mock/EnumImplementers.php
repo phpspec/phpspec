@@ -62,8 +62,8 @@ final class EnumImplementers
     /**
      * Searches what the autoloaders load the project's own classes from:
      * the directories the configuration names, and Composer's, prefixed or
-     * not, and its classmap files, each under the project and outside its
-     * libraries.
+     * not, and its classmap files, each in the project, its root included,
+     * and outside its libraries.
      *
      * @param array<mixed> $autoloaders as spl_autoload_functions() lists them
      */
@@ -79,7 +79,7 @@ final class EnumImplementers
             }
         }
 
-        $roots = array_filter(array_map(self::real(...), $roots), $own->holds(...));
+        $roots = array_filter(array_map(self::real(...), $roots), static fn(string $path): bool => $own->holds($path . '/'));
 
         return new self(array_values(array_unique($roots)), array_keys(ClassLoader::getRegisteredLoaders()));
     }
