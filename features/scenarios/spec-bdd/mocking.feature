@@ -1891,6 +1891,132 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A double given as an argument matches only itself, never an equal double
+    Given an interface "src/App/Context.php":
+      """
+      <?php
+      namespace App;
+
+      interface Context {
+          public function name(): string;
+      }
+      """
+    And an interface "src/App/Handler.php":
+      """
+      <?php
+      namespace App;
+
+      interface Handler {
+          public function handle(mixed $context): string;
+      }
+      """
+    And an interface "src/App/Source.php":
+      """
+      <?php
+      namespace App;
+
+      interface Source {
+          public function context(): Context;
+      }
+      """
+    And a class "src/App/Dispatcher.php":
+      """
+      <?php
+      namespace App;
+
+      final class Dispatcher {
+          public function __construct(private Handler $handler) {}
+
+          public function dispatch(mixed $context): string {
+              return $this->handler->handle($context);
+          }
+
+          public function dispatchFrom(Source $source): string {
+              return $this->handler->handle($source->context());
+          }
+      }
+      """
+    And a spec file "spec/App/Dispatcher.spec.php":
+      """
+      <?php
+
+      use App\Context;
+      use App\Dispatcher;
+      use App\Handler;
+      use App\Source;
+
+      describe(Dispatcher::class, function () {
+          it('answers with the stub declared for that very double', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle($first))->toReturn('first');
+              allow($handler->handle($second))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch($second))->toBe('second');
+          });
+
+          it('takes a call with one double for no call with another', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatch($second);
+
+              expect($handler->handle($second))->toHaveBeenCalled();
+              expect($handler->handle($first))->not()->toHaveBeenCalled();
+          });
+
+          it('tells doubles apart inside an array argument', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle([$first]))->toReturn('first');
+              allow($handler->handle([$second]))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch([$second]))->toBe('second');
+          });
+
+          it('tells doubles apart in an array including them', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle(arrayIncluding(['context' => $first])))->toReturn('first');
+              allow($handler->handle(arrayIncluding(['context' => $second])))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch(['context' => $second, 'id' => 7]))->toBe('second');
+          });
+
+          it('tells a dummy apart from an equal dummy', function (Handler $handler) {
+              $first = dummy(Context::class);
+              $second = dummy(Context::class);
+              allow($handler->handle($first))->toReturn('first');
+              allow($handler->handle($second))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch($second))->toBe('second');
+          });
+
+          it('takes what a dummy answered for what it answers to that method again', function (Handler $handler) {
+              $source = dummy(Source::class);
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatchFrom($source);
+
+              expect($handler->handle($source->context()))->toHaveBeenCalled();
+          });
+
+          it('takes what a mock answered for what it answers to that method again', function (Handler $handler, Source $source) {
+              allow($source->context());
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatchFrom($source);
+
+              expect($handler->handle($source->context()))->toHaveBeenCalled();
+          });
+
+          it('tells apart what two mocks of one type answered', function (Handler $handler, Source $source, Source $other) {
+              allow($source->context());
+              allow($other->context());
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatchFrom($source);
+
+              expect($handler->handle($other->context()))->not()->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: A call stubbed first can still be verified
     Given an interface "src/App/Catalogue.php":
       """

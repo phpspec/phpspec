@@ -123,12 +123,13 @@ final readonly class ArgumentMatcher
     /**
      * Whether the value satisfies this matcher's constraint. A matcher given
      * in a value's place, as in a call a spec writes to declare another, is
-     * no value: it matches an equal matcher alone, never reaching a predicate.
+     * no value: it matches a matcher of the same kind and constraint alone,
+     * never reaching a predicate.
      */
     public function matches(mixed $actual): bool
     {
         if ($actual instanceof self) {
-            return $actual == $this;
+            return self::same($actual, $this);
         }
 
         return match ($this->type) {
@@ -204,10 +205,28 @@ final readonly class ArgumentMatcher
     /**
      * Whether an argument is the one that was written: scalars strictly, an
      * object by value (an equal Money is the Money that was meant, whichever
-     * instance carries it), an array by the same rule for each element.
+     * instance carries it), an array by the same rule for each element. A
+     * double the spec made is only itself. What a double answered is what the
+     * same producer answered to the same method, whatever the arguments, its
+     * producer compared by these rules. A matcher is one of the same kind and
+     * constraint.
      */
     private static function same(mixed $actual, mixed $expected): bool
     {
+        if ($actual instanceof MatchableDouble || $expected instanceof MatchableDouble) {
+            return $actual instanceof MatchableDouble && $expected instanceof MatchableDouble
+                && $actual->______PhpSpecGetMethod() === $expected->______PhpSpecGetMethod()
+                && self::same($actual->______PhpSpecGetDouble(), $expected->______PhpSpecGetDouble());
+        }
+
+        if ($actual instanceof GeneratedDouble || $expected instanceof GeneratedDouble) {
+            return $actual === $expected;
+        }
+
+        if ($actual instanceof self && $expected instanceof self) {
+            return $actual->type === $expected->type && self::same($actual->value, $expected->value);
+        }
+
         if (is_object($actual) && is_object($expected)) {
             return $actual == $expected;
         }

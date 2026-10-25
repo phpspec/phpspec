@@ -377,6 +377,15 @@ expect($logger->log('other'))->not()->toBeCalled();
 An argument written as a value matches by value: a scalar strictly, an object
 when it equals the one written (`new Money(900)` matches any `Money(900)`,
 whichever instance carries it), an array element by element on the same rule.
+A double matches only itself, never another double of the same type. What a
+double answered matches what the same double answers to the same method,
+whatever the arguments, so a spy names it by that call again:
+
+```php
+(new Reader($book, $printer))->read(); // prints what $book->first() answers
+expect($printer->print($book->first()))->toHaveBeenCalled();
+```
+
 For anything looser, write a matcher in the call:
 
 ### `any()`
