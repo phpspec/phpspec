@@ -18,6 +18,7 @@ use PhpSpec\Mock\Expectation;
 use PhpSpec\Mock\GeneratedDouble;
 use PhpSpec\Mock\LastCallDouble;
 use PhpSpec\Mock\MatchableDouble;
+use PhpSpec\Report\DoubleLabels;
 
 /**
  * Creates a test double for the given class or interface.
@@ -35,7 +36,10 @@ function mock(string $class): object
             'Make sure the class is autoloaded or the file is included.',
         );
     }
-    return Double::getInstance($class);
+    $double = Double::getInstance($class);
+    DoubleLabels::made($double);
+
+    return $double;
 }
 
 /**

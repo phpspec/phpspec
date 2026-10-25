@@ -64,4 +64,22 @@ final class HeldCalls
     {
         self::$held = [];
     }
+
+    /**
+     * The calls held so far, for a scope run inside to put back when it ends.
+     *
+     * @return list<array{double: object, method: string, arguments: array<int|string, mixed>, refusal: UnexpectedCallException}>
+     */
+    public static function save(): array
+    {
+        return self::$held;
+    }
+
+    /**
+     * @param list<array{double: object, method: string, arguments: array<int|string, mixed>, refusal: UnexpectedCallException}> $held
+     */
+    public static function restore(array $held): void
+    {
+        self::$held = $held;
+    }
 }

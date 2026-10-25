@@ -1891,6 +1891,132 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A double given as an argument matches only itself, never an equal double
+    Given an interface "src/App/Context.php":
+      """
+      <?php
+      namespace App;
+
+      interface Context {
+          public function name(): string;
+      }
+      """
+    And an interface "src/App/Handler.php":
+      """
+      <?php
+      namespace App;
+
+      interface Handler {
+          public function handle(mixed $context): string;
+      }
+      """
+    And an interface "src/App/Source.php":
+      """
+      <?php
+      namespace App;
+
+      interface Source {
+          public function context(): Context;
+      }
+      """
+    And a class "src/App/Dispatcher.php":
+      """
+      <?php
+      namespace App;
+
+      final class Dispatcher {
+          public function __construct(private Handler $handler) {}
+
+          public function dispatch(mixed $context): string {
+              return $this->handler->handle($context);
+          }
+
+          public function dispatchFrom(Source $source): string {
+              return $this->handler->handle($source->context());
+          }
+      }
+      """
+    And a spec file "spec/App/Dispatcher.spec.php":
+      """
+      <?php
+
+      use App\Context;
+      use App\Dispatcher;
+      use App\Handler;
+      use App\Source;
+
+      describe(Dispatcher::class, function () {
+          it('answers with the stub declared for that very double', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle($first))->toReturn('first');
+              allow($handler->handle($second))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch($second))->toBe('second');
+          });
+
+          it('takes a call with one double for no call with another', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatch($second);
+
+              expect($handler->handle($second))->toHaveBeenCalled();
+              expect($handler->handle($first))->not()->toHaveBeenCalled();
+          });
+
+          it('tells doubles apart inside an array argument', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle([$first]))->toReturn('first');
+              allow($handler->handle([$second]))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch([$second]))->toBe('second');
+          });
+
+          it('tells doubles apart in an array including them', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle(arrayIncluding(['context' => $first])))->toReturn('first');
+              allow($handler->handle(arrayIncluding(['context' => $second])))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch(['context' => $second, 'id' => 7]))->toBe('second');
+          });
+
+          it('tells a dummy apart from an equal dummy', function (Handler $handler) {
+              $first = dummy(Context::class);
+              $second = dummy(Context::class);
+              allow($handler->handle($first))->toReturn('first');
+              allow($handler->handle($second))->toReturn('second');
+
+              expect((new Dispatcher($handler))->dispatch($second))->toBe('second');
+          });
+
+          it('takes what a dummy answered for what it answers to that method again', function (Handler $handler) {
+              $source = dummy(Source::class);
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatchFrom($source);
+
+              expect($handler->handle($source->context()))->toHaveBeenCalled();
+          });
+
+          it('takes what a mock answered for what it answers to that method again', function (Handler $handler, Source $source) {
+              allow($source->context());
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatchFrom($source);
+
+              expect($handler->handle($source->context()))->toHaveBeenCalled();
+          });
+
+          it('tells apart what two mocks of one type answered', function (Handler $handler, Source $source, Source $other) {
+              allow($source->context());
+              allow($other->context());
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatchFrom($source);
+
+              expect($handler->handle($other->context()))->not()->toHaveBeenCalled();
+          });
+      });
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: A call stubbed first can still be verified
     Given an interface "src/App/Catalogue.php":
       """
@@ -3108,4 +3234,167 @@ Feature: Mocking
       });
       """
     When I run phpspec run
+    Then all examples should pass
+  Scenario: A call nothing declared still fails its example after a run nested inside the example
+    Given an interface "src/App/Handler.php":
+      """
+      <?php
+      namespace App;
+
+      interface Handler {
+          public function handle(int $cups): string;
+      }
+      """
+    And a class "src/App/Caller.php":
+      """
+      <?php
+      namespace App;
+
+      final class Caller {
+          public function __construct(private Handler $handler) {}
+
+          public function call(): void {
+              $this->handler->handle(2);
+          }
+      }
+      """
+    And a spec file "spec/App/Caller.spec.php":
+      """
+      <?php
+
+      use App\Caller;
+      use App\Handler;
+      use PhpSpec\InProcessRunner;
+      use PhpSpec\Specification\Context;
+      use PhpSpec\Specification\Subject;
+
+      function nested_context(bool $passing): void
+      {
+          $context = new Context('Nested', function () use ($passing) {
+              it('runs inside', fn () => expect($passing)->toBeTrue());
+          });
+          $context->setWorld(new Subject());
+          $context->run();
+      }
+
+      describe(Caller::class, function () {
+          it('calls before a nested context that passes', function (Handler $handler) {
+              (new Caller($handler))->call();
+              nested_context(true);
+          });
+
+          it('calls before a nested context that fails', function (Handler $handler) {
+              (new Caller($handler))->call();
+              nested_context(false);
+          });
+
+          it('calls before a nested run that fails', function (Handler $handler) {
+              (new Caller($handler))->call();
+              $project = sys_get_temp_dir() . '/phpspec_nested_' . uniqid();
+              mkdir($project . '/spec', 0777, true);
+              file_put_contents($project . '/spec/Inner.spec.php', '<?php describe("Inner", function () { it("fails", fn () => expect(1)->toBe(2)); });');
+              InProcessRunner::run($project, 'run');
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "spec/App/Caller.spec.php --format=agent"
+    Then the exit code should be 1
+    And the output should contain:
+      """
+      calls before a nested context that passes","state":"error"
+      """
+    And the output should contain:
+      """
+      calls before a nested context that fails","state":"error"
+      """
+    And the output should contain:
+      """
+      calls before a nested run that fails","state":"error"
+      """
+    And the output should contain "Handler::handle(2) was called but not expected"
+
+  Scenario: A union of the project's own types that allows null answers like the union without null, and null when none can
+    Given an interface "src/App/Page.php":
+      """
+      <?php
+      namespace App;
+
+      interface Page {
+          public function title(): string;
+      }
+      """
+    And an interface "src/App/Book.php":
+      """
+      <?php
+      namespace App;
+
+      interface Book {
+          public function title(): string;
+      }
+      """
+    And a class "src/App/Token.php":
+      """
+      <?php
+      namespace App;
+
+      final class Token {}
+      """
+    And a class "src/App/Stamp.php":
+      """
+      <?php
+      namespace App;
+
+      final class Stamp {}
+      """
+    And an interface "src/App/Shelf.php":
+      """
+      <?php
+      namespace App;
+
+      interface Shelf {
+          public function either(): Page|Book|null;
+          public function reversed(): Book|Page|null;
+          public function past(): Token|Page|null;
+          public function neither(): Token|Stamp|null;
+          public function worded(): string|Page|null;
+          public function counted(): ?\Countable;
+      }
+      """
+    And a spec file "spec/App/Shelf.spec.php":
+      """
+      <?php
+
+      use App\Book;
+      use App\Page;
+      use App\Shelf;
+
+      describe(Shelf::class, function () {
+          it('answers the first type of the union that can have one, a mock as a dummy', function (Shelf $shelf) {
+              foreach ([$shelf, dummy(Shelf::class)] as $double) {
+                  $either = $double->either();
+                  $reversed = $double->reversed();
+                  $past = $double->past();
+
+                  expect($either instanceof Page)->toBeTrue();
+                  expect($reversed instanceof Book)->toBeTrue();
+                  expect($past instanceof Page)->toBeTrue();
+              }
+          });
+
+          it('answers null when no type of the union can have one, or the union holds a scalar or a built-in type', function (Shelf $shelf) {
+              foreach ([$shelf, dummy(Shelf::class)] as $double) {
+                  expect($double->neither())->toBeNull();
+                  expect($double->worded())->toBeNull();
+                  expect($double->counted())->toBeNull();
+              }
+          });
+
+          it('answers null when stubbed so', function (Shelf $shelf) {
+              allow($shelf->either())->toReturn(null);
+
+              expect($shelf->either())->toBeNull();
+          });
+      });
+      """
+    When I run the spec
     Then all examples should pass

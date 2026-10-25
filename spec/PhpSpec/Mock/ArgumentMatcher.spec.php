@@ -2,6 +2,16 @@
 
 use PhpSpec\Mock\ArgumentMatcher;
 
+interface ArgumentMatcherSpecPage {
+    public function next(): ArgumentMatcherSpecPage;
+}
+
+interface ArgumentMatcherSpecBook {
+    public function first(): ArgumentMatcherSpecPage;
+
+    public function last(): ArgumentMatcherSpecPage;
+}
+
 describe(ArgumentMatcher::class, function () {
 
     describe('any()', function () {
@@ -78,6 +88,12 @@ describe(ArgumentMatcher::class, function () {
             $m = ArgumentMatcher::arrayIncluding(['a' => 1]);
             expect($m->matches('string'))->toBeFalse();
         });
+
+        it('tells two doubles of one type apart', function (ArgumentMatcherSpecPage $first, ArgumentMatcherSpecPage $second) {
+            $m = ArgumentMatcher::arrayIncluding(['page' => $first]);
+            expect($m->matches(['page' => $second, 'at' => 1]))->toBeFalse();
+            expect($m->matches(['page' => $first, 'at' => 1]))->toBeTrue();
+        });
     });
 
     describe('satisfy()', function () {
@@ -117,6 +133,56 @@ describe(ArgumentMatcher::class, function () {
 
         it('keeps scalars strict', function () {
             expect(ArgumentMatcher::matchArgs(['1'], [1]))->toBeFalse();
+        });
+    });
+
+    describe('matchArgs() with doubles', function () {
+        it('tells two doubles of one type apart', function (ArgumentMatcherSpecPage $first, ArgumentMatcherSpecPage $second) {
+            expect(ArgumentMatcher::matchArgs([$second], [$first]))->toBeFalse();
+        });
+
+        it('matches a double with itself', function (ArgumentMatcherSpecPage $first) {
+            expect(ArgumentMatcher::matchArgs([$first], [$first]))->toBeTrue();
+        });
+
+        it('tells two doubles of one type apart inside an array argument', function (ArgumentMatcherSpecPage $first, ArgumentMatcherSpecPage $second) {
+            expect(ArgumentMatcher::matchArgs([['page' => $second]], [['page' => $first]]))->toBeFalse();
+            expect(ArgumentMatcher::matchArgs([['page' => $first]], [['page' => $first]]))->toBeTrue();
+        });
+
+        it('tells apart two dummies, and two answers of doubles, of one type', function () {
+            expect(ArgumentMatcher::matchArgs([dummy(ArgumentMatcherSpecPage::class)], [dummy(ArgumentMatcherSpecPage::class)]))->toBeFalse();
+            expect(ArgumentMatcher::matchArgs([dummy(ArgumentMatcherSpecBook::class)->first()], [dummy(ArgumentMatcherSpecBook::class)->first()]))->toBeFalse();
+            expect(ArgumentMatcher::matchArgs([mock(ArgumentMatcherSpecBook::class)->first()], [mock(ArgumentMatcherSpecBook::class)->first()]))->toBeFalse();
+        });
+
+        it('matches what a double answered to a method with what it answers to that method again', function () {
+            $dummy = dummy(ArgumentMatcherSpecBook::class);
+            $mock = mock(ArgumentMatcherSpecBook::class);
+
+            expect(ArgumentMatcher::matchArgs([$dummy->first()], [$dummy->first()]))->toBeTrue();
+            expect(ArgumentMatcher::matchArgs([$mock->first()], [$mock->first()]))->toBeTrue();
+        });
+
+        it('tells apart what a double answered to two methods', function () {
+            $book = dummy(ArgumentMatcherSpecBook::class);
+
+            expect(ArgumentMatcher::matchArgs([$book->first()], [$book->last()]))->toBeFalse();
+        });
+
+        it('follows a chain of answers back to the double it started from', function () {
+            $book = dummy(ArgumentMatcherSpecBook::class);
+
+            expect(ArgumentMatcher::matchArgs([$book->first()->next()], [$book->first()->next()]))->toBeTrue();
+            expect(ArgumentMatcher::matchArgs([$book->first()->next()], [dummy(ArgumentMatcherSpecBook::class)->first()->next()]))->toBeFalse();
+            expect(ArgumentMatcher::matchArgs([$book->first()->next()], [$book->last()->next()]))->toBeFalse();
+        });
+
+        it('takes what a double answered for no double the spec made', function (ArgumentMatcherSpecPage $page) {
+            $book = dummy(ArgumentMatcherSpecBook::class);
+
+            expect(ArgumentMatcher::matchArgs([$book->first()], [$page]))->toBeFalse();
+            expect(ArgumentMatcher::matchArgs([$page], [$book->first()]))->toBeFalse();
         });
     });
 
@@ -182,5 +248,22 @@ describe(ArgumentMatcher::class, function () {
         expect($typed->matches($typed))->toBeTrue();
         expect(ArgumentMatcher::type('string')->matches(ArgumentMatcher::type('string')))->toBeTrue();
         expect(ArgumentMatcher::any()->matches(ArgumentMatcher::type('string')))->toBeFalse();
+    });
+
+    it('matches a matcher given as an argument only when it holds the very doubles it holds', function (ArgumentMatcherSpecPage $first, ArgumentMatcherSpecPage $second) {
+        $including = ArgumentMatcher::arrayIncluding(['page' => $first]);
+
+        expect($including->matches(ArgumentMatcher::arrayIncluding(['page' => $second])))->toBeFalse();
+        expect($including->matches(ArgumentMatcher::arrayIncluding(['page' => $first])))->toBeTrue();
+    });
+
+    it('compares matchers nested in a matcher by the same rules, never running a predicate', function (ArgumentMatcherSpecPage $first, ArgumentMatcherSpecPage $second) {
+        $positive = fn (int $value) => $value > 0;
+        $nested = ArgumentMatcher::arrayIncluding(['in' => ArgumentMatcher::arrayIncluding(['page' => $first]), 'check' => ArgumentMatcher::satisfy($positive)]);
+
+        expect($nested->matches(ArgumentMatcher::arrayIncluding(['in' => ArgumentMatcher::arrayIncluding(['page' => $second]), 'check' => ArgumentMatcher::satisfy($positive)])))->toBeFalse();
+        expect($nested->matches(ArgumentMatcher::arrayIncluding(['in' => ArgumentMatcher::arrayIncluding(['page' => $first]), 'check' => ArgumentMatcher::satisfy($positive)])))->toBeTrue();
+        expect($nested->matches(ArgumentMatcher::arrayIncluding(['in' => ArgumentMatcher::arrayIncluding(['page' => $first]), 'check' => ArgumentMatcher::satisfy(fn (int $value) => $value > 1)])))->toBeFalse();
+        expect(ArgumentMatcher::type('stdClass')->matches(ArgumentMatcher::instanceOf('stdClass')))->toBeFalse();
     });
 });

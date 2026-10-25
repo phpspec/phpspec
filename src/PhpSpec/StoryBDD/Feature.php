@@ -20,6 +20,7 @@ use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\OwnCode;
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
@@ -192,10 +193,13 @@ final readonly class Feature implements SpecBlock
     {
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();
+        $outerLabels = DoubleLabels::save();
+        DoubleLabels::start();
 
         try {
             return $this->runScenarioWithHooks($scenario, $featureHeld);
         } finally {
+            DoubleLabels::restore($outerLabels);
             $coverage?->endExample($scenario->title);
         }
     }

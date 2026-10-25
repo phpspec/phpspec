@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Specification\ExampleArguments;
 use PhpSpec\Specification\Subject;
 
@@ -33,6 +34,22 @@ describe(ExampleArguments::class, function () {
         [$second] = $arguments->for(fn (ExampleArgumentsSpecClock $clock) => null);
 
         expect($second)->toBe($first);
+    });
+
+    it('numbers the doubles in the order it makes them, each named by its parameter', function () {
+        $saved = DoubleLabels::save();
+        DoubleLabels::start();
+
+        try {
+            $arguments = new ExampleArguments();
+            [$clock, $timer] = $arguments->for(fn (ExampleArgumentsSpecClock $clock, ExampleArgumentsSpecClock $timer) => null);
+            $arguments->for(fn (ExampleArgumentsSpecClock $timer) => null);
+
+            expect(DoubleLabels::of($timer))->toBe('ExampleArgumentsSpecClock double #2 ($timer)');
+            expect(DoubleLabels::of($clock))->toBe('ExampleArgumentsSpecClock double #1 ($clock)');
+        } finally {
+            DoubleLabels::restore($saved);
+        }
     });
 
     it('hands a double, whatever $this holds under the name', function () {

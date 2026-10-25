@@ -24,6 +24,7 @@ use PhpSpec\EventDispatcher\Event\ContextStarted;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Mock\HeldCalls;
+use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Results;
@@ -272,8 +273,14 @@ class Context implements ExampleRegistry, Rebindable, Titled
         // its body printed, not to the terminal between two results.
         $setup = new CapturedOutput();
         $teardown = new CapturedOutput();
-        $arguments = new ExampleArguments($this->world, $this->boundNames());
+
+        // An example names its own doubles and holds its own calls; a run it
+        // sits inside gets back its own however the example ends.
+        $outerLabels = DoubleLabels::save();
+        $outerHeld = HeldCalls::save();
+        DoubleLabels::start();
         HeldCalls::forget();
+        $arguments = new ExampleArguments($this->world, $this->boundNames());
 
         try {
             try {
@@ -314,6 +321,8 @@ class Context implements ExampleRegistry, Rebindable, Titled
             return $this->printed($example->failedInHook(new ExampleError($e->getMessage(), $e)), $setup->text(), '');
         } finally {
             $this->forget($arguments);
+            DoubleLabels::restore($outerLabels);
+            HeldCalls::restore($outerHeld);
         }
 
         $coverage?->endExample($result->getTitle());

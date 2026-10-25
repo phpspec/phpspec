@@ -228,7 +228,11 @@ returns (of the first a union of them names, a built-in interface such as
 `DateTimeInterface` or `Countable` included), an empty `iterable`, a
 `Closure`, an empty `Generator`, `true` or `false` for those types, the double
 itself for `static`, `self` and `parent`. A nullable class or interface of
-your own answers a double of it, a nullable built-in interface `null`.
+your own answers a double of it, a nullable built-in interface `null`. A union
+of your own classes and interfaces that allows `null` answers as it would
+without `null` (`Page|Book|null` a `Page` double, `Book|Page|null` a `Book`
+one), and `null` when none of them can have a double; one that also holds a
+scalar or a built-in type answers `null`. A stub can still return `null`.
 A method returning an interface no double can be (one only an enum can
 implement) is refused when it is called, with the reason. A method returning a final class hands the spec an
 instance of it built without its constructor, for `allow()` to replace. A
@@ -306,6 +310,29 @@ beforeEach(function (Filesystem $fs) {
 });
 ```
 
+## How a failure names a double
+
+A failure names a double by the type it stands for and a number, with the
+parameter names it was handed under:
+
+```
+Expected App\Context double #2 ($second) to be App\Context double #1 ($first)
+```
+
+An example numbers its doubles in the order it makes them: a parameter's when
+the first closure naming it runs, and one from `mock()` or `dummy()` where it
+is called. What a double answered is named by the type its call declares
+(`mixed` for none) and by where it came from, and numbered when a failure
+first shows it:
+
+```
+App\Page double #3 (from App\Book double #1->first())
+```
+
+A double keeps its number for the whole example, and every format shows the
+same one, whichever worker ran the example. Each example and each scenario
+numbers from one.
+
 ## Verifying Method Calls
 
 Stub and verify the same call in any order: a stubbed call still records
@@ -377,6 +404,15 @@ expect($logger->log('other'))->not()->toBeCalled();
 An argument written as a value matches by value: a scalar strictly, an object
 when it equals the one written (`new Money(900)` matches any `Money(900)`,
 whichever instance carries it), an array element by element on the same rule.
+A double matches only itself, never another double of the same type. What a
+double answered matches what the same double answers to the same method,
+whatever the arguments, so a spy names it by that call again:
+
+```php
+(new Reader($book, $printer))->read(); // prints what $book->first() answers
+expect($printer->print($book->first()))->toHaveBeenCalled();
+```
+
 For anything looser, write a matcher in the call:
 
 ### `any()`

@@ -181,8 +181,9 @@ Large or object values in `expectation` are exported compactly (long
 strings and arrays are truncated with a `{ "truncated": true, "length": N }`
 marker) so one entry can never flood a context window. Objects are named by what
 they are, not by which instance they were: an enum as `App\Status::Active`,
-anything that can describe itself as `App\Money("12.00 GBP")`, everything else
-as `App\Basket`.
+anything that can describe itself as `App\Money("12.00 GBP")`, a double as
+`App\Context double #1 ($first)` (see [Mocking](mocking.md#how-a-failure-names-a-double)),
+everything else as `App\Basket`.
 Two runs of the same failure therefore report the same value. Floats keep their
 fraction, so `90.0` is never reported as the `90` it was compared against. A
 float JSON has no word for is named instead: `"INF"`, `"-INF"`, `"NAN"`, at any

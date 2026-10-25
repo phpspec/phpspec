@@ -31,6 +31,19 @@ describe(HeldCalls::class, function () {
         expect(HeldCalls::take()?->getMessage())->toBe('other notify("Ann")');
     });
 
+    it('puts a saved list back whole, whatever a scope inside held and took', function () {
+        $double = new stdClass();
+        HeldCalls::hold($double, 'notify', ['Ann'], ($this->refusal)('notify("Ann")'));
+        $saved = HeldCalls::save();
+        HeldCalls::forget();
+        HeldCalls::hold($double, 'notify', ['Bob'], ($this->refusal)('notify("Bob")'));
+        HeldCalls::take();
+
+        HeldCalls::restore($saved);
+
+        expect(HeldCalls::take()?->getMessage())->toBe('notify("Ann")');
+    });
+
     it('lets a check that names no arguments claim every call to its method', function () {
         $double = new stdClass();
         HeldCalls::hold($double, 'notify', ['Ann'], ($this->refusal)('notify("Ann")'));

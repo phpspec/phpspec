@@ -32,7 +32,8 @@ final class ExclusionReader
     private const TAG = '/@codeCoverageIgnore(?!Start|End)\b/';
     private const KINDS = [T_CLASS => 'class', T_TRAIT => 'class', T_ENUM => 'class', T_INTERFACE => 'interface'];
     private const MODIFIERS = [T_ABSTRACT, T_FINAL, T_READONLY, T_PUBLIC, T_PROTECTED, T_PRIVATE, T_STATIC, T_VAR];
-    private const OPENS = [T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES, 123];
+
+    private readonly Tokens $stream;
 
     /** @var list<PhpToken> */
     private readonly array $tokens;
@@ -54,7 +55,8 @@ final class ExclusionReader
      */
     public function __construct(string $source, private readonly Closure $named)
     {
-        $this->tokens = array_values(PhpToken::tokenize($source));
+        $this->stream = Tokens::of($source);
+        $this->tokens = $this->stream->list;
     }
 
     public function read(): ExcludedLines
@@ -114,9 +116,9 @@ final class ExclusionReader
                 $i = $end;
             } elseif ($token->is(array_keys(self::KINDS)) && $this->declaresAt($i)) {
                 $classes[] = $this->classLike($i, $namespace, $marked, $doc);
-                $i = $this->bodyOpen($i);
+                $i = $this->stream->bodyOpen($i);
             } elseif ($token->is(T_CLASS) && !$this->namesAClassAt($i)) {
-                $end = $this->matchingClose($this->bodyOpen($i));
+                $end = $this->stream->matchingClose($this->stream->bodyOpen($i));
                 $this->mark($this->code, $token->line, $this->tokens[$end]->line);
                 $i = $end;
             } elseif ($token->is(T_FUNCTION) && $this->nameAfter($i) !== null) {
@@ -144,8 +146,8 @@ final class ExclusionReader
     {
         $kind = self::KINDS[$this->tokens[$at]->id];
         $name = $namespace . $this->nameAfter($at);
-        $open = $this->bodyOpen($at);
-        $end = $this->matchingClose($open);
+        $open = $this->stream->bodyOpen($at);
+        $end = $this->stream->matchingClose($open);
         $this->mark($this->declaring, $this->tokens[$at]->line, $this->tokens[$open]->line);
         $excluded = $kind === 'interface' || $marked || $this->tagged($doc) || ($this->named)('class', $name);
 
@@ -161,8 +163,8 @@ final class ExclusionReader
     private function function(int $at, string $owner, bool $marked, ?int $doc, bool $topLevel): int
     {
         $name = $owner . $this->nameAfter($at);
-        $open = $this->bodyOpen($at);
-        $end = $this->tokens[$open]->text === ';' ? $open : $this->matchingClose($open);
+        $open = $this->stream->bodyOpen($at);
+        $end = $this->tokens[$open]->text === ';' ? $open : $this->stream->matchingClose($open);
         $excluded = $marked || $this->tagged($doc) || ($this->named)($topLevel ? 'function' : 'method', $name);
 
         if ($this->tokens[$open]->text !== ';') {
@@ -238,14 +240,14 @@ final class ExclusionReader
      */
     private function tag(int $at): void
     {
-        $before = $this->significantBefore($at);
+        $before = $this->stream->significantBefore($at);
         $line = $before !== null && $this->tokens[$before]->line === $this->tokens[$at]->line
             ? $this->tokens[$at]->line
-            : $this->tokens[$this->significantAfter($at) ?? $at]->line;
+            : $this->tokens[$this->stream->significantAfter($at) ?? $at]->line;
         $first = $this->firstOnLine($line);
 
         while ($first !== null && $this->tokens[$first]->text === '}') {
-            $first = $this->significantAfter($first);
+            $first = $this->stream->significantAfter($first);
         }
 
         if ($first === null || $this->tokens[$first]->line < $line) {
@@ -269,9 +271,9 @@ final class ExclusionReader
             } elseif ($text === ')' || $text === ']') {
                 $nesting--;
             } elseif ($nesting === 0 && $this->tokens[$i]->id === 123) {
-                return $this->tokens[$this->matchingClose($i)]->line;
+                return $this->tokens[$this->stream->matchingClose($i)]->line;
             } elseif ($nesting === 0 && ($text === ';' || $text === '}')) {
-                return $this->tokens[$text === ';' ? $i : ($this->significantBefore($i) ?? $i)]->line;
+                return $this->tokens[$text === ';' ? $i : ($this->stream->significantBefore($i) ?? $i)]->line;
             }
         }
 
@@ -280,7 +282,7 @@ final class ExclusionReader
 
     private function isCase(int $at): bool
     {
-        $after = $this->significantAfter($at);
+        $after = $this->stream->significantAfter($at);
 
         return $this->tokens[$at]->is(T_CASE)
             || ($this->tokens[$at]->is(T_DEFAULT) && $after !== null && in_array($this->tokens[$after]->text, [':', ';'], true));
@@ -297,7 +299,7 @@ final class ExclusionReader
         for ($i = $from + 1; $i < count($this->tokens); $i++) {
             $token = $this->tokens[$i];
 
-            if ($token->is(self::OPENS)) {
+            if ($token->is(Tokens::OPENS)) {
                 $depth++;
             } elseif ($token->text === '}' && --$depth < 0) {
                 break;
@@ -306,7 +308,7 @@ final class ExclusionReader
             }
         }
 
-        return $this->tokens[$this->significantBefore($i) ?? $from]->line;
+        return $this->tokens[$this->stream->significantBefore($i) ?? $from]->line;
     }
 
     /**
@@ -368,7 +370,7 @@ final class ExclusionReader
 
     private function declaresAt(int $at): bool
     {
-        $before = $this->significantBefore($at);
+        $before = $this->stream->significantBefore($at);
 
         return $this->nameAfter($at) !== null
             && ($before === null || !$this->tokens[$before]->is([T_DOUBLE_COLON, T_NEW]));
@@ -376,46 +378,22 @@ final class ExclusionReader
 
     private function namesAClassAt(int $at): bool
     {
-        $before = $this->significantBefore($at);
+        $before = $this->stream->significantBefore($at);
 
         return $before !== null && $this->tokens[$before]->is(T_DOUBLE_COLON);
     }
 
     private function nameAfter(int $at): ?string
     {
-        $next = $this->significantAfter($at);
+        $next = $this->stream->significantAfter($at);
 
         if ($next !== null && $this->tokens[$next]->text === '&') {
-            $next = $this->significantAfter($next);
+            $next = $this->stream->significantAfter($next);
         }
 
         $text = $next === null ? '' : $this->tokens[$next]->text;
 
         return preg_match('/^[A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*$/', $text) === 1 ? $text : null;
-    }
-
-    /**
-     * Where the body after a declaration opens, or the semicolon an abstract
-     * method ends on.
-     */
-    private function bodyOpen(int $from): int
-    {
-        $nesting = 0;
-
-        for ($i = $from + 1; $i < count($this->tokens); $i++) {
-            $text = $this->tokens[$i]->text;
-            $nesting += match ($text) {
-                '(', '[' => 1,
-                ')', ']' => -1,
-                default => 0,
-            };
-
-            if ($nesting === 0 && ($this->tokens[$i]->id === 123 || $text === ';')) {
-                return $i;
-            }
-        }
-
-        return count($this->tokens) - 1;
     }
 
     /**
@@ -425,56 +403,17 @@ final class ExclusionReader
     private function endOfCodeOutsideMethods(int $at): int
     {
         if ($this->tokens[$at]->is(T_FN)) {
-            return $this->arrowEnd($at);
+            return $this->stream->arrowEnd($at);
         }
 
-        return $this->matchingClose($this->tokens[$at]->id === 123 ? $at : $this->bodyOpen($at));
-    }
-
-    /**
-     * The last token of an arrow function's expression: before the separator
-     * or the bracket that ends it.
-     */
-    private function arrowEnd(int $from): int
-    {
-        $nesting = 0;
-
-        for ($i = $from + 1; $i < count($this->tokens); $i++) {
-            $text = $this->tokens[$i]->text;
-            $nesting += match ($text) {
-                '(', '[', '{' => 1,
-                ')', ']', '}' => -1,
-                default => 0,
-            };
-
-            if ($nesting < 0 || ($nesting === 0 && in_array($text, [';', ','], true))) {
-                return $i - 1;
-            }
-        }
-
-        return count($this->tokens) - 1;
+        return $this->stream->matchingClose($this->tokens[$at]->id === 123 ? $at : $this->stream->bodyOpen($at));
     }
 
     private function statementEnd(int $from): int
     {
-        $open = $this->bodyOpen($from);
+        $open = $this->stream->bodyOpen($from);
 
-        return $this->tokens[$open]->text === ';' ? $open : $this->matchingClose($open);
-    }
-
-    private function matchingClose(int $open): int
-    {
-        $depth = 0;
-
-        for ($i = $open; $i < count($this->tokens); $i++) {
-            if ($this->tokens[$i]->is(self::OPENS)) {
-                $depth++;
-            } elseif ($this->tokens[$i]->text === '}' && --$depth === 0) {
-                return $i;
-            }
-        }
-
-        return count($this->tokens) - 1;
+        return $this->tokens[$open]->text === ';' ? $open : $this->stream->matchingClose($open);
     }
 
     private function tagged(?int $doc): bool
@@ -486,28 +425,6 @@ final class ExclusionReader
     {
         foreach ($this->tokens as $i => $token) {
             if ($token->line === $line && !$token->isIgnorable()) {
-                return $i;
-            }
-        }
-
-        return null;
-    }
-
-    private function significantBefore(int $at): ?int
-    {
-        for ($i = $at - 1; $i >= 0; $i--) {
-            if (!$this->tokens[$i]->isIgnorable()) {
-                return $i;
-            }
-        }
-
-        return null;
-    }
-
-    private function significantAfter(int $at): ?int
-    {
-        for ($i = $at + 1; $i < count($this->tokens); $i++) {
-            if (!$this->tokens[$i]->isIgnorable()) {
                 return $i;
             }
         }

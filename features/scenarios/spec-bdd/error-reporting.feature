@@ -283,3 +283,191 @@ Feature: Error reporting
       """
     When I run phpspec run
     Then the output should contain "1 spec, 2 examples (1 pending, 1 skipped, 1 warning, 1 deprecation)"
+
+  Scenario: A failure names a double by its type and the number it was made with
+    Given an interface "src/App/Context.php":
+      """
+      <?php
+      namespace App;
+
+      interface Context {
+          public function name(): string;
+      }
+      """
+    And an interface "src/App/Handler.php":
+      """
+      <?php
+      namespace App;
+
+      interface Handler {
+          public function handle(mixed $context): string;
+      }
+      """
+    And an interface "src/App/Page.php":
+      """
+      <?php
+      namespace App;
+
+      interface Page {
+          public function next(): Page;
+      }
+      """
+    And an interface "src/App/Book.php":
+      """
+      <?php
+      namespace App;
+
+      interface Book {
+          public function first(): Page;
+
+          public function opened(): \DateTimeInterface;
+      }
+      """
+    And a class "src/App/Dispatcher.php":
+      """
+      <?php
+      namespace App;
+
+      final class Dispatcher {
+          public function __construct(private Handler $handler) {}
+
+          public function dispatch(mixed $context): string {
+              return $this->handler->handle($context);
+          }
+      }
+      """
+    And a spec file "spec/App/Naming.spec.php":
+      """
+      <?php
+
+      use App\Book;
+      use App\Context;
+      use App\Dispatcher;
+      use App\Handler;
+
+      describe('Naming', function () {
+          it('compares two parameters', function (Context $first, Context $second) {
+              expect($second)->toBe($first);
+          });
+
+          it('verifies a call', function (Handler $handler, Context $first, Context $second) {
+              allow($handler->handle(any()))->toReturn('handled');
+
+              (new Dispatcher($handler))->dispatch($second);
+
+              expect($handler->handle($first))->toHaveBeenCalled();
+          });
+
+          it('compares a double made by mock()', function (Context $first) {
+              expect(mock(Context::class))->toBe($first);
+          });
+
+          it('compares what a mock answered', function (Book $book, Context $first) {
+              allow($book->first());
+
+              expect($first)->toBe($book->first());
+          });
+
+          it('compares what a mock answered on a base PHP requires', function (Book $book, Context $first) {
+              allow($book->opened());
+
+              expect($first)->toBe($book->opened());
+          });
+
+          it('compares what a dummy answered down a chain', function (Context $first) {
+              $book = dummy(Book::class);
+
+              expect($first)->toBe($book->first()->next());
+          });
+
+          it('refuses a call nothing declared', function (Handler $handler, Context $first) {
+              (new Dispatcher($handler))->dispatch($first);
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "Expected App\Context double #2 ($second) to be App\Context double #1 ($first)"
+    And the output should contain "expected: App\Context double #1 ($first)"
+    And the output should contain "got: App\Context double #2 ($second)"
+    And the output should contain "expected: at least 1 call to App\Handler::handle(App\Context double #2 ($first))"
+    And the output should contain "got: App\Handler::handle(App\Context double #3 ($second))"
+    And the output should contain "Expected App\Context double #2 to be App\Context double #1 ($first)"
+    And the output should contain "Expected App\Context double #2 ($first) to be App\Page double #3 (from App\Book double #1->first())"
+    And the output should contain "Expected App\Context double #2 ($first) to be DateTimeInterface double #3 (from App\Book double #1->opened())"
+    And the output should contain "Expected App\Context double #1 ($first) to be App\Page double #3 (from App\Book double #2->first()->next())"
+    And the output should contain "App\Handler::handle(App\Context double #2 ($first)) was called but not expected"
+    And the output should not contain "PhpspecDouble"
+    And the output should not contain "______phpspec"
+
+  Scenario: Every report, and every worker, names a double alike
+    Given an interface "src/App/Context.php":
+      """
+      <?php
+      namespace App;
+
+      interface Context {
+          public function name(): string;
+      }
+      """
+    And an interface "src/App/Page.php":
+      """
+      <?php
+      namespace App;
+
+      interface Page {}
+      """
+    And an interface "src/App/Book.php":
+      """
+      <?php
+      namespace App;
+
+      interface Book {
+          public function first(): Page;
+      }
+      """
+    And a spec file "spec/App/Naming.spec.php":
+      """
+      <?php
+
+      use App\Context;
+
+      describe('Naming', function () {
+          it('compares two parameters', function (Context $first, Context $second) {
+              expect($second)->toBe($first);
+          });
+      });
+      """
+    And a spec file "spec/App/Answering.spec.php":
+      """
+      <?php
+
+      use App\Book;
+      use App\Context;
+
+      describe('Answering', function () {
+          it('compares what a mock answered', function (Book $book, Context $first) {
+              allow($book->first());
+
+              expect($first)->toBe($book->first());
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should contain "Context double #2 ($second) to be "
+    And the output should contain "Context double #1 ($first)"
+    And the output should contain "Page double #3 (from "
+    And the output should not contain "PhpspecDouble"
+    When I run phpspec run with option "--format=junit"
+    Then the output should contain "Context double #2 ($second) to be "
+    And the output should contain "Page double #3 (from "
+    When I run phpspec run with option "--format=tap"
+    Then the output should contain "Context double #2 ($second) to be "
+    And the output should contain "Page double #3 (from "
+    When I run phpspec run with option "--format=html"
+    Then the output should contain "Context double #2 ($second) to be "
+    And the output should contain "Context double #1 ($first)"
+    And the output should contain "Page double #3 (from "
+    And the output should not contain "PhpspecDouble"
+    When I run phpspec run with option "--parallel=2"
+    Then the output should contain "Expected App\Context double #2 ($second) to be App\Context double #1 ($first)"
+    And the output should contain "Expected App\Context double #2 ($first) to be App\Page double #3 (from App\Book double #1->first())"

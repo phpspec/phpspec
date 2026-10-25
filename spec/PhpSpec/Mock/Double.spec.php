@@ -351,6 +351,17 @@ interface DoubleSpecBook {
     public function either(): DoubleSpecCoin|DoubleSpecPage;
 }
 
+final class DoubleSpecToken {}
+
+interface DoubleSpecShelf {
+    public function either(): DoubleSpecCoin|DoubleSpecPage|null;
+    public function reversed(): DoubleSpecNumbered|DoubleSpecPage|null;
+    public function neither(): DoubleSpecCoin|DoubleSpecToken|null;
+    public function worded(): string|DoubleSpecPage|null;
+    public function counted(): \Countable|DoubleSpecPage|null;
+    public function falsy(): DoubleSpecPage|false|null;
+}
+
 describe(Double::class, function() {
 
     it("creates a double of an interface", function() {
@@ -637,6 +648,29 @@ describe(Double::class, function() {
         it("is of the first type of a union that can have one", function () {
             expect(double_spec_refusal(fn() => Double::getInstance(DoubleSpecBook::class)->either()->title()))->toContain('DoubleSpecPage::title() was called on what DoubleSpecBook::either() answered');
         });
+
+        it("is of the first type that can have one of a union of the project's types allowing null, and null when none can", function () {
+            $shelf = Double::getInstance(DoubleSpecShelf::class);
+
+            expect($shelf->either() instanceof DoubleSpecPage)->toBeTrue();
+            expect($shelf->reversed() instanceof DoubleSpecNumbered)->toBeTrue();
+            expect($shelf->neither())->toBeNull();
+        });
+
+        it("is null for a union allowing null that holds a scalar or a built-in type", function () {
+            $shelf = Double::getInstance(DoubleSpecShelf::class);
+
+            expect($shelf->worded())->toBeNull();
+            expect($shelf->counted())->toBeNull();
+            expect($shelf->falsy())->toBeNull();
+        });
+
+        it("is null when stubbed so, for a union allowing null", function () {
+            $shelf = mock(DoubleSpecShelf::class);
+            allow($shelf->either())->toReturn(null);
+
+            expect($shelf->either())->toBeNull();
+        });
     });
 
     context("what a dummy answers of a class or interface", function () {
@@ -656,6 +690,17 @@ describe(Double::class, function() {
 
         it("is a dummy of the first type of a union that can have one", function () {
             expect(dummy(DoubleSpecBook::class)->either()->title())->toBe('');
+        });
+
+        it("is a dummy of the first type that can have one of a union of the project's types allowing null, and null when none can", function () {
+            $shelf = dummy(DoubleSpecShelf::class);
+
+            expect($shelf->either()->title())->toBe('');
+            expect($shelf->reversed()->number())->toBe(0);
+            expect($shelf->neither())->toBeNull();
+            expect($shelf->worded())->toBeNull();
+            expect($shelf->counted())->toBeNull();
+            expect($shelf->falsy())->toBeNull();
         });
 
         it("refuses a stub or an expectation, naming the call a mock() should answer instead", function () {

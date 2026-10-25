@@ -16,6 +16,7 @@ namespace PhpSpec\Specification;
 
 use Closure;
 use PhpSpec\Mock\Double;
+use PhpSpec\Report\DoubleLabels;
 use ReflectionFunction;
 use ReflectionNamedType;
 
@@ -98,6 +99,7 @@ final class ExampleArguments
     {
         if (!isset($this->doubles[$name]) || !$this->doubles[$name] instanceof $type) {
             $this->doubles[$name] = Double::getInstance($type);
+            DoubleLabels::made($this->doubles[$name], $name);
         }
 
         return $this->doubles[$name];

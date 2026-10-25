@@ -1,8 +1,25 @@
 <?php
 
 use PhpSpec\Mock\UnexpectedCallException;
+use PhpSpec\Report\DoubleLabels;
+
+interface UnexpectedCallExceptionSpecMenu {}
 
 describe(UnexpectedCallException::class, function () {
+
+    it('names an object argument as a failure names it, a double by its name', function () {
+        $saved = DoubleLabels::save();
+        DoubleLabels::start();
+
+        try {
+            $menu = mock(UnexpectedCallExceptionSpecMenu::class);
+            $message = UnexpectedCallException::to('App\Till', 'open', [$menu, new ArrayObject()], getcwd() . '/src/App/Till.php', 8)->getMessage();
+
+            expect($message)->toContain('App\Till::open(UnexpectedCallExceptionSpecMenu double #1, ArrayObject) was called but not expected');
+        } finally {
+            DoubleLabels::restore($saved);
+        }
+    });
 
     it('names the file relative to the project, however the platform spelled the path', function () {
         $message = UnexpectedCallException::to('App\Menu', 'priceOf', ['mocha'], getcwd() . '/src/App/Till.php', 8)->getMessage();
