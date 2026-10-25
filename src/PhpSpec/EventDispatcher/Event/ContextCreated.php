@@ -15,17 +15,14 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 use PhpSpec\Specification\Context;
 
 /**
  * @internal
  * Dispatched when a context scope (describe/context block) is created during spec loading.
  */
-final readonly class ContextCreated implements Event, Loggable
+final readonly class ContextCreated implements Event
 {
-    use LogDateTime;
     public const NAME = 'context.created';
 
     /**
@@ -54,14 +51,5 @@ final readonly class ContextCreated implements Event, Loggable
     public function getTitle(): string
     {
         return $this->title;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow(
-            $this->getName() . ' - ' .
-            $this->getTitle(),
-        );
     }
 }

@@ -15,17 +15,14 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 use PhpSpec\Specification\ExampleError;
 
 /**
  * @internal
  * Dispatched when an example throws an unexpected error or exception during execution.
  */
-final readonly class ExampleErrored implements Event, Loggable
+final readonly class ExampleErrored implements Event
 {
-    use LogDateTime;
     public const NAME = 'example.errored';
 
     /**
@@ -54,11 +51,5 @@ final readonly class ExampleErrored implements Event, Loggable
     public function getError(): ExampleError
     {
         return $this->error;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow($this->getName() . ' - ' . $this->getTitle());
     }
 }

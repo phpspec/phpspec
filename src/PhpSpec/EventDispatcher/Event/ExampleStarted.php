@@ -15,16 +15,13 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 
 /**
  * @internal
  * Dispatched when an example begins running, before its closure is invoked.
  */
-final readonly class ExampleStarted implements Event, Loggable
+final readonly class ExampleStarted implements Event
 {
-    use LogDateTime;
     public const NAME = 'example.started';
 
     /**
@@ -44,11 +41,5 @@ final readonly class ExampleStarted implements Event, Loggable
     public function getTitle(): string
     {
         return $this->title;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow($this->getName() . ' - ' . $this->getTitle());
     }
 }

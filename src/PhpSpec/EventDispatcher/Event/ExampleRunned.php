@@ -15,16 +15,13 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 
 /**
  * @internal
  * Dispatched after an example finishes running, triggering match evaluation and result collection.
  */
-final readonly class ExampleRunned implements Event, Loggable
+final readonly class ExampleRunned implements Event
 {
-    use LogDateTime;
     public const NAME = 'example.runned';
 
     /**
@@ -46,11 +43,5 @@ final readonly class ExampleRunned implements Event, Loggable
     public function getTitle(): string
     {
         return $this->title;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow($this->getName() . ' - ' . $this->getTitle());
     }
 }

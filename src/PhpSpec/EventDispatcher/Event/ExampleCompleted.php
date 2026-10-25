@@ -15,17 +15,14 @@
 namespace PhpSpec\EventDispatcher\Event;
 
 use PhpSpec\EventDispatcher\Event;
-use PhpSpec\Logging\LogDateTime;
-use PhpSpec\Logging\Loggable;
 use PhpSpec\Result\ExampleResult;
 
 /**
  * @internal
  * Dispatched when an example finishes execution, carrying the result.
  */
-final readonly class ExampleCompleted implements Event, Loggable
+final readonly class ExampleCompleted implements Event
 {
-    use LogDateTime;
     public const NAME = 'example.completed';
 
     /**
@@ -61,11 +58,5 @@ final readonly class ExampleCompleted implements Event, Loggable
     public function getResult(): ExampleResult
     {
         return $this->result;
-    }
-
-    /** {@inheritdoc} */
-    public function getLog(): string
-    {
-        return $this->getLogNow($this->getName() . ' - ' . $this->title);
     }
 }
