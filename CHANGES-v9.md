@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed since rc.5
  - A double of a class is made without running the class's constructor, where it used to run it with arguments PhpSpec made up. Properties keep the defaults they declare; a promoted property, or any other the constructor sets, stays uninitialised, so a final method that reads one needs a real instance. A double of an interface built on `DateTimeImmutable` or `Exception` is still initialised as that base is
+ - Questions are asked only at a terminal. With a pipe or a file on stdin (`docker compose exec -T`, CI, `cmd | phpspec`), every offer is declined and the run says how to take it, where it used to read the input as answers or wait on it. To pipe answers on purpose, set `SHELL_INTERACTIVE=1`; `--no-interaction` still wins over it, and `--accept-offers` works as before. A piped `pair` session needs `SHELL_INTERACTIVE=1` too, and `refactor` carries a plan out unattended only with an explicit `--no-interaction`
 
 ## [9.0.0-rc.1](https://github.com/phpspec/phpspec/compare/8.3.1...9.0.0-rc.1)
 

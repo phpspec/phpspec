@@ -574,6 +574,9 @@ No coverage was recorded for src/Untested.php during an example or scenario.
 
 The text, Clover and HTML reports cover only the files the run loaded.
 
+The engines do not report a property hook that never runs: such a hook counts
+neither as covered nor as uncovered, and PCOV reports none at all.
+
 A percentage is cut, never rounded up: 2502 of 2503 lines is 99.9%, not
 100.0%. Beside `--coverage-min` it is cut to the places the threshold is
 written to, one at least, so it reads below the threshold exactly when it is:
