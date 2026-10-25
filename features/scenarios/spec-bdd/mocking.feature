@@ -3290,7 +3290,7 @@ Feature: Mocking
 
           it('calls before a nested run that fails', function (Handler $handler) {
               (new Caller($handler))->call();
-              $project = sys_get_temp_dir() . '/phpspec_nested_' . uniqid();
+              $project = __DIR__ . '/../../nested';
               mkdir($project . '/spec', 0777, true);
               file_put_contents($project . '/spec/Inner.spec.php', '<?php describe("Inner", function () { it("fails", fn () => expect(1)->toBe(2)); });');
               InProcessRunner::run($project, 'run');

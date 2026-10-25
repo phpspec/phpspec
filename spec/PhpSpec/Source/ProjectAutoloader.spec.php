@@ -18,6 +18,14 @@ describe(ProjectAutoloader::class, function () {
         return $root;
     });
 
+    this('cleanUp', fn () => function (string $root): void {
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $entry) {
+            $entry->isDir() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
+        }
+
+        rmdir($root);
+    });
+
     it('loads a class from the autoload map first, then from where the layout puts it', function () {
         $namespace = 'LoadFx' . bin2hex(random_bytes(4));
         $root = ($this->project)([
@@ -28,15 +36,19 @@ describe(ProjectAutoloader::class, function () {
         ]);
         $loader = new ProjectAutoloader([$namespace . '\\' => $root . '/mapped'], new SourceLayout('src', [$namespace => 'src']), $root);
 
-        $loader($namespace . '\\Mapped');
-        $loader($namespace . '\\Both');
-        $loader($namespace . '\\Laid');
-        $loader($namespace . '\\Missing');
+        try {
+            $loader($namespace . '\\Mapped');
+            $loader($namespace . '\\Both');
+            $loader($namespace . '\\Laid');
+            $loader($namespace . '\\Missing');
 
-        expect(class_exists($namespace . '\\Mapped', false))->toBeTrue();
-        expect(constant($namespace . '\\Both::FROM'))->toBe('map');
-        expect(class_exists($namespace . '\\Laid', false))->toBeTrue();
-        expect(class_exists($namespace . '\\Missing', false))->toBeFalse();
+            expect(class_exists($namespace . '\\Mapped', false))->toBeTrue();
+            expect(constant($namespace . '\\Both::FROM'))->toBe('map');
+            expect(class_exists($namespace . '\\Laid', false))->toBeTrue();
+            expect(class_exists($namespace . '\\Missing', false))->toBeFalse();
+        } finally {
+            ($this->cleanUp)($root);
+        }
     });
 
     it('names the directories it loads from: the autoload map\'s, the source path and each mapped one, under the project', function () {
