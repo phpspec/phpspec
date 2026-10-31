@@ -153,6 +153,10 @@ describe(EnumImplementers::class, function () {
     });
 
     it('steps over a directory it cannot read, the one it starts at too', function () {
+        if (DIRECTORY_SEPARATOR === '\\' || (function_exists('posix_getuid') && posix_getuid() === 0)) {
+            skip('File modes do not stop this user reading.');
+        }
+
         [$namespace, $root, $loader] = ($this->project)([
             'src/Labelled.php' => "<?php\nnamespace NS;\ninterface Labelled extends \\UnitEnum {}\n",
             'src/Status.php' => "<?php\nnamespace NS;\nenum Status implements Labelled { case Sent; }\n",
