@@ -193,13 +193,33 @@ Feature: Error reporting
       <?php
       describe('Warnings', function () {
           it('triggers a warning', function () {
-              @trigger_error('test warning', E_USER_WARNING);
+              trigger_error('test warning', E_USER_WARNING);
               expect(true)->toBeTrue();
           });
       });
       """
     When I run phpspec run
     Then the output should contain "warning"
+
+  Scenario: A warning or notice the code silences with @ is left to it, and stops no run
+    Given a spec file "spec/App/Probe.spec.php":
+      """
+      <?php
+      describe('Probe', function () {
+          it('polls a service that is not up yet', function () {
+              $up = @fsockopen('127.0.0.1', 1, $errno, $errstr, 0.1);
+              @trigger_error('not ready', E_USER_NOTICE);
+              expect($up)->toBeFalse();
+          });
+          it('runs after it', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-warning --stop-on-notice"
+    Then the output should contain "1 spec, 2 examples (2 passed)"
+    And the output should not contain "fsockopen"
+    And the output should not contain "not ready"
 
   Scenario: Every note an example raised is counted, and its notices are listed with the rest
     Given a spec file "spec/App/Notes.spec.php":

@@ -203,6 +203,8 @@ A PHP warning, deprecation or notice raised while an example or a step runs is k
 
 A deprecation a library raises because your code called something deprecated is reported, whether the library raised it with `trigger_error()` or `trigger_deprecation()`. One a library raises for another library's code calling it is left out: nothing you change in your own code makes it go away. A library is anything in a Composer vendor directory or outside the project.
 
+A warning or notice the code silenced with `@` is left to it, as PHP leaves it: not reported, and still in `error_get_last()`, so a probe such as `@fsockopen()` stops no `--stop-on-warning` run. A deprecation raised with `trigger_error()` or `trigger_deprecation()` is reported even when silenced, since libraries raise theirs that way for the tests to see.
+
 ## Focused Examples
 
 Run only specific examples or contexts:

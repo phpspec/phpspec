@@ -20,6 +20,7 @@ namespace PhpSpec;
  * goes, keeping each with where it was raised rather than letting it reach
  * the terminal. A deprecation a library raised for another library calling it
  * is left out: nothing the project changes in its own code makes it go away.
+ * A warning or notice the code silenced with @ is left to it, as PHP leaves it.
  */
 final class CapturedNotes
 {
@@ -33,6 +34,13 @@ final class CapturedNotes
     public function listen(): void
     {
         set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
+            // Returning false lets PHP keep it for error_get_last(). A user
+            // deprecation is kept even so: libraries silence theirs for
+            // production, not for the tests.
+            if ($severity !== E_USER_DEPRECATED && (error_reporting() & $severity) === 0) {
+                return false;
+            }
+
             if (!$this->deprecationBetweenLibraries($severity, $file, $line, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS))) {
                 $this->notes[] = ['severity' => $severity, 'message' => $message, 'file' => $file, 'line' => $line];
             }

@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use PhpSpec\ByReturnValue;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
@@ -79,7 +80,7 @@ final class SubprocessRunner implements SpecRunner
             return GenerationReport::read($reportPath);
         } finally {
             if (is_file($reportPath)) {
-                @unlink($reportPath);
+                unlink($reportPath);
             }
         }
     }
@@ -134,7 +135,11 @@ final class SubprocessRunner implements SpecRunner
         while ($streams !== []) {
             $read = array_values($streams);
             $write = $except = [];
-            if (@stream_select($read, $write, $except, 0, 200000) === false) {
+            $ready = (new ByReturnValue())->call(static function () use (&$read, &$write, &$except): int|false {
+                return stream_select($read, $write, $except, 0, 200000);
+            });
+
+            if ($ready === false) {
                 break;
             }
 

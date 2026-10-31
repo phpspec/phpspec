@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Parallel;
 
+use PhpSpec\ByReturnValue;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\SpecificationResult;
@@ -172,7 +173,10 @@ final class WorkerProcess
         $write = null;
         $except = null;
 
-        if (@stream_select($read, $write, $except, 0) > 0) {
+        // A signal arriving mid-wait makes it warn and answer false: nothing to read yet.
+        if ((new ByReturnValue())->call(static function () use (&$read, &$write, &$except): int|false {
+            return stream_select($read, $write, $except, 0);
+        }) > 0) {
             foreach ($read as $pipe) {
                 $content = stream_get_contents($pipe);
                 if ($content !== false && $content !== '') {

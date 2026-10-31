@@ -40,7 +40,7 @@ final readonly class Members
 
     public static function in(string $source): self
     {
-        $tokens = @token_get_all($source);
+        $tokens = token_get_all($source);
         $namespace = '';
         $class = null;
         $kinds = [];

@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Guard;
 
+use PhpSpec\ByReturnValue;
+
 /**
  * @internal
  * Git as the command line answers it. Every question is asked with an argument
@@ -70,9 +72,13 @@ final class ShellGit implements Git
         // Paths as they are on disk. Git escapes anything outside ASCII by
         // default, and "src/caf\303\251.php" is a file guard would look for
         // and never find, so it would quietly stop judging it.
-        $process = @proc_open(['git', '-c', 'core.quotePath=false', ...$arguments], $descriptors, $pipes, $this->workingDir);
+        [$process, $pipes] = (new ByReturnValue())->call(function () use ($arguments, $descriptors): array {
+            $process = proc_open(['git', '-c', 'core.quotePath=false', ...$arguments], $descriptors, $pipes, $this->workingDir);
 
-        if (!is_resource($process)) {
+            return [$process, $pipes];
+        });
+
+        if (!is_resource($process) || !isset($pipes[1], $pipes[2])) {
             return null;
         }
 

@@ -69,6 +69,30 @@ describe(CapturedNotes::class, function () {
         ]);
     });
 
+    it('leaves a warning or notice the code silenced with @ to PHP, so error_get_last() still holds it', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+        $caught->listen();
+        error_clear_last();
+        @trigger_error('probing', E_USER_WARNING);
+        $last = error_get_last();
+        @trigger_error('not yet', E_USER_NOTICE);
+        $caught->stop();
+
+        expect($caught->notes())->toBe([]);
+        expect($last['message'] ?? null)->toBe('probing');
+    });
+
+    it('keeps a deprecation silenced with @, as libraries raise theirs for the tests to see', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+        $caught->listen();
+        @trigger_error('old', E_USER_DEPRECATED); $line = __LINE__;
+        $caught->stop();
+
+        expect($caught->notes())->toBe([['severity' => E_USER_DEPRECATED, 'message' => 'old', 'file' => __FILE__, 'line' => $line]]);
+    });
+
     it('keeps a deprecation a library raised for the project calling it, by trigger_error or trigger_deprecation', function () {
         $caught = new CapturedNotes($this->project);
 

@@ -83,7 +83,7 @@ final class SpecFileCache
         // a stale mtime/size and never invalidate the cache.
         clearstatcache(true, $path);
 
-        return @filemtime($path) . ':' . @filesize($path);
+        return is_file($path) ? filemtime($path) . ':' . filesize($path) : ':';
     }
 
     /**
