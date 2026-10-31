@@ -226,28 +226,28 @@ final readonly class Feature implements SpecBlock
         DispatcherRegistry::dispatcher()->addSubscriber($attachments);
 
         $stepResults = [];
-        $failed = false;
+        $stopped = false;
 
         foreach ([...($this->featureNode->background->steps ?? []), ...$scenario->steps] as $step) {
             $title = $step->keyword . ' ' . $step->text;
+            $match = $this->registry->match($step->text);
 
             if ($held !== null) {
-                $stepResults[] = $stepResults === [] ? $held->instead($title) : new StepResult($title, 'skipped');
+                $stepResults[] = $stepResults === [] ? $held->instead($title) : $this->notRun($title, $match);
                 continue;
             }
 
-            if ($failed) {
-                $stepResults[] = new StepResult($title, 'skipped');
+            if ($stopped || $match === null) {
+                $stepResults[] = $this->notRun($title, $match);
+                $stopped = true;
                 continue;
             }
 
-            $result = $this->runStep($step, $world, $collector);
+            $result = $this->runStep($step, $match, $world, $collector);
             $after = $this->attempt(fn() => $this->hooks->runAfterStep($world), 'afterStep');
             $result = $after?->after($result) ?? $result;
             $stepResults[] = $result;
-            if ($result->isFailure() || $result->isError() || $result->isSkipped()) {
-                $failed = true;
-            }
+            $stopped = !$result->isPassed();
         }
 
         if ($held !== null && $stepResults === []) {
@@ -324,26 +324,32 @@ final readonly class Feature implements SpecBlock
     }
 
     /**
-     * Executes a single step by matching it against the registry, running hooks,
-     * and collecting match expectations. Returns undefined/pending/failed/passed status.
+     * A step that does not run: skipped behind the step the scenario stopped
+     * at, or undefined when no definition matches it, its step hooks unrun
+     * either way, so every step a scenario lacks is offered at once.
+     */
+    private function notRun(string $title, ?StepMatch $match): StepResult
+    {
+        return new StepResult($title, $match === null ? 'undefined' : 'skipped');
+    }
+
+    /**
+     * Runs a step a definition matches: its beforeStep hook, then its body,
+     * collecting match expectations. Returns pending/skipped/failed/errored/passed status.
      *
      * @param StepNode $step the step node to execute
+     * @param StepMatch $match the definition it matched, with the arguments taken from its text
      * @param object $world shared state object bound as $this inside step closures
      * @param StepMatchCollector $collector shared match collector for the scenario
      * @throws PendingException caught internally and reported as pending
      */
-    private function runStep(StepNode $step, object $world, StepMatchCollector $collector): StepResult
+    private function runStep(StepNode $step, StepMatch $match, object $world, StepMatchCollector $collector): StepResult
     {
         $title = $step->keyword . ' ' . $step->text;
 
         $before = $this->attempt(fn() => $this->hooks->runBeforeStep($world), 'beforeStep');
         if ($before !== null) {
             return $before->instead($title);
-        }
-        $match = $this->registry->match($step->text);
-
-        if ($match === null) {
-            return new StepResult($title, 'undefined');
         }
 
         // PHP warnings, deprecations and notices raised inside the step are

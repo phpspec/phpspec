@@ -337,7 +337,7 @@ the same way (useful for tight feedback loops and CI):
 | `--stop-on-deprecation` | deprecation, from an example or a step |
 | `--stop-on-notice` | notice, from an example or a step |
 | `--stop-on-pending` | pending example, or pending or undefined step |
-| `--stop-on-skipped` | skipped example, or step that skipped itself (not one skipped behind a step that failed or was pending) |
+| `--stop-on-skipped` | skipped example, or step that skipped itself (not one skipped behind an earlier step that did not pass) |
 | `--stop-on-problems` | any non-passing result |
 
 ```bash

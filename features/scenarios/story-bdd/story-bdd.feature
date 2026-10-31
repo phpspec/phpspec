@@ -267,6 +267,70 @@ Feature: Story BDD with Gherkin
     Then the output should contain "errored"
     And the output should contain "skipped"
 
+  Scenario: A pending step leaves the steps after it unrun, skipped
+    Given a feature file "features/waiting.feature":
+      """
+      Feature: Waiting
+        Scenario: Waits first
+          Given an order that is not ready yet
+          Then the waiting order has a total
+      """
+    And a step file "features/steps/waiting.steps.php":
+      """
+      <?php
+      given("an order that is not ready yet", function () {
+          pending("Wait");
+      });
+
+      then("the waiting order has a total", function () {
+          expect($this->order->total())->toBe(1);
+      });
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "○ Given an order that is not ready yet (Wait)"
+    And the output should contain "- Then the waiting order has a total"
+    And the output should not contain "errored"
+
+  Scenario: An undefined step leaves the steps after it unrun, and each one no definition matches stays undefined
+    Given a feature file "features/unwritten.feature":
+      """
+      Feature: Unwritten
+        Scenario: Starts with a gap
+          Given a step nobody has written
+          Then the unwritten order has a total
+          And another step nobody has written
+      """
+    And a step file "features/steps/unwritten.steps.php":
+      """
+      <?php
+      then("the unwritten order has a total", function () {
+          expect($this->order->total())->toBe(1);
+      });
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "? Given a step nobody has written"
+    And the output should contain "- Then the unwritten order has a total"
+    And the output should contain "? And another step nobody has written"
+    And the output should not contain "errored"
+
+  Scenario: A step no definition matches stays undefined behind a step that failed
+    Given a feature file "features/broken.feature":
+      """
+      Feature: Broken
+        Scenario: Fails before a gap
+          Given a step that breaks
+          Then a step nobody has written after it
+      """
+    And a step file "features/steps/broken.steps.php":
+      """
+      <?php
+      given("a step that breaks", function () {
+          throw new \RuntimeException("boom");
+      });
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "? Then a step nobody has written after it"
+
   Scenario: Background steps run before each scenario
     Given a feature file "features/background.feature":
       """

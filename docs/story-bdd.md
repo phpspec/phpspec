@@ -314,9 +314,10 @@ afterFeature(function () {
 ```
 
 The after hooks are teardown hooks: `afterScenario` runs even when a step in
-the scenario failed, so resources are always cleaned up. `afterStep` runs after
-every step that executed, but not for steps skipped because an earlier step
-failed.
+the scenario failed, so resources are always cleaned up. `beforeStep` and
+`afterStep` run around every step that executes, and around no other: not a
+step no definition matches, nor one skipped because an earlier step did not
+pass.
 
 A before hook can decide for what it wraps: `skip()` or `pending()` in
 `beforeFeature`, `beforeScenario` or `beforeStep` leaves every scenario of the
@@ -337,11 +338,14 @@ already failed keeps its failure, with the hook's error as a warning under it.
 | failed | red | Step threw an exception or expectation failed |
 | pending | yellow | Step calls `pending()`, shown with the reason it gave |
 | undefined | blue | No matching step definition found |
-| skipped | cyan | Step calls `skip()`, shown with the reason it gave, or a prior step failed |
+| skipped | cyan | Step calls `skip()`, shown with the reason it gave, or an earlier step did not pass |
 
-After the first failure in a scenario, all remaining steps are skipped. A
-pending or skipped step is listed under `Pending:` or `Skipped:` at the end
-with its reason; a step skipped behind a failure is not, the failure is.
+A scenario stops at its first step that does not pass, whether it fails,
+errors, is pending or undefined, or skips itself. The steps after it do not
+run: each is skipped, or undefined when no definition matches it, so step
+generation offers every step the scenario lacks at once. A pending or skipped
+step is listed under `Pending:` or `Skipped:` at the end with its reason; a
+step skipped behind another is not, the one that stopped the scenario is.
 
 ## Running Features
 

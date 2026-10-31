@@ -539,6 +539,90 @@ describe(Feature::class, function () {
         expect($log)->toBe(['step', 'afterScenario', 'afterScenario']);
     });
 
+    it("runs no step after a pending or undefined one, and keeps each later one no definition matches undefined", function () {
+        $registry = new StepRegistry();
+        $ran = [];
+        $registry->addStep("a pending step", function () {
+            pending('Wait');
+        });
+        $registry->addStep("a following step", function () use (&$ran) {
+            $ran[] = 'following';
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Stopping',
+            '',
+            null,
+            [
+                new ScenarioNode('Waits', [
+                    new StepNode('Given', 'a pending step'),
+                    new StepNode('Then', 'a following step'),
+                    new StepNode('And', 'a step nobody wrote'),
+                ]),
+                new ScenarioNode('Lacks a step', [
+                    new StepNode('Given', 'a step nobody wrote'),
+                    new StepNode('Then', 'a following step'),
+                ]),
+            ]
+        ), $registry, new HookRegistry());
+
+        [$waits, $lacks] = $feature->run()->getResults();
+
+        expect($ran)->toBe([]);
+        expect(array_map(fn($step) => [$step->isPending(), $step->isSkipped(), $step->isUndefined()], $waits->getResults()))->toBe([[true, false, false], [false, true, false], [false, false, true]]);
+        expect(array_map(fn($step) => [$step->isSkipped(), $step->isUndefined()], $lacks->getResults()))->toBe([[false, true], [true, false]]);
+    });
+
+    it("keeps a step no definition matches undefined behind a beforeScenario hook that broke", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a defined step", function () {});
+        $hooks = new HookRegistry();
+        $hooks->addBeforeScenario(function () {
+            throw new \RuntimeException('database down');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Held',
+            '',
+            null,
+            [new ScenarioNode('Held', [
+                new StepNode('Given', 'a defined step'),
+                new StepNode('Then', 'a defined step'),
+                new StepNode('And', 'a step nobody wrote'),
+            ])]
+        ), $registry, $hooks);
+
+        $steps = $feature->run()->getResults()[0]->getResults();
+
+        expect($steps[0]->isError())->toBeTrue();
+        expect($steps[1]->isSkipped())->toBeTrue();
+        expect($steps[2]->isUndefined())->toBeTrue();
+    });
+
+    it("runs no step hook around a step no definition matches, so one that throws leaves it undefined", function () {
+        $ran = [];
+        $hooks = new HookRegistry();
+        $hooks->addBeforeStep(function () use (&$ran) {
+            $ran[] = 'before';
+        });
+        $hooks->addAfterStep(function () use (&$ran) {
+            $ran[] = 'after';
+            throw new \RuntimeException('log full');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Gap',
+            '',
+            null,
+            [new ScenarioNode('Unwritten', [new StepNode('Given', 'a step nobody wrote')])]
+        ), new StepRegistry(), $hooks);
+
+        $steps = $feature->run()->getResults()[0]->getResults();
+
+        expect($ran)->toBe([]);
+        expect($steps[0]->isUndefined())->toBeTrue();
+    });
+
     it("runs afterStep hooks after each executed step but not for cascade-skipped ones", function () {
         $log = [];
         $registry = new StepRegistry();
