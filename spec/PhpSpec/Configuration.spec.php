@@ -162,20 +162,39 @@ describe(Configuration::class, function () {
         return $root;
     };
 
-    it('loads a class from the path the layout maps its namespace to', function (Filesystem $fs) use ($projectWith) {
+    // The autoloaders the configuration registers serve the check alone:
+    // neither they nor the project outlive it.
+    $autoloadingFrom = function (string $root, Configuration $config, Closure $check): void {
+        $registered = spl_autoload_functions();
+        $config->registerAutoloaders();
+
+        try {
+            $check();
+        } finally {
+            foreach (spl_autoload_functions() as $autoloader) {
+                if (!in_array($autoloader, $registered, true)) {
+                    spl_autoload_unregister($autoloader);
+                }
+            }
+
+            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $entry) {
+                $entry->isDir() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
+            }
+
+            rmdir($root);
+        }
+    };
+
+    it('loads a class from the path the layout maps its namespace to', function (Filesystem $fs) use ($projectWith, $autoloadingFrom) {
         $root = $projectWith($fs, 'src/Tasker/', 'src/Tasker/MappedByPrefix.php', "<?php\nnamespace Tasker;\nclass MappedByPrefix {}\n");
 
-        (Configuration::load($root, $fs))->registerAutoloaders();
-
-        expect(class_exists('Tasker\\MappedByPrefix'))->toBeTrue();
+        $autoloadingFrom($root, Configuration::load($root, $fs), fn() => expect(class_exists('Tasker\\MappedByPrefix'))->toBeTrue());
     });
 
-    it('still loads a class filed under its full namespace path', function (Filesystem $fs) use ($projectWith) {
+    it('still loads a class filed under its full namespace path', function (Filesystem $fs) use ($projectWith, $autoloadingFrom) {
         $root = $projectWith($fs, 'src/', 'src/Tasker/FiledInFull.php', "<?php\nnamespace Tasker;\nclass FiledInFull {}\n");
 
-        (Configuration::load($root, $fs))->registerAutoloaders();
-
-        expect(class_exists('Tasker\\FiledInFull'))->toBeTrue();
+        $autoloadingFrom($root, Configuration::load($root, $fs), fn() => expect(class_exists('Tasker\\FiledInFull'))->toBeTrue());
     });
 
     it('keeps a configured layout over the one composer.json declares', function (Filesystem $fs) {

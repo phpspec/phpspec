@@ -22,6 +22,7 @@ use ReflectionIntersectionType;
 use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
+use UnitEnum;
 
 /**
  * @internal
@@ -496,9 +497,41 @@ PHP;
      */
     private static function refusedReturnCode(string $class, string $methodName, string $returnType, string $why): string
     {
-        $message = sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no double of %s can be made. %s', ltrim($class, '\\'), $methodName, ltrim($returnType, '\\'), $why);
+        return 'throw new \\LogicException(' . var_export(self::refusedReturnMessage($class, $methodName, $returnType, $why), true) . ');';
+    }
 
-        return 'throw new \\LogicException(' . var_export($message, true) . ');';
+    private static function refusedReturnMessage(string $class, string $methodName, string $returnType, string $why): string
+    {
+        return sprintf('PhpSpec cannot stand in for the return type of %s::%s(): no double of %s can be made. %s', ltrim($class, '\\'), $methodName, ltrim($returnType, '\\'), $why);
+    }
+
+    /**
+     * What a method returning an interface only an enum can implement
+     * answers: a case of an enum implementing it, as a method returning that
+     * enum would, refused when there is none.
+     */
+    private static function enumCaseCode(string $class, string $methodName, string $interface, string $why): string
+    {
+        $why = sprintf('%s, and no enum implementing %s was found.', rtrim($why, '.'), ltrim($interface, '\\'));
+
+        return sprintf(
+            '$__ret = \\PhpSpec\\Mock\\Answers::enumCase(%s) ?? throw new \\LogicException(%s); return $__ret;',
+            var_export(ltrim($interface, '\\'), true),
+            var_export(self::refusedReturnMessage($class, $methodName, $interface, $why), true),
+        );
+    }
+
+    /**
+     * Whether the type is an interface of the code's own only an enum can
+     * implement; PHP's own, as BackedEnum, name no enum to look for.
+     */
+    private static function isEnumOnly(?ReflectionType $type): bool
+    {
+        return $type instanceof ReflectionNamedType
+            && !$type->isBuiltin()
+            && interface_exists($type->getName())
+            && is_subclass_of($type->getName(), UnitEnum::class)
+            && !(new ReflectionClass($type->getName()))->isInternal();
     }
 
     /**
@@ -697,6 +730,8 @@ PHP;
                 $return = sprintf('$__ret = (new \\ReflectionClass(\\%s::class))->newInstanceWithoutConstructor()->______PhpSpecStandFor($this); return $__ret;', $className);
             } elseif ($isNullable && $simpleReturnName !== 'mixed') {
                 $return = self::returning('null');
+            } elseif ($refusedReturn !== null && self::isEnumOnly($returnedType)) {
+                $return = self::enumCaseCode($owner, $methodName, (string) $returnedType, $refusedReturn);
             } elseif ($refusedReturn !== null && $returnedType !== null) {
                 $return = self::refusedReturnCode($owner, $methodName, (string) $returnedType, $refusedReturn);
             } elseif ($returnedType instanceof ReflectionUnionType) {
