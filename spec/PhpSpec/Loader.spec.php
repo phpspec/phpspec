@@ -13,6 +13,15 @@ describe(Loader::class, function () {
         expect($loader)->toBeAnInstanceOf(Loader::class);
     });
 
+    it("names what each file the targets select within is asked for alone, its selectors together, the file kept whole when it is also given whole", function () {
+        $selections = (new Loader())->selectionsOf('spec/A.spec.php:4, spec/A.spec.php@e0953166a73b,spec/B.spec.php,features/x.feature:5,spec/C.spec.php:3,spec/C.spec.php,spec');
+
+        expect($selections)->toBe([
+            'spec/A.spec.php' => 'spec/A.spec.php:4,spec/A.spec.php@e0953166a73b',
+            'features/x.feature' => 'features/x.feature:5',
+        ]);
+    });
+
     it("returns empty suite for non-existent path", function (Filesystem $fs) {
         allow($fs->isFile(any()))->toReturn(false);
         allow($fs->isDir(any()))->toReturn(false);

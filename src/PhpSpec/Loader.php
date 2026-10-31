@@ -89,6 +89,30 @@ final class Loader
     }
 
     /**
+     * What a run of each file the targets select within is asked for, by
+     * itself: its ":LINE" and "@ID" selectors, joined as targets are, keyed
+     * by the file as given. A file given whole as well is left out, as is
+     * every file given whole.
+     *
+     * @param string $files the targets, comma-separated
+     * @return array<string, string>
+     */
+    public function selectionsOf(string $files): array
+    {
+        $selections = [];
+
+        foreach ($this->targets($files) as $path => ['lines' => $lines, 'ids' => $ids]) {
+            $selectors = [...array_map(static fn(int $line): string => $path . ':' . $line, $lines), ...array_map(static fn(string $id): string => $path . '@' . $id, $ids)];
+
+            if ($selectors !== []) {
+                $selections[$path] = implode(',', $selectors);
+            }
+        }
+
+        return $selections;
+    }
+
+    /**
      * Whether a path runs as features: a .feature file, or the features root
      * or anything inside it, however either is spelled. Any other path runs
      * as specs, whatever words it holds.

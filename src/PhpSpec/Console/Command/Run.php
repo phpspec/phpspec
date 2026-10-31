@@ -999,12 +999,16 @@ final class Run extends Command implements InternalOptions
         $parallel = $input->getOption('parallel');
         if ($parallel !== false) {
             $workers = $parallel !== null ? (int) $parallel : null;
+            // Each file goes to one worker with everything its targets select
+            // in it, so a block two selectors name runs once, as it does here.
+            $selections = $this->loader->selectionsOf($files);
             $paths = [];
             foreach ($suite->getSpecifications() as $spec) {
                 if (method_exists($spec, 'getPath')) {
-                    $paths[] = $spec->getPath();
+                    $paths[] = $selections[$spec->getPath()] ?? $spec->getPath();
                 }
             }
+            $paths = array_values(array_unique($paths));
 
             // Whether coverage is being collected, not whether the caller
             // asked for a report: guard asks for coverage of its own, and a

@@ -335,3 +335,52 @@ Feature: Parallel execution
       """
     When I run phpspec run with option "--parallel --profile"
     Then all examples should pass
+
+  Scenario: A parallel run keeps the lines its paths select, in a spec and in a feature
+    Given a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('adds', fn() => expect(1 + 1)->toBe(2));
+          it('subtracts', fn() => expect(2 - 1)->toBe(1));
+          it('multiplies', fn() => expect(2 * 2)->toBe(4));
+      });
+      """
+    And a feature file "features/billing.feature":
+      """
+      Feature: Billing
+        Scenario: First
+          Given a billing step
+
+        Scenario: Second
+          Given a billing step
+
+        Scenario: Third
+          Given a billing step
+      """
+    And a step file "features/steps/billing.steps.php":
+      """
+      <?php
+      given('a billing step', function () {});
+      """
+    When I run phpspec run in a fresh process with option "--parallel=2 spec/App/Money.spec.php:4 features/billing.feature:5 --format=agent"
+    Then the output should contain:
+      """
+      "examples":1,"scenarios":1,
+      """
+
+  Scenario: A parallel run keeps the example an id selects, and runs a block two selectors name once
+    Given a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('adds', fn() => expect(1 + 1)->toBe(2));
+          it('subtracts', fn() => expect(2 - 1)->toBe(1));
+          it('multiplies', fn() => expect(2 * 2)->toBe(4));
+      });
+      """
+    When I run phpspec run in a fresh process with option "--parallel=2 spec/App/Money.spec.php@e0953166a73b spec/App/Money.spec.php:4 --format=agent"
+    Then the output should contain:
+      """
+      "examples":1,"scenarios":0,
+      """
