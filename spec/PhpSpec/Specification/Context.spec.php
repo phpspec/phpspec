@@ -369,6 +369,21 @@ describe(Context::class, function() {
         expect($log)->toBe(['ex1', 'ex2', 'afterAll']);
     });
 
+    it("keeps the examples that ran when afterAll throws, and the error after them", function() {
+        $ctx = new Context("Server", function() {
+            afterAll(function() {
+                throw new RuntimeException('would not stop');
+            });
+            it("answers", function() {});
+            it("pages", function() {});
+        });
+        $ctx->setWorld(new Subject());
+        $result = $ctx->run();
+
+        expect(array_map(fn($child) => [$child->getTitle(), $child->isError()], $result->getResults()))->toBe([['answers', false], ['pages', false], ['Server', true]]);
+        expect($result->isError())->toBe(true);
+    });
+
     it("runs all children inside fdescribe", function() {
         $log = [];
         $ctx = new Context("fdescribe test", function() use (&$log) {

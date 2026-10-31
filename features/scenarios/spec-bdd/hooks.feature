@@ -167,6 +167,31 @@ Feature: Lifecycle hooks
       """
     When I run phpspec run
     Then the output should contain "pending() in afterAll comes after the examples ran; call it in beforeAll or in an example."
+    And the output should contain "2 examples (1 passed, 1 errored)"
+    And the exit code should be 1
+
+  Scenario: An afterAll that throws keeps the examples that ran
+    Given a spec file "spec/App/Server.spec.php":
+      """
+      <?php
+      describe('Server', function () {
+          afterAll(function () {
+              throw new RuntimeException('would not stop');
+          });
+
+          it('answers', fn () => expect(1)->toBe(1));
+          it('pages', fn () => expect(1)->toBe(2));
+
+          context('when busy', function () {
+              it('queues', fn () => expect(1)->toBe(1));
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "✓ answers"
+    And the output should contain "✓ queues"
+    And the output should contain "would not stop"
+    And the output should contain "4 examples (2 passed, 1 failed, 1 errored)"
     And the exit code should be 1
 
   Scenario: A function PhpSpec calls with no arguments is refused when it declares one

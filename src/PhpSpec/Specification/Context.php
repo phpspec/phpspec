@@ -242,7 +242,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
             $result = new ExampleResult($this->numberedTitle(), [], true);
             $error = $e instanceof ExampleError ? $e : new ExampleError($e->getMessage(), $e);
             $result->setError($error);
-            $contextResult = new ContextResult($this->numberedTitle(), [$result]);
+            $contextResult = new ContextResult($this->numberedTitle(), [...$results, $result]);
             $contextResult->setError($error);
 
             return $contextResult;
