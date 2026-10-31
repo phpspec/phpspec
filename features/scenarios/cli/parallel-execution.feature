@@ -444,3 +444,59 @@ Feature: Parallel execution
       """
     And the output should contain "before reporting spec/App/Crash.spec.php."
     And the output should not contain "before reporting spec/App/Money.spec.php"
+
+  Scenario: A parallel run deals its files in the order its seed gives, as a run in one process orders them
+    Given a spec file "spec/App/A.spec.php":
+      """
+      <?php
+      describe('A', function () {
+          it('runs', function () {
+              file_put_contents(__DIR__ . '/../../order.log', 'A', FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/B.spec.php":
+      """
+      <?php
+      describe('B', function () {
+          it('runs', function () {
+              file_put_contents(__DIR__ . '/../../order.log', 'B', FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/C.spec.php":
+      """
+      <?php
+      describe('C', function () {
+          it('runs', function () {
+              file_put_contents(__DIR__ . '/../../order.log', 'C', FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/D.spec.php":
+      """
+      <?php
+      describe('D', function () {
+          it('runs', function () {
+              file_put_contents(__DIR__ . '/../../order.log', 'D', FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/E.spec.php":
+      """
+      <?php
+      describe('E', function () {
+          it('runs', function () {
+              file_put_contents(__DIR__ . '/../../order.log', 'E', FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--parallel=1 --order=random --seed=42"
+    Then all examples should pass
+    And the output should contain "Randomised with seed 42"
+    And the file "order.log" should contain "EABDC"

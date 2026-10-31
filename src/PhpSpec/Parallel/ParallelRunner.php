@@ -16,6 +16,7 @@ namespace PhpSpec\Parallel;
 
 use PhpSpec\Process\ChildPhp;
 use PhpSpec\Results;
+use PhpSpec\SeededShuffle;
 use PhpSpec\StopConditions;
 
 /**
@@ -46,6 +47,7 @@ final class ParallelRunner
      * @param string|null $filter the title filter to forward to workers
      * @param string|null $tags the tag expression to forward to workers
      * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off, after the settings it takes from this process
+     * @param int|null $seed the seed of a random run, which orders the files as they are dealt to the workers, or null to deal them as given
      */
     public function __construct(
         private readonly array $targets,
@@ -57,6 +59,7 @@ final class ParallelRunner
         private readonly ?string $filter = null,
         private readonly ?string $tags = null,
         private readonly array $phpOptions = [],
+        private readonly ?int $seed = null,
     ) {
         $this->workers = max(1, $workers ?? self::detectCpuCount());
         $this->phpspecBin = $phpspecBin ?? self::findPhpspecBin();
@@ -98,9 +101,9 @@ final class ParallelRunner
         $phpOptions = [...(new ChildPhp())->options(), ...$this->phpOptions];
         $workerCount = min($this->workers, count($this->targets));
         $partitions = array_fill(0, $workerCount, []);
-        $i = 0;
-        foreach ($this->targets as $file => $targets) {
-            $partitions[$i++ % $workerCount][$file] = $targets;
+        $files = $this->seed === null ? array_keys($this->targets) : (new SeededShuffle($this->seed))->of(array_keys($this->targets));
+        foreach ($files as $i => $file) {
+            $partitions[$i % $workerCount][$file] = $this->targets[$file];
         }
 
         /** @var WorkerProcess[] $processes */

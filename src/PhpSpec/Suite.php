@@ -52,11 +52,7 @@ final readonly class Suite implements SpecBlock
     {
         DispatcherRegistry::dispatcher()->dispatch(new SuiteStarted(), SuiteStarted::NAME);
 
-        $specs = $this->specifications;
-        if ($seed !== null) {
-            mt_srand($seed);
-            shuffle($specs);
-        }
+        $specs = $seed === null ? $this->specifications : (new SeededShuffle($seed))->of($this->specifications);
 
         if ($stop->any()) {
             StopRegistry::activate($stop);

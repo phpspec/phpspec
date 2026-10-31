@@ -321,7 +321,7 @@ rejected with an error rather than silently falling back.
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--all` | Run all suites, both specs and features |
 | `--story` | Run only features (Story BDD) |
-| `--order=ORDER` | Run order: `default` or `random` |
+| `--order=ORDER` | Run order: `default` or `random`; under `--parallel`, the files are dealt to the workers in the random order, each worker running its share in it |
 | `--seed=SEED` | Shuffle by this whole number, as a random run prints it, to reproduce that order; implies `--order random` |
 
 **Stopping early.** By default a run continues to the end. These flags halt it at

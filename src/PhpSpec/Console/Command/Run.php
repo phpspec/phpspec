@@ -998,6 +998,7 @@ final class Run extends Command implements InternalOptions
                 filter: is_string($filter) ? $filter : null,
                 tags: is_string($tags) ? $tags : null,
                 phpOptions: $this->engines->switches($collectingWith),
+                seed: $seed,
             );
             $stream = $parallelRunner->stream();
         } else {
