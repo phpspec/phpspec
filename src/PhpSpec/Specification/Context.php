@@ -16,6 +16,7 @@ namespace PhpSpec\Specification;
 
 use Closure;
 use PhpSpec\ArgumentlessFunction;
+use PhpSpec\Attachments;
 use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
@@ -282,6 +283,11 @@ class Context implements ExampleRegistry, Rebindable, Titled
         HeldCalls::forget();
         $arguments = new ExampleArguments($this->world, $this->boundNames());
 
+        // What the example and its hooks hand over about it, from its first
+        // beforeEach to its last afterEach.
+        $attachments = new Attachments();
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
         try {
             try {
                 $setup->around(function () use ($arguments): void {
@@ -291,11 +297,12 @@ class Context implements ExampleRegistry, Rebindable, Titled
                     }
                 });
 
-                $result = $example->run();
+                $result = $example->run($attachments);
             } catch (PendingException|SkippedException $signal) {
-                $result = $example->leftOutBy($signal);
+                $result = $example->leftOutBy($signal, $attachments);
             }
             $body = $result->getOutput();
+            $attachedBefore = $result->getAttachments();
 
             try {
                 $teardown->around(function () use ($arguments): void {
@@ -315,11 +322,16 @@ class Context implements ExampleRegistry, Rebindable, Titled
             if ($refused !== null && !$result->isError()) {
                 $result = $example->failedInHook(new ExampleError($refused->getMessage(), $refused));
             }
+
+            self::attach($result, $attachedBefore, $attachments);
         } catch (Throwable $e) {
             $coverage?->endExample($example->getTitle());
+            $failed = $example->failedInHook(new ExampleError($e->getMessage(), $e));
+            self::attach($failed, [], $attachments);
 
-            return $this->printed($example->failedInHook(new ExampleError($e->getMessage(), $e)), $setup->text(), '');
+            return $this->printed($failed, $setup->text(), '');
         } finally {
+            DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
             $this->forget($arguments);
             DoubleLabels::restore($outerLabels);
             HeldCalls::restore($outerHeld);
@@ -328,6 +340,27 @@ class Context implements ExampleRegistry, Rebindable, Titled
         $coverage?->endExample($result->getTitle());
 
         return $this->printed($result, $setup->text() . $body, $teardown->text());
+    }
+
+    /**
+     * Puts what was handed over about an example that needs attention onto its
+     * result: what it carried before its afterEach hooks, and the rest, read now
+     * they are done, which is what they handed over and anything a result that
+     * passed until then did not read.
+     *
+     * @param array<string, string|array{error: string}> $before
+     */
+    private static function attach(ExampleResult $result, array $before, Attachments $attachments): void
+    {
+        if (!$result->isFailure() && !$result->isError() && !$result->isPending() && !$result->isSkipped()) {
+            return;
+        }
+
+        $attached = [...$before, ...$attachments->read()];
+
+        if ($attached !== []) {
+            $result->setAttachments($attached);
+        }
     }
 
     /**

@@ -117,6 +117,45 @@ describe(Context::class, function() {
         expect($results[1]->getMessage())->toBe('no setup');
     });
 
+    it("keeps what an example's hooks hand over about it, its teardown's read once that is done", function() {
+        $ctx = new Context("attached", function() {
+            beforeEach(function() { \PhpSpec\attach('set up', 'from beforeEach'); });
+            afterEach(function() { \PhpSpec\attach('torn down', 'from afterEach'); });
+            it("fails", function() {
+                \PhpSpec\attach('ran', 'from the example');
+                expect(1)->toBe(2);
+            });
+        });
+        $ctx->setWorld(new Subject());
+
+        expect($ctx->run()->getResults()[0]->getAttachments())->toBe(['set up' => 'from beforeEach', 'ran' => 'from the example', 'torn down' => 'from afterEach']);
+    });
+
+    it("keeps what was handed over on an example its hook broke, before or after it", function() {
+        $ctx = new Context("broken while attaching", function() {
+            beforeEach(function() {
+                \PhpSpec\attach('set up', 'half done');
+                throw new \RuntimeException('no setup');
+            });
+            it("one", function() { expect(true)->toBeTrue(); });
+        });
+        $ctx->setWorld(new Subject());
+        $teardown = new Context("broken teardown while attaching", function() {
+            afterEach(function() {
+                \PhpSpec\attach('torn down', 'half undone');
+                throw new \RuntimeException('no teardown');
+            });
+            it("one", function() {
+                \PhpSpec\attach('ran', 'green');
+                expect(true)->toBeTrue();
+            });
+        });
+        $teardown->setWorld(new Subject());
+
+        expect($ctx->run()->getResults()[0]->getAttachments())->toBe(['set up' => 'half done']);
+        expect($teardown->run()->getResults()[0]->getAttachments())->toBe(['ran' => 'green', 'torn down' => 'half undone']);
+    });
+
     it("fails the example whose afterEach threw, and goes on to the next", function() {
         $ctx = new Context("broken teardown", function() {
             afterEach(function() { throw new \RuntimeException('no teardown'); });

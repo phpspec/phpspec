@@ -241,7 +241,9 @@ otherwise quietly fail:
   the failure. Pass a string instead when the value is already final:
   `attach('stdout', $process->getOutput())`.
 - **Read before your teardown runs.** An `afterScenario` that terminates the
-  process and deletes the workspace cannot empty the attachment first.
+  process and deletes the workspace cannot empty the attachment first. What a
+  hook hands over counts too: `beforeScenario` and `beforeEach` with the rest,
+  `afterScenario` and `afterEach` read once they are done.
 - **Nothing is read when the run is green.** A closure over a huge log costs
   nothing on a passing suite, so attach freely.
 - **The same name twice keeps the latest.** A helper attaching on every poll

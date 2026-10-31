@@ -132,7 +132,7 @@ given('the watcher is running', function () {
 });
 ```
 
-A closure is read when the scenario ends, so it holds what the process wrote *after* you attached it rather than the empty file it was then. It is read **before** `afterScenario`, so a hook that terminates the process and clears the workspace cannot empty it first. Nothing is read at all when the scenario passes, so attaching a large log costs a green run nothing. The same name twice keeps the latest.
+A closure is read when the scenario ends, so it holds what the process wrote *after* you attached it rather than the empty file it was then. It is read **before** `afterScenario`, so a hook that terminates the process and clears the workspace cannot empty it first. Hooks attach too: what `beforeScenario` hands over is kept with the steps', and what `afterScenario` hands over, a screenshot of the failure, say, is read once it is done. Nothing is read at all when the scenario passes, so attaching a large log costs a green run nothing. The same name twice keeps the latest.
 
 Attachments appear under the failure in the pretty and dot formatters, and as `attachments` in [`--format=agent`](agent.md#handing-over-context-phpspec-cannot-see).
 

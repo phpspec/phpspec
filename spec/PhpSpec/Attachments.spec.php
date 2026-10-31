@@ -32,6 +32,18 @@ describe(Attachments::class, function () {
         expect($attachments->read())->toBe(['log' => 'CANNOT READ --watch']);
     });
 
+    it('reads each one once, so a later read has only what was handed over since', function () {
+        $attachments = new Attachments();
+        $attachments->add('stdout', 'before the teardown');
+
+        expect($attachments->read())->toBe(['stdout' => 'before the teardown']);
+
+        $attachments->add('screenshot', 'during the teardown');
+
+        expect($attachments->read())->toBe(['screenshot' => 'during the teardown']);
+        expect($attachments->isEmpty())->toBeTrue();
+    });
+
     it('keeps the latest under a name, so a helper offering it every poll leaves one', function () {
         $attachments = new Attachments();
         $attachments->add('log', 'first look');

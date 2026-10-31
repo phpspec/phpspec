@@ -214,16 +214,17 @@ final readonly class Feature implements SpecBlock
     private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld): ScenarioResult
     {
         $world = new StepWorld();
+
+        // What the scenario and its hooks hand over about it, from its
+        // beforeScenario to its afterScenario: a step attaches in one place and
+        // a later step's failure is what makes it worth reading.
+        $attachments = new Attachments();
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
         $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');
 
         $collector = new StepMatchCollector();
         DispatcherRegistry::dispatcher()->addSubscriber($collector);
-
-        // What the scenario hands over about itself, for as long as it runs: a
-        // step attaches in one place and a later step's failure is what makes it
-        // worth reading.
-        $attachments = new Attachments();
-        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
 
         $stepResults = [];
         $stopped = false;
@@ -268,6 +269,12 @@ final readonly class Feature implements SpecBlock
             if ($after !== null) {
                 $stepResults = self::brokenAtTheEnd($stepResults, $after);
             }
+        }
+
+        // What the teardown handed over, and anything a scenario that needed
+        // no attention until then did not read.
+        if (!$attachments->isEmpty() && self::needsAttention($stepResults)) {
+            $attached = [...$attached, ...$attachments->read()];
         }
 
         DispatcherRegistry::dispatcher()->removeSubscriber($collector);

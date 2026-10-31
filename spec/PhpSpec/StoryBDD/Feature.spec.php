@@ -412,6 +412,30 @@ describe(Feature::class, function () {
         expect($steps[0]->isPassed())->toBeTrue();
     });
 
+    it("keeps what a scenario's hooks hand over about it, its teardown's read once that is done", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a step that fails", function () {
+            \PhpSpec\attach('ran', 'from the step');
+            throw new \RuntimeException('boom');
+        });
+        $hooks = new HookRegistry();
+        $hooks->addBeforeScenario(function () {
+            \PhpSpec\attach('set up', 'from beforeScenario');
+        });
+        $hooks->addAfterScenario(function () {
+            \PhpSpec\attach('torn down', 'from afterScenario');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Attached',
+            '',
+            null,
+            [new ScenarioNode('Fails', [new StepNode('Given', 'a step that fails')])]
+        ), $registry, $hooks);
+
+        expect($feature->run()->getResults()[0]->getAttachments())->toBe(['set up' => 'from beforeScenario', 'ran' => 'from the step', 'torn down' => 'from afterScenario']);
+    });
+
     it("runs multiple scenarios independently", function () {
         $registry = new StepRegistry();
         $registry->addStep("I set value to {int}", function ($n) {

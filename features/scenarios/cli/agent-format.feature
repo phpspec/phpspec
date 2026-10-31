@@ -312,6 +312,67 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should have attached "watch.log" containing "CANNOT READ --watch"
 
+  Scenario: An example's hooks hand over context as its body does, its teardown's read once that is done
+    Given a spec file "spec/App/Hooked.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Hooked', function () {
+          beforeEach(function () {
+              attach('set up', 'from beforeEach');
+          });
+
+          afterEach(function () {
+              attach('torn down', 'from afterEach');
+          });
+
+          it('fails', function () {
+              attach('ran', 'from the example');
+              expect(1)->toBe(2);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have attached "set up" containing "from beforeEach"
+    And the reported entry should have attached "ran" containing "from the example"
+    And the reported entry should have attached "torn down" containing "from afterEach"
+
+  Scenario: A scenario's hooks hand over context as its steps do, its teardown's read once that is done
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/hooked.feature":
+      """
+      Feature: Hooked
+        Scenario: Fails
+          Given a step that fails after attaching
+      """
+    And a step file "features/steps/hooked.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeScenario(function () {
+          attach('set up', 'from beforeScenario');
+      });
+
+      afterScenario(function () {
+          attach('torn down', 'from afterScenario');
+      });
+
+      given('a step that fails after attaching', function () {
+          attach('ran', 'from the step');
+          expect(1)->toBe(2);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have attached "set up" containing "from beforeScenario"
+    And the reported entry should have attached "ran" containing "from the step"
+    And the reported entry should have attached "torn down" containing "from afterScenario"
+
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
       """

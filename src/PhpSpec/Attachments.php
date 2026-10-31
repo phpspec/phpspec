@@ -67,9 +67,10 @@ final class Attachments implements Subscriber
     }
 
     /**
-     * Reads everything handed over, now. Called while the run is still standing
-     * where the attachment was made, before any teardown removes what it points
-     * at, so a closure reading a file still finds the file.
+     * Reads everything handed over since the last read, now. Called while the
+     * run is still standing where the attachment was made, before any teardown
+     * removes what it points at, so a closure reading a file still finds the
+     * file; and again once the teardown is done, for what it handed over.
      *
      * A closure that fails says so instead of leaving an empty block, which
      * would read as "the subject printed nothing" rather than "PhpSpec could
@@ -84,6 +85,8 @@ final class Attachments implements Subscriber
         foreach ($this->offered as $name => $value) {
             $read[$name] = $value instanceof Closure ? self::resolve($value) : $value;
         }
+
+        $this->offered = [];
 
         return $read;
     }
