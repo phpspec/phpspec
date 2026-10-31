@@ -366,7 +366,7 @@ Feature: Parallel execution
     When I run phpspec run in a fresh process with option "--parallel=2 spec/App/Money.spec.php:4 features/billing.feature:5 --format=agent"
     Then the output should contain:
       """
-      "examples":1,"scenarios":1,
+      "examples":1,"scenarios":1,"steps":1,"passing":2,"failing":0,"errors":0,
       """
 
   Scenario: A parallel run keeps the example an id selects, and runs a block two selectors name once
@@ -382,5 +382,65 @@ Feature: Parallel execution
     When I run phpspec run in a fresh process with option "--parallel=2 spec/App/Money.spec.php@e0953166a73b spec/App/Money.spec.php:4 --format=agent"
     Then the output should contain:
       """
-      "examples":1,"scenarios":0,
+      "examples":1,"scenarios":0,"steps":0,"passing":1,"failing":0,"errors":0,
       """
+
+  Scenario: A parallel run keeps every line it selects in one file, in a spec and in a feature
+    Given a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('adds', fn() => expect(1 + 1)->toBe(2));
+          it('subtracts', fn() => expect(2 - 1)->toBe(1));
+          it('multiplies', fn() => expect(2 * 2)->toBe(4));
+      });
+      """
+    And a feature file "features/billing.feature":
+      """
+      Feature: Billing
+        Scenario: First
+          Given a billing step
+
+        Scenario: Second
+          Given a billing step
+
+        Scenario: Third
+          Given a billing step
+      """
+    And a step file "features/steps/billing.steps.php":
+      """
+      <?php
+      given('a billing step', function () {});
+      """
+    When I run phpspec run in a fresh process with option "--parallel=2 spec/App/Money.spec.php:3 spec/App/Money.spec.php:5 features/billing.feature:2 features/billing.feature:8 --format=agent"
+    Then the output should contain:
+      """
+      "examples":2,"scenarios":2,"steps":2,"passing":4,"failing":0,"errors":0,
+      """
+
+  Scenario: A worker that dies after reporting a file run in part is said to have died before the files it never reported, only
+    Given a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('adds', fn() => expect(1 + 1)->toBe(2));
+          it('subtracts', fn() => expect(2 - 1)->toBe(1));
+          it('multiplies', fn() => expect(2 * 2)->toBe(4));
+      });
+      """
+    And a spec file "spec/App/Crash.spec.php":
+      """
+      <?php
+      describe('App\Crash', function () {
+          it('dies', function () {
+              exit(1);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--parallel=1 spec/App/Money.spec.php:4 spec/App/Crash.spec.php --format=agent"
+    Then the output should contain:
+      """
+      "passing":1,"failing":0,"errors":1,
+      """
+    And the output should contain "before reporting spec/App/Crash.spec.php."
+    And the output should not contain "before reporting spec/App/Money.spec.php"

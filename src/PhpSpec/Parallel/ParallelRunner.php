@@ -37,7 +37,7 @@ final class ParallelRunner
     private array $processes = [];
 
     /**
-     * @param string[] $paths spec file paths to run
+     * @param array<string, list<string>> $targets each file to run, to the targets its worker is given for it
      * @param int|null $workers number of worker processes (null = auto-detect CPU count)
      * @param StopConditions $stop conditions under which to halt early
      * @param string|null $phpspecBin absolute path to phpspec binary (null = auto-detect)
@@ -48,7 +48,7 @@ final class ParallelRunner
      * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off, after the settings it takes from this process
      */
     public function __construct(
-        private readonly array $paths,
+        private readonly array $targets,
         ?int $workers = null,
         private readonly StopConditions $stop = new StopConditions(),
         ?string $phpspecBin = null,
@@ -91,15 +91,16 @@ final class ParallelRunner
      */
     public function stream(): \Generator
     {
-        if (empty($this->paths)) {
+        if ($this->targets === []) {
             return;
         }
 
         $phpOptions = [...(new ChildPhp())->options(), ...$this->phpOptions];
-        $workerCount = min($this->workers, count($this->paths));
+        $workerCount = min($this->workers, count($this->targets));
         $partitions = array_fill(0, $workerCount, []);
-        foreach ($this->paths as $i => $path) {
-            $partitions[$i % $workerCount][] = $path;
+        $i = 0;
+        foreach ($this->targets as $file => $targets) {
+            $partitions[$i++ % $workerCount][$file] = $targets;
         }
 
         /** @var WorkerProcess[] $processes */

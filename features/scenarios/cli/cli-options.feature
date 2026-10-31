@@ -267,6 +267,55 @@ Feature: CLI options
     And the output should contain "second example" exactly 1 times
     And the output should contain "2 examples"
 
+  Scenario: A whole file asked for alongside one of its lines runs whole however the two are spelled
+    Given a spec file "spec/App/Whole.spec.php":
+      """
+      <?php
+      describe('Whole', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "./spec/App/Whole.spec.php:3 spec/App/Whole.spec.php"
+    Then all examples should pass
+    And the output should contain "first example" exactly 1 times
+    And the output should contain "second example" exactly 1 times
+
+  Scenario: A directory asked for alongside a line of a file inside it runs the whole directory, each file once
+    Given a spec file "spec/App/Whole.spec.php":
+      """
+      <?php
+      describe('Whole', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App spec/App/Whole.spec.php:3"
+    Then all examples should pass
+    And the output should contain "first example" exactly 1 times
+    And the output should contain "second example" exactly 1 times
+
+  Scenario: An id that selects no example stops the run without heading a spec it ran nothing of
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php@deadbeef0000"
+    Then the output should contain "No example at spec/App/Calc.spec.php@deadbeef0000"
+    And the output should not contain "Spec:"
+    And the exit code should be 1
+
   Scenario: A line in a describe but in none of its examples keeps the whole describe, whatever other lines are asked for
     Given a spec file "spec/App/Selection.spec.php":
       """

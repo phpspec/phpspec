@@ -53,7 +53,7 @@ describe(ParallelRunner::class, function () {
             chdir($tmpDir);
 
             try {
-                $runner = new ParallelRunner([$tmpDir . '/spec/Test.spec.php'], 1);
+                $runner = new ParallelRunner([$tmpDir . '/spec/Test.spec.php' => [$tmpDir . '/spec/Test.spec.php']], 1);
                 $results = iterator_to_array($runner->stream(), false);
 
                 expect(count($results))->toBeGreaterThan(0);
@@ -82,7 +82,7 @@ describe(ParallelRunner::class, function () {
             chdir($tmpDir);
 
             try {
-                $runner = new ParallelRunner([$tmpDir . '/spec/Dying.spec.php'], 1, coveragePartialDir: $tmpDir . '/coverage');
+                $runner = new ParallelRunner([$tmpDir . '/spec/Dying.spec.php' => [$tmpDir . '/spec/Dying.spec.php']], 1, coveragePartialDir: $tmpDir . '/coverage');
                 iterator_to_array($runner->stream(), false);
 
                 expect($runner->lostCoverage())->toHaveCount(1);
@@ -119,7 +119,7 @@ describe(ParallelRunner::class, function () {
                     $tmpDir . '/spec/Test2.spec.php',
                     $tmpDir . '/spec/Test3.spec.php',
                 ];
-                $runner = new ParallelRunner($paths, 2);
+                $runner = new ParallelRunner(array_combine($paths, array_map(static fn(string $path): array => [$path], $paths)), 2);
                 $results = iterator_to_array($runner->stream(), false);
 
                 expect(count($results))->toBe(3);
@@ -151,7 +151,7 @@ describe(ParallelRunner::class, function () {
 
             try {
                 $stop = new StopConditions(onFailure: true);
-                $runner = new ParallelRunner([$tmpDir . '/spec/Fail.spec.php'], 1, $stop);
+                $runner = new ParallelRunner([$tmpDir . '/spec/Fail.spec.php' => [$tmpDir . '/spec/Fail.spec.php']], 1, $stop);
                 $results = iterator_to_array($runner->stream(), false);
 
                 expect(count($results))->toBeGreaterThan(0);

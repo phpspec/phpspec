@@ -67,7 +67,7 @@ final class Loader
         $blocks = [];
         $steps = new StepsFileCache();
 
-        foreach ($this->targets($files) as $path => ['lines' => $lines, 'ids' => $ids]) {
+        foreach (RunTargets::of($files)->each() as $path => ['lines' => $lines, 'ids' => $ids]) {
             if ($this->runsAsFeatures($path)) {
                 $blocks = array_merge($blocks, $this->loadFeatures($path, $steps, $lines));
             } else {
@@ -86,30 +86,6 @@ final class Loader
         }
 
         return new Suite($blocks);
-    }
-
-    /**
-     * What a run of each file the targets select within is asked for, by
-     * itself: its ":LINE" and "@ID" selectors, joined as targets are, keyed
-     * by the file as given. A file given whole as well is left out, as is
-     * every file given whole.
-     *
-     * @param string $files the targets, comma-separated
-     * @return array<string, string>
-     */
-    public function selectionsOf(string $files): array
-    {
-        $selections = [];
-
-        foreach ($this->targets($files) as $path => ['lines' => $lines, 'ids' => $ids]) {
-            $selectors = [...array_map(static fn(int $line): string => $path . ':' . $line, $lines), ...array_map(static fn(string $id): string => $path . '@' . $id, $ids)];
-
-            if ($selectors !== []) {
-                $selections[$path] = implode(',', $selectors);
-            }
-        }
-
-        return $selections;
     }
 
     /**
@@ -150,47 +126,6 @@ final class Loader
         }
 
         return $kept;
-    }
-
-    /**
-     * The paths to load, each with the lines its "path:LINE" selectors
-     * target and the example ids its "path@ID" selectors name. A path asked
-     * for whole has neither, and a selector on it does not narrow it.
-     *
-     * @param string $files the comma-separated paths
-     * @return array<string, array{lines: list<int>, ids: list<string>}>
-     */
-    private function targets(string $files): array
-    {
-        $targets = [];
-        $whole = [];
-
-        foreach (array_map('trim', explode(',', $files)) as $path) {
-            if ($path === '') {
-                continue;
-            }
-
-            if (preg_match('/^(.+)(?::(\d+)|@([0-9a-f]{12}))$/', $path, $matches) !== 1
-                || (!str_ends_with($matches[1], '.feature') && !str_ends_with($matches[1], $this->specSuffix))
-            ) {
-                $whole[$path] = true;
-                $targets[$path] = ['lines' => [], 'ids' => []];
-
-                continue;
-            }
-
-            if (!isset($whole[$matches[1]])) {
-                $targets[$matches[1]] ??= ['lines' => [], 'ids' => []];
-
-                if (($matches[3] ?? '') !== '') {
-                    $targets[$matches[1]]['ids'][] = $matches[3];
-                } else {
-                    $targets[$matches[1]]['lines'][] = (int) ($matches[2] ?? 0);
-                }
-            }
-        }
-
-        return $targets;
     }
 
     /**

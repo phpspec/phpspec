@@ -47,7 +47,7 @@ final class WorkerProcess
     private bool $stopped = false;
 
     /**
-     * @param string[] $paths spec file paths to run in this worker
+     * @param array<string, list<string>> $targets each file this worker runs, to the targets it is given for it
      * @param string $phpspecBin absolute path to the phpspec binary
      * @param string|null $coveragePartial file path for the worker to dump raw coverage state to, or null to run without coverage
      * @param list<string> $childOptions the options the parent was started with that set up the project (a named config, a bootstrap), forwarded so the worker runs against the same one
@@ -57,7 +57,7 @@ final class WorkerProcess
      * @param list<string> $phpOptions the php options the worker runs under, which switch its coverage engine on or off
      */
     public function __construct(
-        private readonly array $paths,
+        private readonly array $targets,
         private readonly string $phpspecBin,
         private readonly ?string $coveragePartial = null,
         private readonly array $childOptions = [],
@@ -82,7 +82,7 @@ final class WorkerProcess
             ...$this->phpOptions,
             $this->phpspecBin,
             'run',
-            ...$this->paths,
+            ...array_merge([], ...array_values($this->targets)),
             '-f', 'wire',
             '--no-ansi',
             '--no-interaction',
@@ -104,7 +104,7 @@ final class WorkerProcess
 
         array_push($command, ...$this->stop->options());
 
-        return array_values($command);
+        return $command;
     }
 
     /**
@@ -291,7 +291,7 @@ final class WorkerProcess
         $reported = array_map(self::samePathKey(...), $this->reported);
         $results = [];
 
-        foreach ($this->paths as $path) {
+        foreach (array_keys($this->targets) as $path) {
             if (in_array(self::samePathKey($path), $reported, true)) {
                 continue;
             }

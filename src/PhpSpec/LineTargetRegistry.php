@@ -23,13 +23,13 @@ namespace PhpSpec;
  */
 final class LineTargetRegistry
 {
-    /** @var array<string, list<int>> targeted line numbers keyed by normalised spec path */
+    /** @var array<string, list<int>> targeted line numbers keyed by spec path */
     private static array $targets = [];
 
     /** @var list<int> */
     private static array $current = [];
 
-    /** @var array<string, list<string>> targeted example ids keyed by normalised spec path */
+    /** @var array<string, list<string>> targeted example ids keyed by spec path */
     private static array $ids = [];
 
     /** @var list<string> */
@@ -43,8 +43,7 @@ final class LineTargetRegistry
      */
     public static function add(string $path, int ...$lines): void
     {
-        $key = self::normalise($path);
-        self::$targets[$key] = array_merge(self::$targets[$key] ?? [], array_values($lines));
+        self::$targets[$path] = array_merge(self::$targets[$path] ?? [], array_values($lines));
     }
 
     /**
@@ -54,8 +53,8 @@ final class LineTargetRegistry
      */
     public static function beginSpec(string $path): void
     {
-        self::$current = self::$targets[self::normalise($path)] ?? [];
-        self::$currentIds = self::$ids[self::normalise($path)] ?? [];
+        self::$current = self::$targets[$path] ?? [];
+        self::$currentIds = self::$ids[$path] ?? [];
     }
 
     /**
@@ -66,8 +65,7 @@ final class LineTargetRegistry
      */
     public static function addIds(string $path, string ...$ids): void
     {
-        $key = self::normalise($path);
-        self::$ids[$key] = array_merge(self::$ids[$key] ?? [], array_values($ids));
+        self::$ids[$path] = array_merge(self::$ids[$path] ?? [], array_values($ids));
     }
 
     /**
@@ -99,16 +97,5 @@ final class LineTargetRegistry
         self::$current = [];
         self::$ids = [];
         self::$currentIds = [];
-    }
-
-    /**
-     * Normalises a path for comparison, stripping a leading "./".
-     *
-     * @param string $path the path to normalise
-     * @return string the normalised path
-     */
-    private static function normalise(string $path): string
-    {
-        return str_starts_with($path, './') ? substr($path, 2) : $path;
     }
 }

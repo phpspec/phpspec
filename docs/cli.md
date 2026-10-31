@@ -420,7 +420,8 @@ vendor/bin/phpspec run spec/App/Calculator.spec.php:14 spec/App/Calculator.spec.
 Each selector selects, and the run takes them all together: a line that runs
 a whole context keeps every example in it, nested contexts included, even when
 another selector points inside one of them. A path given whole alongside one
-of its lines runs whole.
+of its lines runs whole, and so does every file of a directory given whole,
+each once: `./spec/App` and `spec/App` are one path.
 
 ### Bootstrap
 

@@ -31,14 +31,6 @@ describe(LineTargetRegistry::class, function () {
         expect(LineTargetRegistry::currentTargets())->toBe([6, 9, 12]);
     });
 
-    it('ignores a leading ./ on either side', function () {
-        LineTargetRegistry::add('./spec/App/Picky.spec.php', 6);
-
-        LineTargetRegistry::beginSpec('spec/App/Picky.spec.php');
-
-        expect(LineTargetRegistry::currentTargets())->toBe([6]);
-    });
-
     it('clears targets on reset', function () {
         LineTargetRegistry::add('spec/App/Picky.spec.php', 6);
         LineTargetRegistry::beginSpec('spec/App/Picky.spec.php');

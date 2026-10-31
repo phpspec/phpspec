@@ -66,6 +66,7 @@ use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 use PhpSpec\Runner;
+use PhpSpec\RunTargets;
 use PhpSpec\StopConditions;
 use PhpSpec\StoryBDD\TagExpression;
 use PhpSpec\TitleFilter;
@@ -253,6 +254,7 @@ final class Run extends Command implements InternalOptions
      */
     private function perform(Input $input, Output $prose, Formatter $formatter, string $files, array $given): int
     {
+        $asked = RunTargets::of(implode(',', $given));
         $refused = (new OptionValues($input))->problem();
 
         if ($refused !== null) {
@@ -276,13 +278,13 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, "Paths file lists no path: $pathsFrom", 'List the spec and feature paths to run in it, one per line.');
         }
 
-        $missing = self::missingPath($given);
+        $missing = self::missingPath($asked);
 
         if ($missing !== null) {
             return $this->stopped($prose, $formatter, "Path not found: $missing", 'Check the path, or give none to run the configured suite.');
         }
 
-        $unrunnable = $this->unrunnablePath($given);
+        $unrunnable = $this->unrunnablePath($asked);
 
         if ($unrunnable !== null) {
             return $this->stopped($prose, $formatter, "Not a spec or a feature: $unrunnable", 'Name a spec file (*' . $this->config->getSpecSuffix() . '), a feature file or a directory of them.');
@@ -363,13 +365,13 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, $e->getMessage(), $e instanceof FileLoadException ? $e->remedy() : null);
         }
 
-        $emptied = $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given);
+        $emptied = $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given, $asked);
 
         if ($emptied !== null) {
             $status = $this->stopped($prose, $formatter, ...$emptied);
 
-            if ($this->onlySelectors($given) && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
-                $this->showCodeAround($prose, $given);
+            if ($asked->onlySelects() && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
+                $this->showCodeAround($prose, $asked);
             }
 
             return $status;
@@ -514,23 +516,18 @@ final class Run extends Command implements InternalOptions
     /**
      * The lines around each targeted line, the target in bold, so the line
      * can be corrected by sight: most misses are off by one or two.
-     *
-     * @param list<string> $given
      */
-    private function showCodeAround(Output $prose, array $given): void
+    private function showCodeAround(Output $prose, RunTargets $asked): void
     {
-        foreach ($given as $target) {
-            if (preg_match('/^(.*):(\d+)$/', $target, $at) !== 1) {
-                continue;
-            }
+        foreach ($asked->each() as $file => ['lines' => $lines]) {
+            foreach ($lines as $line) {
+                $code = (new SurroundingCode($file, $line))->toArray();
 
-            $lines = (new SurroundingCode($at[1], (int) $at[2]))->toArray();
-            if ($lines === []) {
-                continue;
+                if ($code !== []) {
+                    $prose->writeln('');
+                    PrettyViews::surroundingCode($prose, $code, $line, blamed: false);
+                }
             }
-
-            $prose->writeln('');
-            PrettyViews::surroundingCode($prose, $lines, (int) $at[2], blamed: false);
         }
     }
 
@@ -544,7 +541,7 @@ final class Run extends Command implements InternalOptions
      * @param list<string> $given the paths as given on the command line
      * @return array{0: string, 1: string}|null the message and the remedy
      */
-    private function narrowedToNothingBy(Input $input, array $given): ?array
+    private function narrowedToNothingBy(Input $input, array $given, RunTargets $asked): ?array
     {
         $tags = $input->getOption('tags');
 
@@ -562,30 +559,11 @@ final class Run extends Command implements InternalOptions
             return null;
         }
 
-        if ($this->onlySelectors($given)) {
+        if ($asked->onlySelects()) {
             return ['No example at ' . implode(', ', $given), 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.'];
         }
 
         return [sprintf('No example or scenario in %s.', implode(', ', $given)), 'Name a spec, a feature or a directory holding them, or give none to run the configured suite.'];
-    }
-
-    /**
-     * Whether every path given selects examples in a file: a "file:LINE", or
-     * a "file@ID" for one of several examples a line declares.
-     *
-     * @param list<string> $given the paths as given on the command line
-     */
-    private function onlySelectors(array $given): bool
-    {
-        return $given !== [] && array_filter($given, static fn(string $path): bool => self::fileOf($path) === $path) === [];
-    }
-
-    /**
-     * The file a path names, with any ":LINE" or "@ID" selector left off.
-     */
-    private static function fileOf(string $path): string
-    {
-        return (string) preg_replace('/(?::\d+|@[0-9a-f]{12})$/', '', $path);
     }
 
     private function ranAnything(Results $results): bool
@@ -858,13 +836,12 @@ final class Run extends Command implements InternalOptions
      * outright are checked: a configured default may be absent in a project
      * with nothing to run yet, which is not a mistake.
      *
-     * @param list<string> $given the paths the caller named, a line number allowed after a file
      */
-    private static function missingPath(array $given): ?string
+    private static function missingPath(RunTargets $asked): ?string
     {
-        foreach ($given as $path) {
-            if (!file_exists(self::fileOf($path))) {
-                return $path;
+        foreach ($asked->files() as $target => $file) {
+            if (!file_exists($file)) {
+                return $target;
             }
         }
 
@@ -895,16 +872,12 @@ final class Run extends Command implements InternalOptions
     /**
      * The first path given that is a file run cannot take: neither a spec
      * nor a feature.
-     *
-     * @param list<string> $given
      */
-    private function unrunnablePath(array $given): ?string
+    private function unrunnablePath(RunTargets $asked): ?string
     {
-        foreach ($given as $path) {
-            $file = self::fileOf($path);
-
+        foreach ($asked->files() as $target => $file) {
             if (is_file($file) && !str_ends_with($file, $this->config->getSpecSuffix()) && !str_ends_with($file, '.feature')) {
-                return $path;
+                return $target;
             }
         }
 
@@ -958,8 +931,7 @@ final class Run extends Command implements InternalOptions
             }
         }
 
-        foreach (array_map('trim', explode(',', $files)) as $given) {
-            $path = self::fileOf($given);
+        foreach (RunTargets::of($files)->files() as $path) {
             $roots[] = is_file($path) ? dirname($path) : $path;
         }
 
@@ -1001,14 +973,13 @@ final class Run extends Command implements InternalOptions
             $workers = $parallel !== null ? (int) $parallel : null;
             // Each file goes to one worker with everything its targets select
             // in it, so a block two selectors name runs once, as it does here.
-            $selections = $this->loader->selectionsOf($files);
+            $targets = RunTargets::of($files);
             $paths = [];
             foreach ($suite->getSpecifications() as $spec) {
                 if (method_exists($spec, 'getPath')) {
-                    $paths[] = $selections[$spec->getPath()] ?? $spec->getPath();
+                    $paths[$spec->getPath()] = $targets->targetsFor($spec->getPath());
                 }
             }
-            $paths = array_values(array_unique($paths));
 
             // Whether coverage is being collected, not whether the caller
             // asked for a report: guard asks for coverage of its own, and a
@@ -1034,7 +1005,7 @@ final class Run extends Command implements InternalOptions
             $stream = $this->runner->stream($suite, $stop, $seed);
         }
 
-        $lineTargeted = str_contains($files, ':');
+        $lineTargeted = RunTargets::of($files)->selectsWithin();
 
         try {
             foreach ($stream as $result) {

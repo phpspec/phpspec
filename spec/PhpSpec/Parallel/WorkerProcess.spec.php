@@ -29,7 +29,7 @@ describe(WorkerProcess::class, function () {
         $feature = new FeatureResult('Checkout', [new ScenarioResult('Paying', [new StepResult('Given a basket', 'passed')], 3)], 'features/checkout.feature');
 
         it('turns each line on the wire into the result it carries, the whole of it', function () use ($wire, $failing, $feature) {
-            $worker = new WorkerProcess(['spec/App/Basket.spec.php', 'features/checkout.feature'], '/dev/null');
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php'], 'features/checkout.feature' => ['features/checkout.feature']], '/dev/null');
             $ref = new \ReflectionProperty($worker, 'stdout');
             $ref->setValue($worker, $wire->encode($failing) . "\n" . $wire->encode($feature) . "\n" . $wire->ending() . "\n");
 
@@ -47,7 +47,7 @@ describe(WorkerProcess::class, function () {
         });
 
         it('passes over a line that is not on the wire, such as what a bootstrap file printed', function () use ($wire, $failing) {
-            $worker = new WorkerProcess(['spec/App/Basket.spec.php'], '/dev/null');
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php']], '/dev/null');
             $ref = new \ReflectionProperty($worker, 'stdout');
             $ref->setValue($worker, "Bootstrap loaded...\n" . $wire->encode($failing) . "\n{\"not\": \"the wire\"}\n" . $wire->ending() . "\n");
 
@@ -55,7 +55,7 @@ describe(WorkerProcess::class, function () {
         });
 
         it('hands over the results whose lines have fully arrived, and keeps a line still arriving for the next read', function () use ($wire, $failing, $feature) {
-            $worker = new WorkerProcess(['spec/App/Basket.spec.php', 'features/checkout.feature'], '/dev/null');
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php'], 'features/checkout.feature' => ['features/checkout.feature']], '/dev/null');
             $ref = new \ReflectionProperty($worker, 'stdout');
             $second = $wire->encode($feature);
             $ref->setValue($worker, $wire->encode($failing) . "\n" . substr($second, 0, 20));
@@ -69,7 +69,7 @@ describe(WorkerProcess::class, function () {
         });
 
         it('reports a file the worker died before reporting as an error on that file, naming the exit code and what the worker said', function () use ($wire, $failing) {
-            $worker = new WorkerProcess(['spec/App/Basket.spec.php', 'spec/App/Coupon.spec.php'], '/dev/null');
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php'], 'spec/App/Coupon.spec.php' => ['spec/App/Coupon.spec.php']], '/dev/null');
             (new \ReflectionProperty($worker, 'stdout'))->setValue($worker, $wire->encode($failing) . "\n");
             (new \ReflectionProperty($worker, 'stderr'))->setValue($worker, "PHP Fatal error:  Allowed memory size exhausted\n");
             (new \ReflectionProperty($worker, 'exitCode'))->setValue($worker, 255);
@@ -84,8 +84,20 @@ describe(WorkerProcess::class, function () {
             expect($example->getError()->getMessage())->toContain('Allowed memory size exhausted');
         });
 
+        it('reports a file run in part as reported once its result arrived, and the file left unreported by its name alone', function () use ($wire, $failing) {
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php:7', 'spec/App/Basket.spec.php:9'], 'spec/App/Coupon.spec.php' => ['spec/App/Coupon.spec.php:3']], '/dev/null');
+            (new \ReflectionProperty($worker, 'stdout'))->setValue($worker, $wire->encode($failing) . "\n");
+            (new \ReflectionProperty($worker, 'exitCode'))->setValue($worker, 1);
+
+            $results = $worker->getResults();
+
+            expect($results)->toHaveCount(2);
+            expect($results[1]->getTitle())->toBe('Coupon.spec.php');
+            expect($results[1]->getResults()[0]->getError()->getMessage())->toContain('before reporting spec/App/Coupon.spec.php.');
+        });
+
         it('reports nothing missing when the worker ended its report, whatever its exit code', function () use ($wire, $failing) {
-            $worker = new WorkerProcess(['spec/App/Basket.spec.php'], '/dev/null');
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php']], '/dev/null');
             (new \ReflectionProperty($worker, 'stdout'))->setValue($worker, $wire->encode($failing) . "\n" . $wire->ending() . "\n");
             (new \ReflectionProperty($worker, 'exitCode'))->setValue($worker, 1);
 
@@ -98,15 +110,15 @@ describe(WorkerProcess::class, function () {
             $partial = (string) tempnam(sys_get_temp_dir(), 'phpspec_partial_');
 
             try {
-                expect((new WorkerProcess(['spec/A.spec.php'], '/dev/null', $partial))->lostCoverage())->toBeNull();
-                expect((new WorkerProcess(['spec/A.spec.php'], '/dev/null'))->lostCoverage())->toBeNull();
+                expect((new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/dev/null', $partial))->lostCoverage())->toBeNull();
+                expect((new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/dev/null'))->lostCoverage())->toBeNull();
             } finally {
                 unlink($partial);
             }
         });
 
         it('says it exited before handing over its coverage, with what it said', function () {
-            $worker = new WorkerProcess(['spec/A.spec.php'], '/dev/null', sys_get_temp_dir() . '/phpspec_never_' . uniqid() . '.json');
+            $worker = new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/dev/null', sys_get_temp_dir() . '/phpspec_never_' . uniqid() . '.json');
             (new \ReflectionProperty($worker, 'stderr'))->setValue($worker, "PHP Fatal error:  Allowed memory size exhausted\n");
             (new \ReflectionProperty($worker, 'exitCode'))->setValue($worker, 255);
 
@@ -114,7 +126,7 @@ describe(WorkerProcess::class, function () {
         });
 
         it('says it was stopped with the run before handing over its coverage', function () {
-            $worker = new WorkerProcess(['spec/A.spec.php'], '/dev/null', sys_get_temp_dir() . '/phpspec_never_' . uniqid() . '.json');
+            $worker = new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/dev/null', sys_get_temp_dir() . '/phpspec_never_' . uniqid() . '.json');
 
             $worker->terminate();
 
@@ -124,7 +136,7 @@ describe(WorkerProcess::class, function () {
 
     context('buildCommand', function () {
         it('runs under the php options it is given, before the binary, and asks for the wire format', function () {
-            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', phpOptions: ['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off']);
+            $worker = new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/path/to/phpspec', phpOptions: ['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off']);
             $command = $worker->buildCommand();
 
             expect(array_slice($command, 1, 5))->toBe(['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off', '/path/to/phpspec']);
@@ -133,30 +145,37 @@ describe(WorkerProcess::class, function () {
             expect($command)->not()->toContain('junit');
         });
 
+        it('gives the worker each target of each file as an argument of its own', function () {
+            $command = (new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php:3', 'spec/A.spec.php@e0953166a73b'], 'spec/B.spec.php' => ['spec/B.spec.php']], '/path/to/phpspec'))->buildCommand();
+            $run = array_search('run', $command, true);
+
+            expect(array_slice($command, $run + 1, 3))->toBe(['spec/A.spec.php:3', 'spec/A.spec.php@e0953166a73b', 'spec/B.spec.php']);
+        });
+
         it('requests a partial dump when a coverage partial path is set', function () {
-            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', '/tmp/partial-0.json');
+            $worker = new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/path/to/phpspec', '/tmp/partial-0.json');
             $command = $worker->buildCommand();
 
             expect($command)->toContain('--coverage-partial=/tmp/partial-0.json');
         });
 
         it('forwards the options that set up the project, a named config and a bootstrap, so a worker runs against the same one', function () {
-            $command = (new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', childOptions: ['--config=custom/my-config.json', '--bootstrap=custom/boot.php']))->buildCommand();
+            $command = (new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/path/to/phpspec', childOptions: ['--config=custom/my-config.json', '--bootstrap=custom/boot.php']))->buildCommand();
 
             expect($command)->toContain('--config=custom/my-config.json');
             expect($command)->toContain('--bootstrap=custom/boot.php');
         });
 
         it('forwards the title filter and the tag expression, so a worker selects as the parent did', function () {
-            $command = (new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', filter: 'adds', tags: '@smoke and not @wip'))->buildCommand();
+            $command = (new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/path/to/phpspec', filter: 'adds', tags: '@smoke and not @wip'))->buildCommand();
 
             expect($command)->toContain('--filter=adds');
             expect($command)->toContain('--tags=@smoke and not @wip');
-            expect((new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec'))->buildCommand())->not()->toContain('--filter=');
+            expect((new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/path/to/phpspec'))->buildCommand())->not()->toContain('--filter=');
         });
 
         it('forwards the stop conditions to the worker, so it halts as the parent would', function () {
-            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', stop: new StopConditions(onError: true, onSkipped: true));
+            $worker = new WorkerProcess(['spec/A.spec.php' => ['spec/A.spec.php']], '/path/to/phpspec', stop: new StopConditions(onError: true, onSkipped: true));
             $command = $worker->buildCommand();
 
             expect($command)->toContain('--stop-on-error');
