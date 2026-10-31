@@ -124,14 +124,31 @@ describe(Html::class, function() {
         expect($text)->toContain('<li class="note deprecation">⛔ check() is deprecated <span class="where">at /proj/features/steps/steps.php:8</span></li>');
     });
 
-    it("counts an errored step among the failed in the header", function() {
+    it("tells an errored step from a failed one in the header and the feature's bar", function() {
         $output = new BufferedOutput();
-        $step = new StepResult("Given a broken fixture", "error");
-        $step->setError(new StepError("fixture down", new \RuntimeException("fixture down")));
+        $errored = new StepResult("Given a broken fixture", "error");
+        $errored->setError(new StepError("fixture down", new \RuntimeException("fixture down")));
+        $failed = new StepResult("Then it balances", "failure");
+        $failed->setError(new StepError("Expected 1 to be 2", new \RuntimeException("Expected 1 to be 2")));
 
-        (new Html($output))->format(new SuiteResult([new FeatureResult("Story", [new ScenarioResult("Breaks", [$step])])]));
+        (new Html($output))->format(new SuiteResult([new FeatureResult("Story", [new ScenarioResult("Breaks", [$errored]), new ScenarioResult("Fails", [$failed])])]));
+        $text = $output->fetch();
 
-        expect($output->fetch())->toContain('<p class="meta">1 step · 1 failed</p>');
+        expect($text)->toContain('<p class="meta">2 steps · 1 failed · 1 errored</p>');
+        expect($text)->toContain('<span class="count">2 steps · 1 failed · 1 errored</span>');
+    });
+
+    it("tells an errored example from a failed one in the header and the spec's bar", function() {
+        $output = new BufferedOutput();
+        $errored = new ExampleResult("breaks", [], true);
+        $errored->setError(new ExampleError("boom", new \RuntimeException("boom")));
+        $spec = new SpecificationResult("MySpec", [new ExampleResult("fails", [MatchResult::failed("a", "b", "nope", __FILE__, __LINE__)]), $errored]);
+
+        (new Html($output))->format(new SuiteResult([$spec]));
+        $text = $output->fetch();
+
+        expect($text)->toContain('<p class="meta">2 examples · 1 failed · 1 errored</p>');
+        expect($text)->toMatch('/<details class="group failed" open>\s*<summary>MySpec <span class="count">2 examples · 1 failed · 1 errored<\/span>/');
     });
 
     it("collapses the failure details under the failed example", function() {

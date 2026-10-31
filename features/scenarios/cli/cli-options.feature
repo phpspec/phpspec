@@ -611,6 +611,52 @@ Feature: CLI options
       """
     And the file "report.html" should contain "⚠ totals are rounded"
 
+  Scenario: The HTML report tells an error from a failure in its header and group bars
+    Given a spec file "spec/App/Ledger.spec.php":
+      """
+      <?php
+      describe('Ledger', function () {
+          it('balances', fn () => expect(1)->toBe(2));
+          it('opens', function () {
+              throw new RuntimeException('disk full');
+          });
+      });
+      """
+    And a feature file "features/a_ledger.feature":
+      """
+      Feature: Ledger
+        Scenario: Balances
+          Given a failing step
+        Scenario: Opens
+          Given a breaking step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a failing step", fn () => expect(1)->toBe(2));
+      given("a breaking step", function () {
+          throw new RuntimeException('disk full');
+      });
+      """
+    When I run phpspec run with option "-f html -o report.html"
+    Then the file "report.html" should contain:
+      """
+      <p class="meta">2 examples · 1 failed · 1 errored</p>
+      """
+    And the file "report.html" should contain:
+      """
+      <span class="count">2 examples · 1 failed · 1 errored</span>
+      """
+    When I run phpspec run with option "features/ -f html -o stories.html"
+    Then the file "stories.html" should contain:
+      """
+      <p class="meta">2 steps · 1 failed · 1 errored</p>
+      """
+    And the file "stories.html" should contain:
+      """
+      <span class="count">2 steps · 1 failed · 1 errored</span>
+      """
+
   Scenario: Unknown formats are rejected instead of silently falling back
     Given a spec file "spec/App/BadFormat.spec.php":
       """

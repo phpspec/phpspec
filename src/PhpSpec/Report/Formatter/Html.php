@@ -136,19 +136,16 @@ final class Html extends AbstractFormatter
         $html = '';
 
         foreach ($groups as $group) {
-            $failed = $this->hasFailure($group);
-            $leaves = $this->countLeaves($group);
+            $counts = (new Counts($group))->toArray();
+            $leaves = $counts['examples'] + $counts['steps'];
+            $broken = $this->failuresAndErrorsCounted($counts);
+            $failed = $broken !== [];
             $title = method_exists($group, 'getTitle') ? (string) $group->getTitle() : '';
-            $count = $leaves . ' ' . $leafNoun . ($leaves !== 1 ? 's' : '');
-
-            if ($failed) {
-                $count .= ' · ' . $this->countFailures($group) . ' failed';
-            }
-
-            $raised = (new Counts($group))->toArray();
-            foreach ($this->notesCounted($raised['warnings'] + $raised['stepWarnings'], $raised['deprecations'] + $raised['stepDeprecations'], $raised['notices'] + $raised['stepNotices']) as $notes) {
-                $count .= ' · ' . $notes;
-            }
+            $count = implode(' · ', [
+                $leaves . ' ' . $leafNoun . ($leaves !== 1 ? 's' : ''),
+                ...$broken,
+                ...$this->notesCounted($counts['warnings'] + $counts['stepWarnings'], $counts['deprecations'] + $counts['stepDeprecations'], $counts['notices'] + $counts['stepNotices']),
+            ]);
 
             $html .= sprintf(
                 "<details class=\"group %s\"%s>\n<summary>%s <span class=\"count\">%s</span></summary>\n<ul>\n%s</ul>\n</details>\n",
@@ -323,6 +320,26 @@ final class Html extends AbstractFormatter
     }
 
     /**
+     * The failures and the errors, each counted in the console's words, as
+     * "1 failed" or "2 errored"; none for one that never happened.
+     *
+     * @param array<string, int> $counts as Counts tallies them
+     * @return list<string>
+     */
+    private function failuresAndErrorsCounted(array $counts): array
+    {
+        $counted = [];
+
+        foreach (['failed' => $counts['failures'] + $counts['stepFailures'], 'errored' => $counts['errors'] + $counts['stepErrors']] as $word => $count) {
+            if ($count > 0) {
+                $counted[] = $count . ' ' . $word;
+            }
+        }
+
+        return $counted;
+    }
+
+    /**
      * Each kind of note raised, counted, as "2 warnings"; none for a kind
      * never raised.
      *
@@ -413,7 +430,7 @@ final class Html extends AbstractFormatter
      * Builds the header meta line from the suite counts.
      *
      * @param array<string, int> $counts the tallied suite counts
-     * @return string e.g. "4 examples · 2 failed"
+     * @return string e.g. "4 examples · 1 failed · 1 errored"
      */
     private function summaryLine(array $counts): string
     {
@@ -427,13 +444,7 @@ final class Html extends AbstractFormatter
             $parts[] = $counts['steps'] . ' step' . ($counts['steps'] !== 1 ? 's' : '');
         }
 
-        $failed = $counts['failures'] + $counts['errors'] + $counts['stepFailures'] + $counts['stepErrors'];
-
-        if ($failed > 0) {
-            $parts[] = $failed . ' failed';
-        }
-
-        $parts = [...$parts, ...$this->notesCounted($counts['warnings'] + $counts['stepWarnings'], $counts['deprecations'] + $counts['stepDeprecations'], $counts['notices'] + $counts['stepNotices'])];
+        $parts = [...$parts, ...$this->failuresAndErrorsCounted($counts), ...$this->notesCounted($counts['warnings'] + $counts['stepWarnings'], $counts['deprecations'] + $counts['stepDeprecations'], $counts['notices'] + $counts['stepNotices'])];
 
         return implode(' · ', $parts);
     }
@@ -456,75 +467,6 @@ final class Html extends AbstractFormatter
         }
 
         return sprintf("<footer class=\"summary\">\n%s<p>Finished in %.4f seconds</p>\n</footer>\n", $lines, $duration);
-    }
-
-    /**
-     * Checks whether the result subtree contains any failed or errored leaf.
-     *
-     * @param Results $result the result node to inspect
-     * @return bool true when a failure or error exists in the subtree
-     */
-    private function hasFailure(Results $result): bool
-    {
-        foreach ($result->getResults() as $child) {
-            if ($child instanceof ExampleResult) {
-                if ($child->isFailure() || $child->isError()) {
-                    return true;
-                }
-            } elseif ($child instanceof StepResult) {
-                if ($child->isFailure() || $child->isError()) {
-                    return true;
-                }
-            } elseif ($this->hasFailure($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Counts example and step leaves in a result subtree.
-     *
-     * @param Results $result the result node to count
-     * @return int the number of leaves
-     */
-    private function countLeaves(Results $result): int
-    {
-        $count = 0;
-
-        foreach ($result->getResults() as $child) {
-            if ($child instanceof ExampleResult || $child instanceof StepResult) {
-                $count++;
-            } elseif ($child instanceof Results) {
-                $count += $this->countLeaves($child);
-            }
-        }
-
-        return $count;
-    }
-
-    /**
-     * Counts failed and errored leaves in a result subtree.
-     *
-     * @param Results $result the result node to count
-     * @return int the number of failing leaves
-     */
-    private function countFailures(Results $result): int
-    {
-        $count = 0;
-
-        foreach ($result->getResults() as $child) {
-            if ($child instanceof ExampleResult) {
-                $count += $child->isFailure() || $child->isError() ? 1 : 0;
-            } elseif ($child instanceof StepResult) {
-                $count += $child->isFailure() || $child->isError() ? 1 : 0;
-            } else {
-                $count += $this->countFailures($child);
-            }
-        }
-
-        return $count;
     }
 
     /**
