@@ -58,6 +58,20 @@ final class Attachments implements Subscriber
     }
 
     /**
+     * What a unit this one's scope sets up starts from: everything handed over
+     * here, unread, so a closure is read at that unit's failure. What the unit
+     * hands over itself wins under the same name, and reading it leaves this
+     * one as it was.
+     */
+    public function handedDown(): self
+    {
+        $unit = new self();
+        $unit->offered = $this->offered;
+
+        return $unit;
+    }
+
+    /**
      * Takes one that arrived over the event bus, which is how a step or an
      * example reaches the collector for the unit it is running in.
      */

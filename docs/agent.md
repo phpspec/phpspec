@@ -233,7 +233,7 @@ given('the watcher is running', function () {
 }
 ```
 
-Four rules make that work, and each one exists because of a way it would
+Five rules make that work, and each one exists because of a way it would
 otherwise quietly fail:
 
 - **A closure is read at the end, not when you attach it.** The log above is
@@ -244,6 +244,14 @@ otherwise quietly fail:
   process and deletes the workspace cannot empty the attachment first. What a
   hook hands over counts too: `beforeScenario` and `beforeEach` with the rest,
   `afterScenario` and `afterEach` read once they are done.
+- **Setup reaches what it sets up.** What a `describe` body, `beforeAll` or
+  `beforeFeature` hands over is carried by every example or scenario under it
+  that fails, a closure read at that failure; what one hands over itself wins
+  under the same name. A setup that does not pass puts it, once, on the first
+  result it decides: the first example or scenario it leaves out, or the error
+  it reports. `afterAll` and `afterFeature` run once everything under them is
+  reported, so theirs is kept only when they break, with the setup's, on the
+  result that carries the break.
 - **Nothing is read when the run is green.** A closure over a huge log costs
   nothing on a passing suite, so attach freely.
 - **The same name twice keeps the latest.** A helper attaching on every poll

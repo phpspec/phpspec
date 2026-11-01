@@ -240,6 +240,21 @@ then('the reported entry should have attached {string} containing {string}', fun
     expect(is_array($attached) ? ($attached['value'] ?? $attached['error'] ?? '') : (string) $attached)->toContain($text);
 });
 
+then('the reported entry {string} should have attached {string} containing {string}', function (string $example, string $name, string $text) use ($events, $entries) {
+    $named = array_values(array_filter($entries($events($this->stdout ?? $this->output)), fn(array $entry) => ($entry['example'] ?? null) === $example));
+    $attached = $named[0]['attachments'][$name] ?? null;
+
+    expect($named)->toHaveLength(1);
+    expect(is_array($attached) ? ($attached['value'] ?? $attached['error'] ?? '') : (string) $attached)->toContain($text);
+});
+
+then('the reported entry {string} should have attached nothing', function (string $example) use ($events, $entries) {
+    $named = array_values(array_filter($entries($events($this->stdout ?? $this->output)), fn(array $entry) => ($entry['example'] ?? null) === $example));
+
+    expect($named)->toHaveLength(1);
+    expect($named[0]['attachments'] ?? [])->toBe([]);
+});
+
 // What the subject printed is a diagnosis about the entry it printed under, and
 // it reaches the reader as data instead of landing in the middle of the report.
 then('the reported entry should have printed {string}', function (string $text) use ($events, $entries) {

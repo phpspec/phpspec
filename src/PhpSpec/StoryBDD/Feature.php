@@ -122,7 +122,10 @@ final readonly class Feature implements SpecBlock
         $coverage?->beginSpec($this->path);
         $coverage?->pushContext($this->featureNode->title);
 
-        $held = $this->attempt(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature');
+        // What beforeFeature hands over: a copy for each scenario it sets up,
+        // or, when it did not pass, read once by the first scenario it decides.
+        $setup = new Attachments();
+        $held = $this->attemptCollecting(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature', $setup);
 
         // The last scenario waits for afterFeature, which may break its last step.
         $last = null;
@@ -133,7 +136,7 @@ final readonly class Feature implements SpecBlock
                 $expansions = $scenario instanceof ScenarioOutlineNode ? $scenario->expand() : [$scenario];
 
                 foreach ($expansions as $expanded) {
-                    $result = $this->runScenario($expanded, $held);
+                    $result = $this->runScenario($expanded, $held, $held === null ? $setup->handedDown() : $setup);
                     if ($last !== null) {
                         yield $last;
                     }
@@ -146,9 +149,10 @@ final readonly class Feature implements SpecBlock
             }
 
             $closed = true;
-            $after = $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature');
+            $teardown = new Attachments();
+            $after = $this->attemptCollecting(fn() => $this->hooks->runAfterFeature(), 'afterFeature', $teardown);
             if ($last !== null) {
-                yield $after === null ? $last : new ScenarioResult($last->getTitle(), self::brokenAtTheEnd($last->getResults(), $after), $last->getLine(), $last->getAttachments());
+                yield $after === null ? $last : new ScenarioResult($last->getTitle(), self::brokenAtTheEnd($last->getResults(), $after), $last->getLine(), [...$setup->read(), ...$last->getAttachments(), ...$teardown->read()]);
             }
         } finally {
             if (!$closed) {
@@ -188,8 +192,9 @@ final readonly class Feature implements SpecBlock
      * included, as around an example.
      *
      * @param HookOutcome|null $featureHeld what a beforeFeature raised, deciding every scenario without running its hooks or steps
+     * @param Attachments $attachments what the scenario and its hooks hand over, on top of what beforeFeature did
      */
-    private function runScenario(ScenarioNode $scenario, ?HookOutcome $featureHeld = null): ScenarioResult
+    private function runScenario(ScenarioNode $scenario, ?HookOutcome $featureHeld, Attachments $attachments): ScenarioResult
     {
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();
@@ -197,7 +202,7 @@ final readonly class Feature implements SpecBlock
         DoubleLabels::start();
 
         try {
-            return $this->runScenarioWithHooks($scenario, $featureHeld);
+            return $this->runScenarioWithHooks($scenario, $featureHeld, $attachments);
         } finally {
             DoubleLabels::restore($outerLabels);
             $coverage?->endExample($scenario->title);
@@ -210,15 +215,11 @@ final readonly class Feature implements SpecBlock
      *
      * @param ScenarioNode $scenario the scenario to execute
      * @param HookOutcome|null $featureHeld what a beforeFeature raised, deciding every scenario without running its hooks or steps
+     * @param Attachments $attachments what the scenario hands over, from its beforeScenario to its afterScenario: a step attaches in one place and a later step's failure is what makes it worth reading
      */
-    private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld): ScenarioResult
+    private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld, Attachments $attachments): ScenarioResult
     {
         $world = new StepWorld();
-
-        // What the scenario and its hooks hand over about it, from its
-        // beforeScenario to its afterScenario: a step attaches in one place and
-        // a later step's failure is what makes it worth reading.
-        $attachments = new Attachments();
         DispatcherRegistry::dispatcher()->addSubscriber($attachments);
 
         $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');
@@ -283,6 +284,17 @@ final readonly class Feature implements SpecBlock
         // An outline expansion is addressed by its own examples-table row; every
         // other scenario by its keyword line.
         return new ScenarioResult($scenario->title, $stepResults, $scenario->exampleLine ?? $scenario->line, $attached);
+    }
+
+    private function attemptCollecting(\Closure $hooks, string $name, Attachments $attachments): ?HookOutcome
+    {
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
+        try {
+            return $this->attempt($hooks, $name);
+        } finally {
+            DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
+        }
     }
 
     /**

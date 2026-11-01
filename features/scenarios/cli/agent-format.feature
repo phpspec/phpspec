@@ -373,6 +373,188 @@ Feature: Agent output format
     And the reported entry should have attached "ran" containing "from the step"
     And the reported entry should have attached "torn down" containing "from afterScenario"
 
+  Scenario: A beforeAll that passes hands over to each example under it that fails, read at that failure
+    Given a spec file "spec/App/Server.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Server', function () {
+          beforeAll(function () {
+              file_put_contents('server.log', 'booted');
+              attach('server.log', fn () => file_get_contents('server.log'));
+              attach('port', '8080');
+          });
+
+          it('answers', function () {
+              file_put_contents('server.log', ', answered 500', FILE_APPEND);
+              attach('port', '7070');
+              expect(1)->toBe(2);
+          });
+
+          it('passes', fn () => expect(1)->toBe(1));
+
+          context('when busy', function () {
+              beforeAll(fn () => attach('port', '9090'));
+
+              it('queues', fn () => expect(1)->toBe(2));
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry "App\Server > answers" should have attached "server.log" containing "booted, answered 500"
+    And the reported entry "App\Server > answers" should have attached "port" containing "7070"
+    And the reported entry "App\Server > when busy > queues" should have attached "server.log" containing "booted, answered 500"
+    And the reported entry "App\Server > when busy > queues" should have attached "port" containing "9090"
+
+  Scenario: A beforeAll that skips hands over to the first example it leaves out, once
+    Given a spec file "spec/App/Remote.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Remote', function () {
+          beforeAll(function () {
+              attach('network', 'no route to host');
+              skip('no network');
+          });
+
+          context('when online', function () {
+              it('fetches', fn () => expect(1)->toBe(2));
+          });
+
+          it('posts', fn () => expect(1)->toBe(2));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry "App\Remote > when online > fetches" should have attached "network" containing "no route to host"
+    And the reported entry "App\Remote > posts" should have attached nothing
+
+  Scenario: An afterAll that breaks carries what it handed over and what the setup did, its own winning
+    Given a spec file "spec/App/Server.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Server', function () {
+          beforeAll(function () {
+              attach('server.log', 'booted');
+              attach('state', 'up');
+          });
+
+          afterAll(function () {
+              attach('state', 'stuck');
+              throw new RuntimeException('would not stop');
+          });
+
+          it('answers', fn () => expect(1)->toBe(1));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry "App\Server > App\Server" should have attached "server.log" containing "booted"
+    And the reported entry "App\Server > App\Server" should have attached "state" containing "stuck"
+
+  Scenario: A beforeFeature that passes hands over to each scenario that fails, the scenario's own winning
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/server.feature":
+      """
+      Feature: Server
+        Scenario: Answers
+          Given a failing step
+        Scenario: Passes
+          Given a passing step
+        Scenario: Queues
+          Given a failing step on its own port
+      """
+    And a step file "features/steps/server.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeFeature(function () {
+          attach('server.log', 'booted');
+          attach('port', '8080');
+      });
+
+      given('a failing step', fn () => expect(1)->toBe(2));
+      given('a passing step', fn () => expect(1)->toBe(1));
+      given('a failing step on its own port', function () {
+          attach('port', '7070');
+          expect(1)->toBe(2);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry "Server > Answers" should have attached "server.log" containing "booted"
+    And the reported entry "Server > Answers" should have attached "port" containing "8080"
+    And the reported entry "Server > Queues" should have attached "port" containing "7070"
+
+  Scenario: A beforeFeature that skips hands over to the first scenario, once
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/remote.feature":
+      """
+      Feature: Remote
+        Scenario: Fetches
+          Given a step
+        Scenario: Posts
+          Given a step
+      """
+    And a step file "features/steps/remote.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeFeature(function () {
+          attach('network', 'no route to host');
+          skip('no network');
+      });
+
+      given('a step', fn () => expect(1)->toBe(2));
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry "Remote > Fetches" should have attached "network" containing "no route to host"
+    And the reported entry "Remote > Posts" should have attached nothing
+
+  Scenario: An afterFeature that breaks carries what it handed over and what the setup did on the last scenario, its own winning
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/server.feature":
+      """
+      Feature: Server
+        Scenario: Answers
+          Given a passing step
+      """
+    And a step file "features/steps/server.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeFeature(function () {
+          attach('server.log', 'booted');
+          attach('state', 'up');
+      });
+
+      afterFeature(function () {
+          attach('state', 'stuck');
+          throw new RuntimeException('would not stop');
+      });
+
+      given('a passing step', fn () => expect(1)->toBe(1));
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry "Server > Answers" should have attached "server.log" containing "booted"
+    And the reported entry "Server > Answers" should have attached "state" containing "stuck"
+
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
       """

@@ -436,6 +436,79 @@ describe(Feature::class, function () {
         expect($feature->run()->getResults()[0]->getAttachments())->toBe(['set up' => 'from beforeScenario', 'ran' => 'from the step', 'torn down' => 'from afterScenario']);
     });
 
+    it("hands what a beforeFeature handed over to each scenario that fails, the scenario's own winning", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a failing step", fn() => throw new \RuntimeException('boom'));
+        $registry->addStep("a passing step", function () {});
+        $registry->addStep("a failing step on its own port", function () {
+            \PhpSpec\attach('port', '7070');
+            throw new \RuntimeException('boom');
+        });
+        $hooks = new HookRegistry();
+        $hooks->addBeforeFeature(function () {
+            \PhpSpec\attach('log', 'booted');
+            \PhpSpec\attach('port', '8080');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode('Server', '', null, [
+            new ScenarioNode('Answers', [new StepNode('Given', 'a failing step')]),
+            new ScenarioNode('Passes', [new StepNode('Given', 'a passing step')]),
+            new ScenarioNode('Queues', [new StepNode('Given', 'a failing step on its own port')]),
+        ]), $registry, $hooks);
+
+        expect(array_map(fn($scenario) => $scenario->getAttachments(), $feature->run()->getResults()))->toBe([
+            ['log' => 'booted', 'port' => '8080'],
+            [],
+            ['log' => 'booted', 'port' => '7070'],
+        ]);
+    });
+
+    it("puts what a beforeFeature that did not pass handed over on the first scenario, once", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a step", function () {});
+        $skipping = new HookRegistry();
+        $skipping->addBeforeFeature(function () {
+            \PhpSpec\attach('network', 'no route to host');
+            skip('no network');
+        });
+        $throwing = new HookRegistry();
+        $throwing->addBeforeFeature(function () {
+            \PhpSpec\attach('log', 'port taken');
+            throw new \RuntimeException('would not start');
+        });
+        $node = new FeatureNode('Remote', '', null, [
+            new ScenarioNode('Fetches', [new StepNode('Given', 'a step')]),
+            new ScenarioNode('Posts', [new StepNode('Given', 'a step')]),
+        ]);
+
+        expect(array_map(fn($scenario) => $scenario->getAttachments(), (new Feature('test.feature', $node, $registry, $skipping))->run()->getResults()))->toBe([['network' => 'no route to host'], []]);
+        expect(array_map(fn($scenario) => $scenario->getAttachments(), (new Feature('test.feature', $node, $registry, $throwing))->run()->getResults()))->toBe([['log' => 'port taken'], []]);
+    });
+
+    it("puts what the setup, the last scenario and a broken afterFeature handed over on that scenario, the later winning", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a failing step on its own port", function () {
+            \PhpSpec\attach('port', '7070');
+            throw new \RuntimeException('boom');
+        });
+        $hooks = new HookRegistry();
+        $hooks->addBeforeFeature(function () {
+            \PhpSpec\attach('log', 'booted');
+            \PhpSpec\attach('port', '8080');
+            \PhpSpec\attach('state', 'up');
+        });
+        $hooks->addAfterFeature(function () {
+            \PhpSpec\attach('state', 'stuck');
+            throw new \RuntimeException('would not stop');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode('Server', '', null, [
+            new ScenarioNode('Queues', [new StepNode('Given', 'a failing step on its own port')]),
+        ]), $registry, $hooks);
+
+        expect($feature->run()->getResults()[0]->getAttachments())->toBe(['log' => 'booted', 'port' => '7070', 'state' => 'stuck']);
+    });
+
     it("runs multiple scenarios independently", function () {
         $registry = new StepRegistry();
         $registry->addStep("I set value to {int}", function ($n) {

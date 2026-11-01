@@ -156,6 +156,79 @@ describe(Context::class, function() {
         expect($teardown->run()->getResults()[0]->getAttachments())->toBe(['ran' => 'green', 'torn down' => 'half undone']);
     });
 
+    it("hands what its body and a beforeAll handed over to each example under it that fails, nested ones too, theirs winning", function() {
+        $ctx = new Context("Server", function() {
+            \PhpSpec\attach('fixture', 'from the body');
+            beforeAll(function() {
+                \PhpSpec\attach('log', 'booted');
+                \PhpSpec\attach('port', '8080');
+            });
+            it("answers", function() {
+                \PhpSpec\attach('port', '7070');
+                expect(1)->toBe(2);
+            });
+            it("passes", function() {});
+            context("when busy", function() {
+                beforeAll(function() { \PhpSpec\attach('port', '9090'); });
+                it("queues", function() { expect(1)->toBe(2); });
+            });
+        });
+        $ctx->setWorld(new Subject());
+        [$answers, $passes, $busy] = $ctx->run()->getResults();
+
+        expect($answers->getAttachments())->toBe(['fixture' => 'from the body', 'log' => 'booted', 'port' => '7070']);
+        expect($passes->getAttachments())->toBe([]);
+        expect($busy->getResults()[0]->getAttachments())->toBe(['fixture' => 'from the body', 'log' => 'booted', 'port' => '9090']);
+    });
+
+    it("puts what a beforeAll that left the examples out handed over on the first one it leaves out, once", function() {
+        $ctx = new Context("Remote", function() {
+            beforeAll(function() {
+                \PhpSpec\attach('network', 'no route to host');
+                skip('no network');
+            });
+            context("when online", function() {
+                it("fetches", function() {});
+            });
+            it("posts", function() {});
+        });
+        $ctx->setWorld(new Subject());
+        [$online, $posts] = $ctx->run()->getResults();
+
+        expect($online->getResults()[0]->getAttachments())->toBe(['network' => 'no route to host']);
+        expect($posts->getAttachments())->toBe([]);
+    });
+
+    it("puts what the setup and a broken afterAll handed over on the context's error, the afterAll's winning", function() {
+        $ctx = new Context("Server", function() {
+            beforeAll(function() {
+                \PhpSpec\attach('log', 'booted');
+                \PhpSpec\attach('state', 'up');
+            });
+            afterAll(function() {
+                \PhpSpec\attach('state', 'stuck');
+                throw new RuntimeException('would not stop');
+            });
+            it("answers", function() {});
+        });
+        $ctx->setWorld(new Subject());
+
+        expect(array_map(fn($child) => $child->getAttachments(), $ctx->run()->getResults()))->toBe([[], ['log' => 'booted', 'state' => 'stuck']]);
+    });
+
+    it("puts what a beforeAll that threw handed over on the context's error", function() {
+        $ctx = new Context("Server", function() {
+            beforeAll(function() {
+                \PhpSpec\attach('log', 'port taken');
+                throw new RuntimeException('would not start');
+            });
+            it("answers", function() {});
+        });
+        $ctx->setWorld(new Subject());
+
+        expect(array_map(fn($child) => $child->getAttachments(), $ctx->run()->getResults()))->toBe([['log' => 'port taken']]);
+    });
+
     it("fails the example whose afterEach threw, and goes on to the next", function() {
         $ctx = new Context("broken teardown", function() {
             afterEach(function() { throw new \RuntimeException('no teardown'); });

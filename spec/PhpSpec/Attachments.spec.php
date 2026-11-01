@@ -52,6 +52,24 @@ describe(Attachments::class, function () {
         expect($attachments->read())->toBe(['log' => 'second look']);
     });
 
+    it('hands down what it holds, unread, to a unit it sets up, whose own wins and whose reading leaves it as it was', function () {
+        $reads = 0;
+        $setup = new Attachments();
+        $setup->add('log', function () use (&$reads) {
+            $reads++;
+
+            return 'booted';
+        });
+        $setup->add('port', '8080');
+
+        $unit = $setup->handedDown();
+        $unit->add('port', '7070');
+
+        expect($reads)->toBe(0);
+        expect($unit->read())->toBe(['log' => 'booted', 'port' => '7070']);
+        expect($setup->read())->toBe(['log' => 'booted', 'port' => '8080']);
+    });
+
     it('says a closure could not be read rather than showing an empty block', function () {
         $attachments = new Attachments();
         $attachments->add('log', fn() => false);
