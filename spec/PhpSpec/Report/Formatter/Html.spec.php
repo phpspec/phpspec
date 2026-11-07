@@ -165,7 +165,7 @@ describe(Html::class, function() {
         expect($text)->toContain('<details class="example failed">');
         expect($text)->toContain('<summary>fails</summary>');
         expect($text)->toContain('<dt>expected:</dt><dd>&quot;b&quot;</dd><dt>got:</dt><dd>&quot;a&quot;</dd>');
-        expect($text)->toContain('at ' . __FILE__ . ':' . $line);
+        expect($text)->toContain('at spec/PhpSpec/Report/Formatter/Html.spec.php:' . $line);
         expect($text)->toContain('class="snippet"');
         expect($text)->toContain('MatchResult::failed');
     });
@@ -182,7 +182,7 @@ describe(Html::class, function() {
 
         $formatter->format(new SuiteResult([$story]));
         $text = $output->fetch();
-        expect($text)->toContain('<details class="example failure">');
+        expect($text)->toContain('<details class="example failed">');
         expect($text)->toContain('<summary>Then it fails</summary>');
         expect($text)->toContain('Assertion failed badly');
     });
@@ -198,7 +198,7 @@ describe(Html::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain('class="example error"');
+        expect($text)->toContain('class="example errored"');
         expect($text)->toContain('boom');
     });
 

@@ -611,6 +611,46 @@ Feature: CLI options
       """
     And the file "report.html" should contain "⚠ totals are rounded"
 
+  Scenario: The HTML report opens a feature red when a step has no definition, and says where an error broke
+    Given a spec file "spec/App/Divide.spec.php":
+      """
+      <?php
+      describe('Divide', function () {
+          it('by zero', function () {
+              throw new RuntimeException('division by zero');
+          });
+      });
+      """
+    And a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Paying
+          Given a step nobody defined
+      """
+    When I run phpspec run with option "-f html -o report.html"
+    Then the file "report.html" should contain:
+      """
+      <details class="example errored">
+      """
+    And the file "report.html" should contain:
+      """
+      <p class="message">RuntimeException: division by zero</p>
+      """
+    And the file "report.html" should contain:
+      """
+      <p class="where">at spec/App/Divide.spec.php:4</p>
+      """
+    When I run phpspec run with option "features/ -f html -o stories.html"
+    Then the file "stories.html" should contain:
+      """
+      <details class="group failed" open>
+      <summary>Shop <span class="count">1 step · 1 undefined</span></summary>
+      """
+    And the file "stories.html" should contain:
+      """
+      <p class="message">Undefined step: Given a step nobody defined</p>
+      """
+
   Scenario: The HTML report tells an error from a failure in its header and group bars
     Given a spec file "spec/App/Ledger.spec.php":
       """

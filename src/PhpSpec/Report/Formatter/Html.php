@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\CountLines;
 use PhpSpec\Report\HtmlTheme;
@@ -21,11 +22,14 @@ use PhpSpec\Report\ReportedObject;
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\Location;
 use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\Result;
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @internal
@@ -36,6 +40,14 @@ use PhpSpec\Results;
  */
 final class Html extends AbstractFormatter
 {
+    private readonly ProjectRoot $root;
+
+    public function __construct(OutputInterface $output, ?string $nothingFound = 'No specs found.')
+    {
+        parent::__construct($output, $nothingFound);
+        $this->root = ProjectRoot::here();
+    }
+
     /**
      * No-op; the HTML document is non-streamable, all output happens in end().
      */
@@ -138,7 +150,7 @@ final class Html extends AbstractFormatter
         foreach ($groups as $group) {
             $counts = (new Counts($group))->toArray();
             $leaves = $counts['examples'] + $counts['steps'];
-            $broken = $this->failuresAndErrorsCounted($counts);
+            $broken = $this->failingCounted($counts);
             $failed = $broken !== [];
             $title = method_exists($group, 'getTitle') ? (string) $group->getTitle() : '';
             $count = implode(' · ', [
@@ -206,18 +218,10 @@ final class Html extends AbstractFormatter
      */
     private function renderExample(ExampleResult $example): string
     {
-        $state = match (true) {
-            $example->isError() => 'error',
-            $example->isFailure() => 'failed',
-            $example->isPending() => 'pending',
-            $example->isSkipped() => 'skipped',
-            $example->isRisky() => 'risky',
-            default => 'passed',
-        };
-
+        $state = $example->state();
         $detail = '';
 
-        if ($state === 'failed') {
+        if ($state === State::Failed) {
             foreach ($example->getResults() as $match) {
                 if ($match->getResult() === Result::Failed) {
                     $detail .= $this->renderFailureDetail($match);
@@ -225,16 +229,13 @@ final class Html extends AbstractFormatter
             }
         }
 
-        if ($state === 'error') {
-            $detail = sprintf(
-                "<p class=\"message\">%s</p>\n",
-                $this->escape($example->getError()?->getMessage() ?? ''),
-            );
+        if ($state === State::Errored) {
+            $detail = $this->brokeDetail($example->getError()?->getType() . ': ' . $example->getMessage(), $example->failedAt() ?? $example->writtenAt());
         }
 
-        $reason = $state === 'risky' ? 'no expectation' : $example->getReason();
+        $reason = $state === State::Risky ? 'no expectation' : $example->getReason();
 
-        return $this->leaf($state, $example->getTitle(), $reason, $example, $detail);
+        return $this->leaf($state->value, $example->getTitle(), $reason, $example, $detail);
     }
 
     /**
@@ -247,16 +248,29 @@ final class Html extends AbstractFormatter
      */
     private function renderStep(StepResult $step): string
     {
-        $detail = '';
+        $match = $step->getMatch();
+        $message = $step->message();
+        $detail = match (true) {
+            $match !== null => $this->renderFailureDetail($match),
+            $message !== null => $this->brokeDetail(($step->errorType() === null ? '' : $step->errorType() . ': ') . $message, $step->failedAt()),
+            default => '',
+        };
 
-        if (($step->isFailure() || $step->isError()) && $step->getError() !== null) {
-            $detail = sprintf(
-                "<p class=\"message\">%s</p>\n",
-                $this->escape($step->getError()->getMessage()),
-            );
+        return $this->leaf($step->state()->value, $step->getTitle(), $step->getReason(), $step, $detail);
+    }
+
+    /**
+     * What went wrong, and where, when that is known.
+     */
+    private function brokeDetail(string $message, ?Location $at): string
+    {
+        $detail = sprintf("<p class=\"message\">%s</p>\n", $this->escape($message));
+
+        if ($at !== null) {
+            $detail .= sprintf("<p class=\"where\">at %s</p>\n", $this->escape((string) $at->relativeTo($this->root)));
         }
 
-        return $this->leaf($step->getState(), $step->getTitle(), $step->getReason(), $step, $detail);
+        return $detail;
     }
 
     /**
@@ -305,13 +319,13 @@ final class Html extends AbstractFormatter
 
         foreach ($kinds as [$kind, $glyph, $notes]) {
             foreach ($notes as $note) {
+                $at = Location::at($note['file'], $note['line'])?->relativeTo($this->root);
                 $items .= sprintf(
-                    "<li class=\"note %s\">%s %s <span class=\"where\">at %s:%d</span></li>\n",
+                    "<li class=\"note %s\">%s %s%s</li>\n",
                     $kind,
                     $glyph,
                     $this->escape($note['message']),
-                    $this->escape($note['file']),
-                    $note['line'],
+                    $at === null ? '' : ' <span class="where">at ' . $this->escape((string) $at) . '</span>',
                 );
             }
         }
@@ -320,17 +334,17 @@ final class Html extends AbstractFormatter
     }
 
     /**
-     * The failures and the errors, each counted in the console's words, as
-     * "1 failed" or "2 errored"; none for one that never happened.
+     * What fails the run, each counted in the console's words, as "1 failed",
+     * "2 errored" or "1 undefined"; none for one that never happened.
      *
      * @param array<string, int> $counts as Counts tallies them
      * @return list<string>
      */
-    private function failuresAndErrorsCounted(array $counts): array
+    private function failingCounted(array $counts): array
     {
         $counted = [];
 
-        foreach (['failed' => $counts['failures'] + $counts['stepFailures'], 'errored' => $counts['errors'] + $counts['stepErrors']] as $word => $count) {
+        foreach (['failed' => $counts['failures'] + $counts['stepFailures'], 'errored' => $counts['errors'] + $counts['stepErrors'], 'undefined' => $counts['undefined']] as $word => $count) {
             if ($count > 0) {
                 $counted[] = $count . ' ' . $word;
             }
@@ -378,7 +392,8 @@ final class Html extends AbstractFormatter
         );
 
         $code = $match->getCode();
-        $failingLine = $match->getLine();
+        $at = $match->location();
+        $failingLine = $at?->line;
 
         if ($code !== []) {
             $rows = '';
@@ -395,12 +410,8 @@ final class Html extends AbstractFormatter
             $html .= "<table class=\"snippet\">$rows</table>\n";
         }
 
-        if ($match->getFile() !== null) {
-            $html .= sprintf(
-                "<p class=\"where\">at %s:%d</p>\n",
-                $this->escape($match->getFile()),
-                $failingLine ?? 0,
-            );
+        if ($at !== null) {
+            $html .= sprintf("<p class=\"where\">at %s</p>\n", $this->escape((string) $at->relativeTo($this->root)));
         }
 
         return $html;
@@ -444,7 +455,7 @@ final class Html extends AbstractFormatter
             $parts[] = $counts['steps'] . ' step' . ($counts['steps'] !== 1 ? 's' : '');
         }
 
-        $parts = [...$parts, ...$this->failuresAndErrorsCounted($counts), ...$this->notesCounted($counts['warnings'] + $counts['stepWarnings'], $counts['deprecations'] + $counts['stepDeprecations'], $counts['notices'] + $counts['stepNotices'])];
+        $parts = [...$parts, ...$this->failingCounted($counts), ...$this->notesCounted($counts['warnings'] + $counts['stepWarnings'], $counts['deprecations'] + $counts['stepDeprecations'], $counts['notices'] + $counts['stepNotices'])];
 
         return implode(' · ', $parts);
     }

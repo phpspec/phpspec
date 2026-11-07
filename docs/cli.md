@@ -276,9 +276,12 @@ the console, the HTML report and `--format=agent` carry them.
 #### HTML Formatter
 
 Outputs a self-contained HTML document with passed/failed examples and a
-summary counted in the console's words, ready to open in a browser. An example
-or step that raised a PHP warning, deprecation or notice unfolds to each one,
-with the line that raised it, and the header and its group's bar count them:
+summary counted in the console's words, ready to open in a browser. A spec or
+feature opens when anything in it fails the run, a step with no definition
+included. A failed or errored example or step unfolds to what went wrong and
+where, named from the project root. An example or step that raised a PHP
+warning, deprecation or notice unfolds to each one, with the line that raised
+it, and the header and its group's bar count them:
 
 ```bash
 vendor/bin/phpspec run --format=html > report.html
