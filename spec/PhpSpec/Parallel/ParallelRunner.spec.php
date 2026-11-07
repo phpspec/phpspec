@@ -4,12 +4,6 @@ use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\StopConditions;
 
 describe(ParallelRunner::class, function () {
-    context('detectCpuCount', function () {
-        it('returns at least 1', function () {
-            expect(ParallelRunner::detectCpuCount())->toBeGreaterThan(0);
-        });
-    });
-
     context('constructor', function () {
         it('enforces minimum of 1 worker', function () {
             $runner = new ParallelRunner([], 0);

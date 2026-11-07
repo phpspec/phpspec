@@ -62,7 +62,7 @@ final class ParallelRunner
         private readonly array $phpOptions = [],
         private readonly ?int $seed = null,
     ) {
-        $this->workers = max(1, $workers ?? self::detectCpuCount());
+        $this->workers = max(1, $workers ?? (new CpuCount())->count());
         $this->phpspecBin = $phpspecBin ?? self::findPhpspecBin();
     }
 
@@ -174,23 +174,6 @@ final class ParallelRunner
         (new ByReturnValue())->call(static function () use (&$read, &$write, &$except): int|false {
             return stream_select($read, $write, $except, 0, 100000);
         });
-    }
-
-    /**
-     * Detects the number of CPU cores on the current system.
-     *
-     * @return int the number of available CPU cores (minimum 1)
-     */
-    public static function detectCpuCount(): int
-    {
-        if (PHP_OS_FAMILY === 'Darwin') {
-            return max(1, (int) shell_exec('sysctl -n hw.ncpu'));
-        }
-        if (PHP_OS_FAMILY === 'Windows') {
-            return max(1, (int) (getenv('NUMBER_OF_PROCESSORS') ?: 4));
-        }
-
-        return max(1, (int) shell_exec('nproc'));
     }
 
     /**

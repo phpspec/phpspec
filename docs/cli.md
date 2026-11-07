@@ -472,7 +472,7 @@ carries the same `--config`.
 
 | Option | Description |
 |---|---|
-| `--parallel[=N]` | Run specs across N worker processes (defaults to the number of CPU cores) |
+| `--parallel[=N]` | Run specs across N worker processes (defaults to the number of CPU cores, or the fewer a container's CPU quota allows; 4 when the machine does not say) |
 
 ```bash
 vendor/bin/phpspec run --parallel        # one worker per CPU core
