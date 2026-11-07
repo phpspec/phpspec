@@ -14,10 +14,12 @@
 
 namespace PhpSpec\Report\Formatter\Pretty;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\CountLines;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\Location;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
@@ -233,23 +235,25 @@ final class PrettyViews
     }
 
     /**
-     * Where an error is blamed, followed by the other frames of the trace,
-     * innermost first. The blamed place itself is not repeated.
+     * Where an error is blamed, followed by the other frames of the trace
+     * that are the user's code, each named from the project root.
      *
-     * @param array{file: string, line: int} $at
-     * @param array<int, array{file?: string, line?: int}> $trace
+     * @param array<int, array<string, mixed>> $trace
      */
-    public static function location(OutputInterface $output, array $at, array $trace): void
+    public static function location(OutputInterface $output, Location $at, array $trace, ProjectRoot $root): void
     {
-        $output->write(PHP_EOL . '  at ' . $at['file'] . ':' . $at['line'] . PHP_EOL);
+        $output->write(PHP_EOL . '  at ' . $at . PHP_EOL);
 
-        $others = array_filter(
-            $trace,
-            static fn(array $frame): bool => ($frame['file'] ?? null) !== $at['file'] || ($frame['line'] ?? null) !== $at['line'],
-        );
+        $others = [];
+        foreach ($trace as $frame) {
+            $frameAt = Location::at(is_string($frame['file'] ?? null) ? $frame['file'] : null, is_int($frame['line'] ?? null) ? $frame['line'] : null)?->relativeTo($root);
+            if ($frameAt !== null && (string) $frameAt !== (string) $at) {
+                $others[] = $frameAt;
+            }
+        }
 
-        foreach (array_slice($others, 0, 5) as $frame) {
-            $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
+        foreach (array_slice($others, 0, 5) as $frameAt) {
+            $output->write('     ' . $frameAt . PHP_EOL);
         }
     }
 

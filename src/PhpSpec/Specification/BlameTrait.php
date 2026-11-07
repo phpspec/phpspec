@@ -75,8 +75,10 @@ trait BlameTrait
     /**
      * Where the error broke, as a reader should look at it: the site when it is
      * the user's code, else the line of the file declaring what ran that it
-     * came through, else the nearest frame of the user's code; nowhere when
-     * none of them is on the way.
+     * came through. An error that did not come through that file broke in
+     * PhpSpec's own machinery, and the user's frames on its way called
+     * PhpSpec rather than the code that ran, so it broke nowhere to name.
+     * With no declaring file, the nearest frame of the user's code.
      */
     public function brokeAt(?string $declaredIn = null): ?Location
     {
@@ -84,9 +86,8 @@ trait BlameTrait
             return Location::at($this->file, $this->line);
         }
 
-        $line = $declaredIn === null ? null : $this->lineIn($declaredIn);
-        if ($line !== null) {
-            return Location::at($declaredIn, $line);
+        if ($declaredIn !== null) {
+            return Location::at($declaredIn, $this->lineIn($declaredIn));
         }
 
         $blame = $this->blame();

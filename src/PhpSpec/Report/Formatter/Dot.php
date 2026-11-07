@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\Counts;
@@ -104,7 +105,7 @@ final class Dot extends AbstractFormatter
 
         // The same sectioned detail as the pretty formatter: the dots are the
         // progress, the catch-up story at the bottom is identical.
-        (new DetailSections())->render($this->output, $results);
+        (new DetailSections(ProjectRoot::here()))->render($this->output, $results);
         $this->output->writeln('');
 
         PrettyViews::counts($this->output, (new Counts($results))->toArray(), $results->getDuration());

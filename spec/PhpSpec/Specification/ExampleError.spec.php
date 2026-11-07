@@ -81,7 +81,7 @@ describe(ExampleError::class, function() {
         expect($error->getFilteredTrace())->toHaveCount(2);
     });
 
-    it("broke where a reader should look: its site in the project's code, else the line of the declaring file it came through, else the project's nearest frame", function() {
+    it("broke where a reader should look: its site in the project's code, else the line of the declaring file it came through, else, with no declaring file, the project's nearest frame", function() {
         $spec = '/project/spec/App/Basket.spec.php';
         $inTheProject = ExampleError::fromReport("boom", "LogicException", "/project/src/App/Basket.php", 12, [['file' => $spec, 'line' => 7]]);
         $throughTheSpec = ExampleError::fromReport("boom", "LogicException", "/project/vendor/acme/Client.php", 5, [['file' => '/project/src/App/Gateway.php', 'line' => 8], ['file' => $spec, 'line' => 7]]);
@@ -91,8 +91,14 @@ describe(ExampleError::class, function() {
         expect((string) $inTheProject->brokeAt($spec))->toBe('/project/src/App/Basket.php:12');
         expect((string) $throughTheSpec->brokeAt($spec))->toBe($spec . ':7');
         expect((string) $throughTheSpec->brokeAt())->toBe('/project/src/App/Gateway.php:8');
-        expect((string) $besideTheSpec->brokeAt($spec))->toBe('/project/src/App/Gateway.php:8');
-        expect($nowhere->brokeAt($spec))->toBeNull();
+        expect((string) $besideTheSpec->brokeAt())->toBe('/project/src/App/Gateway.php:8');
+        expect($nowhere->brokeAt())->toBeNull();
+    });
+
+    it("broke nowhere it can name when it did not come through the file that declares what ran, as when PhpSpec broke resolving its arguments", function() {
+        $called = ExampleError::fromReport("Cannot create mock", "LogicException", "/project/vendor/phpspec/phpspec/src/PhpSpec/Mock/Double.php", 40, [['file' => '/project/features/steps/runner.steps.php', 'line' => 13]]);
+
+        expect($called->brokeAt('/project/spec/App/Service.spec.php'))->toBeNull();
     });
 
     it("carries no site when rebuilt from a report that had none", function() {
