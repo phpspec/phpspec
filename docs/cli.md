@@ -200,7 +200,7 @@ See [Coding Agents](agent.md) for the JSON receipts and
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
 | `-v` | Verbose mode: shows the duration of each example and step; `--format=agent` reports the passing entries too |
 | `-q` | Quiet mode: suppresses all output, exit code still reflects pass/fail |
-| `--profile[=N]` | Show the N slowest examples, each by its path of titles (default: 10) |
+| `--profile[=N]` | Show the N slowest examples and scenarios, each by its path of titles, as `--filter` matches it (default: 10) |
 
 #### Pretty Formatter (default)
 

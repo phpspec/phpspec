@@ -1223,7 +1223,7 @@ final class Run extends Command implements InternalOptions
             return;
         }
         $output->writeln('');
-        $output->writeln("Top $count slowest examples:");
+        $output->writeln("Top $count slowest examples and scenarios:");
         foreach ($slowest as $timing) {
             $output->writeln(sprintf('  <fg=yellow>%.4fs</> %s', $timing->duration, $timing->path));
         }

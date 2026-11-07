@@ -19,6 +19,7 @@ use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
@@ -94,42 +95,34 @@ final readonly class SuiteSummary
     }
 
     /**
-     * Reduces a feature to a single verdict plus its undefined-step count: red
-     * if any step failed, todo if any step is still undefined (steps to
-     * write), pending if any defined step awaits its implementation (the
-     * working story), green otherwise.
+     * Reduces a feature to a single verdict, from how its scenarios ended,
+     * plus its undefined-step count: red if a scenario failed or errored, todo
+     * if one waits on a step still undefined (steps to write), pending if one
+     * awaits its implementation (the working story), green otherwise.
      *
      * @return array{path: string, status: 'red'|'green'|'todo'|'pending', undefined: int}
      */
     private static function summariseFeature(FeatureResult $feature): array
     {
-        $failures = 0;
+        $states = [];
         $undefined = 0;
-        $pending = 0;
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
                 continue;
             }
 
+            $states[] = $scenario->state();
             foreach ($scenario->getResults() as $step) {
-                if (!$step instanceof StepResult) {
-                    continue;
-                }
-
-                if ($step->isFailure() || $step->isError()) {
-                    ++$failures;
-                } elseif ($step->isUndefined()) {
+                if ($step instanceof StepResult && $step->state() === State::Undefined) {
                     ++$undefined;
-                } elseif ($step->isPending()) {
-                    ++$pending;
                 }
             }
         }
 
         $status = match (true) {
-            $failures > 0 => 'red',
-            $undefined > 0 => 'todo',
-            $pending > 0 => 'pending',
+            in_array(State::Failed, $states, true) || in_array(State::Errored, $states, true) => 'red',
+            in_array(State::Undefined, $states, true) => 'todo',
+            in_array(State::Pending, $states, true) => 'pending',
             default => 'green',
         };
 
@@ -150,13 +143,14 @@ final readonly class SuiteSummary
     {
         foreach ($node->getResults() as $child) {
             if ($child instanceof ExampleResult) {
-                if ($child->isFailure() || $child->isError()) {
+                $state = $child->state();
+                if ($state === State::Failed || $state === State::Errored) {
                     $failing[] = [
                         'subject' => $subject,
                         'example' => $child->getTitle(),
                         'error' => self::truncateError($child->getMessage()),
                     ];
-                } elseif ($child->isPending()) {
+                } elseif ($state === State::Pending) {
                     $pending[] = ['subject' => $subject, 'example' => $child->getTitle(), 'error' => ''];
                 }
             } elseif ($child instanceof Results) {
@@ -243,9 +237,9 @@ final readonly class SuiteSummary
     }
 
     /**
-     * Whether every feature step passed. Checked explicitly against failures and
-     * undefined steps because the suite status stays green on undefined-only
-     * steps, so "features are done" needs more than a green status.
+     * Whether every feature step passed. Checked against the steps themselves
+     * because a pending step leaves the suite status green, and a story still
+     * waiting on its implementation is not done.
      */
     public function featuresAreGreen(): bool
     {

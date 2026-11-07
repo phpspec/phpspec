@@ -852,7 +852,23 @@ Feature: CLI options
       """
     When I run phpspec run with option "--profile"
     Then the output should contain "slowest examples"
-    And the output should contain "s Profile > Profile > runs quickly"
+    And the output should contain "s Profile > runs quickly"
+
+  Scenario: Profile lists the slowest scenarios too
+    Given a feature file "features/slow.feature":
+      """
+      Feature: Slow
+        Scenario: Waits
+          Given a slow step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a slow step', fn () => usleep(20000));
+      """
+    When I run phpspec run with option "features/ --profile"
+    Then the output should contain "slowest examples and scenarios"
+    And the output should contain "s Slow > Waits"
 
   Scenario: Bootstrap file
     Given a file "bootstrap.php":

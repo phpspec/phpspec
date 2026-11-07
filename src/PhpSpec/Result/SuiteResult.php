@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Result;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Results;
 
 /**
@@ -110,40 +111,23 @@ final class SuiteResult implements Results
     }
 
     /**
-     * The slowest examples, slowest first, each named by its title path, for
-     * profiling output.
+     * The slowest examples and scenarios, slowest first, each named as its
+     * outcome names it, for profiling output. Pending ones never ran.
      *
-     * @param int $count maximum number of examples to return
-     * @return list<ExampleTiming> the slowest non-pending examples
+     * @param int $count maximum number to return
+     * @return list<ExampleTiming>
      */
     public function getSlowestExamples(int $count = 10): array
     {
         $timings = [];
-        $this->collectTimings($this, '', $timings);
+        (new Outcomes(ProjectRoot::here()))->walk($this, function (Outcome $outcome) use (&$timings): void {
+            if ($outcome->state !== State::Pending) {
+                $timings[] = new ExampleTiming($outcome->name(), $outcome->duration);
+            }
+        });
         usort($timings, fn(ExampleTiming $a, ExampleTiming $b) => $b->duration <=> $a->duration);
 
         return array_slice($timings, 0, $count);
-    }
-
-    /**
-     * @param list<ExampleTiming> $timings
-     */
-    private function collectTimings(Results $results, string $path, array &$timings): void
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                if (!$result->isPending()) {
-                    $timings[] = new ExampleTiming(self::under($path, $result->getTitle()), $result->getDuration());
-                }
-            } elseif ($result instanceof SpecificationResult || $result instanceof ContextResult || $result instanceof FeatureResult || $result instanceof ScenarioResult) {
-                $this->collectTimings($result, self::under($path, $result->getTitle()), $timings);
-            }
-        }
-    }
-
-    private static function under(string $path, string $title): string
-    {
-        return $path === '' ? $title : $path . ' > ' . $title;
     }
 
     /**
