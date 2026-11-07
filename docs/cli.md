@@ -486,6 +486,21 @@ them, so it runs what it would run alone, each block once. The run that
 starts the workers only finds the files: each worker loads the ones it runs,
 so a `features/support` file runs in every worker that runs a feature, never
 in the process that started them.
+
+Each worker is told which one it is, from 1, as `PHPSPEC_WORKER` and as
+`TEST_TOKEN` (the name ParaTest and Laravel use), so the specs it runs can keep
+state of their own, a database above all. Seeding one per worker and rolling
+each example back is much faster than seeding before every example:
+
+```php
+// bootstrap.php: a database per worker, seeded once
+$database = 'app_test_' . (getenv('PHPSPEC_WORKER') ?: '0');
+```
+
+```php
+beforeEach(fn () => $this->db->beginTransaction());
+afterEach(fn () => $this->db->rollBack());
+```
 `php -d memory_limit=1G -d extension=pcov vendor/bin/phpspec run --parallel`
 gives every worker a 1G ceiling and PCOV. Extensions go over by name, so one
 loaded from a path outside `extension_dir` reaches a worker only if

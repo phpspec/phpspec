@@ -56,6 +56,7 @@ final class WorkerProcess
      * @param string|null $filter the title filter the parent runs under, forwarded so a worker selects as it did
      * @param string|null $tags the tag expression the parent runs under, forwarded likewise
      * @param list<string> $phpOptions the php options the worker runs under, which switch its coverage engine on or off
+     * @param int $number which worker this is, from 1, told to it as PHPSPEC_WORKER and TEST_TOKEN so each can keep a database of its own
      */
     public function __construct(
         private readonly array $targets,
@@ -66,6 +67,7 @@ final class WorkerProcess
         private readonly ?string $filter = null,
         private readonly ?string $tags = null,
         private readonly array $phpOptions = [],
+        private readonly int $number = 1,
     ) {
         $this->wire = new Wire();
     }
@@ -122,7 +124,8 @@ final class WorkerProcess
         ];
 
         $cwd = getcwd();
-        $process = proc_open($command, $descriptors, $this->pipes, $cwd !== false ? $cwd : null);
+        $environment = [...getenv(), 'PHPSPEC_WORKER' => (string) $this->number, 'TEST_TOKEN' => (string) $this->number];
+        $process = proc_open($command, $descriptors, $this->pipes, $cwd !== false ? $cwd : null, $environment);
 
         if (!is_resource($process)) {
             throw new \RuntimeException('Failed to start worker process');

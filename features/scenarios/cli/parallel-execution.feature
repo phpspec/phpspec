@@ -55,6 +55,32 @@ Feature: Parallel execution
     Then all steps should pass
     And the file "support.log" should contain "loaded" exactly 2 times
 
+  Scenario: Each worker knows which one it is, as PHPSPEC_WORKER and TEST_TOKEN
+    Given a spec file "spec/App/First.spec.php":
+      """
+      <?php
+      describe('First', function () {
+          it('says which worker ran it', function () {
+              file_put_contents('workers.log', 'worker ' . getenv('PHPSPEC_WORKER') . ' token ' . getenv('TEST_TOKEN') . "\n", FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/Second.spec.php":
+      """
+      <?php
+      describe('Second', function () {
+          it('says which worker ran it', function () {
+              file_put_contents('workers.log', 'worker ' . getenv('PHPSPEC_WORKER') . ' token ' . getenv('TEST_TOKEN') . "\n", FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=2"
+    Then all examples should pass
+    And the file "workers.log" should contain "worker 1 token 1"
+    And the file "workers.log" should contain "worker 2 token 2"
+
   Scenario: Explicit worker count
     Given a spec file "spec/App/WorkerCount.spec.php":
       """

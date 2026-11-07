@@ -31,6 +31,19 @@ describe(WorkerProcess::class, function () {
         });
     });
 
+    context('telling a worker who it is', function () {
+        it('hands the worker its number, as PHPSPEC_WORKER and as TEST_TOKEN, keeping the rest of the environment', function () {
+            $script = tempnam(sys_get_temp_dir(), 'phpspec_worker_spec_');
+            file_put_contents($script, '<?php fwrite(STDERR, getenv("PHPSPEC_WORKER") . " " . getenv("TEST_TOKEN") . " " . (getenv("PATH") !== false ? "path" : "none"));');
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php']], $script, number: 3);
+            $worker->start();
+            $worker->getResults();
+            unlink($script);
+
+            expect($worker->getStderr())->toBe('3 3 path');
+        });
+    });
+
     context('getResults with no output', function () {
         it('returns empty array when stdout is empty', function () {
             $worker = new WorkerProcess([], '/dev/null');

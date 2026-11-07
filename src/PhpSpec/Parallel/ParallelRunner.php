@@ -118,7 +118,7 @@ final class ParallelRunner
                 $this->coveragePartials[] = $coveragePartial;
             }
 
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions);
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions, $i + 1);
             $process->start();
             $running[$i] = $process;
             $this->processes[] = $process;
