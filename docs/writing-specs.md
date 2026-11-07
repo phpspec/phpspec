@@ -219,7 +219,7 @@ When any focused block exists in a context, only focused blocks are executed. Th
 
 ## How `$this` Works
 
-Each spec file is loaded via a `Subject` object, which is `$this` inside spec closures. The `Subject` class has `#[AllowDynamicProperties]`, so a let's value lands on it as a property when an example first reads it. Let values are forgotten before the next example starts, so no example sees another's.
+Each spec file is loaded via a `Subject` object, which is `$this` inside spec closures. The `Subject` class has `#[AllowDynamicProperties]`, so a `this()` value lands on it as a property when an example first reads it. `this()` values are forgotten before the next example starts, so no example sees another's.
 
 ## Nesting Structure
 
