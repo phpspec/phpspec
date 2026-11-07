@@ -287,6 +287,40 @@ Feature: Parallel execution
     And the output should contain "Dying.spec.php"
     And the exit code should not be 0
 
+  Scenario: A worker that stops tells the run why
+    Given a feature file "features/a.feature":
+      """
+      Feature: A
+        Scenario: One
+          Given a thing
+      """
+    And a step file "features/steps/a.steps.php":
+      """
+      <?php
+      given('a thing', function () {});
+      given('a thing', function () {});
+      """
+    When I run phpspec run with option "--story --parallel=1"
+    Then the output should contain "is already defined at features/steps/a.steps.php:2"
+    And the exit code should not be 0
+
+  Scenario: A worker that dies of a fatal error tells the run what it was
+    Given a spec file "spec/App/Greedy.spec.php":
+      """
+      <?php
+      describe('Greedy', function () {
+          it('takes all the memory', function () {
+              $taken = [];
+              while (true) {
+                  $taken[] = str_repeat('x', 100000);
+              }
+          });
+      });
+      """
+    When I run phpspec run under php "-d memory_limit=16M -d log_errors=0" with option "--parallel=1"
+    Then the output should contain "Allowed memory size of 16777216 bytes exhausted"
+    And the exit code should not be 0
+
   Scenario: A worker that dies takes its coverage with it, and the run says so rather than report less
     Given a class "src/App/Basket.php":
       """

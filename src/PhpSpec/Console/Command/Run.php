@@ -80,6 +80,7 @@ use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 use Symfony\Component\Console\Output\StreamOutput;
 
@@ -224,16 +225,19 @@ final class Run extends Command implements InternalOptions
         // line the command would otherwise print (the seed, the profile table, the
         // coverage verdict, an error) is routed off the console: what an agent
         // needs is told to the formatter instead and rides inside the document.
+        // A parallel worker's console is the wire, so its human lines go to the
+        // error stream, which the run that started it reports when it stops.
         // For every other format the two are the same stream.
         $document = $formatter instanceof Agent ? $formatter : null;
-        $prose = $document !== null ? new BufferedOutput() : $output;
+        $prose = match (true) {
+            $document !== null => new BufferedOutput(),
+            $formatter instanceof WireFormatter && $output instanceof ConsoleOutputInterface => $output->getErrorOutput(),
+            default => $output,
+        };
         $document?->targets($files);
         $document?->rerunsWith($this->childOptions($input));
 
-        // PHP prints a fatal to standard output as well as the error stream, and
-        // standard output is the document's. Sending its own reports to the error
-        // stream leaves the channel clean; the document names the fatal itself.
-        $displayErrors = $document !== null ? (string) ini_set('display_errors', 'stderr') : null;
+        $displayErrors = $this->displayErrorsOffStdout($formatter);
 
         try {
             return $this->perform($input, $prose, $formatter, $files, $given);
@@ -243,6 +247,27 @@ final class Run extends Command implements InternalOptions
                 ini_set('display_errors', $displayErrors);
             }
         }
+    }
+
+    /**
+     * PHP prints a fatal to standard output as well as the error stream, and
+     * standard output is the agent document's, or a worker's wire. Displaying
+     * errors on the error stream leaves it clean: the document names the fatal
+     * itself, and a worker's parent reports what the worker said there. A
+     * worker that already logs its errors there keeps its display as it is,
+     * so each error is said once.
+     *
+     * @return string|null the setting to restore, or null when it was left alone
+     */
+    private function displayErrorsOffStdout(Formatter $formatter): ?string
+    {
+        $loggedToStderr = filter_var(ini_get('log_errors'), FILTER_VALIDATE_BOOLEAN) && ini_get('error_log') === '';
+
+        if ($formatter instanceof Agent || ($formatter instanceof WireFormatter && !$loggedToStderr)) {
+            return (string) ini_set('display_errors', 'stderr');
+        }
+
+        return null;
     }
 
     /**
