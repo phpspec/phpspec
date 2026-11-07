@@ -72,6 +72,7 @@ use PhpSpec\Runner;
 use PhpSpec\RunTargets;
 use PhpSpec\StopConditions;
 use PhpSpec\StoryBDD\TagExpression;
+use PhpSpec\TemporaryDirectory;
 use PhpSpec\TitleFilter;
 use Random\RandomException;
 use Symfony\Component\Console\Command\Command;
@@ -91,6 +92,9 @@ final class Run extends Command implements InternalOptions
 {
     /** @var array<int, string> partial coverage state files written by parallel workers */
     private array $coveragePartials = [];
+
+    /** The directory the parallel workers write their partial coverage to, until it is merged. */
+    private ?TemporaryDirectory $coverageDirectory = null;
 
     /** @var list<string> why the coverage of each worker that never handed it over was lost */
     private array $coverageLost = [];
@@ -990,9 +994,8 @@ final class Run extends Command implements InternalOptions
             // asked for a report: guard asks for coverage of its own, and a
             // worker that was never told to dump it leaves the parent with
             // nothing to judge.
-            $coveragePartialDir = $collectingWith !== null
-                ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
-                : null;
+            $this->coverageDirectory = $collectingWith !== null ? TemporaryDirectory::create('phpspec_coverage_') : null;
+            $coveragePartialDir = $this->coverageDirectory?->path;
 
             $parallelRunner = new ParallelRunner(
                 $paths,
@@ -1245,6 +1248,9 @@ final class Run extends Command implements InternalOptions
             $this->coveragePartials = [];
             $this->coverageLost = [];
         }
+
+        $this->coverageDirectory?->remove();
+        $this->coverageDirectory = null;
 
         return $reporter->report($output, new CoverageOptions(
             sources: $this->coverageSources($input),

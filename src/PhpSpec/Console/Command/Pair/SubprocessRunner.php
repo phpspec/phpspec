@@ -92,7 +92,7 @@ final class SubprocessRunner implements SpecRunner
      */
     private static function reportPath(): string
     {
-        return (getcwd() ?: '.') . '/.phpspec/pair/report-' . uniqid() . '.json';
+        return (getcwd() ?: '.') . '/.phpspec/pair/report-' . bin2hex(random_bytes(8)) . '.json';
     }
 
     /**
