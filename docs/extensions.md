@@ -211,7 +211,10 @@ vendor/bin/phpspec lint
 
 ### Listeners
 
-React to lifecycle events during a spec run.
+Hear how the run goes: when the suite begins and ends, and each example and
+each scenario as an `Outcome` (see [Formatters](#formatters)), once its spec
+file or feature has run. Stories and `--parallel` runs are heard the same
+way, each outcome once.
 
 ```php
 <?php
@@ -219,15 +222,16 @@ React to lifecycle events during a spec run.
 namespace Acme\PhpSpecProfiler;
 
 use PhpSpec\Extensions\ListenerExtension;
+use PhpSpec\Result\Outcome;
 
 class SlowTestReporter extends ListenerExtension
 {
     private array $slow = [];
 
-    public function afterExample(string $title, float $duration): void
+    public function completed(Outcome $outcome): void
     {
-        if ($duration > 0.5) {
-            $this->slow[] = [$title, $duration];
+        if ($outcome->duration > 0.5) {
+            $this->slow[] = [$outcome->name(), $outcome->duration];
         }
     }
 
@@ -239,28 +243,25 @@ class SlowTestReporter extends ListenerExtension
 
         usort($this->slow, fn($a, $b) => $b[1] <=> $a[1]);
         echo "\nSlow examples:\n";
-        foreach ($this->slow as [$title, $duration]) {
-            printf("  %.3fs  %s\n", $duration, $title);
+        foreach ($this->slow as [$name, $duration]) {
+            printf("  %.3fs  %s\n", $duration, $name);
         }
     }
 }
 ```
 
-Available events:
+Every method is optional:
 
-| Event | Arguments |
+| Method | Told |
 |---|---|
-| `beforeSuite()` | none |
-| `afterSuite()` | none |
-| `beforeSpec(string $title)` | Spec file title |
-| `afterSpec(string $title)` | Spec file title |
-| `beforeExample(string $title)` | Example title |
-| `afterExample(string $title, float $duration)` | Example title and duration in seconds |
-| `onPass(string $title)` | Passed example |
-| `onFail(string $title, string $message)` | Failed example with error message |
-| `onError(string $title, string $message)` | Errored example with exception message |
-| `onPending(string $title)` | Pending example |
-| `onSkipped(string $title)` | Skipped example |
+| `beforeSuite()` | Once, before anything runs |
+| `afterSuite()` | Once, after everything has been reported |
+| `completed(Outcome $outcome)` | Each example and scenario; by default it calls the method for how it ended |
+| `onPass(Outcome $outcome)` | Passed, or an example that checked nothing |
+| `onFail(Outcome $outcome)` | Failed, or a scenario with a step no definition matches |
+| `onError(Outcome $outcome)` | Errored |
+| `onPending(Outcome $outcome)` | Left pending |
+| `onSkipped(Outcome $outcome)` | Skipped |
 
 ### Browsers
 
@@ -396,7 +397,7 @@ Each extension type has a base class with the minimum contract:
 | Formatter | `FormatterExtension` | `getName()`, `formatPass()`, `formatFail()` |
 | Matcher | `MatcherExtension` | `getName()`, `match()`, `failureMessage()` |
 | Command | `CommandExtension` | `getName()`, `execute()` |
-| Listener | `ListenerExtension` | At least one event method |
+| Listener | `ListenerExtension` | None; override what it should hear |
 
 All base classes live in `PhpSpec\Extensions\`.
 

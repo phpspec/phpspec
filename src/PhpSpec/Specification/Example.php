@@ -19,10 +19,8 @@ use PhpSpec\Attachments;
 use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\ExampleCompleted;
 use PhpSpec\EventDispatcher\Event\ExampleErrored;
 use PhpSpec\EventDispatcher\Event\ExampleRunned;
-use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber;
 use PhpSpec\ExampleId;
 use PhpSpec\Mock\HeldCalls;
@@ -260,13 +258,9 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
      */
     public function failedInHook(ExampleError $error): ExampleResult
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
-
         $this->isError = true;
         $this->exampleResult = new ExampleResult($this->getTitle(), [], true);
         $this->exampleResult->setError($error);
-
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
 
         return $this->declared($this->exampleResult);
     }
@@ -278,8 +272,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
      */
     public function leftOutBy(PendingException|SkippedException $signal, ?Attachments $attachments = null): ExampleResult
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
-
         $this->exampleResult = $signal instanceof PendingException
             ? new ExampleResult($this->getTitle(), [], isPending: true, reason: $signal->getMessage())
             : new ExampleResult($this->getTitle(), [], isSkipped: true, reason: $signal->getMessage());
@@ -287,8 +279,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
         if ($attachments !== null) {
             $this->keepAttachments($attachments);
         }
-
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
 
         return $this->declared($this->exampleResult);
     }
@@ -298,8 +288,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
         $subscriber = new ExampleSubscriber($this);
         DispatcherRegistry::dispatcher()->addSubscriber($subscriber);
 
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
-
         if ($this->pending) {
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->getTitle(), [], isPending: true, reason: $this->leftOutByFocus ? 'left out by focus' : null);
@@ -307,7 +295,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
                 $this->exampleResult->markLeftOutByFocus();
             }
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         }
 
@@ -328,7 +315,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
             $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
             $caught->stop();
@@ -337,7 +323,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
             $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
             // An undeclared call came first; its default answer may be what broke.
@@ -369,7 +354,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
         }
         $this->exampleResult->raised($caught->notes());
         $this->keepAttachments($attachments);
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;
     }
 

@@ -16,7 +16,6 @@ namespace PhpSpec\Extensions;
 
 use PhpSpec\Browser\Browser;
 use PhpSpec\Configuration;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Specification\Expectation;
@@ -39,6 +38,9 @@ final class ExtensionLoader
 
     /** @var Command[] */
     private array $commands = [];
+
+    /** @var list<ListenerExtension> */
+    private array $listeners = [];
 
     /** @var ToolProviderInterface[] */
     private array $toolProviders = [];
@@ -115,6 +117,16 @@ final class ExtensionLoader
     public function hasFormatter(string $name): bool
     {
         return isset($this->formatters[$name]);
+    }
+
+    /**
+     * The listener extensions the configuration names, for the run to tell.
+     *
+     * @return list<ListenerExtension>
+     */
+    public function getListeners(): array
+    {
+        return $this->listeners;
     }
 
     /**
@@ -212,7 +224,7 @@ final class ExtensionLoader
         }
         $instance = new $fqcn();
         if ($instance instanceof ListenerExtension) {
-            DispatcherRegistry::dispatcher()->addSubscriber(new ListenerBridge($instance));
+            $this->listeners[] = $instance;
         }
     }
 

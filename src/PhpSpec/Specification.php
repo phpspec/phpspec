@@ -16,8 +16,6 @@ namespace PhpSpec;
 
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\SpecificationFinished;
-use PhpSpec\EventDispatcher\Event\SpecificationStarted;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\SpecificationResult;
@@ -61,7 +59,6 @@ class Specification implements ExampleRegistry, SpecBlock
         // otherwise double up with the ones loadSubject() is about to register.
         $this->reset();
 
-        DispatcherRegistry::dispatcher()->dispatch(new SpecificationStarted($this->path), SpecificationStarted::NAME);
         CoverageRegistry::collector()?->beginSpec($this->path);
         FilterRegistry::current()?->beginSpec($this->path);
         LineTargetRegistry::beginSpec($this->path);
@@ -106,7 +103,7 @@ class Specification implements ExampleRegistry, SpecBlock
 
         $this->markSharedLines($blockResults, $declaredLines);
         $result = new SpecificationResult($this->getTitle(), $blockResults, $this->path);
-        DispatcherRegistry::dispatcher()->dispatch(new SpecificationFinished($this->getTitle()), SpecificationFinished::NAME);
+
         return $result;
     }
 

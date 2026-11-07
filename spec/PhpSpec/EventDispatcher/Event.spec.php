@@ -7,18 +7,11 @@ use PhpSpec\EventDispatcher\Event\ContextModified;
 use PhpSpec\EventDispatcher\Event\ExampleCreated;
 use PhpSpec\EventDispatcher\Event\ExampleErrored;
 use PhpSpec\EventDispatcher\Event\ExampleRunned;
-use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Event\ExpectationStarted;
 use PhpSpec\EventDispatcher\Event\ExpectationFailed;
 use PhpSpec\EventDispatcher\Event\ExpectationPassed;
 use PhpSpec\EventDispatcher\Event\MatchCreated;
 use PhpSpec\EventDispatcher\Event\Mock\MethodMocked;
-use PhpSpec\EventDispatcher\Event\ExampleCompleted;
-use PhpSpec\EventDispatcher\Event\SpecificationFinished;
-use PhpSpec\EventDispatcher\Event\SpecificationStarted;
-use PhpSpec\EventDispatcher\Event\SuiteFinished;
-use PhpSpec\EventDispatcher\Event\SuiteStarted;
-use PhpSpec\Result\ExampleResult;
 use PhpSpec\Specification\Context;
 use PhpSpec\Specification\Example;
 use PhpSpec\Specification\ExampleError;
@@ -92,14 +85,6 @@ describe("Event classes", function() {
         });
     });
 
-    context("ExampleStarted", function() {
-        it("returns its name and title", function() {
-            $event = new ExampleStarted("my test");
-            expect($event->getName())->toBe('example.started');
-            expect($event->getTitle())->toBe("my test");
-        });
-    });
-
     context("ExpectationStarted", function() {
         it("returns its name", function() {
             $event = new ExpectationStarted();
@@ -139,46 +124,6 @@ describe("Event classes", function() {
             expect($event->getDouble())->toBe($double);
             expect($event->getMockedMethod())->toBe($method);
             expect($event->getPrediction())->toBe(1);
-        });
-    });
-
-    context("SpecificationStarted", function() {
-        it("returns its name and path", function() {
-            $event = new SpecificationStarted("/path/to/spec.php");
-            expect($event->getName())->toBe('specification.started');
-            expect($event->getPath())->toBe("/path/to/spec.php");
-        });
-    });
-
-    context("SpecificationFinished", function() {
-        it("returns its name and title", function() {
-            $event = new SpecificationFinished("Calculator");
-            expect($event->getName())->toBe('specification.finished');
-            expect($event->getTitle())->toBe("Calculator");
-        });
-    });
-
-    context("SuiteStarted", function() {
-        it("returns its name", function() {
-            $event = new SuiteStarted();
-            expect($event->getName())->toBe('suite.started');
-        });
-    });
-
-    context("SuiteFinished", function() {
-        it("returns its name", function() {
-            $event = new SuiteFinished();
-            expect($event->getName())->toBe('suite.finished');
-        });
-    });
-
-    context("ExampleCompleted", function() {
-        it("returns its name, title, and result", function() {
-            $result = new ExampleResult("does something", []);
-            $event = new ExampleCompleted("does something", $result);
-            expect($event->getName())->toBe('example.completed');
-            expect($event->getTitle())->toBe("does something");
-            expect($event->getResult())->toBe($result);
         });
     });
 

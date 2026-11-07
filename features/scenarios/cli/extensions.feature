@@ -259,6 +259,121 @@ Feature: Extensions
     Then all examples should pass
     And the file "listener_output.txt" should contain "suite finished"
 
+  Scenario: A listener extension hears each example and each scenario as an Outcome
+    Given a phpspec.yaml config:
+      """
+      extensions:
+        listeners:
+          - App\HeardListener
+      autoload:
+        App\: src/App
+      """
+    And a class "src/App/HeardListener.php":
+      """
+      <?php
+      namespace App;
+
+      use PhpSpec\Extensions\ListenerExtension;
+      use PhpSpec\Result\Outcome;
+
+      class HeardListener extends ListenerExtension
+      {
+          public function onPass(Outcome $outcome): void
+          {
+              file_put_contents('heard.txt', "passed {$outcome->name()}\n", FILE_APPEND);
+          }
+
+          public function onFail(Outcome $outcome): void
+          {
+              file_put_contents('heard.txt', "failed {$outcome->name()} at {$outcome->failedAt}\n", FILE_APPEND);
+          }
+      }
+      """
+    And a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('adds', fn () => expect(1 + 1)->toBe(2));
+          it('subtracts', fn () => expect(2 - 1)->toBe(2));
+      });
+      """
+    And a feature file "features/calc.feature":
+      """
+      Feature: Calc
+        Scenario: Adds
+          Given a passing step
+        Scenario: Subtracts
+          Given a failing step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a passing step', fn () => expect(1)->toBe(1));
+      given('a failing step', fn () => expect(1)->toBe(2));
+      """
+    When I run phpspec run
+    And I run phpspec run with option "--story"
+    Then the file "heard.txt" should contain "passed Calc > adds"
+    And the file "heard.txt" should contain "failed Calc > subtracts at spec/App/Calc.spec.php:4"
+    And the file "heard.txt" should contain "passed Calc > Adds"
+    And the file "heard.txt" should contain "failed Calc > Subtracts at features/steps/steps.php:3"
+
+  Scenario: Under --parallel, a listener extension hears the suite once and each example once
+    Given a phpspec.yaml config:
+      """
+      extensions:
+        listeners:
+          - App\CountingListener
+      autoload:
+        App\: src/App
+      """
+    And a class "src/App/CountingListener.php":
+      """
+      <?php
+      namespace App;
+
+      use PhpSpec\Extensions\ListenerExtension;
+      use PhpSpec\Result\Outcome;
+
+      class CountingListener extends ListenerExtension
+      {
+          public function beforeSuite(): void
+          {
+              file_put_contents('heard.txt', "began\n", FILE_APPEND);
+          }
+
+          public function onPass(Outcome $outcome): void
+          {
+              file_put_contents('heard.txt', "heard {$outcome->name()}\n", FILE_APPEND);
+          }
+
+          public function afterSuite(): void
+          {
+              file_put_contents('heard.txt', "ended\n", FILE_APPEND);
+          }
+      }
+      """
+    And a spec file "spec/App/Left.spec.php":
+      """
+      <?php
+      describe('Left', function () {
+          it('works', fn () => expect(true)->toBeTrue());
+      });
+      """
+    And a spec file "spec/App/Right.spec.php":
+      """
+      <?php
+      describe('Right', function () {
+          it('works', fn () => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec run with option "--parallel=2"
+    Then all examples should pass
+    And the file "heard.txt" should contain "began" exactly 1 times
+    And the file "heard.txt" should contain "heard Left > works" exactly 1 times
+    And the file "heard.txt" should contain "heard Right > works" exactly 1 times
+    And the file "heard.txt" should contain "ended" exactly 1 times
+
   Scenario: Custom command extension
     Given a phpspec.yaml config:
       """

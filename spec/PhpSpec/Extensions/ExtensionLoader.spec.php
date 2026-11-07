@@ -87,8 +87,7 @@ describe(ExtensionLoader::class, function () {
         $loader = new ExtensionLoader($config, $fs);
         $loader->load();
 
-        // Listener was loaded — no exception thrown
-        expect(true)->toBeTrue();
+        expect(array_map(fn(ListenerExtension $listener) => $listener::class, $loader->getListeners()))->toBe([StubListener::class]);
     });
 
     it('loads tool provider extensions from config', function (Filesystem $fs) {

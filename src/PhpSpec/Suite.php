@@ -14,9 +14,6 @@
 
 namespace PhpSpec;
 
-use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\SuiteFinished;
-use PhpSpec\EventDispatcher\Event\SuiteStarted;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Specification\SpecBlock;
 
@@ -50,8 +47,6 @@ final readonly class Suite implements SpecBlock
      */
     public function stream(StopConditions $stop = new StopConditions(), ?int $seed = null): \Generator
     {
-        DispatcherRegistry::dispatcher()->dispatch(new SuiteStarted(), SuiteStarted::NAME);
-
         $specs = $seed === null ? $this->specifications : (new SeededShuffle($seed))->of($this->specifications);
 
         if ($stop->any()) {
@@ -71,7 +66,6 @@ final readonly class Suite implements SpecBlock
             StopRegistry::reset();
         }
 
-        DispatcherRegistry::dispatcher()->dispatch(new SuiteFinished(), SuiteFinished::NAME);
     }
 
     /**

@@ -57,10 +57,9 @@ Holds an array of `Specification` and `Feature` objects (both implement a common
 ### 6. Specification: `Specification`
 
 Represents a single `.spec.php` file. On `run()`:
-1. Dispatches `SpecificationStarted` event
-2. Creates a `Subject` (which `require_once`s the spec file, triggering the DSL functions)
-3. Runs each collected `SpecBlock` (Context or Example)
-4. Returns a `SpecificationResult`
+1. Creates a `Subject` (which `require_once`s the spec file, triggering the DSL functions)
+2. Runs each collected `SpecBlock` (Context or Example)
+3. Returns a `SpecificationResult`
 
 ### 7. Subject: `Subject`
 
@@ -78,11 +77,10 @@ Represents a `describe` or `context` block. Holds child `SpecBlock`s and lifecyc
 ### 9. Example: `Example`
 
 Represents an `it` block. On `run()`:
-1. Dispatches `ExampleStarted`
-2. Resolves type-hinted closure parameters as mocks
-3. Executes the closure (which calls `expect()` -> matchers)
-4. Dispatches `ExampleRunned`
-5. Returns an `ExampleResult` with collected `MatchResult`s
+1. Resolves type-hinted closure parameters as mocks
+2. Executes the closure (which calls `expect()` -> matchers)
+3. Dispatches `ExampleRunned`
+4. Returns an `ExampleResult` with collected `MatchResult`s
 
 ## Event Dispatcher
 
@@ -92,31 +90,30 @@ The `Dispatcher` uses a **scope stack** for structure building. DSL functions (`
 
 | Event | When |
 |---|---|
-| `SuiteStarted` | The suite begins running |
-| `SpecificationStarted` | A spec file begins running |
-| `SpecificationFinished` | A spec file finishes running |
 | `ContextCreated` | `describe()`/`context()` is called |
 | `ContextStarted` | A context block begins execution |
 | `ContextModified` | `this()` is called |
 | `ContextRan` | A context block finishes |
 | `ExampleCreated` | `it()`/`its()` is called |
-| `ExampleStarted` | An example begins execution |
 | `ExampleRunned` | An example finishes |
-| `ExampleCompleted` | An example's result has been recorded |
 | `ExampleErrored` | An exception is thrown during an example |
 | `ExpectationStarted` | `expect()` begins a match |
 | `MatchCreated` | A matcher registers a match closure |
 | `ExpectationPassed` | A match passes |
 | `ExpectationFailed` | A match fails |
 | `MethodMocked` | A mock expectation is set |
-| `SuiteFinished` | The suite finishes running |
 
 ### Subscribers
 
 Subscribers (in `EventDispatcher/Subscriber/`) react to events:
 
-- **`SpecificationSubscriber`**: Resets the subscribed `Specification` on `SpecificationStarted`, so each spec file builds its tree from a clean slate.
 - **`ExampleSubscriber`**: Collects `MatchCreated` closures, executes them on `ExampleRunned`, and builds the `ExampleResult`. Handles `ExampleErrored`.
+
+Reports read results, not events. The run hands each spec file's or feature's
+result to the formatter and to listener extensions as it arrives, from this
+process or from a parallel worker, and the result model says how each example
+and scenario ended (`ExampleResult::state()`, `ScenarioResult::decidingStep()`,
+and the `Outcome` an example or a scenario gives).
 
 ## Story BDD Pipeline
 

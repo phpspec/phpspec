@@ -36,6 +36,7 @@ use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
+use PhpSpec\Extensions\ListenerBridge;
 use PhpSpec\FileLoadException;
 use PhpSpec\FilterRegistry;
 use PhpSpec\Guard\Coverage;
@@ -966,6 +967,8 @@ final class Run extends Command implements InternalOptions
         }
 
         $formatter->begin();
+        $listeners = $this->listenersFor($formatter);
+        $listeners?->began();
 
         $start = hrtime(true);
         $accumulated = [];
@@ -1017,6 +1020,7 @@ final class Run extends Command implements InternalOptions
                 }
 
                 $formatter->printResult($result);
+                $listeners?->heard($result);
                 $accumulated[] = $result;
             }
         } finally {
@@ -1032,8 +1036,24 @@ final class Run extends Command implements InternalOptions
         $results = new SuiteResult($accumulated);
         $results->setDuration((hrtime(true) - $start) / 1e9);
         $formatter->end($results);
+        $listeners?->ended();
 
         return $results;
+    }
+
+    /**
+     * The listener extensions to tell what the run sees, none in a parallel
+     * worker: its results reach the run that started it, which tells them.
+     */
+    private function listenersFor(Formatter $formatter): ?ListenerBridge
+    {
+        $listeners = $this->extensionLoader?->getListeners() ?? [];
+
+        if ($listeners === [] || $formatter instanceof WireFormatter) {
+            return null;
+        }
+
+        return new ListenerBridge($listeners, new Outcomes(ProjectRoot::here()));
     }
 
     /**
