@@ -28,6 +28,33 @@ Feature: Parallel execution
     When I run phpspec run with option "--parallel"
     Then all examples should pass
 
+  Scenario: A parallel run leaves feature support code to the workers that run the features
+    Given a feature file "features/a_first.feature":
+      """
+      Feature: First
+        Scenario: Runs
+          Given a step
+      """
+    And a feature file "features/b_second.feature":
+      """
+      Feature: Second
+        Scenario: Runs
+          Given a step
+      """
+    And a file "features/support/env.php":
+      """
+      <?php
+      file_put_contents(__DIR__ . '/../../support.log', "loaded\n", FILE_APPEND);
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a step', fn () => expect(true)->toBeTrue());
+      """
+    When I run phpspec run with option "features/ --parallel=2"
+    Then all steps should pass
+    And the file "support.log" should contain "loaded" exactly 2 times
+
   Scenario: Explicit worker count
     Given a spec file "spec/App/WorkerCount.spec.php":
       """

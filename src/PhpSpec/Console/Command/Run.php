@@ -956,7 +956,9 @@ final class Run extends Command implements InternalOptions
         ArrangingCode::under(...$this->specCodeRoots($files));
 
         $tags = $input->getOption('tags');
-        $suite = $this->loader->load($files, $filter, is_string($tags) ? $tags : null);
+        $parallel = $input->getOption('parallel');
+        // A parallel run's workers load their own files; this one only finds them.
+        $suite = $parallel === false ? $this->loader->load($files, $filter, is_string($tags) ? $tags : null) : null;
 
         $stop = $this->stopConditions($input);
 
@@ -979,17 +981,16 @@ final class Run extends Command implements InternalOptions
             $start = hrtime(true);
             $accumulated = [];
 
-            $parallel = $input->getOption('parallel');
-            if ($parallel !== false) {
+            if ($suite === null) {
                 $workers = $parallel !== null ? (int) $parallel : null;
                 // Each file goes to one worker with everything its targets select
                 // in it, so a block two selectors name runs once, as it does here.
+                // The parent only finds the files: each worker loads its own,
+                // and selects by the filter and tags it is handed.
                 $targets = RunTargets::of($files);
                 $paths = [];
-                foreach ($suite->getSpecifications() as $spec) {
-                    if (method_exists($spec, 'getPath')) {
-                        $paths[$spec->getPath()] = $targets->targetsFor($spec->getPath());
-                    }
+                foreach ($this->loader->files($files) as $path) {
+                    $paths[$path] = $targets->targetsFor($path);
                 }
 
                 // Whether coverage is being collected, not whether the caller

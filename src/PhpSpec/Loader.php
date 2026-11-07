@@ -89,6 +89,34 @@ final class Loader
     }
 
     /**
+     * The spec and feature files the targets name, in the order a load finds
+     * them, found without loading any: no feature is parsed and no support or
+     * steps file is required, so nothing they do happens here.
+     *
+     * @param string|null $files the targets, comma-separated; ./spec when none
+     * @return list<string>
+     */
+    public function files(?string $files): array
+    {
+        $found = [];
+
+        foreach (array_keys(RunTargets::of($files ?: './spec')->each()) as $path) {
+            if (!$this->runsAsFeatures($path)) {
+                array_push($found, ...$this->specFiles($path));
+
+                continue;
+            }
+
+            $featureFiles = [];
+            $stepFiles = [];
+            $this->scanFeatures($path, $featureFiles, $stepFiles);
+            array_push($found, ...$featureFiles);
+        }
+
+        return $found;
+    }
+
+    /**
      * Whether a path runs as features: a .feature file, or the features root
      * or anything inside it, however either is spelled. Any other path runs
      * as specs, whatever words it holds.
@@ -188,26 +216,34 @@ final class Loader
     }
 
     /**
-     * Recursively scans a directory for *.spec.php files and creates Specification objects.
+     * The specifications under a path, in the order they are found.
      *
-     * @param string $directory root directory to scan
+     * @param string $directory a spec file, or a directory to scan
      * @return array<Specification>
      */
     private function loadSuite(string $directory): array
     {
-        $specifications = [];
+        return array_map($this->loadFile(...), $this->specFiles($directory));
+    }
 
-        if (!$this->fs->isFile($directory) && !$this->fs->isDir($directory)) {
+    /**
+     * The spec files a path names: itself, or every one under it, recursively.
+     *
+     * @return list<string>
+     */
+    private function specFiles(string $directory): array
+    {
+        if ($this->fs->isFile($directory)) {
+            return str_ends_with($directory, $this->specSuffix) ? [$directory] : [];
+        }
+
+        if (!$this->fs->isDir($directory)) {
             return [];
         }
 
-        if ($this->fs->isFile($directory)) {
-            return str_ends_with($directory, $this->specSuffix) ? [$this->loadFile($directory)] : [];
-        }
+        $files = [];
 
-        $files = $this->fs->scandir($directory);
-
-        foreach ($files as $file) {
+        foreach ($this->fs->scandir($directory) as $file) {
             if ($file === '.' || $file === '..') {
                 continue;
             }
@@ -215,14 +251,13 @@ final class Loader
             $filePath = self::join($directory, $file);
 
             if ($this->fs->isDir($filePath)) {
-                $subdirectoryFilePaths = $this->loadSuite($filePath);
-                $specifications = array_merge($specifications, $subdirectoryFilePaths);
+                array_push($files, ...$this->specFiles($filePath));
             } elseif ($this->fs->isFile($filePath) && str_ends_with($file, $this->specSuffix)) {
-                $specifications[] = $this->loadFile($filePath);
+                $files[] = $filePath;
             }
         }
 
-        return $specifications;
+        return $files;
     }
 
     /**

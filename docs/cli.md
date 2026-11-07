@@ -482,7 +482,10 @@ vendor/bin/phpspec run --parallel=4      # four workers
 Each worker runs a slice of the spec files in its own process, set up as the
 run was: the same php settings, and the extensions its command line loaded. A
 file given with `:LINE` or `@ID` selectors goes to one worker with all of
-them, so it runs what it would run alone, each block once.
+them, so it runs what it would run alone, each block once. The run that
+starts the workers only finds the files: each worker loads the ones it runs,
+so a `features/support` file runs in every worker that runs a feature, never
+in the process that started them.
 `php -d memory_limit=1G -d extension=pcov vendor/bin/phpspec run --parallel`
 gives every worker a 1G ceiling and PCOV. Extensions go over by name, so one
 loaded from a path outside `extension_dir` reaches a worker only if
