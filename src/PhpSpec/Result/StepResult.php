@@ -101,6 +101,34 @@ final class StepResult implements Results
     }
 
     /**
+     * What went wrong: the expectation that did not hold or the error the step
+     * threw; for an undefined step, that it is one. Nothing for a step that
+     * passed or was left out, whose reason says why.
+     */
+    public function message(): ?string
+    {
+        return match ($this->state()) {
+            State::Failed, State::Errored => $this->error?->getMessage(),
+            State::Undefined => 'Undefined step: ' . $this->title,
+            default => null,
+        };
+    }
+
+    /**
+     * Where the step went wrong: its expectation, or where its error says to
+     * look; nowhere for a step that did not go wrong, or whose definition is
+     * missing.
+     */
+    public function failedAt(): ?Location
+    {
+        return match ($this->state()) {
+            State::Failed => $this->match?->location(),
+            State::Errored => $this->error?->brokeAt(),
+            default => null,
+        };
+    }
+
+    /**
      * Checks whether this step passed.
      */
     public function isPassed(): bool

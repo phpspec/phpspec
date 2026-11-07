@@ -44,6 +44,39 @@ describe(ExampleResult::class, function() {
         ]))->toBe([State::Passed, State::Failed, State::Errored, State::Pending, State::Skipped, State::Risky, State::Errored, State::Pending, State::Skipped, State::Pending, State::Failed]);
     });
 
+    it("is written where it was declared, and nowhere until then", function() {
+        $result = new ExampleResult("adds", []);
+
+        expect($result->writtenAt())->toBeNull();
+
+        $result->declaredAt('/project/spec/Calc.spec.php', 12);
+
+        expect((string) $result->writtenAt())->toBe('/project/spec/Calc.spec.php:12');
+    });
+
+    it("failed at its first failing expectation, and nowhere when that site did not travel", function() {
+        $first = MatchResult::failed("a", "b", "first", __FILE__, $line = __LINE__);
+        $second = MatchResult::failed("c", "d", "second", __FILE__, __LINE__);
+
+        expect((string) (new ExampleResult("fails", [MatchResult::passed(), $first, $second]))->failedAt())->toBe(__FILE__ . ':' . $line);
+        expect((new ExampleResult("fails", [MatchResult::failed("a", "b", "lost", '', 0)]))->failedAt())->toBeNull();
+    });
+
+    it("broke where its error says to look, from the file it is declared in", function() {
+        $result = new ExampleResult("breaks", [], true);
+        $result->setError(ExampleError::fromReport("boom", "LogicException", "/project/vendor/acme/Client.php", 5, [['file' => '/project/src/App/Gateway.php', 'line' => 8], ['file' => '/project/spec/App/Basket.spec.php', 'line' => 7]]));
+        $result->declaredAt('/project/spec/App/Basket.spec.php', 3);
+
+        expect((string) $result->failedAt())->toBe('/project/spec/App/Basket.spec.php:7');
+    });
+
+    it("failed nowhere when it passed or was left out", function() {
+        $failing = MatchResult::failed("a", "b", "fail", __FILE__, __LINE__);
+
+        expect((new ExampleResult("passes", [MatchResult::passed()]))->failedAt())->toBeNull();
+        expect((new ExampleResult("waits", [$failing], isPending: true))->failedAt())->toBeNull();
+    });
+
     it("is an error when flagged", function() {
         $result = new ExampleResult("test", [], true);
         expect($result->isError())->toBe(true);

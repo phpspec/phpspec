@@ -142,6 +142,15 @@ final readonly class MatchResult implements Results
     }
 
     /**
+     * Where the expectation was made, or nowhere for one that passed or whose
+     * site did not travel with it.
+     */
+    public function location(): ?Location
+    {
+        return Location::at($this->getFile(), $this->getLine());
+    }
+
+    /**
      * Returns the expected value from a failed match, or null for passed results.
      */
     public function getExpected(): mixed
