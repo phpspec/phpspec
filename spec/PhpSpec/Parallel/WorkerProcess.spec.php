@@ -12,6 +12,25 @@ use PhpSpec\StopConditions;
 
 describe(WorkerProcess::class, function () {
 
+    context('listening to a worker', function () {
+        it('stops listening to a pipe the worker closed, so a wait is never woken by it again', function () {
+            $script = tempnam(sys_get_temp_dir(), 'phpspec_worker_spec_');
+            file_put_contents($script, '<?php echo "done\n";');
+            $worker = new WorkerProcess(['spec/App/Basket.spec.php' => ['spec/App/Basket.spec.php']], $script);
+            $worker->start();
+
+            $deadline = microtime(true) + 5;
+            while ($worker->pipes() !== [] && microtime(true) < $deadline) {
+                $worker->read();
+                usleep(1000);
+            }
+
+            expect($worker->pipes())->toBe([]);
+            $worker->getResults();
+            unlink($script);
+        });
+    });
+
     context('getResults with no output', function () {
         it('returns empty array when stdout is empty', function () {
             $worker = new WorkerProcess([], '/dev/null');

@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Parallel;
 
+use PhpSpec\ByReturnValue;
 use PhpSpec\Process\ChildPhp;
 use PhpSpec\Results;
 use PhpSpec\SeededShuffle;
@@ -21,7 +22,7 @@ use PhpSpec\StopConditions;
 
 /**
  * @internal
- * Runs spec files in parallel using child processes managed by Fibers for non-blocking I/O.
+ * Runs spec files in parallel in child processes, waiting on all of their output at once.
  *
  * Each worker process runs a partition of spec files via `phpspec run -f wire`
  * and reports each result back whole, on its own line, as it completes.
@@ -106,9 +107,8 @@ final class ParallelRunner
             $partitions[$i % $workerCount][$file] = $this->targets[$file];
         }
 
-        /** @var WorkerProcess[] $processes */
-        $processes = [];
-        $fibers = [];
+        /** @var array<int, WorkerProcess> $running */
+        $running = [];
 
         foreach ($partitions as $i => $partition) {
             $coveragePartial = null;
@@ -119,47 +119,61 @@ final class ParallelRunner
             }
 
             $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions);
-            $processes[] = $process;
+            $process->start();
+            $running[$i] = $process;
             $this->processes[] = $process;
-
-            $fiber = new \Fiber(function () use ($process) {
-                $process->start();
-                while ($process->isRunning()) {
-                    $process->read();
-                    \Fiber::suspend();
-                }
-                $process->read();
-                return $process->getResults();
-            });
-            $fiber->start();
-            $fibers[] = $fiber;
         }
 
-        while (!empty($fibers)) {
-            foreach ($fibers as $key => $fiber) {
-                if ($fiber->isSuspended()) {
-                    $fiber->resume();
-                }
+        while ($running !== []) {
+            $this->awaitOutput($running);
 
-                $results = $fiber->isTerminated() ? $fiber->getReturn() : $processes[$key]->takeResults();
-                foreach ($results as $result) {
+            foreach ($running as $key => $process) {
+                $process->read();
+                $done = !$process->isRunning();
+
+                foreach ($done ? $process->getResults() : $process->takeResults() as $result) {
                     yield $result;
+
                     if ($this->stop->metBy($result)) {
-                        foreach ($processes as $p) {
-                            $p->terminate();
+                        foreach ($this->processes as $stopped) {
+                            $stopped->terminate();
                         }
+
                         return;
                     }
                 }
 
-                if ($fiber->isTerminated()) {
-                    unset($fibers[$key]);
+                if ($done) {
+                    unset($running[$key]);
                 }
             }
-            if (!empty($fibers)) {
-                usleep(10000);
-            }
         }
+    }
+
+    /**
+     * Waits until any worker has something to say or has closed a pipe, and no
+     * longer than a tenth of a second, so a worker that exits without writing
+     * is still noticed.
+     *
+     * @param array<int, WorkerProcess> $running
+     */
+    private function awaitOutput(array $running): void
+    {
+        $read = array_merge(...array_values(array_map(static fn(WorkerProcess $process): array => $process->pipes(), $running)));
+
+        if ($read === []) {
+            usleep(1000);
+
+            return;
+        }
+
+        $write = null;
+        $except = null;
+
+        // A signal arriving mid-wait makes it warn and answer false: look again.
+        (new ByReturnValue())->call(static function () use (&$read, &$write, &$except): int|false {
+            return stream_select($read, $write, $except, 0, 100000);
+        });
     }
 
     /**

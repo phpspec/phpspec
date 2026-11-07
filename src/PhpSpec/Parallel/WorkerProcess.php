@@ -186,8 +186,23 @@ final class WorkerProcess
                         $this->stderr .= $content;
                     }
                 }
+
+                // A pipe the worker closed would wake every wait at once.
+                if (feof($pipe)) {
+                    $this->closePipe($pipe);
+                }
             }
         }
+    }
+
+    /**
+     * The pipes the worker may still write to, for a wait across workers.
+     *
+     * @return list<resource>
+     */
+    public function pipes(): array
+    {
+        return array_values(array_filter($this->pipes, 'is_resource'));
     }
 
     /**
@@ -343,6 +358,19 @@ final class WorkerProcess
             $content = stream_get_contents($this->pipes[2]);
             if ($content !== false && $content !== '') {
                 $this->stderr .= $content;
+            }
+        }
+    }
+
+    /**
+     * @param resource $pipe
+     */
+    private function closePipe($pipe): void
+    {
+        foreach ($this->pipes as $key => $open) {
+            if ($open === $pipe) {
+                fclose($open);
+                unset($this->pipes[$key]);
             }
         }
     }
