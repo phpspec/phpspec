@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 use PhpSpec\StoryBDD\StepError;
 
@@ -52,6 +53,12 @@ describe(StepResult::class, function () {
         expect((new StepResult("Given a printer", "skipped", "No printer here"))->isSkippedForAReason())->toBeTrue();
         expect((new StepResult("Then it prints", "skipped"))->isSkippedForAReason())->toBeFalse();
         expect((new StepResult("Given a printer", "pending", "later"))->isSkippedForAReason())->toBeFalse();
+    });
+
+    it("is in the state its run left it in", function () {
+        $states = array_map(fn(string $state) => (new StepResult("Given a step", $state))->state(), ['passed', 'failure', 'error', 'pending', 'undefined', 'skipped']);
+
+        expect($states)->toBe([State::Passed, State::Failed, State::Errored, State::Pending, State::Undefined, State::Skipped]);
     });
 
     it("returns the state string", function () {

@@ -86,6 +86,21 @@ final class StepResult implements Results
     }
 
     /**
+     * How the step ended.
+     */
+    public function state(): State
+    {
+        return match ($this->state) {
+            'failure' => State::Failed,
+            'error' => State::Errored,
+            'pending' => State::Pending,
+            'undefined' => State::Undefined,
+            'skipped' => State::Skipped,
+            default => State::Passed,
+        };
+    }
+
+    /**
      * Checks whether this step passed.
      */
     public function isPassed(): bool

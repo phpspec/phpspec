@@ -144,6 +144,22 @@ final class ExampleResult implements Results
     }
 
     /**
+     * How the example ended. Left out with pending() or skip() comes first, as
+     * its body never ran; then broken, then failing, then checking nothing.
+     */
+    public function state(): State
+    {
+        return match (true) {
+            $this->isPending => State::Pending,
+            $this->isSkipped => State::Skipped,
+            $this->isError => State::Errored,
+            $this->isFailure() => State::Failed,
+            $this->risky => State::Risky,
+            default => State::Passed,
+        };
+    }
+
+    /**
      * Checks whether any match result in this example is a failure.
      */
     public function isFailure(): bool

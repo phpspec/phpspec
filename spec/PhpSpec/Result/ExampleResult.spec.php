@@ -2,6 +2,7 @@
 
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Result\State;
 use PhpSpec\Specification\ExampleError;
 
 describe(ExampleResult::class, function() {
@@ -19,6 +20,28 @@ describe(ExampleResult::class, function() {
 
         $result = new ExampleResult("test", [$passing, $failing]);
         expect($result->isFailure())->toBe(true);
+    });
+
+    it("is in one state: left out before broken, broken before failing, failing before checking nothing", function() {
+        $failing = MatchResult::failed("a", "b", "fail", __FILE__, __LINE__);
+        $risky = new ExampleResult("checks nothing", []);
+        $risky->markRisky();
+        $riskyAndFailing = new ExampleResult("checks nothing and fails", [$failing]);
+        $riskyAndFailing->markRisky();
+
+        expect(array_map(fn(ExampleResult $result) => $result->state(), [
+            new ExampleResult("passes", [MatchResult::passed()]),
+            new ExampleResult("fails", [$failing]),
+            new ExampleResult("breaks", [], true),
+            new ExampleResult("waits", [], isPending: true),
+            new ExampleResult("skips", [], isSkipped: true),
+            $risky,
+            new ExampleResult("breaks and fails", [$failing], true),
+            new ExampleResult("waits and breaks", [], true, isPending: true),
+            new ExampleResult("skips and breaks", [$failing], true, isSkipped: true),
+            new ExampleResult("waits and skips", [], isPending: true, isSkipped: true),
+            $riskyAndFailing,
+        ]))->toBe([State::Passed, State::Failed, State::Errored, State::Pending, State::Skipped, State::Risky, State::Errored, State::Pending, State::Skipped, State::Pending, State::Failed]);
     });
 
     it("is an error when flagged", function() {
