@@ -199,7 +199,7 @@ final class ExampleResult implements Results
     public function failedAt(): ?Location
     {
         return match ($this->state()) {
-            State::Failed => $this->firstFailingMatch()?->location(),
+            State::Failed => $this->failingMatch()?->location(),
             State::Errored => $this->error?->brokeAt($this->file),
             default => null,
         };
@@ -210,7 +210,7 @@ final class ExampleResult implements Results
      */
     public function isFailure(): bool
     {
-        return $this->firstFailingMatch() !== null;
+        return $this->failingMatch() !== null;
     }
 
     /**
@@ -218,7 +218,7 @@ final class ExampleResult implements Results
      */
     public function getFailureMessage(): string
     {
-        return (string) $this->firstFailingMatch()?->getMessage();
+        return (string) $this->failingMatch()?->getMessage();
     }
 
     /**
@@ -358,7 +358,11 @@ final class ExampleResult implements Results
         return false;
     }
 
-    private function firstFailingMatch(): ?MatchResult
+    /**
+     * The first expectation that did not hold, for a reader that shows the
+     * values it compared; null when none failed.
+     */
+    public function failingMatch(): ?MatchResult
     {
         foreach ($this->matchResults as $matchResult) {
             if ($matchResult->isFailure()) {

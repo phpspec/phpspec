@@ -82,7 +82,11 @@ and what you act on. The steps that did not pass ride inside the entry, so one
 broken scenario is a single item naming the step that broke it, never a failure
 followed by a train of skipped siblings pointing at the same line. Each row of a
 Scenario Outline is its own entry, named by its values
-(`Adding > Adding numbers (1, 2)`).
+(`Adding > Adding numbers (1, 2)`). A scenario takes its state from the step
+that decides it (see [Step States](story-bdd.md#step-states)): `error` when a
+step, or a hook around it, threw; `failing` when an expectation did not hold;
+`pending` when a step is pending or has no definition, its `message` saying
+which.
 
 | Field | Meaning |
 |---|---|
@@ -90,7 +94,7 @@ Scenario Outline is its own entry, named by its values
 | `example` | The full name, as a path through every `describe` and `context` to the example, which is what `--filter` selects by: `App\Basket > when empty > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. A title a sibling before it already has is numbered, `totals the prices #2`, as every formatter names it. |
 | `state` | `failing`, `error`, `pending`, `skipped` or `risky` (ran without making an expectation); `passing` when it raised a PHP warning, deprecation or notice, and otherwise only under `-v`. |
 | `message` | What went wrong, whatever the state; for `pending` and `skipped`, the reason the example gave, when it gave one. An `error` entry keeps `exception` too, for the class and the site. |
-| `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing, pending or skipped example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
+| `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` names where it broke: the throw site when that is the project's code, else the spec line it came through. For a passing, pending or skipped example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. An `it()` in a loop declares several examples on one line, so each of those is targeted by its file and `id` instead: `run spec/App/Calc.spec.php@6fd046add251`. No full-suite re-run needed to verify one fix. It carries the `--config` the run was named and the `--bootstrap` it was given, so it runs against the same project; a config PhpSpec found by itself is found again from the same directory. An argument a shell would split or expand is single-quoted. Absent with `spec`. |
 | `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]` followed by the same `--config` and `--bootstrap`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
@@ -151,8 +155,8 @@ variadic parameter collected keeps its name, so a call written
 A **story step** that failed an expectation reports the same block, on the step
 inside `steps` (with `at`, the `file:line` of the expectation in your step file)
 and hoisted onto the entry next to `message`, so acting on the entry never means
-going a level deeper. A step whose code *threw* has a `message` and no
-expectation: there was none to report.
+going a level deeper. A step whose code *threw* is in `error`, with a `message`
+and `at` where it broke, and no expectation: there was none to report.
 
 **`error`** entries carry `exception` (`class`, `message`, `at`) as well. When
 the error names something PhpSpec can generate (a missing class, interface, or

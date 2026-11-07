@@ -274,6 +274,12 @@ then('the summary should state {string} as {string}', function (string $key, str
     expect(json_encode($summary[$key]))->toBe($value);
 });
 
+then('the reported entry\'s first step should be {string} at {string}', function (string $state, string $at) use ($events, $entries) {
+    $step = $entries($events($this->stdout ?? $this->output))[0]['steps'][0] ?? [];
+
+    expect([$step['state'] ?? null, $step['at'] ?? null])->toBe([$state, $at]);
+});
+
 then('the reported entry should be {string} at {string}', function (string $state, string $spec) use ($events, $entries) {
     $entry = $entries($events($this->stdout ?? $this->output))[0] ?? [];
 

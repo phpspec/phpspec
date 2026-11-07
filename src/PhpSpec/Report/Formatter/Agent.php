@@ -24,15 +24,15 @@ use PhpSpec\Report\FirstDifference;
 use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\Json;
 use PhpSpec\Report\Formatter\Agent\Offers;
-use PhpSpec\Report\Formatter\Agent\Origin;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Report\Formatter\Agent\ValueExporter;
-use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
-use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Result\Outcome;
+use PhpSpec\Result\Outcomes;
 use PhpSpec\Result\ScenarioResult;
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
@@ -51,6 +51,21 @@ final class Agent extends AbstractFormatter
 {
     /** The kinds of PHP note an entry or a step carries, each under its own key. */
     private const NOTE_KINDS = ['warnings', 'deprecations', 'notices'];
+
+    /**
+     * Each state in the document's words. A step no definition matches is work
+     * to write, as pending work is, so it reads as pending; the run still fails
+     * on it, and its message says it is undefined.
+     */
+    private const STATES = [
+        'passed' => 'passing',
+        'failed' => 'failing',
+        'errored' => 'error',
+        'pending' => 'pending',
+        'skipped' => 'skipped',
+        'risky' => 'risky',
+        'undefined' => 'pending',
+    ];
 
     /** @var list<string> what each reported entry re-runs, for the summary's one command */
     private array $rerunTargets = [];
@@ -114,6 +129,10 @@ final class Agent extends AbstractFormatter
 
     private ?string $stoppedBy = null;
 
+    private readonly ProjectRoot $root;
+
+    private readonly Outcomes $outcomes;
+
     /**
      * @param OutputInterface $output the stream the document goes to
      * @param \Closure(SuiteResult): mixed|null $resolveCandidates resolves the run's generation candidates
@@ -124,6 +143,8 @@ final class Agent extends AbstractFormatter
     {
         parent::__construct($output);
         $this->resolveCandidates = $resolveCandidates;
+        $this->root = ProjectRoot::here();
+        $this->outcomes = new Outcomes($this->root);
         $processEnd?->atEnd($this->ended(...));
     }
 
@@ -207,17 +228,24 @@ final class Agent extends AbstractFormatter
         ]);
     }
 
+    /**
+     * One entry per example or scenario. A scenario is the unit a story run
+     * reports: it is what fails, what re-runs, and what a reader acts on. Its
+     * steps ride inside it rather than becoming entries of their own, so one
+     * broken scenario is one thing to fix and not a failure plus a train of
+     * skipped siblings that address the same line.
+     */
     public function printResult(Results $result): void
     {
-        $origin = $this->within(new Origin(), $result);
+        $this->outcomes->walk($result, function (Outcome $outcome, ExampleResult|ScenarioResult $leaf): void {
+            if ($leaf instanceof ScenarioResult) {
+                $this->recordScenario($outcome, $leaf);
 
-        if ($result instanceof ScenarioResult) {
-            $this->recordScenario($result, $origin);
+                return;
+            }
 
-            return;
-        }
-
-        $this->collect($result, $origin);
+            $this->record($this->fromExample($outcome, $leaf));
+        });
     }
 
     /**
@@ -469,45 +497,6 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * The origin one level into a result: a context or feature adds its title
-     * (and a feature the file it lives in), a scenario adds its title and the
-     * line that re-runs it. A spec file adds nothing: an entry is named by the
-     * describes and contexts it sits in, the path a --filter selects by, and
-     * `spec` already says which file. Anything else passes the origin through.
-     */
-    private function within(Origin $origin, Results $result): Origin
-    {
-        return match (true) {
-            $result instanceof FeatureResult => $origin->within($result->getTitle(), $result->getPath()),
-            $result instanceof ScenarioResult => $origin->within($result->getTitle(), line: $result->getLine()),
-            $result instanceof ContextResult => $origin->within($result->getTitle()),
-            default => $origin,
-        };
-    }
-
-    /**
-     * Walks the result tree, emitting one entry per example/step and threading
-     * the origin down so each entry is named in full and knows where it lives.
-     */
-    private function collect(Results $results, Origin $origin): void
-    {
-        foreach ($results->getResults() as $child) {
-            if ($child instanceof ExampleResult) {
-                $this->record($this->fromExample($child, $origin));
-            } elseif ($child instanceof ScenarioResult) {
-                // A scenario is the unit a story run reports: it is what fails,
-                // what re-runs, and what a reader acts on. Its steps ride inside
-                // it rather than becoming entries of their own, so one broken
-                // scenario is one thing to fix and not a failure plus a train of
-                // skipped siblings that address the same line.
-                $this->recordScenario($child, $this->within($origin, $child));
-            } elseif ($child instanceof Results) {
-                $this->collect($child, $this->within($origin, $child));
-            }
-        }
-    }
-
-    /**
      * Counts an example by state, and reports it when it needs attention: a
      * green suite of thousands need not spend tokens on entries an agent will
      * never act on; the summary still counts them.
@@ -552,10 +541,10 @@ final class Agent extends AbstractFormatter
     /**
      * @return array<string, mixed>
      */
-    private function fromExample(ExampleResult $example, Origin $origin): array
+    private function fromExample(Outcome $outcome, ExampleResult $example): array
     {
-        $state = $this->exampleState($example);
-        $name = $origin->name($example->getTitle());
+        $state = self::STATES[$outcome->state->value];
+        $name = $outcome->name();
         $entry = [
             'v' => Schema::V,
             'event' => Schema::EVENT_EXAMPLE,
@@ -565,24 +554,25 @@ final class Agent extends AbstractFormatter
         ];
 
         if ($state === 'failing') {
-            $match = $this->failingMatch($example);
+            $match = $example->failingMatch();
             $entry += $this->expectation($match);
-            $entry['message'] = $example->getMessage();
+            $entry['message'] = $outcome->message;
             $this->address($entry, $example, $match?->getFile(), $match?->getLine());
             // No offer on a failure: the code exists and the behaviour is wrong,
             // there is nothing to generate — `state: failing` already says so.
         } elseif ($state === 'error') {
             $error = $example->getError();
             $entry['exception'] = [
-                'class' => $error?->getType(),
-                'message' => $error?->getMessage(),
-                'at' => $this->location($error?->getFile(), $error?->getLine()),
+                'class' => $outcome->errorType,
+                'message' => $outcome->message,
+                'at' => $outcome->failedAt === null ? null : (string) $outcome->failedAt,
             ];
             // Mirrored, so one field answers "what went wrong" whatever the
             // state: the exception adds the class and the site, not the text.
-            $entry['message'] = $error?->getMessage();
+            $entry['message'] = $outcome->message;
             $specLine = $error !== null && $example->getFile() !== null ? $error->lineIn($example->getFile()) : null;
-            $this->address($entry, $example, $specLine === null ? $error?->getFile() : $example->getFile(), $specLine ?? $error?->getLine());            // A missing class/method/interface the error names becomes a concrete
+            $this->address($entry, $example, $specLine === null ? $error?->getFile() : $example->getFile(), $specLine ?? $error?->getLine());
+            // A missing class/method/interface the error names becomes a concrete
             // offer to generate it, right on the example that hit it. Only present
             // when the error actually maps to something a generator can create.
             $offer = Offers::forError($error?->getMessage() ?? '');
@@ -590,15 +580,15 @@ final class Agent extends AbstractFormatter
                 $entry['offer'] = $offer;
             }
         } elseif ($state === 'pending' || $state === 'skipped') {
-            if ($example->getReason() !== null) {
-                $entry['message'] = $example->getReason();
+            if ($outcome->reason !== null) {
+                $entry['message'] = $outcome->reason;
             }
             if ($example->isLeftOutByFocus()) {
                 $this->focusedOut++;
             }
             $this->address($entry, $example, null, null);
         } elseif ($state === 'risky') {
-            $entry['message'] = 'No expectation in this example.';
+            $entry['message'] = $outcome->reason;
             $this->address($entry, $example, null, null);
         } elseif ($state === 'passing') {
             $this->address($entry, $example, null, null);
@@ -711,21 +701,6 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Maps an example to its agent state, in the precedence the counter uses.
-     */
-    private function exampleState(ExampleResult $example): string
-    {
-        return match (true) {
-            $example->isPending() => 'pending',
-            $example->isSkipped() => 'skipped',
-            $example->isError() => 'error',
-            $example->isFailure() => 'failing',
-            $example->isRisky() => 'risky',
-            default => 'passing',
-        };
-    }
-
-    /**
      * The expectation that did not hold, as the two values a reader compares.
      * Whatever failed, an example or a story step, it is reported the same way,
      * so nobody has to read a sentence back to find out what was wanted.
@@ -767,31 +742,16 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * The first failing expectation of an example, or null when none failed.
-     */
-    private function failingMatch(ExampleResult $example): ?MatchResult
-    {
-        foreach ($example->getResults() as $match) {
-            if ($match->isFailure()) {
-                return $match;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Records one scenario: counted whatever it did, and emitted when it needs
      * attention, carrying the steps that were not passing, or that raised a
      * PHP note, so the reader sees which one broke (or which are still
-     * undefined, or which warned) without a second lookup.
+     * undefined, or which warned) without a second lookup. What went wrong,
+     * and the values its deciding step did not match, are hoisted onto the
+     * entry, so a reader acting on it never has to go a level deeper.
      */
-    private function recordScenario(ScenarioResult $scenario, Origin $origin): void
+    private function recordScenario(Outcome $outcome, ScenarioResult $scenario): void
     {
         $steps = [];
-        $state = 'passing';
-        $message = null;
-        $expectation = [];
         $printed = '';
 
         foreach ($scenario->getResults() as $step) {
@@ -804,38 +764,29 @@ final class Agent extends AbstractFormatter
             // usually does it in a step that worked, and reads the result in the
             // one that broke.
             $printed .= $step->getOutput();
-            $stepState = $this->stepState($step);
-            $reported = $this->fromStep($step, $stepState);
+            $reported = $this->fromStep($step);
             $this->tally($reported);
 
-            if ($stepState === 'passing' && !$this->carriesNotes($reported)) {
-                continue;
-            }
-
-            $steps[] = $reported;
-            $state = self::worst($state, $stepState);
-            // The message and the expectation of the first step that broke are
-            // hoisted onto the scenario, so a reader acting on the entry never
-            // has to go a level deeper.
-            $message ??= is_string($reported['message'] ?? null) ? $reported['message'] : null;
-            if ($expectation === [] && isset($reported['expectation'])) {
-                $expectation = ['expectation' => $reported['expectation']];
+            if ($step->state() !== State::Passed || $this->carriesNotes($reported)) {
+                $steps[] = $reported;
             }
         }
 
+        $state = self::STATES[$outcome->state->value];
         $this->scenarioCount++;
         $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
 
         $entry = [
             'v' => Schema::V,
             'event' => Schema::EVENT_EXAMPLE,
-            'id' => $this->identify($origin->name, $origin->path),
-            'example' => $origin->name,
+            'id' => $this->identify($outcome->name(), $outcome->writtenAt?->file),
+            'example' => $outcome->name(),
             'state' => $state,
         ];
 
-        $entry += $expectation;
+        $entry += $this->expectation($scenario->decidingStep()?->getMatch());
 
+        $message = $outcome->message ?? $outcome->reason;
         if ($message !== null) {
             $entry['message'] = $message;
         }
@@ -848,13 +799,12 @@ final class Agent extends AbstractFormatter
         }
 
         // A scenario is addressed by the line its keyword sits on, which is what
-        // "file.feature:LINE" already selects, so a failing scenario re-runs on
-        // its own instead of dragging the whole story suite with it. A failure
-        // and a pass are addressed, as with examples: a scenario waiting on
-        // undefined steps is work to write, not work to re-run.
-        if ($state === 'failing' || $state === 'passing') {
-            $at = $this->location($origin->path, $origin->line);
-            $this->addLocation($entry, $at, $at);
+        // "file.feature:LINE" already selects, so a broken scenario re-runs on
+        // its own instead of dragging the whole story suite with it. A scenario
+        // waiting on undefined or pending steps is work to write, not work to
+        // re-run.
+        if (in_array($state, ['failing', 'error', 'passing'], true) && $outcome->writtenAt !== null) {
+            $this->addLocation($entry, (string) $outcome->writtenAt, (string) $outcome->writtenAt);
         }
 
         // A passing scenario lists only the steps that raised a note.
@@ -863,58 +813,31 @@ final class Agent extends AbstractFormatter
 
     /**
      * A step as its scenario's entry carries it: its state, what went wrong
-     * when something did, with the values an expectation did not match and
-     * the line it lives on, and the notes it raised.
+     * when something did or why it was left out, with the values an
+     * expectation did not match and the line it went wrong on, and the notes
+     * it raised.
      *
      * @return array<string, mixed>
      */
-    private function fromStep(StepResult $step, string $state): array
+    private function fromStep(StepResult $step): array
     {
-        $reported = ['title' => $step->getTitle(), 'state' => $state];
+        $reported = ['title' => $step->getTitle(), 'state' => self::STATES[$step->state()->value]];
 
-        if ($state === 'failing' && $step->getError() !== null) {
-            $reported['message'] = $step->getError()->getMessage();
-        } elseif ($step->getReason() !== null) {
-            $reported['message'] = $step->getReason();
+        $message = $step->message() ?? $step->getReason();
+        if ($message !== null) {
+            $reported['message'] = $message;
         }
 
-        $match = $step->getMatch();
-        if ($match !== null) {
-            $reported += $this->expectation($match);
-            $at = $this->location($match->getFile(), $match->getLine());
-            if ($at !== null) {
-                $reported['at'] = $at;
-            }
+        $reported += $this->expectation($step->getMatch());
+
+        $at = $step->failedAt()?->relativeTo($this->root);
+        if ($at !== null) {
+            $reported['at'] = (string) $at;
         }
 
         $this->attachNotes($reported, $step);
 
         return $reported;
-    }
-
-    /**
-     * A step's state in the document's vocabulary.
-     */
-    private function stepState(StepResult $step): string
-    {
-        return match (true) {
-            $step->isPending() || $step->isUndefined() => 'pending',
-            $step->isFailure() || $step->isError() => 'failing',
-            $step->isSkipped() => 'skipped',
-            default => 'passing',
-        };
-    }
-
-    /**
-     * The state a scenario takes from its steps: the one that most needs
-     * attention wins, so a scenario whose first step failed reads as failing
-     * however many of its steps were skipped behind it.
-     */
-    private static function worst(string $state, string $candidate): string
-    {
-        $order = ['passing' => 0, 'skipped' => 1, 'pending' => 2, 'failing' => 3];
-
-        return $order[$candidate] > $order[$state] ? $candidate : $state;
     }
 
     /**

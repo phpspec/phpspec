@@ -457,8 +457,8 @@ Feature: Agent output format
       """
     When I run phpspec run with option "--format=agent"
     Then the output should be valid JSON
-    And the reported entry "App\Server > App\Server" should have attached "server.log" containing "booted"
-    And the reported entry "App\Server > App\Server" should have attached "state" containing "stuck"
+    And the reported entry "App\Server" should have attached "server.log" containing "booted"
+    And the reported entry "App\Server" should have attached "state" containing "stuck"
 
   Scenario: A beforeFeature that passes hands over to each scenario that fails, the scenario's own winning
     Given a PSR-4 project with "spec", "src", and "features" directories
@@ -554,6 +554,28 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry "Server > Answers" should have attached "server.log" containing "booted"
     And the reported entry "Server > Answers" should have attached "state" containing "stuck"
+
+  Scenario: A scenario whose step threw is an error, the step placed where it broke
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/divide.feature":
+      """
+      Feature: Divide
+        Scenario: By zero
+          Given a breaking step
+      """
+    And a step file "features/steps/divide.steps.php":
+      """
+      <?php
+      given('a breaking step', function () {
+          throw new RuntimeException('division by zero');
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry should be "error" at "features/divide.feature:2"
+    And the reported entry's first step should be "error" at "features/steps/divide.steps.php:3"
+    And the summary should state "errors" as "1"
+    And the summary should state "failing" as "0"
 
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
