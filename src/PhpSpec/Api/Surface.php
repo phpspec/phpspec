@@ -14,7 +14,10 @@
 
 namespace PhpSpec\Api;
 
+use PhpSpec\Mock\CallCountExpectation;
+use PhpSpec\Mock\CallCountIntermediate;
 use PhpSpec\Mock\Expectation as MockExpectation;
+use PhpSpec\Mock\LastCallDouble;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Specification\Expectation;
 use ReflectionClass;
@@ -40,7 +43,7 @@ use ReflectionParameter;
  *     dsl: list<Entry>,
  *     matchers: list<Entry>,
  *     negation: Entry,
- *     mocks: array{functions: list<Entry>, expectations: list<Entry>, argument_matchers: list<Entry>},
+ *     mocks: array{functions: list<Entry>, stubs: list<Entry>, expectations: list<Entry>, counts: list<Entry>, note: string, argument_matchers: list<Entry>},
  *     story: array{steps: list<Entry>, hooks: list<Entry>, support: string},
  *     browser: array{functions: list<Entry>, note: string},
  *     docs: array<string, string>,
@@ -55,7 +58,16 @@ final readonly class Surface
         'xdescribe', 'xcontext', 'xit', 'fdescribe', 'fcontext', 'fit',
     ];
 
-    private const MOCK_FUNCTIONS = ['mock', 'allow'];
+    private const MOCK_FUNCTIONS = ['mock', 'dummy', 'allow'];
+
+    /** What allow() hands back, to say how the stubbed call answers. */
+    private const STUBS = [LastCallDouble::class => ['toReturn', 'andReturn', 'toReturnUsing', 'toThrow', 'ignoreOthers']];
+
+    /** What expect() adds to the matchers for a doubled call. */
+    private const MOCK_EXPECTATIONS = [MockExpectation::class => ['toReturn', 'andReturn', 'toThrow', 'toBeCalled', 'toHaveBeenCalled']];
+
+    /** The counts a call expectation takes, the last ending the ones that take a number. */
+    private const COUNTS = [CallCountExpectation::class => ['once', 'twice', 'exactly', 'atLeast', 'atMost'], CallCountIntermediate::class => ['times']];
 
     private const ARGUMENT_MATCHERS = ['any', 'type', 'anInstanceOf', 'arrayIncluding', 'satisfy', 'callback', 'startWith', 'cetera'];
 
@@ -105,7 +117,10 @@ final readonly class Surface
             'negation' => self::entry(new ReflectionMethod(Expectation::class, 'not')),
             'mocks' => [
                 'functions' => self::functions(self::MOCK_FUNCTIONS),
-                'expectations' => self::methods(MockExpectation::class),
+                'stubs' => self::named(self::STUBS),
+                'expectations' => self::named(self::MOCK_EXPECTATIONS),
+                'counts' => self::named(self::COUNTS),
+                'note' => 'A count follows toBeCalled() or toHaveBeenCalled(); exactly(), atLeast() and atMost() end in times(). A doubled call takes every matcher too, judging what it returned.',
                 'argument_matchers' => self::functions(self::ARGUMENT_MATCHERS),
             ],
             'story' => [
@@ -168,6 +183,25 @@ final readonly class Surface
     }
 
     /**
+     * The named methods of each class, in the order given.
+     *
+     * @param array<class-string, list<string>> $methodsByClass
+     * @return list<Entry>
+     */
+    private static function named(array $methodsByClass): array
+    {
+        $entries = [];
+
+        foreach ($methodsByClass as $class => $methods) {
+            foreach ($methods as $method) {
+                $entries[] = self::entry(new ReflectionMethod($class, $method));
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
      * @return Entry
      */
     private static function entry(ReflectionFunctionAbstract $function): array
@@ -188,13 +222,26 @@ final readonly class Surface
         $parameters = array_map(self::parameter(...), $function->getParameters());
         $return = $function->getReturnType();
 
-        return $function->getName() . '(' . implode(', ', $parameters) . ')' . ($return === null ? '' : ': ' . $return);
+        return $function->getName() . '(' . implode(', ', $parameters) . ')' . ($return === null ? '' : ': ' . self::type((string) $return, $function));
+    }
+
+    /**
+     * A type as written, self named by the class that declares it, as PHP
+     * itself reflects a return type from 8.5 on.
+     */
+    private static function type(string $type, ReflectionFunctionAbstract $function): string
+    {
+        if (!$function instanceof ReflectionMethod) {
+            return $type;
+        }
+
+        return (string) preg_replace('/\bself\b/', $function->getDeclaringClass()->getName(), $type);
     }
 
     private static function parameter(ReflectionParameter $parameter): string
     {
         $type = $parameter->getType();
-        $text = ($type === null ? '' : $type . ' ')
+        $text = ($type === null ? '' : self::type((string) $type, $parameter->getDeclaringFunction()) . ' ')
             . ($parameter->isPassedByReference() ? '&' : '')
             . ($parameter->isVariadic() ? '...' : '')
             . '$' . $parameter->getName();

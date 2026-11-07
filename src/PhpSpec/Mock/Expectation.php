@@ -78,6 +78,9 @@ final class Expectation extends BaseExpectation
         return $this;
     }
 
+    /**
+     * Another name for toReturn().
+     */
     public function andReturn(mixed $value): static
     {
         return $this->toReturn($value);

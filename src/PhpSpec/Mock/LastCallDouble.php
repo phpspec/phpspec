@@ -79,6 +79,9 @@ final class LastCallDouble implements MatchableDouble
         return $this;
     }
 
+    /**
+     * Another name for toReturn().
+     */
     public function andReturn(mixed $value): static
     {
         return $this->toReturn($value);

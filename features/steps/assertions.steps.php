@@ -544,3 +544,14 @@ then('a step file should be generated with step definitions', function () {
 then('no file {string} should be generated', function (string $path) {
     expect(file_exists($this->projectDir . '/' . $path))->toBeFalse();
 });
+
+$listsInMocks = static fn(string $key): Closure => function (string $names) use ($key) {
+    $mocks = json_decode($this->stdout ?? $this->output, true)['mocks'] ?? [];
+
+    expect(array_column($mocks[$key] ?? [], 'name'))->toBe(array_map('trim', explode(',', $names)));
+};
+
+then('the api should list the mock functions {string}', $listsInMocks('functions'));
+then('the api should list the stubs {string}', $listsInMocks('stubs'));
+then('the api should list the call counts {string}', $listsInMocks('counts'));
+then('the api should list the mock expectations {string}', $listsInMocks('expectations'));
