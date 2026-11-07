@@ -234,14 +234,22 @@ Compact one-character-per-example output:
 
 #### TAP Formatter
 
-Test Anything Protocol output:
+Test Anything Protocol output, one test point per example and per scenario,
+named as `--filter` matches it. Work left pending or skipped is `ok` with a
+`SKIP` directive and its reason; whatever fails the run is `not ok`, with what
+went wrong, the step that decided a scenario, and where it went wrong:
 
 ```
 TAP version 13
-1..5
-ok 1 - adds two numbers
-ok 2 - subtracts two numbers
-not ok 3 - divides by zero
+ok 1 - Calculator > adds two numbers
+ok 2 - Calculator > rounds # SKIP needs the rates API
+not ok 3 - Calculator > divides by zero
+  ---
+  message: Expected an exception to be thrown
+  at: spec/Calculator.spec.php:21
+  ...
+ok 4 - Checkout > Paying
+1..4
 ```
 
 #### JUnit XML Formatter

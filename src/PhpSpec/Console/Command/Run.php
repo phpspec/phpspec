@@ -1191,7 +1191,7 @@ final class Run extends Command implements InternalOptions
 
         return match ($format) {
             'dot' => new Dot($output, $nothingFound),
-            'tap' => new Tap($output),
+            'tap' => new Tap($output, new Outcomes(ProjectRoot::here())),
             'junit' => new Junit($output),
             'html' => new Html($output),
             'wire' => new WireFormatter($output),

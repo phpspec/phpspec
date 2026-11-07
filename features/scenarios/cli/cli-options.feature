@@ -1360,8 +1360,8 @@ Feature: CLI options
       });
       """
     When I run phpspec run with option "--format tap"
-    Then the output should contain "ok 1 - TapReasons is pending # SKIP Needs the rates API"
-    And the output should contain "ok 2 - TapReasons is skipped # SKIP No network on this machine"
+    Then the output should contain "ok 1 - TapReasons > is pending # SKIP Needs the rates API"
+    And the output should contain "ok 2 - TapReasons > is skipped # SKIP No network on this machine"
 
   Scenario: A run a stop option cut short says so
     Given a spec file "spec/App/Careful.spec.php":
@@ -1386,8 +1386,55 @@ Feature: CLI options
       """
     When I run phpspec run with option "--story --format tap"
     Then the output should contain "1..1"
-    And the output should contain "not ok 1 - Paying"
+    And the output should contain "not ok 1 - Shop > Paying"
     And the output should contain "Undefined step: When I pay"
+
+  Scenario: TAP judges a scenario as the run does, and says where one went wrong
+    Given a feature file "features/remote.feature":
+      """
+      Feature: Remote
+        Scenario: Skipped by its hook
+          Given a step
+        Scenario: Waits, then lacks a step
+          Given a pending step
+          Then a step nobody defined
+        Scenario: Fails
+          Given a failing step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      beforeScenario(function () {
+          static $first = true;
+          if ($first) {
+              $first = false;
+              skip('no network');
+          }
+      });
+      given('a step', fn () => expect(1)->toBe(1));
+      given('a pending step', fn () => pending('later'));
+      given('a failing step', fn () => expect(1)->toBe(2));
+      """
+    When I run phpspec run with option "--story --format tap"
+    Then the output should contain "ok 1 - Remote > Skipped by its hook # SKIP no network"
+    And the output should contain:
+      """
+      not ok 2 - Remote > Waits, then lacks a step
+        ---
+        message: "Undefined step: Then a step nobody defined"
+        step: Then a step nobody defined
+        ...
+      """
+    And the output should contain:
+      """
+      not ok 3 - Remote > Fails
+        ---
+        message: Expected 1 to be 2
+        step: Given a failing step
+        at: features/steps/steps.php:11
+        ...
+      """
+    And the exit code should be 1
 
   Scenario: JUnit carries the reason an example was left pending or skipped
     Given a spec file "spec/App/JunitReasons.spec.php":
