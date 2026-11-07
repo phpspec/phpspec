@@ -335,7 +335,8 @@ already failed keeps its failure, with the hook's error as a warning under it.
 | State | Color | Meaning |
 |---|---|---|
 | passed | green | Step executed successfully |
-| failed | red | Step threw an exception or expectation failed |
+| failed | red | An expectation in the step did not hold |
+| errored | red | The step, or a hook around it, threw |
 | pending | yellow | Step calls `pending()`, shown with the reason it gave |
 | undefined | blue | No matching step definition found |
 | skipped | cyan | Step calls `skip()`, shown with the reason it gave, or an earlier step did not pass |
@@ -346,6 +347,11 @@ run: each is skipped, or undefined when no definition matches it, so step
 generation offers every step the scenario lacks at once. A pending or skipped
 step is listed under `Pending:` or `Skipped:` at the end with its reason; a
 step skipped behind another is not, the one that stopped the scenario is.
+
+A scenario ends as its deciding step did: its first step that fails the run
+(failed, errored or undefined), whatever came before it, so the verdict
+agrees with the exit code; else its first step left pending or skipped on
+purpose, with that step's reason; else it passed.
 
 ## Running Features
 

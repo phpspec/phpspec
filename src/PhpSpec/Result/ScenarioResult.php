@@ -73,4 +73,55 @@ final readonly class ScenarioResult implements Results
     {
         return $this->stepResults;
     }
+
+    /**
+     * The step that decides how the scenario ended: its first step that fails
+     * the run, whatever came before it, so the verdict agrees with the exit
+     * code; else its first step left pending or skipped on purpose; none for a
+     * scenario that passed.
+     */
+    public function decidingStep(): ?StepResult
+    {
+        $leftOut = null;
+
+        foreach ($this->stepResults as $step) {
+            if ($step->state()->failsTheRun()) {
+                return $step;
+            }
+
+            if ($leftOut === null && ($step->isPending() || $step->isSkippedForAReason())) {
+                $leftOut = $step;
+            }
+        }
+
+        return $leftOut;
+    }
+
+    public function state(): State
+    {
+        return $this->decidingStep()?->state() ?? State::Passed;
+    }
+
+    public function message(): ?string
+    {
+        return $this->decidingStep()?->message();
+    }
+
+    public function reason(): ?string
+    {
+        return $this->decidingStep()?->getReason();
+    }
+
+    public function failedAt(): ?Location
+    {
+        return $this->decidingStep()?->failedAt();
+    }
+
+    /**
+     * How long its steps ran, in seconds.
+     */
+    public function getDuration(): float
+    {
+        return array_sum(array_map(static fn(StepResult $step): float => $step->getDuration(), $this->stepResults));
+    }
 }
