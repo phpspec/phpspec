@@ -374,6 +374,69 @@ Feature: Extensions
     And the file "heard.txt" should contain "heard Right > works" exactly 1 times
     And the file "heard.txt" should contain "ended" exactly 1 times
 
+  Scenario: A listener extension hears the suite end even when the run breaks down
+    Given a phpspec.yaml config:
+      """
+      extensions:
+        formatters:
+          - App\BreakingFormatter
+        listeners:
+          - App\ClosingListener
+      autoload:
+        App\: src/App
+      """
+    And a class "src/App/BreakingFormatter.php":
+      """
+      <?php
+      namespace App;
+
+      use PhpSpec\Extensions\FormatterExtension;
+      use PhpSpec\Result\Outcome;
+
+      class BreakingFormatter extends FormatterExtension
+      {
+          public function getName(): string
+          {
+              return 'breaking';
+          }
+
+          public function formatPass(Outcome $outcome): string
+          {
+              throw new \RuntimeException('the report broke');
+          }
+
+          public function formatFail(Outcome $outcome): string
+          {
+              throw new \RuntimeException('the report broke');
+          }
+      }
+      """
+    And a class "src/App/ClosingListener.php":
+      """
+      <?php
+      namespace App;
+
+      use PhpSpec\Extensions\ListenerExtension;
+
+      class ClosingListener extends ListenerExtension
+      {
+          public function afterSuite(): void
+          {
+              file_put_contents('closed.txt', 'suite ended');
+          }
+      }
+      """
+    And a spec file "spec/App/Closing.spec.php":
+      """
+      <?php
+      describe('Closing', function () {
+          it('passes', fn () => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec run with option "--format breaking"
+    Then the file "closed.txt" should contain "suite ended"
+    And the exit code should not be 0
+
   Scenario: Custom command extension
     Given a phpspec.yaml config:
       """

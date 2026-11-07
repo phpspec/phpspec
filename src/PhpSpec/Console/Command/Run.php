@@ -974,74 +974,78 @@ final class Run extends Command implements InternalOptions
         $listeners = $this->listenersFor($formatter);
         $listeners?->began();
 
-        $start = hrtime(true);
-        $accumulated = [];
-
-        $parallel = $input->getOption('parallel');
-        if ($parallel !== false) {
-            $workers = $parallel !== null ? (int) $parallel : null;
-            // Each file goes to one worker with everything its targets select
-            // in it, so a block two selectors name runs once, as it does here.
-            $targets = RunTargets::of($files);
-            $paths = [];
-            foreach ($suite->getSpecifications() as $spec) {
-                if (method_exists($spec, 'getPath')) {
-                    $paths[$spec->getPath()] = $targets->targetsFor($spec->getPath());
-                }
-            }
-
-            // Whether coverage is being collected, not whether the caller
-            // asked for a report: guard asks for coverage of its own, and a
-            // worker that was never told to dump it leaves the parent with
-            // nothing to judge.
-            $this->coverageDirectory = $collectingWith !== null ? TemporaryDirectory::create('phpspec_coverage_') : null;
-            $coveragePartialDir = $this->coverageDirectory?->path;
-
-            $parallelRunner = new ParallelRunner(
-                $paths,
-                $workers,
-                $stop,
-                coveragePartialDir: $coveragePartialDir,
-                childOptions: $this->childOptions($input),
-                filter: is_string($filter) ? $filter : null,
-                tags: is_string($tags) ? $tags : null,
-                phpOptions: $this->engines->switches($collectingWith),
-                seed: $seed,
-            );
-            $stream = $parallelRunner->stream();
-        } else {
-            $parallelRunner = null;
-            $stream = $this->runner->stream($suite, $stop, $seed);
-        }
-
-        $lineTargeted = RunTargets::of($files)->selectsWithin();
-
+        // Whatever stops the run, a listener told it began is told it ended.
         try {
-            foreach ($stream as $result) {
-                if (($filter !== null || $lineTargeted) && self::countLeaves($result) === 0) {
-                    continue;
+            $start = hrtime(true);
+            $accumulated = [];
+
+            $parallel = $input->getOption('parallel');
+            if ($parallel !== false) {
+                $workers = $parallel !== null ? (int) $parallel : null;
+                // Each file goes to one worker with everything its targets select
+                // in it, so a block two selectors name runs once, as it does here.
+                $targets = RunTargets::of($files);
+                $paths = [];
+                foreach ($suite->getSpecifications() as $spec) {
+                    if (method_exists($spec, 'getPath')) {
+                        $paths[$spec->getPath()] = $targets->targetsFor($spec->getPath());
+                    }
                 }
 
-                $formatter->printResult($result);
-                $listeners?->heard($result);
-                $accumulated[] = $result;
+                // Whether coverage is being collected, not whether the caller
+                // asked for a report: guard asks for coverage of its own, and a
+                // worker that was never told to dump it leaves the parent with
+                // nothing to judge.
+                $this->coverageDirectory = $collectingWith !== null ? TemporaryDirectory::create('phpspec_coverage_') : null;
+                $coveragePartialDir = $this->coverageDirectory?->path;
+
+                $parallelRunner = new ParallelRunner(
+                    $paths,
+                    $workers,
+                    $stop,
+                    coveragePartialDir: $coveragePartialDir,
+                    childOptions: $this->childOptions($input),
+                    filter: is_string($filter) ? $filter : null,
+                    tags: is_string($tags) ? $tags : null,
+                    phpOptions: $this->engines->switches($collectingWith),
+                    seed: $seed,
+                );
+                $stream = $parallelRunner->stream();
+            } else {
+                $parallelRunner = null;
+                $stream = $this->runner->stream($suite, $stop, $seed);
             }
+
+            $lineTargeted = RunTargets::of($files)->selectsWithin();
+
+            try {
+                foreach ($stream as $result) {
+                    if (($filter !== null || $lineTargeted) && self::countLeaves($result) === 0) {
+                        continue;
+                    }
+
+                    $formatter->printResult($result);
+                    $listeners?->heard($result);
+                    $accumulated[] = $result;
+                }
+            } finally {
+                FilterRegistry::reset();
+                LineTargetRegistry::reset();
+            }
+
+            if ($parallelRunner !== null) {
+                $this->coveragePartials = $parallelRunner->getCoveragePartials();
+                $this->coverageLost = $parallelRunner->lostCoverage();
+            }
+
+            $results = new SuiteResult($accumulated);
+            $results->setDuration((hrtime(true) - $start) / 1e9);
+            $formatter->end($results);
+
+            return $results;
         } finally {
-            FilterRegistry::reset();
-            LineTargetRegistry::reset();
+            $listeners?->ended();
         }
-
-        if ($parallelRunner !== null) {
-            $this->coveragePartials = $parallelRunner->getCoveragePartials();
-            $this->coverageLost = $parallelRunner->lostCoverage();
-        }
-
-        $results = new SuiteResult($accumulated);
-        $results->setDuration((hrtime(true) - $start) / 1e9);
-        $formatter->end($results);
-        $listeners?->ended();
-
-        return $results;
     }
 
     /**
