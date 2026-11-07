@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\ProjectRoot;
+use PhpSpec\Result\Kind;
 use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\State;
@@ -34,6 +36,15 @@ describe(ScenarioResult::class, function () {
         expect($verdict(new ScenarioResult('Waits, then its teardown breaks', [new StepResult('Given a', 'pending', 'later'), new StepResult('When c', 'skipped'), $hookBroke])))->toBe([State::Errored, 'boom (in afterScenario)', null]);
         expect($verdict(new ScenarioResult('Skipped by a hook', [new StepResult('Given a', 'skipped', 'no db'), new StepResult('Then b', 'skipped')])))->toBe([State::Skipped, null, 'no db']);
         expect($verdict(new ScenarioResult('Waits', [new StepResult('Given a', 'pending', 'not yet'), new StepResult('Then b', 'skipped')])))->toBe([State::Pending, null, 'not yet']);
+    });
+
+    it('tells its outcome under the name it is given, written at its line in its feature file, with the step that decided it', function () {
+        $root = ProjectRoot::at('/project');
+        $pending = new StepResult('When it rounds', 'pending', 'not yet');
+        $outcome = (new ScenarioResult('Rounds', [new StepResult('Given a', 'passed'), $pending], 12))->outcome(['Calc', 'Rounds'], '/project/features/calc.feature', $root);
+
+        expect([$outcome->kind, $outcome->titles, $outcome->state, $outcome->reason, $outcome->step, (string) $outcome->writtenAt])->toBe([Kind::Scenario, ['Calc', 'Rounds'], State::Pending, 'not yet', 'When it rounds', 'features/calc.feature:12']);
+        expect((new ScenarioResult('Rebuilt', [], 0))->outcome(['Rebuilt'], '/project/features/calc.feature', $root)->writtenAt)->toBeNull();
     });
 
     it('went wrong where the step that decided it did, and took as long as its steps', function () {

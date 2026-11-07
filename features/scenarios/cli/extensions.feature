@@ -73,6 +73,7 @@ Feature: Extensions
       namespace App;
 
       use PhpSpec\Extensions\FormatterExtension;
+      use PhpSpec\Result\Outcome;
 
       class MinimalFormatter extends FormatterExtension
       {
@@ -81,14 +82,14 @@ Feature: Extensions
               return 'minimal';
           }
 
-          public function formatPass(string $title): string
+          public function formatPass(Outcome $outcome): string
           {
-              return "OK: $title";
+              return "OK: {$outcome->name()}";
           }
 
-          public function formatFail(string $title, string $message): string
+          public function formatFail(Outcome $outcome): string
           {
-              return "FAIL: $title - $message";
+              return "FAIL: {$outcome->name()} - {$outcome->message}";
           }
       }
       """
@@ -102,8 +103,124 @@ Feature: Extensions
       });
       """
     When I run phpspec run with option "--format minimal"
-    Then the output should contain "OK: passes"
+    Then the output should contain "OK: FmtTest > passes"
+    And the output should contain "1 example (1 passed)"
     And the exit code should be 0
+
+  Scenario: A formatter extension hears each scenario of a story run, by its feature
+    Given a phpspec.yaml config:
+      """
+      extensions:
+        formatters:
+          - App\StoryFormatter
+      autoload:
+        App\: src/App
+      """
+    And a class "src/App/StoryFormatter.php":
+      """
+      <?php
+      namespace App;
+
+      use PhpSpec\Extensions\FormatterExtension;
+      use PhpSpec\Result\Outcome;
+
+      class StoryFormatter extends FormatterExtension
+      {
+          public function getName(): string
+          {
+              return 'stories';
+          }
+
+          public function formatPass(Outcome $outcome): string
+          {
+              return "OK: {$outcome->name()}";
+          }
+
+          public function formatFail(Outcome $outcome): string
+          {
+              return "FAIL: {$outcome->name()} - {$outcome->message}";
+          }
+      }
+      """
+    And a feature file "features/calc.feature":
+      """
+      Feature: Calc
+        Scenario: Adds
+          Given a passing step
+        Scenario: Subtracts
+          Given a failing step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a passing step', fn () => expect(1)->toBe(1));
+      given('a failing step', fn () => expect(1)->toBe(2));
+      """
+    When I run phpspec run with option "--story --format stories"
+    Then the output should contain "OK: Calc > Adds"
+    And the output should contain "FAIL: Calc > Subtracts - Expected 1 to be 2"
+    And the output should contain "2 scenarios (1 passed, 1 failed)"
+    And the exit code should be 1
+
+  Scenario: A formatter extension knows where an example or a scenario went wrong
+    Given a phpspec.yaml config:
+      """
+      extensions:
+        formatters:
+          - App\GithubFormatter
+      autoload:
+        App\: src/App
+      """
+    And a class "src/App/GithubFormatter.php":
+      """
+      <?php
+      namespace App;
+
+      use PhpSpec\Extensions\FormatterExtension;
+      use PhpSpec\Result\Outcome;
+
+      class GithubFormatter extends FormatterExtension
+      {
+          public function getName(): string
+          {
+              return 'github';
+          }
+
+          public function formatPass(Outcome $outcome): string
+          {
+              return "::debug::{$outcome->name()}";
+          }
+
+          public function formatFail(Outcome $outcome): string
+          {
+              return sprintf('::error file=%s,line=%d::%s', $outcome->failedAt?->file, $outcome->failedAt?->line, $outcome->name());
+          }
+      }
+      """
+    And a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('subtracts', function () {
+              expect(2 - 1)->toBe(2);
+          });
+      });
+      """
+    And a feature file "features/calc.feature":
+      """
+      Feature: Calc
+        Scenario: Subtracts
+          Given a failing step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a failing step', fn () => expect(1)->toBe(2));
+      """
+    When I run phpspec run with option "--format github"
+    Then the output should contain "::error file=spec/App/Calc.spec.php,line=4::Calc > subtracts"
+    When I run phpspec run with option "--story --format github"
+    Then the output should contain "::error file=features/steps/steps.php,line=2::Calc > Subtracts"
 
   Scenario: Custom listener extension
     Given a phpspec.yaml config:

@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Result;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Results;
 use PhpSpec\Specification\ExampleError;
 
@@ -157,6 +158,28 @@ final class ExampleResult implements Results
             $this->risky => State::Risky,
             default => State::Passed,
         };
+    }
+
+    /**
+     * How the example ended, under the name it is given, its places named from
+     * the project root.
+     *
+     * @param list<string> $titles the titles that lead to it, its own last
+     */
+    public function outcome(array $titles, ProjectRoot $root): Outcome
+    {
+        $state = $this->state();
+
+        return new Outcome(
+            Kind::Example,
+            $titles,
+            $state,
+            $state === State::Failed || $state === State::Errored ? $this->getMessage() : null,
+            $state === State::Risky ? 'no expectation' : $this->reason,
+            $this->failedAt()?->relativeTo($root),
+            $this->writtenAt()?->relativeTo($root),
+            $this->duration,
+        );
     }
 
     /**

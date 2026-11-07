@@ -8,6 +8,7 @@ use PhpSpec\Extensions\ListenerExtension;
 use PhpSpec\Extensions\MatcherExtension;
 use PhpSpec\Extensions\ToolProviderInterface;
 use PhpSpec\Filesystem;
+use PhpSpec\Result\Outcome;
 use PhpSpec\Specification\Expectation;
 
 describe(ExtensionLoader::class, function () {
@@ -351,14 +352,14 @@ class StubFormatter extends FormatterExtension
         return 'stub';
     }
 
-    public function formatPass(string $title): string
+    public function formatPass(Outcome $outcome): string
     {
-        return $title;
+        return $outcome->name();
     }
 
-    public function formatFail(string $title, string $message): string
+    public function formatFail(Outcome $outcome): string
     {
-        return "$title: $message";
+        return "{$outcome->name()}: {$outcome->message}";
     }
 }
 

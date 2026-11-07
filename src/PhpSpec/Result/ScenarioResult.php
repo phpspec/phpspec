@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Result;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Results;
 
 /**
@@ -115,6 +116,29 @@ final readonly class ScenarioResult implements Results
     public function failedAt(): ?Location
     {
         return $this->decidingStep()?->failedAt();
+    }
+
+    /**
+     * How the scenario ended, under the name it is given, written at its line
+     * in its feature file; its places named from the project root.
+     *
+     * @param list<string> $titles the titles that lead to it, its own last
+     */
+    public function outcome(array $titles, string $featurePath, ProjectRoot $root): Outcome
+    {
+        $deciding = $this->decidingStep();
+
+        return new Outcome(
+            Kind::Scenario,
+            $titles,
+            $this->state(),
+            $deciding?->message(),
+            $deciding?->getReason(),
+            $deciding?->failedAt()?->relativeTo($root),
+            Location::at($featurePath, $this->line)?->relativeTo($root),
+            $this->getDuration(),
+            $deciding?->getTitle(),
+        );
     }
 
     /**

@@ -49,6 +49,7 @@ use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Parallel\WireFormatter;
 use PhpSpec\Process\ChildPhp;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
@@ -61,6 +62,7 @@ use PhpSpec\Report\Formatter\Pretty;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Report\Formatter\Tap;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\Outcomes;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
@@ -1164,7 +1166,7 @@ final class Run extends Command implements InternalOptions
     private function createFormatter(string $format, Output $output, ?string $nothingFound = 'No specs found.'): Formatter
     {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
-            return new FormatterBridge($this->extensionLoader->getFormatter($format), $output);
+            return new FormatterBridge($this->extensionLoader->getFormatter($format), $output, new Outcomes(ProjectRoot::here()));
         }
 
         return match ($format) {

@@ -1,6 +1,8 @@
 <?php
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\Kind;
 use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\State;
 use PhpSpec\Specification\ExampleError;
@@ -75,6 +77,21 @@ describe(ExampleResult::class, function() {
 
         expect((new ExampleResult("passes", [MatchResult::passed()]))->failedAt())->toBeNull();
         expect((new ExampleResult("waits", [$failing], isPending: true))->failedAt())->toBeNull();
+    });
+
+    it("tells its outcome under the name it is given: what went wrong, why it was left out, where, and how long it took", function() {
+        $root = ProjectRoot::at('/project');
+        $failing = new ExampleResult("subtracts", [MatchResult::failed(1, 2, "Expected 1 to be 2", '/project/spec/Calc.spec.php', 8)]);
+        $failing->declaredAt('/project/spec/Calc.spec.php', 7);
+        $failing->setDuration(0.5);
+        $risky = new ExampleResult("checks nothing", []);
+        $risky->markRisky();
+        $outcome = $failing->outcome(['Calc', 'subtracts'], $root);
+
+        expect([$outcome->kind, $outcome->titles, $outcome->state, $outcome->message, $outcome->reason, $outcome->duration])->toBe([Kind::Example, ['Calc', 'subtracts'], State::Failed, "Expected 1 to be 2", null, 0.5]);
+        expect([(string) $outcome->failedAt, (string) $outcome->writtenAt])->toBe(['spec/Calc.spec.php:8', 'spec/Calc.spec.php:7']);
+        expect([(new ExampleResult("waits", [], isPending: true, reason: "not yet"))->outcome(['waits'], $root)->reason, $risky->outcome(['checks nothing'], $root)->reason])->toBe(["not yet", "no expectation"]);
+        expect((new ExampleResult("passes", [MatchResult::passed()]))->outcome(['passes'], $root)->message)->toBeNull();
     });
 
     it("is an error when flagged", function() {

@@ -50,7 +50,8 @@ Each entry is a fully-qualified class name. The class must implement the appropr
 
 ### Formatters
 
-Custom output formatters for spec results.
+Custom output formatters. Each example and each scenario reaches the formatter
+as an `Outcome`, by how it ended:
 
 ```php
 <?php
@@ -58,6 +59,7 @@ Custom output formatters for spec results.
 namespace Acme\PhpSpecGithub;
 
 use PhpSpec\Extensions\FormatterExtension;
+use PhpSpec\Result\Outcome;
 
 class GithubActionsFormatter extends FormatterExtension
 {
@@ -66,32 +68,48 @@ class GithubActionsFormatter extends FormatterExtension
         return 'github';
     }
 
-    public function formatPass(string $title): string
+    public function formatPass(Outcome $outcome): string
     {
-        return "::notice ::$title";
+        return "::notice ::{$outcome->name()}";
     }
 
-    public function formatFail(string $title, string $message): string
+    public function formatFail(Outcome $outcome): string
     {
-        return "::error ::$title - $message";
+        $at = $outcome->failedAt ?? $outcome->writtenAt;
+
+        return sprintf('::error file=%s,line=%d,title=%s::%s', $at?->file, $at?->line, $outcome->name(), $outcome->message);
     }
 
-    public function formatPending(string $title): string
+    public function formatPending(Outcome $outcome): string
     {
-        return "::warning ::$title (pending)";
-    }
-
-    public function formatError(string $title, string $message): string
-    {
-        return "::error ::$title - $message";
-    }
-
-    public function formatSummary(int $total, int $passed, int $failed, int $pending, int $errors): string
-    {
-        return sprintf('%d example%s (%d passed, %d failed, %d pending, %d errored)', $total, $total === 1 ? '' : 's', $passed, $failed, $pending, $errors);
+        return "::warning ::{$outcome->name()} ({$outcome->reason})";
     }
 }
 ```
+
+An `Outcome` carries:
+
+| Member | What it holds |
+|---|---|
+| `kind` | `Kind::Example` or `Kind::Scenario` |
+| `name()` | The titles that lead to it, joined as `--filter` matches them: `Calc > when empty > adds`, `Calc > Subtracts` |
+| `title()`, `titles` | Its own title; every title, its own last |
+| `state` | `State::Passed`, `Failed`, `Errored`, `Pending`, `Skipped`, `Risky` or `Undefined`; `failsTheRun()` says whether it fails the run |
+| `message` | What went wrong, for one that failed or errored, or a scenario with a step no definition matches |
+| `reason` | Why it was left pending or skipped, when it said; `no expectation` for a risky example |
+| `failedAt` | Where it went wrong, a `Location` with `file` (from the project root) and `line`: the failing expectation, or the project's code an error came from; null when nothing did |
+| `writtenAt` | Where it is written: its `it()` line, or its `Scenario:` line in the feature file |
+| `duration` | Seconds it took; a scenario's are its steps' |
+| `step` | For a scenario, the step that decided how it ended |
+
+A scenario ends as its deciding step did (see [Step States](story-bdd.md#step-states)).
+Each outcome reaches one method by its state: `formatPass` for passed and
+risky, `formatFail` for failed and undefined, `formatError` for errored,
+`formatPending` for pending and `formatSkipped` for skipped. `formatError`
+falls back to `formatFail` and `formatSkipped` to `formatPending`; override
+`format(Outcome $outcome)` to take every state in one place.
+`formatSummary(array $outcomes)` writes the closing line from every outcome it
+was handed: `2 examples, 3 scenarios (4 passed, 1 failed)` unless overridden.
 
 Use with `--format github` or set as default:
 
@@ -341,6 +359,7 @@ acme/phpspec-nyan-formatter/
 namespace Acme\PhpSpecNyanFormatter;
 
 use PhpSpec\Extensions\FormatterExtension;
+use PhpSpec\Result\Outcome;
 
 class NyanFormatter extends FormatterExtension
 {
@@ -349,14 +368,14 @@ class NyanFormatter extends FormatterExtension
         return 'nyan';
     }
 
-    public function formatPass(string $title): string
+    public function formatPass(Outcome $outcome): string
     {
-        return "~=[,,_,,]:3 $title";
+        return "~=[,,_,,]:3 {$outcome->name()}";
     }
 
-    public function formatFail(string $title, string $message): string
+    public function formatFail(Outcome $outcome): string
     {
-        return "=[,,_,,]= $title\n  $message";
+        return "=[,,_,,]= {$outcome->name()}\n  {$outcome->message}";
     }
 }
 ```
