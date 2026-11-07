@@ -362,6 +362,48 @@ Feature: Parallel execution
     And the output should not contain "Total:"
     And the exit code should be 1
 
+  Scenario: A worker whose files the filter selects nothing in still hands over its coverage
+    Given a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function name(): string
+          {
+              return 'Basket';
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe(Basket::class, function () {
+          it('is named', function () {
+              expect((new Basket())->name())->toBe('Basket');
+          });
+      });
+      """
+    And a spec file "spec/App/Other.spec.php":
+      """
+      <?php
+      describe('Other', function () {
+          it('is somewhere else', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--coverage --parallel=2 --filter=named"
+    Then the output should contain "1 example (1 passed)"
+    And the output should not contain "Coverage is incomplete"
+    And the output should not contain "matches --filter"
+    And the output should contain "Total:"
+
   Scenario: Workers run under the php settings the run was given
     Given a spec file "spec/App/First.spec.php":
       """

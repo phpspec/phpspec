@@ -346,7 +346,7 @@ final class Run extends Command implements InternalOptions
         // whole delta against a fraction of the coverage and cry wolf, and its
         // verdict would land in the middle of the report the parent parses.
         // The parent judges once, having merged what every worker collected.
-        $worker = $input->getOption('coverage-partial') !== null;
+        $worker = $formatter instanceof WireFormatter;
 
         // A guard section this cannot read leaves guard off, and off is exactly
         // what a typo must not be able to do quietly: the whole point of the
@@ -397,7 +397,9 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, $e->getMessage(), $e instanceof FileLoadException ? $e->remedy() : null);
         }
 
-        $emptied = $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given, $asked);
+        // A worker runs a slice of the run: whether the run selected anything
+        // is for the run that started it to say.
+        $emptied = $worker || $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given, $asked);
 
         if ($emptied !== null) {
             $status = $this->stopped($prose, $formatter, ...$emptied);
