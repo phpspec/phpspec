@@ -179,6 +179,7 @@ final class ExampleResult implements Results
             $this->failedAt()?->relativeTo($root),
             $this->writtenAt()?->relativeTo($root),
             $this->duration,
+            errorType: $state === State::Errored ? $this->error?->getType() : null,
         );
     }
 

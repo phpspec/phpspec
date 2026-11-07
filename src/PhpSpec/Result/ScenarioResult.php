@@ -138,6 +138,7 @@ final readonly class ScenarioResult implements Results
             Location::at($featurePath, $this->line)?->relativeTo($root),
             $this->getDuration(),
             $deciding?->getTitle(),
+            $deciding?->errorType(),
         );
     }
 

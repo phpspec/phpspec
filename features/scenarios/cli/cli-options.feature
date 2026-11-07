@@ -1436,6 +1436,52 @@ Feature: CLI options
       """
     And the exit code should be 1
 
+  Scenario: JUnit reports each scenario as one testcase, judged as the run judges it
+    Given a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Pays
+          Given a passing step
+        Scenario: Refunds
+          Given a failing step
+          Then a passing step
+        Scenario: Later
+          Given a pending step
+        Scenario: Unknown
+          Given a step nobody defined
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a passing step', fn () => expect(1)->toBe(1));
+      given('a failing step', fn () => expect(1)->toBe(2));
+      given('a pending step', fn () => pending('needs the gateway'));
+      """
+    When I run phpspec run with option "--story --format junit"
+    Then the output should contain:
+      """
+      <testsuite name="Shop" type="feature" file="features/shop.feature" tests="4" failures="2" errors="0" skipped="1"
+      """
+    And the output should contain:
+      """
+      <testcase name="Refunds" classname="Shop" file="features/shop.feature" line="4"
+      """
+    And the output should contain:
+      """
+      <failure message="Expected 1 to be 2">Expected 1 to be 2
+
+      features/steps/steps.php:3</failure>
+      """
+    And the output should contain:
+      """
+      <skipped message="needs the gateway"/>
+      """
+    And the output should contain:
+      """
+      <failure message="Undefined step: Given a step nobody defined">
+      """
+    And the output should not contain "Given a passing step"
+
   Scenario: JUnit carries the reason an example was left pending or skipped
     Given a spec file "spec/App/JunitReasons.spec.php":
       """

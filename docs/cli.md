@@ -262,11 +262,14 @@ vendor/bin/phpspec run --format=junit > results.xml
 
 Each spec is a `testsuite` and each example a `testcase` named by its title,
 with `classname` naming the file, the describe and the contexts around it
-(`HappyHour > HappyHour > at 5pm`, as the pretty sections name an example), so
-one title in two contexts reads apart. A feature is
-a `testsuite` of scenario suites, each step a `testcase` under its scenario. A
-pending or skipped case carries the reason as the `skipped` element's
-`message`. Every case and suite carries `time`, in seconds. PHP warnings,
+(`HappyHour > HappyHour > at 5pm`), so one title in two contexts reads apart. A
+feature is a `testsuite` and each scenario a `testcase` classed under the
+feature, judged as the run judges it: by its first step that fails the run, or
+else its first step left pending or skipped. Every case carries the `file` and
+`line` it is written at. A failure or error carries what went wrong and, under
+it, where; an error also the class it threw as `type`. A pending or skipped
+case carries the reason as the `skipped` element's `message`. Every case and
+suite carries `time`, in seconds. PHP warnings,
 deprecations and notices are left out, as PHPUnit's JUnit log leaves them out:
 the console, the HTML report and `--format=agent` carry them.
 

@@ -115,6 +115,14 @@ final class StepResult implements Results
     }
 
     /**
+     * The class of what the step threw, when it errored.
+     */
+    public function errorType(): ?string
+    {
+        return $this->state() === State::Errored ? $this->error?->getType() : null;
+    }
+
+    /**
      * Where the step went wrong: its expectation, or where its error says to
      * look; nowhere for a step that did not go wrong, or whose definition is
      * missing.

@@ -47,6 +47,17 @@ describe(ScenarioResult::class, function () {
         expect((new ScenarioResult('Rebuilt', [], 0))->outcome(['Rebuilt'], '/project/features/calc.feature', $root)->writtenAt)->toBeNull();
     });
 
+    it('names in its outcome the class of what its deciding step threw, when it errored', function () {
+        $root = ProjectRoot::at('/project');
+        $broken = new StepResult('When it divides', 'error');
+        $broken->setError(new StepError('division by zero', new \DivisionByZeroError('division by zero')));
+        $failing = new StepResult('Then it adds', 'failure');
+        $failing->setError(new StepError('Expected 1 to be 2', new \RuntimeException('Expected 1 to be 2')));
+
+        expect((new ScenarioResult('Divides', [$broken]))->outcome(['Divides'], '', $root)->errorType)->toBe('DivisionByZeroError');
+        expect((new ScenarioResult('Adds', [$failing]))->outcome(['Adds'], '', $root)->errorType)->toBeNull();
+    });
+
     it('went wrong where the step that decided it did, and took as long as its steps', function () {
         $failing = new StepResult('Then it adds', 'failure');
         $failing->setMatch(MatchResult::failed(1, 2, 'Expected 1 to be 2', __FILE__, $line = __LINE__));

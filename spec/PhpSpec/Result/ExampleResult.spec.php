@@ -94,6 +94,15 @@ describe(ExampleResult::class, function() {
         expect((new ExampleResult("passes", [MatchResult::passed()]))->outcome(['passes'], $root)->message)->toBeNull();
     });
 
+    it("names in its outcome the class of what it threw, when it errored", function() {
+        $root = ProjectRoot::at('/project');
+        $broken = new ExampleResult("breaks", [], true);
+        $broken->setError(new ExampleError("boom", new \LogicException("boom")));
+
+        expect($broken->outcome(['breaks'], $root)->errorType)->toBe('LogicException');
+        expect((new ExampleResult("passes", [MatchResult::passed()]))->outcome(['passes'], $root)->errorType)->toBeNull();
+    });
+
     it("is an error when flagged", function() {
         $result = new ExampleResult("test", [], true);
         expect($result->isError())->toBe(true);

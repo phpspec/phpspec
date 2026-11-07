@@ -27,6 +27,7 @@ final readonly class Outcome
      * @param string|null $message what went wrong, for one that failed, errored or lacks a step definition
      * @param string|null $reason why it was left pending or skipped, when it said, or that it checked nothing
      * @param string|null $step the step that decided a scenario, when one did
+     * @param string|null $errorType the class of what an errored one threw
      */
     public function __construct(
         public Kind $kind,
@@ -38,6 +39,7 @@ final readonly class Outcome
         public ?Location $writtenAt,
         public float $duration,
         public ?string $step = null,
+        public ?string $errorType = null,
     ) {}
 
     /**
