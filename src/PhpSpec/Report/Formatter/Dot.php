@@ -20,6 +20,7 @@ use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
@@ -32,6 +33,17 @@ use Symfony\Component\Console\Terminal;
  */
 final class Dot extends AbstractFormatter
 {
+    /** The character each state is marked with. */
+    private const MARKS = [
+        'passed' => '<fg=green>.</>',
+        'failed' => '<fg=red>F</>',
+        'errored' => '<fg=red>E</>',
+        'pending' => '<fg=yellow>P</>',
+        'skipped' => '<fg=cyan>S</>',
+        'risky' => '<fg=yellow>R</>',
+        'undefined' => '<fg=bright-blue>U</>',
+    ];
+
     private int $dotsPerLine = 60;
     private int $subtotalWidth = 3;
     private int $col = 0;
@@ -117,10 +129,8 @@ final class Dot extends AbstractFormatter
     private function printDots(Results $results): void
     {
         foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                $this->formatExample($result);
-            } elseif ($result instanceof StepResult) {
-                $this->formatStep($result);
+            if ($result instanceof ExampleResult || $result instanceof StepResult) {
+                $this->mark($result->state());
             } elseif ($result instanceof Results) {
                 $this->printDots($result);
             }
@@ -128,50 +138,11 @@ final class Dot extends AbstractFormatter
     }
 
     /**
-     * Outputs a single character representing the example's outcome.
+     * Outputs the character for how an example or a step ended.
      */
-    private function formatExample(ExampleResult $example): void
+    private function mark(State $state): void
     {
-        if ($example->isPending()) {
-            $this->output->write('<fg=yellow>P</>');
-        } elseif ($example->isSkipped()) {
-            $this->output->write('<fg=cyan>S</>');
-        } elseif ($example->isError()) {
-            $this->output->write('<fg=red>E</>');
-        } elseif ($example->isFailure()) {
-            $this->output->write('<fg=red>F</>');
-        } elseif ($example->isRisky()) {
-            $this->output->write('<fg=yellow>R</>');
-        } else {
-            $this->output->write('<fg=green>.</>');
-        }
-
-        $this->col++;
-        $this->total++;
-
-        if ($this->col >= $this->dotsPerLine) {
-            $this->printSubtotal();
-        }
-    }
-
-    /**
-     * Outputs a single character representing the step's outcome.
-     */
-    private function formatStep(StepResult $step): void
-    {
-        if ($step->isPending()) {
-            $this->output->write('<fg=yellow>P</>');
-        } elseif ($step->isUndefined()) {
-            $this->output->write('<fg=bright-blue>U</>');
-        } elseif ($step->isError()) {
-            $this->output->write('<fg=red>E</>');
-        } elseif ($step->isFailure()) {
-            $this->output->write('<fg=red>F</>');
-        } elseif ($step->isSkipped()) {
-            $this->output->write('<fg=cyan>S</>');
-        } else {
-            $this->output->write('<fg=green>.</>');
-        }
+        $this->output->write(self::MARKS[$state->value]);
 
         $this->col++;
         $this->total++;
