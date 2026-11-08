@@ -24,7 +24,7 @@ namespace PhpSpec\Coverage;
  */
 final class PerExampleCollector
 {
-    /** @var array<string, array<int, list<int>>> file path => line number => the numbers of the tests that ran it, each its place in $tests */
+    /** @var array<string, array<int, string>> file path => line number => the numbers of the tests that ran it, each its place in $tests, packed four bytes apiece: a large suite runs millions of pairs */
     private array $lines = [];
 
     /** @var array<string, int> test identifier => its number */
@@ -180,7 +180,7 @@ final class PerExampleCollector
     {
         $names = array_keys($this->tests);
 
-        return array_map(static fn(array $numbers): array => array_map(static fn(int $number): string => $names[$number], $numbers), $this->lines[$file] ?? []);
+        return array_map(static fn(string $numbers): array => array_map(static fn(int $number): string => $names[$number], array_values((array) unpack('V*', $numbers))), $this->lines[$file] ?? []);
     }
 
     /**
@@ -230,13 +230,13 @@ final class PerExampleCollector
      * names its tests by their place in the test list: a test's name, repeated
      * on every line it ran, would make the state many times the size.
      *
-     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string}>, lines: array<string, array<int, list<int>>>, aggregate: array<string, array<int, int>>}
+     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string}>, lines: array<string, array<int, string>>, aggregate: array<string, array<int, int>>}
      */
     public function toArray(): array
     {
         return [
             'tests' => $this->tests,
-            'lines' => $this->lines,
+            'lines' => array_map(static fn(array $lines): array => array_map(base64_encode(...), $lines), $this->lines),
             'aggregate' => $this->aggregate,
         ];
     }
@@ -247,7 +247,7 @@ final class PerExampleCollector
      * what the other process recorded is kept apart from this one's, to be
      * merged by what each of them compiled.
      *
-     * @param array{tests?: array<string, array{time: float, memory: int, spec_file: string}>, lines?: array<string, array<int, list<int>>>, aggregate?: array<string, array<int, int>>} $state state produced by toArray()
+     * @param array{tests?: array<string, array{time: float, memory: int, spec_file: string}>, lines?: array<string, array<int, string>>, aggregate?: array<string, array<int, int>>} $state state produced by toArray()
      */
     public function applyState(array $state): void
     {
@@ -260,7 +260,7 @@ final class PerExampleCollector
 
         foreach ($state['lines'] ?? [] as $file => $lines) {
             foreach ($lines as $lineNumber => $places) {
-                foreach ($places as $place) {
+                foreach ((array) unpack('V*', (string) base64_decode($places)) as $place) {
                     $this->ran($file, $lineNumber, ...$numbers[$place]);
                 }
             }
@@ -325,7 +325,7 @@ final class PerExampleCollector
     /**
      * Records the test's duration and peak memory.
      *
-     * @return array{int, bool} its number, and whether it had one already
+     * @return array{string, bool} its number, packed, and whether it had one already
      */
     private function credit(string $testId): array
     {
@@ -340,27 +340,28 @@ final class PerExampleCollector
     }
 
     /**
-     * The test's number, and whether it had one already: a test named again,
-     * as two examples of one title are, keeps the number it was given.
+     * The test's number, packed, and whether it had one already: a test named
+     * again, as two examples of one title are, keeps the number it was given.
      *
-     * @return array{int, bool}
+     * @return array{string, bool}
      */
     private function numbered(string $testId): array
     {
         $seen = isset($this->numbers[$testId]);
 
-        return [$this->numbers[$testId] ??= count($this->numbers), $seen];
+        return [pack('V', $this->numbers[$testId] ??= count($this->numbers)), $seen];
     }
 
     /**
      * Records that the test ran the line, once however often it is told.
      */
-    private function ran(string $file, int $lineNumber, int $number, bool $seen): void
+    private function ran(string $file, int $lineNumber, string $number, bool $seen): void
     {
-        if ($seen && in_array($number, $this->lines[$file][$lineNumber] ?? [], true)) {
+        if ($seen && in_array($number, str_split($this->lines[$file][$lineNumber] ?? '', 4), true)) {
             return;
         }
 
-        $this->lines[$file][$lineNumber][] = $number;
+        $this->lines[$file][$lineNumber] ??= '';
+        $this->lines[$file][$lineNumber] .= $number;
     }
 }

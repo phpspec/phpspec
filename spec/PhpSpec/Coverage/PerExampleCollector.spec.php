@@ -183,7 +183,28 @@ describe(PerExampleCollector::class, function () {
 
         $state = $collector->toArray();
         expect(array_keys($state['tests']))->toBe(['spec/App/Calculator.spec.php::adds', 'spec/App/Calculator.spec.php::subtracts']);
-        expect($state['lines'])->toBe(['/project/src/App/Calculator.php' => [12 => [0, 1]]]);
+        expect($state['lines'])->toBe(['/project/src/App/Calculator.php' => [12 => base64_encode(pack('V*', 0, 1))]]);
+    });
+
+    it('takes a test numbered past a byte from another process, and reads it back by name', function (CoverageDriver $driver) {
+        $names = array_map(static fn(int $number): string => "spec/A.spec.php::test {$number}", range(0, 299));
+        $tests = array_fill_keys($names, ['time' => 0.1, 'memory' => 1, 'spec_file' => 'spec/A.spec.php']);
+        $collector = new PerExampleCollector($driver);
+
+        $collector->applyState(['tests' => $tests, 'lines' => ['/project/src/A.php' => [7 => base64_encode(pack('V*', 299, 256, 3))]], 'aggregate' => []]);
+
+        expect($collector->linesOf('/project/src/A.php'))->toBe([7 => ['spec/A.spec.php::test 299', 'spec/A.spec.php::test 256', 'spec/A.spec.php::test 3']]);
+    });
+
+    it('adds a test named again to a line whose other tests only look like it, byte by byte', function (CoverageDriver $driver) {
+        $names = array_map(static fn(int $number): string => "spec/A.spec.php::test {$number}", range(0, 256));
+        $tests = array_fill_keys($names, ['time' => 0.1, 'memory' => 1, 'spec_file' => 'spec/A.spec.php']);
+        $collector = new PerExampleCollector($driver);
+
+        $collector->applyState(['tests' => $tests, 'lines' => ['/project/src/A.php' => [7 => base64_encode(pack('V*', 0, 1))]], 'aggregate' => []]);
+        $collector->applyState(['tests' => ['spec/A.spec.php::test 256' => $tests['spec/A.spec.php::test 256']], 'lines' => ['/project/src/A.php' => [7 => base64_encode(pack('V*', 0))]], 'aggregate' => []]);
+
+        expect($collector->linesOf('/project/src/A.php')[7])->toBe(['spec/A.spec.php::test 0', 'spec/A.spec.php::test 1', 'spec/A.spec.php::test 256']);
     });
 
     it('exports its state and merges state from another collector', function (CoverageDriver $driver, CoverageDriver $otherDriver) {
