@@ -143,9 +143,7 @@ final class PerExampleCollector
             return;
         }
 
-        $data = $this->driver->stop();
-        $this->aggregated($data);
-        $this->credit($this->testId($title), $data);
+        $this->collected($this->driver->stop(), $this->testId($title));
     }
 
     /**
@@ -159,7 +157,7 @@ final class PerExampleCollector
         }
 
         $this->pending = false;
-        $this->aggregated($this->driver->stop());
+        $this->collected($this->driver->stop());
     }
 
     /**
@@ -272,41 +270,73 @@ final class PerExampleCollector
     }
 
     /**
-     * Merges line hits into the aggregate, keeping the highest value per line.
+     * Merges what the driver recorded into the aggregate, crediting the test
+     * that ran it, when there is one, with every line it ran.
      *
-     * @param array<string, array<int, int>> $data file path => line => hit value
+     * @param array<string, array<int, int>> $data file => line => 1 for a line that ran, -1 for code that did not, -2 for a line that is not code
      */
-    private function aggregated(array $data): void
+    private function collected(array $data, ?string $testId = null): void
     {
+        $test = $testId === null ? null : $this->credit($testId);
+
         foreach ($data as $file => $lines) {
-            foreach ($lines as $lineNumber => $hit) {
-                $this->aggregate[$file][$lineNumber] = max($this->aggregate[$file][$lineNumber] ?? $hit, $hit);
+            // Searched natively: each cycle holds every line of every file
+            // compiled so far, of which a test runs a few.
+            $run = array_keys($lines, 1, true);
+            $this->aggregated($file, $lines, $run);
+
+            if ($test !== null) {
+                foreach ($run as $lineNumber) {
+                    $this->ran($file, $lineNumber, ...$test);
+                }
             }
         }
     }
 
     /**
-     * Records the test as having run every line it hit, with its duration and
-     * peak memory.
+     * Merges one file's lines into the aggregate, each at the most any cycle
+     * made of it: run, then code, then no code.
      *
-     * @param array<string, array<int, int>> $data what the driver collected while the test ran
+     * @param array<int, int> $lines line => 1, -1 or -2
+     * @param list<int> $run the lines among them that ran
      */
-    private function credit(string $testId, array $data): void
+    private function aggregated(string $file, array $lines, array $run): void
     {
-        [$number, $seen] = $this->numbered($testId);
+        if (!isset($this->aggregate[$file])) {
+            $this->aggregate[$file] = $lines;
+
+            return;
+        }
+
+        $noCode = array_keys($this->aggregate[$file], -2, true);
+        $this->aggregate[$file] += $lines;
+
+        foreach ($run as $lineNumber) {
+            $this->aggregate[$file][$lineNumber] = 1;
+        }
+
+        foreach ($noCode as $lineNumber) {
+            if (($lines[$lineNumber] ?? null) === -1) {
+                $this->aggregate[$file][$lineNumber] = -1;
+            }
+        }
+    }
+
+    /**
+     * Records the test's duration and peak memory.
+     *
+     * @return array{int, bool} its number, and whether it had one already
+     */
+    private function credit(string $testId): array
+    {
+        $test = $this->numbered($testId);
         $this->tests[$testId] = [
             'time' => (hrtime(true) - $this->startTime) / 1e9,
             'memory' => memory_get_peak_usage(),
             'spec_file' => (string) $this->specPath,
         ];
 
-        foreach ($data as $file => $lines) {
-            foreach ($lines as $lineNumber => $hit) {
-                if ($hit >= 1) {
-                    $this->ran($file, $lineNumber, $number, $seen);
-                }
-            }
-        }
+        return $test;
     }
 
     /**

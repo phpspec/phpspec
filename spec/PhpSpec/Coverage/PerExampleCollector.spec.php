@@ -104,6 +104,37 @@ describe(PerExampleCollector::class, function () {
         expect(array_keys($collector->getTests()))->toBe(['spec/App/Calculator.spec.php::Calculator > runs a spec']);
     });
 
+    it('keeps each line at the most any example made of it: run, then code, then no code', function (CoverageDriver $driver) {
+        allow($driver->start());
+        allow($driver->stop())->toReturnUsing(function () {
+            static $cycle = 0;
+            $cycle++;
+
+            return [
+                1 => ['/project/src/App/Calculator.php' => [12 => -1, 13 => -2, 14 => 1, 15 => -2]],
+                2 => ['/project/src/App/Calculator.php' => [12 => 1, 13 => -1, 14 => -1, 16 => -1], '/project/src/App/Other.php' => [3 => 1]],
+                3 => ['/project/src/App/Calculator.php' => [12 => -1, 13 => -2, 15 => -2, 17 => 1]],
+            ][$cycle];
+        });
+        $collector = new PerExampleCollector($driver);
+        $collector->beginSpec('spec/App/Calculator.spec.php');
+
+        foreach (['adds', 'subtracts', 'divides'] as $title) {
+            $collector->beginExample();
+            $collector->endExample($title);
+        }
+
+        expect($collector->getAggregate())->toBe([
+            '/project/src/App/Calculator.php' => [12 => 1, 13 => -1, 14 => 1, 15 => -2, 16 => -1, 17 => 1],
+            '/project/src/App/Other.php' => [3 => 1],
+        ]);
+        expect($collector->linesOf('/project/src/App/Calculator.php'))->toBe([
+            14 => ['spec/App/Calculator.spec.php::adds'],
+            12 => ['spec/App/Calculator.spec.php::subtracts'],
+            17 => ['spec/App/Calculator.spec.php::divides'],
+        ]);
+    });
+
     it('normalises away a leading ./ from the spec path in test identifiers', function (CoverageDriver $driver) {
         allow($driver->start());
         allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);
