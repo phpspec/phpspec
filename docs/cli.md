@@ -481,8 +481,9 @@ vendor/bin/phpspec run --parallel=4      # four workers
 
 Each worker runs in its own process, set up as the run was: the same php
 settings, and the extensions its command line loaded. It is handed one file at
-a time, the largest first, and the next as soon as it is through, so a slow
-file holds no other back. A file given with `:LINE` or `@ID` selectors goes to one worker with all
+a time and the next as soon as it is through, so a slow file holds no other
+back: the features first, the largest first, then the specs in the order they
+are found. A file given with `:LINE` or `@ID` selectors goes to one worker with all
 of them, so it runs what it would run alone, each block once. The run that
 starts the workers only finds the files: each worker loads the ones it runs,
 so a `features/support` file runs in every worker that runs a feature, never

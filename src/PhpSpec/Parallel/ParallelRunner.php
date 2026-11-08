@@ -55,7 +55,7 @@ final class ParallelRunner
      * @param string|null $filter the title filter to forward to workers
      * @param string|null $tags the tag expression to forward to workers
      * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off, after the settings it takes from this process
-     * @param int|null $seed the seed of a random run, which orders the files as they are handed to the workers, or null to hand the largest over first
+     * @param int|null $seed the seed of a random run, which orders the files as they are handed to the workers, or null to hand the features over first, the largest first, then the specs as found
      * @param bool $perExample whether the workers credit each covered line to the example that ran it, which only the JSON report reads
      */
     public function __construct(
@@ -109,10 +109,12 @@ final class ParallelRunner
         }
 
         $phpOptions = [...(new ChildPhp())->options(), ...$this->phpOptions];
-        // A random run hands the files over in the order its seed gives; any
-        // other hands the largest over first, so the longest to run is not
-        // the last to start.
-        $this->queue = $this->seed === null ? $this->largestFirst(array_keys($this->targets)) : (new SeededShuffle($this->seed))->of(array_keys($this->targets));
+        // A random run hands the files over in the order its seed gives. Any
+        // other hands the features over first, the largest first, since the
+        // scenarios a feature holds make it long, so the longest is not the
+        // last to start; then the specs as they were found, since a spec
+        // file's size says nothing of what its examples do.
+        $this->queue = $this->seed === null ? $this->featuresFirst(array_keys($this->targets)) : (new SeededShuffle($this->seed))->of(array_keys($this->targets));
 
         foreach (range(1, min($this->workers, count($this->queue))) as $number) {
             $process = new WorkerProcess($this->phpspecBin, $this->coveragePartial($number), $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions, $number, $this->perExample);
@@ -189,12 +191,13 @@ final class ParallelRunner
      * @param list<string> $files
      * @return list<string>
      */
-    private function largestFirst(array $files): array
+    private function featuresFirst(array $files): array
     {
-        $sizes = array_combine($files, array_map(static fn(string $file): int => is_file($file) ? (int) filesize($file) : 0, $files));
-        usort($files, static fn(string $one, string $other): int => $sizes[$other] <=> $sizes[$one]);
+        $features = array_values(array_filter($files, static fn(string $file): bool => str_ends_with($file, '.feature')));
+        $sizes = array_combine($features, array_map(static fn(string $file): int => is_file($file) ? (int) filesize($file) : 0, $features));
+        usort($features, static fn(string $one, string $other): int => $sizes[$other] <=> $sizes[$one]);
 
-        return $files;
+        return [...$features, ...array_values(array_diff($files, $features))];
     }
 
     private function coveragePartial(int $worker): ?string

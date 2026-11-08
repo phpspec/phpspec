@@ -51,8 +51,8 @@ describe(ParallelRunner::class, function () {
             }
         });
 
-        it('hands the largest file over first, so the longest to run is not the last to start', function () {
-            expect(($this->handed)(['a.spec.php' => 10, 'b.spec.php' => 30, 'c.spec.php' => 20, 'd.spec.php' => 30], null))->toBe(['b.spec.php', 'd.spec.php', 'c.spec.php', 'a.spec.php']);
+        it('hands the features over first, the largest first, then the specs in the order they were found', function () {
+            expect(($this->handed)(['a.spec.php' => 10, 'b.spec.php' => 30, 'c.feature' => 20, 'd.feature' => 40, 'e.feature' => 40], null))->toBe(['d.feature', 'e.feature', 'c.feature', 'a.spec.php', 'b.spec.php']);
         });
 
         it('hands the files over in the order the seed of a random run gives', function () {
