@@ -68,11 +68,10 @@ A dynamic-property object (`#[AllowDynamicProperties]`) that serves as `$this` i
 ### 8. Context: `Context`
 
 Represents a `describe` or `context` block. Holds child `SpecBlock`s and lifecycle hooks. On `run()`:
-1. Dispatches `ContextStarted`
-2. Executes the closure (which registers child blocks)
-3. Resolves focus (if any `fit`/`fdescribe`/`fcontext` exists, only focused children run)
-4. Runs `beforeAll` hooks, then each child with `beforeEach`/`afterEach` wrapping, then `afterAll` hooks
-5. Returns a `ContextResult`
+1. Executes the closure (which registers child blocks)
+2. Resolves focus (if any `fit`/`fdescribe`/`fcontext` exists, only focused children run)
+3. Runs `beforeAll` hooks, then each child with `beforeEach`/`afterEach` wrapping, then `afterAll` hooks
+4. Returns a `ContextResult`
 
 ### 9. Example: `Example`
 
@@ -90,24 +89,18 @@ The `Dispatcher` uses a **scope stack** for structure building. DSL functions (`
 
 | Event | When |
 |---|---|
-| `ContextCreated` | `describe()`/`context()` is called |
-| `ContextStarted` | A context block begins execution |
-| `ContextModified` | `this()` is called |
-| `ContextRan` | A context block finishes |
-| `ExampleCreated` | `it()`/`its()` is called |
 | `ExampleRunned` | An example finishes |
 | `ExampleErrored` | An exception is thrown during an example |
-| `ExpectationStarted` | `expect()` begins a match |
 | `MatchCreated` | A matcher registers a match closure |
-| `ExpectationPassed` | A match passes |
-| `ExpectationFailed` | A match fails |
-| `MethodMocked` | A mock expectation is set |
+| `AttachmentCreated` | `attach()` is called |
 
 ### Subscribers
 
-Subscribers (in `EventDispatcher/Subscriber/`) react to events:
+Subscribers react to events:
 
 - **`ExampleSubscriber`**: Collects `MatchCreated` closures, executes them on `ExampleRunned`, and builds the `ExampleResult`. Handles `ExampleErrored`.
+- **`StepMatchCollector`**: Collects the `MatchCreated` closures a step makes and evaluates them once it completes.
+- **`Attachments`**: Keeps what `attach()` hands over (`AttachmentCreated`), read only when the example or scenario does not pass.
 
 Reports read results, not events. The run hands each spec file's or feature's
 result to the formatter and to listener extensions as it arrives, from this

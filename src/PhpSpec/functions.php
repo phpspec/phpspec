@@ -14,8 +14,6 @@
 
 namespace {
     use PhpSpec\EventDispatcher\DispatcherRegistry;
-    use PhpSpec\EventDispatcher\Event\ContextCreated;
-    use PhpSpec\EventDispatcher\Event\ExampleCreated;
     use PhpSpec\Mock\MatchableDouble;
     use PhpSpec\Specification\Context;
     use PhpSpec\Specification\Example;
@@ -42,10 +40,6 @@ namespace {
             $scope->addSpecBlock($it);
         }
 
-        DispatcherRegistry::dispatcher()->dispatch(
-            new ExampleCreated($title, $it),
-            ExampleCreated::NAME,
-        );
     }
 
     /**
@@ -111,7 +105,6 @@ namespace {
             $scope->addSpecBlock($describe);
         }
 
-        DispatcherRegistry::dispatcher()->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
     }
 
     /**
@@ -213,10 +206,6 @@ namespace {
         $scope = DispatcherRegistry::dispatcher()->currentScope();
         $scope?->addSpecBlock($it);
 
-        DispatcherRegistry::dispatcher()->dispatch(
-            new ExampleCreated($title, $it),
-            ExampleCreated::NAME,
-        );
     }
 
     /**
@@ -233,7 +222,6 @@ namespace {
         $scope = DispatcherRegistry::dispatcher()->currentScope();
         $scope?->addSpecBlock($describe);
 
-        DispatcherRegistry::dispatcher()->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
     }
 
     /**
@@ -295,10 +283,6 @@ namespace {
         $scope = DispatcherRegistry::dispatcher()->currentScope();
         $scope?->addSpecBlock($it);
 
-        DispatcherRegistry::dispatcher()->dispatch(
-            new ExampleCreated($title, $it),
-            ExampleCreated::NAME,
-        );
     }
 
     /**
@@ -315,7 +299,6 @@ namespace {
         $scope = DispatcherRegistry::dispatcher()->currentScope();
         $scope?->addSpecBlock($describe);
 
-        DispatcherRegistry::dispatcher()->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
     }
 
     /**

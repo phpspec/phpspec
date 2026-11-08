@@ -20,8 +20,6 @@ use PhpSpec\Attachments;
 use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\ContextRan;
-use PhpSpec\EventDispatcher\Event\ContextStarted;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Mock\HeldCalls;
@@ -184,7 +182,6 @@ class Context implements ExampleRegistry, Rebindable, Titled
         CoverageRegistry::collector()?->pushContext($this->context);
 
         try {
-            DispatcherRegistry::dispatcher()->dispatch(new ContextStarted($this->numberedTitle()), ContextStarted::NAME);
             $this->collecting($attachments, function (): void {
                 DispatcherRegistry::dispatcher()->pushScope($this);
                 (new ArgumentlessFunction($this->specBlock))();
@@ -251,7 +248,6 @@ class Context implements ExampleRegistry, Rebindable, Titled
                 });
             }
         } catch (Throwable $e) {
-            DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->numberedTitle(), $this), ContextRan::NAME);
             $result = new ExampleResult($this->numberedTitle(), [], true);
             $error = $e instanceof ExampleError ? $e : new ExampleError($e->getMessage(), $e);
             $result->setError($error);
@@ -265,8 +261,6 @@ class Context implements ExampleRegistry, Rebindable, Titled
         } finally {
             CoverageRegistry::collector()?->popContext();
         }
-
-        DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->numberedTitle(), $this), ContextRan::NAME);
 
         return new ContextResult($this->numberedTitle(), $results);
     }

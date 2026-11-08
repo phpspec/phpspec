@@ -15,7 +15,6 @@
 namespace PhpSpec\Mock;
 
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\ExpectationStarted;
 use PhpSpec\EventDispatcher\Event\MatchCreated;
 use PhpSpec\Result\MatchResult;
 
@@ -50,7 +49,6 @@ final class CallCountExpectation
         private readonly bool $negated,
         private readonly ?array $argPattern,
     ) {
-        DispatcherRegistry::dispatcher()->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
         DispatcherRegistry::dispatcher()->dispatch(new MatchCreated(function () {
             return $this->evaluate();
         }), MatchCreated::NAME);

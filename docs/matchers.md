@@ -433,10 +433,9 @@ Stubs the mock method to return a value.
 
 Each matcher calls `EventfulExpectation::createMatchEvent()`, which:
 
-1. Dispatches an `ExpectationStarted` event
-2. Creates a lazy `MatchCreated` event containing a closure
-3. The closure evaluates the match and returns a `MatchResult` (passed or failed)
-4. The `ExampleSubscriber` collects these match closures and executes them when the example finishes
+1. Judges the match on the line it is written, into a `MatchResult` (passed or failed)
+2. Dispatches a `MatchCreated` event carrying a closure that returns it
+3. The `ExampleSubscriber` collects these closures and reads them when the example finishes
 
 Failed matches carry a `Detail\Failed` object with expected/actual values, formatted message, file path, line number, and surrounding source code.
 

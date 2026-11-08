@@ -1,71 +1,11 @@
 <?php
 
-use PhpSpec\EventDispatcher\Event\ContextCreated;
-use PhpSpec\EventDispatcher\Event\ContextRan;
-use PhpSpec\EventDispatcher\Event\ContextStarted;
-use PhpSpec\EventDispatcher\Event\ContextModified;
-use PhpSpec\EventDispatcher\Event\ExampleCreated;
 use PhpSpec\EventDispatcher\Event\ExampleErrored;
 use PhpSpec\EventDispatcher\Event\ExampleRunned;
-use PhpSpec\EventDispatcher\Event\ExpectationStarted;
-use PhpSpec\EventDispatcher\Event\ExpectationFailed;
-use PhpSpec\EventDispatcher\Event\ExpectationPassed;
 use PhpSpec\EventDispatcher\Event\MatchCreated;
-use PhpSpec\EventDispatcher\Event\Mock\MethodMocked;
-use PhpSpec\Specification\Context;
-use PhpSpec\Specification\Example;
 use PhpSpec\Specification\ExampleError;
-use PhpSpec\Mock\MockedMethod;
 
 describe("Event classes", function() {
-
-    context("ContextCreated", function() {
-        it("returns its name, title, and context", function() {
-            $ctx = new Context("MyContext", function() {});
-            $event = new ContextCreated("MyContext", $ctx);
-            expect($event->getName())->toBe('context.created');
-            expect($event->getTitle())->toBe("MyContext");
-            expect($event->getContext())->toBe($ctx);
-        });
-    });
-
-    context("ContextRunned", function() {
-        it("returns its name, title, and context", function() {
-            $ctx = new Context("MyContext", function() {});
-            $event = new ContextRan("MyContext", $ctx);
-            expect($event->getName())->toBe('context.ran');
-            expect($event->getTitle())->toBe("MyContext");
-            expect($event->getContext())->toBe($ctx);
-        });
-    });
-
-    context("ContextStarted", function() {
-        it("returns its name and title", function() {
-            $event = new ContextStarted("MyContext");
-            expect($event->getName())->toBe('context.started');
-            expect($event->getTitle())->toBe("MyContext");
-        });
-    });
-
-    context("ContextModified", function() {
-        it("returns its name, property, and setter", function() {
-            $setter = fn() => 42;
-            $event = new ContextModified("myProp", $setter);
-            expect($event->getName())->toBe('context.modified');
-            expect($event->getProperty())->toBe("myProp");
-            expect($event->getSetter())->toBe($setter);
-        });
-    });
-
-    context("ExampleCreated", function() {
-        it("returns its name, title, and example", function() {
-            $ex = new Example("does something", function() {});
-            $event = new ExampleCreated("does something", $ex);
-            expect($event->getName())->toBe('example.created');
-            expect($event->getTitle())->toBe("does something");
-            expect($event->getExample())->toBe($ex);
-        });
-    });
 
     context("ExampleErrored", function() {
         it("returns its name, title, and error", function() {
@@ -85,27 +25,6 @@ describe("Event classes", function() {
         });
     });
 
-    context("ExpectationStarted", function() {
-        it("returns its name", function() {
-            $event = new ExpectationStarted();
-            expect($event->getName())->toBe('expectation.started');
-        });
-    });
-
-    context("ExpectationFailed", function() {
-        it("returns its name", function() {
-            $event = new ExpectationFailed();
-            expect($event->getName())->toBe('expectation.failed');
-        });
-    });
-
-    context("ExpectationPassed", function() {
-        it("returns its name", function() {
-            $event = new ExpectationPassed();
-            expect($event->getName())->toBe('expectation.passed');
-        });
-    });
-
     context("MatchCreated", function() {
         it("returns its name and match closure", function() {
             $match = fn() => true;
@@ -114,17 +33,4 @@ describe("Event classes", function() {
             expect($event->getMatch())->toBe($match);
         });
     });
-
-    context("MethodMocked", function() {
-        it("returns its name, double, mocked method, and prediction", function() {
-            $double = new \stdClass();
-            $method = new MockedMethod($double, "save");
-            $event = new MethodMocked($double, $method, 1);
-            expect($event->getName())->toBe('method.mocked');
-            expect($event->getDouble())->toBe($double);
-            expect($event->getMockedMethod())->toBe($method);
-            expect($event->getPrediction())->toBe(1);
-        });
-    });
-
 });

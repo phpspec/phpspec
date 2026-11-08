@@ -16,9 +16,7 @@ namespace PhpSpec\Mock;
 
 use Closure;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\ExpectationStarted;
 use PhpSpec\EventDispatcher\Event\MatchCreated;
-use PhpSpec\EventDispatcher\Event\Mock\MethodMocked;
 use PhpSpec\Result\MatchResult;
 use PhpSpec\Specification\Expectation as BaseExpectation;
 
@@ -117,7 +115,6 @@ final class Expectation extends BaseExpectation
         $methodName = $method->method;
         $double->______PhpSpecArrange($methodName, 'expected');
         $method->unCall();
-        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
         if ($calls->countCallsToWithArgs($methodName, $method->arguments) > 0) {
             HeldCalls::claim($double, $methodName, null);
@@ -166,7 +163,6 @@ final class Expectation extends BaseExpectation
         $double->______PhpSpecArrange($methodName, 'checked');
         $method->unCall();
         $argPattern = $method->arguments;
-        DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
         // A failing check names every call to the method, so it claims them all.
         $made = $calls->countCallsToWithArgs($methodName, $argPattern) >= 1;
@@ -254,14 +250,13 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Dispatches ExpectationStarted and MatchCreated events for a match closure.
+     * Dispatches the MatchCreated event for a match closure.
      *
      * @param mixed $match closure that returns a MatchResult
      * @return $this
      */
     private function expectation($match): static
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
         DispatcherRegistry::dispatcher()->dispatch(new MatchCreated($match), MatchCreated::NAME);
         return $this;
     }
