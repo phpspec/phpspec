@@ -17,6 +17,7 @@ namespace PhpSpec\Parallel;
 use PhpSpec\ByReturnValue;
 use PhpSpec\Process\ChildPhp;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\LoadingNotes;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Results;
 use PhpSpec\SeededShuffle;
@@ -123,7 +124,13 @@ final class ParallelRunner
             $this->processes[] = $process;
         }
 
+        // Every worker loads the files it needs; a run reports what they raise
+        // doing so once, as it would in one process.
+        $loading = new LoadingNotes();
+
         foreach ($this->results() as $result) {
+            $loading->keepFirstIn($result);
+
             yield $result;
 
             if ($this->stop->metBy($result)) {

@@ -255,6 +255,21 @@ describe(ExampleResult::class, function() {
         expect($result->getNotices())->toBe([$notice]);
     });
 
+    it("keeps only the notes it is told to, of every kind", function() {
+        $result = new ExampleResult("test", []);
+        $result->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'keep', 'file' => 'a.php', 'line' => 1],
+            ['severity' => E_USER_WARNING, 'message' => 'drop', 'file' => 'a.php', 'line' => 2],
+            ['severity' => E_USER_NOTICE, 'message' => 'drop', 'file' => 'a.php', 'line' => 3],
+            ['severity' => E_USER_DEPRECATED, 'message' => 'drop', 'file' => 'a.php', 'line' => 4],
+        ]);
+
+        $result->keepNotes(static fn(array $note): bool => $note['message'] === 'keep');
+
+        expect(array_column($result->getWarnings(), 'message'))->toBe(['keep']);
+        expect([...$result->getNotices(), ...$result->getDeprecations()])->toBe([]);
+    });
+
     it("is not a context", function() {
         $result = new ExampleResult("test", []);
         expect($result->isContext())->toBe(false);

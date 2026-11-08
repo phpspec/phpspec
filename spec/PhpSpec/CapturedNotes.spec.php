@@ -141,4 +141,41 @@ describe(CapturedNotes::class, function () {
 
         expect(array_column($caught->notes(), 'message'))->toBe(['before breaking']);
     });
+
+    context('telling a file loading from code being called', function () {
+        this('loading', fn() => function (string $source): array {
+            $file = (string) tempnam(sys_get_temp_dir(), 'phpspec_loading_');
+            file_put_contents($file, $source);
+            $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+            try {
+                $caught->during(function () use ($file): void {
+                    require $file;
+                });
+            } finally {
+                unlink($file);
+            }
+
+            return array_column($caught->notes(), 'loading', 'message');
+        });
+
+        it('marks what a file raises at its top level, whether directly or through a function it calls', function () {
+            $function = 'loading_note_' . bin2hex(random_bytes(6));
+
+            expect(($this->loading)("<?php\ntrigger_error('at the top', E_USER_WARNING);\n"))->toBe(['at the top' => true]);
+            expect(($this->loading)("<?php\nfunction {$function}() { trigger_error('through a function', E_USER_WARNING); }\n{$function}();\n"))->toBe(['through a function' => true]);
+        });
+
+        it('marks what PHP says as it compiles a file', function () {
+            expect(($this->loading)("<?php\nuse RuntimeException;\n"))->toBe(["The use statement with non-compound name 'RuntimeException' has no effect" => true]);
+        });
+
+        it('leaves unmarked what code an example called raises, a closure being what it ran in', function () {
+            $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+            $caught->during(fn() => trigger_error('called', E_USER_WARNING));
+
+            expect($caught->notes()[0])->not()->toHaveKey('loading');
+        });
+    });
 });

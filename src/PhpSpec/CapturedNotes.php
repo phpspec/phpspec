@@ -41,8 +41,11 @@ final class CapturedNotes
                 return false;
             }
 
-            if (!$this->deprecationBetweenLibraries($severity, $file, $line, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS))) {
-                $this->notes[] = ['severity' => $severity, 'message' => $message, 'file' => $file, 'line' => $line];
+            $frames = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
+            if (!$this->deprecationBetweenLibraries($severity, $file, $line, $frames)) {
+                $note = ['severity' => $severity, 'message' => $message, 'file' => $file, 'line' => $line];
+                $this->notes[] = $this->raisedLoading($frames) ? $note + ['loading' => true] : $note;
             }
 
             return true;
@@ -78,6 +81,29 @@ final class CapturedNotes
     public function notes(): array
     {
         return $this->notes;
+    }
+
+    /**
+     * Whether a file raised it as it loaded, which happens once in a process,
+     * rather than code that an example, a step or a hook called.
+     *
+     * @param list<array{function?: string, file?: string, line?: int}> $frames the handler's own first, outward from where it was raised
+     */
+    private function raisedLoading(array $frames): bool
+    {
+        foreach (array_slice($frames, 1) as $frame) {
+            $function = $frame['function'] ?? '';
+
+            if (in_array($function, ['include', 'include_once', 'require', 'require_once'], true)) {
+                return true;
+            }
+
+            if (str_starts_with($function, '{closure')) {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /**

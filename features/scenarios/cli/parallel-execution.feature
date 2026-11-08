@@ -540,6 +540,107 @@ Feature: Parallel execution
     And the output should not contain "matches --filter"
     And the output should contain "Total:"
 
+  Scenario: What a steps or support file raises as it loads is counted once, however many workers load it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/one.feature":
+      """
+      Feature: One
+        Scenario: First
+          Given a customer
+      """
+    And a feature file "features/two.feature":
+      """
+      Feature: Two
+        Scenario: Second
+          Given a customer
+      """
+    And a file "features/support/Helper.php":
+      """
+      <?php
+      trigger_error('the support loads', E_USER_WARNING);
+      """
+    And a step file "features/steps/shop.steps.php":
+      """
+      <?php
+      trigger_error('the steps load', E_USER_WARNING);
+      given('a customer', fn() => null);
+      """
+    When I run phpspec run with option "--story --parallel=2 --format=agent"
+    Then the summary should state "warnings" as "2"
+
+  Scenario: What a class or a helper raises as it loads is counted once, however many workers load it
+    Given a class "src/App/Loud.php":
+      """
+      <?php
+
+      namespace App;
+
+      trigger_error('the class loads', E_USER_WARNING);
+
+      class Loud {}
+      """
+    And a file "spec/helper.php":
+      """
+      <?php
+      trigger_error('the helper loads', E_USER_WARNING);
+      """
+    And a spec file "spec/App/One.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/../helper.php';
+      describe('One', function () {
+          it('makes one', fn() => expect(new App\Loud())->toBeAnInstanceOf(App\Loud::class));
+      });
+      """
+    And a spec file "spec/App/Two.spec.php":
+      """
+      <?php
+      require_once __DIR__ . '/../helper.php';
+      describe('Two', function () {
+          it('makes one', fn() => expect(new App\Loud())->toBeAnInstanceOf(App\Loud::class));
+      });
+      """
+    When I run phpspec run with option "--parallel=2 --format=agent"
+    Then the summary should state "warnings" as "2"
+
+  Scenario: What code raises when called is counted for every example that called it, in whichever worker
+    Given a class "src/App/Noisy.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Noisy
+      {
+          public function warn(): void
+          {
+              trigger_error('every call', E_USER_WARNING);
+          }
+      }
+      """
+    And a spec file "spec/App/One.spec.php":
+      """
+      <?php
+      describe('One', function () {
+          it('warns', function () {
+              (new App\Noisy())->warn();
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/Two.spec.php":
+      """
+      <?php
+      describe('Two', function () {
+          it('warns', function () {
+              (new App\Noisy())->warn();
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=2 --format=agent"
+    Then the summary should state "warnings" as "2"
+
   Scenario: Workers run under the php settings the run was given
     Given a spec file "spec/App/First.spec.php":
       """

@@ -231,6 +231,18 @@ describe(Wire::class, function () {
         expect($steps[5]->getReason())->toBe('Needs the gateway');
     });
 
+    it('carries that a note was raised by a file loading, and adds nothing to one that was not', function () {
+        $wire = new Wire();
+        $loading = ['severity' => E_USER_WARNING, 'message' => 'loads', 'file' => 'a.php', 'line' => 1, 'loading' => true];
+        $called = ['severity' => E_USER_WARNING, 'message' => 'called', 'file' => 'a.php', 'line' => 2];
+        $example = new ExampleResult('warns', [MatchResult::passed()]);
+        $example->setWarnings([$loading, $called]);
+
+        $read = $wire->decode($wire->encode(new SpecificationResult('A', [$example], 'a.spec.php')));
+
+        expect($read->getResults()[0]->getWarnings())->toBe([$loading, $called]);
+    });
+
     it('answers null for a line that is not on the wire, and the mark for a worker saying it ran its file or ended its report', function () {
         $wire = new Wire();
 

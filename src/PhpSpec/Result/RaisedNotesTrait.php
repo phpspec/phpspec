@@ -49,6 +49,18 @@ trait RaisedNotesTrait
     }
 
     /**
+     * Keeps, of every kind, only the notes the callback answers true for.
+     *
+     * @param callable(array{severity: int, message: string, file: string, line: int, loading?: true}): bool $keep
+     */
+    public function keepNotes(callable $keep): void
+    {
+        $this->warnings = array_values(array_filter($this->warnings, $keep));
+        $this->deprecations = array_values(array_filter($this->deprecations, $keep));
+        $this->notices = array_values(array_filter($this->notices, $keep));
+    }
+
+    /**
      * @param list<array{severity: int, message: string, file: string, line: int}> $warnings
      */
     public function setWarnings(array $warnings): void

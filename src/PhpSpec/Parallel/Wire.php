@@ -562,7 +562,7 @@ final class Wire
                     'message' => (string) $note['message'],
                     'file' => (string) $note['file'],
                     'line' => (int) $note['line'],
-                ];
+                ] + (isset($note['loading']) ? ['loading' => true] : []);
             }
         }
 
