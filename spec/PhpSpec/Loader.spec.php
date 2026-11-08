@@ -339,6 +339,27 @@ it("instantiates", function (Filesystem $fs) {
         }
     });
 
+    it("loads a steps file once in all the loads it is asked for, as a worker loads each file it is handed", function () {
+        $root = TemporaryDirectory::create('phpspec_loader_loads_');
+        $function = 'loader_loads_' . bin2hex(random_bytes(8));
+        mkdir($root->path . '/features/steps', 0777, true);
+        file_put_contents($root->path . '/features/one.feature', "Feature: One\n  Scenario: First\n    Given a shared step\n");
+        file_put_contents($root->path . '/features/two.feature', "Feature: Two\n  Scenario: Second\n    Given a shared step\n");
+        file_put_contents($root->path . '/features/steps/shared.steps.php', "<?php\nfunction {$function}(): bool { return true; }\ngiven('a shared step', function () { expect({$function}())->toBeTrue(); });\n");
+
+        try {
+            $loader = new Loader(featuresPath: $root->path . '/features');
+
+            foreach (['one', 'two'] as $name) {
+                $feature = $loader->load($root->path . "/features/{$name}.feature")->getSpecifications()[0];
+
+                expect($feature->run()->getResults()[0]->getResults()[0]->isPassed())->toBeTrue();
+            }
+        } finally {
+            $root->remove();
+        }
+    });
+
     it("finds step definitions anywhere under the features root", function () {
         $root = sys_get_temp_dir() . '/phpspec_loader_root_' . uniqid();
         mkdir($root . '/features/checkout', 0777, true);

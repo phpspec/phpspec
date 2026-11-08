@@ -2,6 +2,7 @@
 
 use PhpSpec\Parallel\Wire;
 use PhpSpec\Parallel\WireFormatter;
+use PhpSpec\Parallel\WireMark;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\SpecificationResult;
@@ -28,6 +29,14 @@ describe(WireFormatter::class, function () {
 
         (new WireFormatter($output))->end(new SuiteResult([]));
 
-        expect((new Wire())->decode(rtrim($output->fetch(), "\n")))->toBe(true);
+        expect((new Wire())->decode(rtrim($output->fetch(), "\n")))->toBe(WireMark::Ended);
+    });
+
+    it('says the worker ran the file it was handed, on a line of its own', function () {
+        $output = new BufferedOutput();
+
+        (new WireFormatter($output))->ran();
+
+        expect($output->fetch())->toBe((new Wire())->ran() . "\n");
     });
 });

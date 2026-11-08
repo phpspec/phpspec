@@ -49,6 +49,7 @@ use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Parallel\WireFormatter;
+use PhpSpec\Parallel\WorkQueue;
 use PhpSpec\Process\ChildPhp;
 use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
@@ -79,6 +80,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface as Output;
@@ -166,6 +168,7 @@ final class Run extends Command implements InternalOptions
             ->addOption('coverage-src', null, Option::VALUE_REQUIRED, 'Source directory to scope coverage reports to (overrides config src_path)')
             ->addOption('coverage-partial', null, Option::VALUE_REQUIRED, 'Dump raw coverage state to a file (internal, used by parallel workers)')
             ->addOption('suite-check', null, Option::VALUE_NONE, 'Run every example whatever the config stops on, keeping no offers (internal, used by refactor\'s suite check)')
+            ->addOption('queue', null, Option::VALUE_NONE, 'Run the files handed over on standard input, one at a time (internal, used by parallel workers)')
             ->addOption('parallel', null, Option::VALUE_OPTIONAL, 'Run specs in parallel processes (--parallel=N for N workers)', false)
             ->setDescription('Runs specifications');
     }
@@ -984,8 +987,10 @@ final class Run extends Command implements InternalOptions
 
         $tags = $input->getOption('tags');
         $parallel = $input->getOption('parallel');
-        // A parallel run's workers load their own files; this one only finds them.
-        $suite = $parallel === false ? $this->loader->load($files, $filter, is_string($tags) ? $tags : null) : null;
+        $queue = $formatter instanceof WireFormatter && $input->getOption('queue') ? new WorkQueue($this->standardInput($input), $formatter) : null;
+        // A parallel run's workers load their own files; this one only finds
+        // them. A queued worker loads each file as it is handed over.
+        $suite = $parallel === false && $queue === null ? $this->loader->load($files, $filter, is_string($tags) ? $tags : null) : null;
 
         $stop = $this->stopConditions($input);
 
@@ -1008,7 +1013,10 @@ final class Run extends Command implements InternalOptions
             $start = hrtime(true);
             $accumulated = [];
 
-            if ($suite === null) {
+            if ($queue !== null) {
+                $parallelRunner = null;
+                $stream = $this->queued($queue, $filter, is_string($tags) ? $tags : null, $stop);
+            } elseif ($suite === null) {
                 $workers = $parallel !== null ? (int) $parallel : null;
                 // Each file goes to one worker with everything its targets select
                 // in it, so a block two selectors name runs once, as it does here.
@@ -1074,6 +1082,35 @@ final class Run extends Command implements InternalOptions
         } finally {
             $listeners?->ended();
         }
+    }
+
+    /**
+     * What a queued worker runs: each file it is handed, loaded and run as it
+     * arrives, until none is left or one stops the run.
+     *
+     * @return \Generator<Results>
+     */
+    private function queued(WorkQueue $queue, ?string $filter, ?string $tags, StopConditions $stop): \Generator
+    {
+        foreach ($queue as $targets) {
+            ArrangingCode::under(...$this->specCodeRoots($targets));
+
+            foreach ($this->runner->stream($this->loader->load($targets, $filter, $tags), $stop) as $result) {
+                yield $result;
+
+                if ($stop->metBy($result)) {
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * @return resource
+     */
+    private function standardInput(Input $input)
+    {
+        return ($input instanceof StreamableInputInterface ? $input->getStream() : null) ?? STDIN;
     }
 
     /**
@@ -1215,7 +1252,7 @@ final class Run extends Command implements InternalOptions
 
     public function internalOptions(): array
     {
-        return ['coverage-partial', 'suite-check'];
+        return ['coverage-partial', 'suite-check', 'queue'];
     }
 
     private function createFormatter(string $format, Output $output, ?string $nothingFound = 'No specs found.'): Formatter

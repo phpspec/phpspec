@@ -335,7 +335,7 @@ rejected with an error rather than silently falling back.
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--all` | Run all suites, both specs and features |
 | `--story` | Run only features (Story BDD) |
-| `--order=ORDER` | Run order: `default` or `random`; under `--parallel`, the files are dealt to the workers in the random order, each worker running its share in it |
+| `--order=ORDER` | Run order: `default` or `random`; under `--parallel`, the workers are handed the files in the random order |
 | `--seed=SEED` | Shuffle by this whole number, as a random run prints it, to reproduce that order; implies `--order random` |
 
 **Stopping early.** By default a run continues to the end. These flags halt it at
@@ -479,10 +479,11 @@ vendor/bin/phpspec run --parallel        # one worker per CPU core
 vendor/bin/phpspec run --parallel=4      # four workers
 ```
 
-Each worker runs a slice of the spec files in its own process, set up as the
-run was: the same php settings, and the extensions its command line loaded. A
-file given with `:LINE` or `@ID` selectors goes to one worker with all of
-them, so it runs what it would run alone, each block once. The run that
+Each worker runs in its own process, set up as the run was: the same php
+settings, and the extensions its command line loaded. It is handed one file at
+a time, the largest first, and the next as soon as it is through, so a slow
+file holds no other back. A file given with `:LINE` or `@ID` selectors goes to one worker with all
+of them, so it runs what it would run alone, each block once. The run that
 starts the workers only finds the files: each worker loads the ones it runs,
 so a `features/support` file runs in every worker that runs a feature, never
 in the process that started them.
@@ -509,7 +510,8 @@ PhpSpec's own wire (`--format=wire`, one JSON line per spec or feature); the
 parent renders them as they arrive, in whichever format
 was asked for, with everything a single process would show: a failure's values
 and code, an error's site, what an example printed. A worker that dies is
-reported as an error on the file it was running, naming its exit code. Coverage
+reported as an error on the file it was running, naming its exit code and what
+it said; the other workers run the files it was never handed. Coverage
 (`--coverage*`) composes with `--parallel`: workers collect per-example
 coverage and the parent merges it. A worker whose coverage never reaches the
 parent, because it died or the run stopped it, fails the run with the reason

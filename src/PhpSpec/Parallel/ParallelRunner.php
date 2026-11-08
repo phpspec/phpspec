@@ -16,6 +16,8 @@ namespace PhpSpec\Parallel;
 
 use PhpSpec\ByReturnValue;
 use PhpSpec\Process\ChildPhp;
+use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Results;
 use PhpSpec\SeededShuffle;
 use PhpSpec\StopConditions;
@@ -24,8 +26,10 @@ use PhpSpec\StopConditions;
  * @internal
  * Runs spec files in parallel in child processes, waiting on all of their output at once.
  *
- * Each worker process runs a partition of spec files via `phpspec run -f wire`
- * and reports each result back whole, on its own line, as it completes.
+ * Each worker process is handed one file at a time, runs it through
+ * `phpspec run --queue -f wire` and reports each result back whole, on its
+ * own line, as it completes. A worker that ran its file is handed the next,
+ * so a slow file holds no other back.
  */
 final class ParallelRunner
 {
@@ -38,6 +42,9 @@ final class ParallelRunner
     /** @var list<WorkerProcess> */
     private array $processes = [];
 
+    /** @var list<string> the files no worker has been handed yet */
+    private array $queue = [];
+
     /**
      * @param array<string, list<string>> $targets each file to run, to the targets its worker is given for it
      * @param int|null $workers number of worker processes (null = auto-detect CPU count)
@@ -48,7 +55,7 @@ final class ParallelRunner
      * @param string|null $filter the title filter to forward to workers
      * @param string|null $tags the tag expression to forward to workers
      * @param list<string> $phpOptions the php options every worker runs under, which switch its coverage engine on or off, after the settings it takes from this process
-     * @param int|null $seed the seed of a random run, which orders the files as they are dealt to the workers, or null to deal them as given
+     * @param int|null $seed the seed of a random run, which orders the files as they are handed to the workers, or null to hand the largest over first
      */
     public function __construct(
         private readonly array $targets,
@@ -100,29 +107,41 @@ final class ParallelRunner
         }
 
         $phpOptions = [...(new ChildPhp())->options(), ...$this->phpOptions];
-        $workerCount = min($this->workers, count($this->targets));
-        $partitions = array_fill(0, $workerCount, []);
-        $files = $this->seed === null ? array_keys($this->targets) : (new SeededShuffle($this->seed))->of(array_keys($this->targets));
-        foreach ($files as $i => $file) {
-            $partitions[$i % $workerCount][$file] = $this->targets[$file];
-        }
+        // A random run hands the files over in the order its seed gives; any
+        // other hands the largest over first, so the longest to run is not
+        // the last to start.
+        $this->queue = $this->seed === null ? $this->largestFirst(array_keys($this->targets)) : (new SeededShuffle($this->seed))->of(array_keys($this->targets));
 
-        /** @var array<int, WorkerProcess> $running */
-        $running = [];
-
-        foreach ($partitions as $i => $partition) {
-            $coveragePartial = null;
-
-            if ($this->coveragePartialDir !== null) {
-                $coveragePartial = $this->coveragePartialDir . '/partial-' . $i . '.json';
-                $this->coveragePartials[] = $coveragePartial;
-            }
-
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions, $i + 1);
+        foreach (range(1, min($this->workers, count($this->queue))) as $number) {
+            $process = new WorkerProcess($this->phpspecBin, $this->coveragePartial($number), $this->childOptions, $this->stop, $this->filter, $this->tags, $phpOptions, $number);
             $process->start();
-            $running[$i] = $process;
+            $this->hand($process);
             $this->processes[] = $process;
         }
+
+        foreach ($this->results() as $result) {
+            yield $result;
+
+            if ($this->stop->metBy($result)) {
+                foreach ($this->processes as $stopped) {
+                    $stopped->terminate();
+                }
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * What the workers report as they run the files they are handed, until
+     * every one is done.
+     *
+     * @return \Generator<SpecificationResult|FeatureResult>
+     */
+    private function results(): \Generator
+    {
+        $running = $this->processes;
+        $last = null;
 
         while ($running !== []) {
             $this->awaitOutput($running);
@@ -131,23 +150,61 @@ final class ParallelRunner
                 $process->read();
                 $done = !$process->isRunning();
 
-                foreach ($done ? $process->getResults() : $process->takeResults() as $result) {
-                    yield $result;
-
-                    if ($this->stop->metBy($result)) {
-                        foreach ($this->processes as $stopped) {
-                            $stopped->terminate();
-                        }
-
-                        return;
-                    }
-                }
+                yield from $done ? $process->getResults() : $process->takeResults();
 
                 if ($done) {
                     unset($running[$key]);
+                    $last = $process;
+                } elseif ($process->wantsWork()) {
+                    $this->hand($process);
                 }
             }
         }
+
+        // Every worker died with files left to hand over: the last to go says why.
+        if ($last !== null) {
+            yield from $last->leftBehind($this->queue);
+        }
+    }
+
+    /**
+     * Hands the worker the next file, or tells it none is left.
+     */
+    private function hand(WorkerProcess $process): void
+    {
+        $file = array_shift($this->queue);
+
+        if ($file === null) {
+            $process->finish();
+
+            return;
+        }
+
+        $process->give($file, $this->targets[$file]);
+    }
+
+    /**
+     * @param list<string> $files
+     * @return list<string>
+     */
+    private function largestFirst(array $files): array
+    {
+        $sizes = array_combine($files, array_map(static fn(string $file): int => is_file($file) ? (int) filesize($file) : 0, $files));
+        usort($files, static fn(string $one, string $other): int => $sizes[$other] <=> $sizes[$one]);
+
+        return $files;
+    }
+
+    private function coveragePartial(int $worker): ?string
+    {
+        if ($this->coveragePartialDir === null) {
+            return null;
+        }
+
+        $partial = $this->coveragePartialDir . '/partial-' . $worker . '.json';
+        $this->coveragePartials[] = $partial;
+
+        return $partial;
     }
 
     /**

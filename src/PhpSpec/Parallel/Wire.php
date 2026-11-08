@@ -61,10 +61,44 @@ final class Wire
     }
 
     /**
-     * The result a line carries; true for the line that ends the report; null
-     * for a line that is not on the wire, such as what a bootstrap printed.
+     * The line that says the worker ran the file it was handed.
      */
-    public function decode(string $line): SpecificationResult|FeatureResult|true|null
+    public function ran(): string
+    {
+        return json_encode(['wire' => self::VERSION, 'ran' => true], JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * The line that hands a worker a file, by the targets it runs in it.
+     *
+     * @param list<string> $targets
+     */
+    public function give(array $targets): string
+    {
+        return json_encode(['wire' => self::VERSION, 'give' => $targets], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * The targets a line hands a worker, or null for a line that hands it none.
+     *
+     * @return list<string>|null
+     */
+    public function given(string $line): ?array
+    {
+        $data = json_decode($line, true);
+
+        if (!is_array($data) || ($data['wire'] ?? null) !== self::VERSION || !is_array($data['give'] ?? null)) {
+            return null;
+        }
+
+        return array_values(array_filter($data['give'], 'is_string'));
+    }
+
+    /**
+     * The result a line carries, or the mark the worker said; null for a line
+     * that is not on the wire, such as what a bootstrap printed.
+     */
+    public function decode(string $line): SpecificationResult|FeatureResult|WireMark|null
     {
         if (!str_starts_with($line, '{')) {
             return null;
@@ -77,7 +111,11 @@ final class Wire
         }
 
         if (isset($data['end'])) {
-            return true;
+            return WireMark::Ended;
+        }
+
+        if (isset($data['ran'])) {
+            return WireMark::Ran;
         }
 
         if (is_array($data['feature'] ?? null)) {

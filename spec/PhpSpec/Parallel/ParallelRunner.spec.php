@@ -1,7 +1,9 @@
 <?php
 
 use PhpSpec\Parallel\ParallelRunner;
+use PhpSpec\SeededShuffle;
 use PhpSpec\StopConditions;
+use PhpSpec\TemporaryDirectory;
 
 describe(ParallelRunner::class, function () {
     context('constructor', function () {
@@ -24,6 +26,39 @@ describe(ParallelRunner::class, function () {
             $results = iterator_to_array($runner->stream(), false);
 
             expect($results)->toHaveCount(0);
+        });
+    });
+
+    context('handing the files over', function () {
+        this('handed', fn() => function (array $sizes, ?int $seed): array {
+            $directory = TemporaryDirectory::create('phpspec_parallel_order_');
+            $log = $directory->path . '/handed.log';
+            $worker = $directory->path . '/worker.php';
+            file_put_contents($worker, '<?php while (($line = fgets(STDIN)) !== false) { file_put_contents(' . var_export($log, true) . ', basename(json_decode($line, true)["give"][0]) . "\\n", FILE_APPEND); echo "{\\"wire\\":1,\\"ran\\":true}\\n"; } echo "{\\"wire\\":1,\\"end\\":true}\\n";');
+            $targets = [];
+
+            foreach ($sizes as $name => $size) {
+                file_put_contents($directory->path . '/' . $name, str_repeat('x', $size));
+                $targets[$directory->path . '/' . $name] = [$directory->path . '/' . $name];
+            }
+
+            try {
+                iterator_to_array((new ParallelRunner($targets, 1, phpspecBin: $worker, seed: $seed))->stream(), false);
+
+                return file($log, FILE_IGNORE_NEW_LINES);
+            } finally {
+                $directory->remove();
+            }
+        });
+
+        it('hands the largest file over first, so the longest to run is not the last to start', function () {
+            expect(($this->handed)(['a.spec.php' => 10, 'b.spec.php' => 30, 'c.spec.php' => 20, 'd.spec.php' => 30], null))->toBe(['b.spec.php', 'd.spec.php', 'c.spec.php', 'a.spec.php']);
+        });
+
+        it('hands the files over in the order the seed of a random run gives', function () {
+            $sizes = ['a.spec.php' => 10, 'b.spec.php' => 30, 'c.spec.php' => 20, 'd.spec.php' => 40];
+
+            expect(($this->handed)($sizes, 42))->toBe((new SeededShuffle(42))->of(array_keys($sizes)));
         });
     });
 

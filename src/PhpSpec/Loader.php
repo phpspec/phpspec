@@ -40,6 +40,8 @@ final class Loader
      */
     private Filesystem $fs;
 
+    private readonly StepsFileCache $steps;
+
     public function __construct(
         ?Filesystem $filesystem = null,
         private string $specSuffix = '.spec.php',
@@ -47,6 +49,7 @@ final class Loader
         private ?string $stepsPath = null,
     ) {
         $this->fs = $filesystem ?? new RealFilesystem();
+        $this->steps = new StepsFileCache();
     }
 
     /**
@@ -65,11 +68,10 @@ final class Loader
         }
 
         $blocks = [];
-        $steps = new StepsFileCache();
 
         foreach (RunTargets::of($files)->each() as $path => ['lines' => $lines, 'ids' => $ids]) {
             if ($this->runsAsFeatures($path)) {
-                $blocks = array_merge($blocks, $this->loadFeatures($path, $steps, $lines));
+                $blocks = array_merge($blocks, $this->loadFeatures($path, $lines));
             } else {
                 LineTargetRegistry::add($path, ...$lines);
                 LineTargetRegistry::addIds($path, ...$ids);
@@ -276,11 +278,10 @@ final class Loader
      * address.
      *
      * @param string $path directory or file containing .feature files
-     * @param StepsFileCache $steps the steps files this load has required, shared by every feature path it is given
      * @param list<int> $lines the line numbers from "file.feature:LINE" paths, none to load all scenarios
      * @return array<\PhpSpec\StoryBDD\Feature>
      */
-    private function loadFeatures(string $path, StepsFileCache $steps, array $lines = []): array
+    private function loadFeatures(string $path, array $lines = []): array
     {
         $parser = new GherkinParser();
         $featureFiles = [];
@@ -320,7 +321,7 @@ final class Loader
         }
 
         foreach ($uniqueStepFiles as $stepFile) {
-            $definitions = $steps->definitions($stepFile);
+            $definitions = $this->steps->definitions($stepFile);
             StoryBDDRegistry::steps()->adopt($definitions['steps']);
             StoryBDDRegistry::hooks()->adopt($definitions['hooks']);
         }

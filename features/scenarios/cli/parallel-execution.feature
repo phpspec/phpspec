@@ -81,6 +81,83 @@ Feature: Parallel execution
     And the file "workers.log" should contain "worker 1 token 1"
     And the file "workers.log" should contain "worker 2 token 2"
 
+  Scenario: A worker done with its file takes the next one, so a slow file holds no other back
+    Given a spec file "spec/App/ASlow.spec.php":
+      """
+      <?php
+      describe('ASlow', function () {
+          it('runs', function () {
+              usleep(1500000);
+              file_put_contents('workers.log', 'ASlow by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/BFast.spec.php":
+      """
+      <?php
+      describe('BFast', function () {
+          it('runs', function () {
+              file_put_contents('workers.log', 'BFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/CFast.spec.php":
+      """
+      <?php
+      describe('CFast', function () {
+          it('runs', function () {
+              file_put_contents('workers.log', 'CFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/DFast.spec.php":
+      """
+      <?php
+      describe('DFast', function () {
+          it('runs', function () {
+              file_put_contents('workers.log', 'DFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=2"
+    Then all examples should pass
+    And the file "workers.log" should contain "ASlow by worker 1"
+    And the file "workers.log" should contain "BFast by worker 2"
+    And the file "workers.log" should contain "CFast by worker 2"
+    And the file "workers.log" should contain "DFast by worker 2"
+
+  Scenario: A worker that runs feature after feature requires their steps file once
+    Given a feature file "features/first.feature":
+      """
+      Feature: First
+        Scenario: One
+          Given a thing
+      """
+    And a feature file "features/second.feature":
+      """
+      Feature: Second
+        Scenario: Two
+          Given a thing
+      """
+    And a step file "features/steps/shared.steps.php":
+      """
+      <?php
+      function shared_thing(): bool
+      {
+          return true;
+      }
+
+      given('a thing', function () {
+          expect(shared_thing())->toBeTrue();
+      });
+      """
+    When I run phpspec run with option "--story --parallel=1"
+    Then the output should contain "2 scenarios, 2 steps (2 passed)"
+
   Scenario: Explicit worker count
     Given a spec file "spec/App/WorkerCount.spec.php":
       """
@@ -285,6 +362,65 @@ Feature: Parallel execution
     When I run phpspec run with option "--parallel=1"
     Then the output should contain "exited with code 3"
     And the output should contain "Dying.spec.php"
+    And the exit code should not be 0
+
+  Scenario: The files a dead worker was never handed run on the workers still running
+    Given a spec file "spec/App/ACrash.spec.php":
+      """
+      <?php
+      describe('ACrash', function () {
+          it('takes the worker down', function () {
+              exit(3);
+          });
+      });
+      """
+    And a spec file "spec/App/BFine.spec.php":
+      """
+      <?php
+      describe('BFine', function () {
+          it('runs', fn() => expect(true)->toBeTrue());
+      });
+      """
+    And a spec file "spec/App/CFine.spec.php":
+      """
+      <?php
+      describe('CFine', function () {
+          it('runs', fn() => expect(true)->toBeTrue());
+      });
+      """
+    And a spec file "spec/App/DFine.spec.php":
+      """
+      <?php
+      describe('DFine', function () {
+          it('runs', fn() => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec run with option "--parallel=2"
+    Then the output should contain "4 examples (3 passed, 1 errored)"
+    And the output should contain "before reporting ./spec/App/ACrash.spec.php."
+
+  Scenario: The files left when every worker has died are each reported as an error
+    Given a spec file "spec/App/ACrash.spec.php":
+      """
+      <?php
+      describe('ACrash', function () {
+          it('takes the worker down', function () {
+              exit(3);
+          });
+      });
+      """
+    And a spec file "spec/App/BCrash.spec.php":
+      """
+      <?php
+      describe('BCrash', function () {
+          it('takes the worker down', function () {
+              exit(3);
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=1"
+    Then the output should contain "before reporting ./spec/App/ACrash.spec.php."
+    And the output should contain "before reporting ./spec/App/BCrash.spec.php."
     And the exit code should not be 0
 
   Scenario: A worker that stops tells the run why

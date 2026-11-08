@@ -24,8 +24,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  * What a parallel worker runs with: each spec or feature result goes out on
- * its own line as it completes, whole, and a last line says the report is
- * done, so the parent can tell a worker that finished from one that died.
+ * its own line as it completes, whole; a line says when the worker ran the
+ * file it was handed, and a last one that the report is done, so the parent
+ * can tell a worker that finished from one that died.
  */
 final class WireFormatter extends AbstractFormatter
 {
@@ -49,5 +50,13 @@ final class WireFormatter extends AbstractFormatter
     public function end(SuiteResult $results): void
     {
         $this->output->write($this->wire->ending() . "\n", false, OutputInterface::OUTPUT_RAW);
+    }
+
+    /**
+     * Says the worker ran the file it was handed, so it is handed the next.
+     */
+    public function ran(): void
+    {
+        $this->output->write($this->wire->ran() . "\n", false, OutputInterface::OUTPUT_RAW);
     }
 }
