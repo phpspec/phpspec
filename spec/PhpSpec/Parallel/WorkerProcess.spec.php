@@ -230,6 +230,12 @@ describe(WorkerProcess::class, function () {
             expect($command)->toContain('--coverage-partial=/tmp/partial-0.json');
         });
 
+        it('asks the worker to credit each example only when told to, which only the JSON report reads', function () {
+            expect((new WorkerProcess('/path/to/phpspec', '/tmp/partial-1.json'))->buildCommand())->not()->toContain('--coverage-per-example');
+            expect((new WorkerProcess('/path/to/phpspec', '/tmp/partial-1.json', perExample: true))->buildCommand())->toContain('--coverage-per-example');
+            expect((new WorkerProcess('/path/to/phpspec', perExample: true))->buildCommand())->not()->toContain('--coverage-per-example');
+        });
+
         it('forwards the options that set up the project, a named config and a bootstrap, so a worker runs against the same one', function () {
             $command = (new WorkerProcess('/path/to/phpspec', childOptions: ['--config=custom/my-config.json', '--bootstrap=custom/boot.php']))->buildCommand();
 

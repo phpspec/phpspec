@@ -59,6 +59,7 @@ final class WorkerProcess
      * @param string|null $tags the tag expression the parent runs under, forwarded likewise
      * @param list<string> $phpOptions the php options the worker runs under, which switch its coverage engine on or off
      * @param int $number which worker this is, from 1, told to it as PHPSPEC_WORKER and TEST_TOKEN so each can keep a database of its own
+     * @param bool $perExample whether the worker credits each covered line to the example that ran it, which only the JSON report reads
      */
     public function __construct(
         private readonly string $phpspecBin,
@@ -69,6 +70,7 @@ final class WorkerProcess
         private readonly ?string $tags = null,
         private readonly array $phpOptions = [],
         private readonly int $number = 1,
+        private readonly bool $perExample = false,
     ) {
         $this->wire = new Wire();
     }
@@ -94,6 +96,10 @@ final class WorkerProcess
 
         if ($this->coveragePartial !== null) {
             $command[] = '--coverage-partial=' . $this->coveragePartial;
+        }
+
+        if ($this->coveragePartial !== null && $this->perExample) {
+            $command[] = '--coverage-per-example';
         }
 
         array_push($command, ...$this->childOptions);

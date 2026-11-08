@@ -512,8 +512,8 @@ was asked for, with everything a single process would show: a failure's values
 and code, an error's site, what an example printed. A worker that dies is
 reported as an error on the file it was running, naming its exit code and what
 it said; the other workers run the files it was never handed. Coverage
-(`--coverage*`) composes with `--parallel`: workers collect per-example
-coverage and the parent merges it. A worker whose coverage never reaches the
+(`--coverage*`) composes with `--parallel`: workers collect coverage, per
+example only for `--coverage-json`, and the parent merges it. A worker whose coverage never reaches the
 parent, because it died or the run stopped it, fails the run with the reason
 and what the worker said, rather than a smaller number. `--format=agent` is
 parallel-safe too: the
@@ -596,8 +596,8 @@ background and `beforeScenario`/`afterScenario` hooks, and a closure declared
 in `describe` that an example calls. Code that runs only in
 `beforeAll`/`afterAll`, `beforeFeature`/`afterFeature` or the `describe` body
 itself does not count. Every run counts the same way: coverage options can be
-combined with `--parallel`, whose workers collect coverage per example and the
-parent process merges their results before rendering the reports. Workers can
+combined with `--parallel`, whose workers collect coverage and the parent
+process merges their results before rendering the reports. Workers can
 compile a file differently: PHP folds a class constant into its value when the
 class is already loaded, so a line can be code in one worker and none in
 another. A line one worker ran is covered. A line nobody ran is not counted

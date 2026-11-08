@@ -169,6 +169,7 @@ final class Run extends Command implements InternalOptions
             ->addOption('coverage-partial', null, Option::VALUE_REQUIRED, 'Dump raw coverage state to a file (internal, used by parallel workers)')
             ->addOption('suite-check', null, Option::VALUE_NONE, 'Run every example whatever the config stops on, keeping no offers (internal, used by refactor\'s suite check)')
             ->addOption('queue', null, Option::VALUE_NONE, 'Run the files handed over on standard input, one at a time (internal, used by parallel workers)')
+            ->addOption('coverage-per-example', null, Option::VALUE_NONE, 'Credit each covered line to the example that ran it (internal, used by parallel workers)')
             ->addOption('parallel', null, Option::VALUE_OPTIONAL, 'Run specs in parallel processes (--parallel=N for N workers)', false)
             ->setDescription('Runs specifications');
     }
@@ -779,11 +780,9 @@ final class Run extends Command implements InternalOptions
             return null;
         }
 
-        // The JSON report names the example that ran each line, and parallel
-        // workers dump the same state for the parent to merge.
-        $perExample = $input->getOption('coverage-json') !== null
-            || $input->getOption('coverage-partial') !== null
-            || $input->getOption('parallel') !== false;
+        // Only the JSON report names the example that ran each line: a run
+        // asked for one credits each, and so do the workers it starts.
+        $perExample = $input->getOption('coverage-json') !== null || $input->getOption('coverage-per-example');
 
         $reporter = new CoverageReporter($this->engines, Exclusions::of($this->config, new RealFilesystem(), (string) getcwd()));
 
@@ -1045,6 +1044,7 @@ final class Run extends Command implements InternalOptions
                     tags: is_string($tags) ? $tags : null,
                     phpOptions: $this->engines->switches($collectingWith),
                     seed: $seed,
+                    perExample: $input->getOption('coverage-json') !== null,
                 );
                 $stream = $parallelRunner->stream();
             } else {
@@ -1252,7 +1252,7 @@ final class Run extends Command implements InternalOptions
 
     public function internalOptions(): array
     {
-        return ['coverage-partial', 'suite-check', 'queue'];
+        return ['coverage-partial', 'suite-check', 'queue', 'coverage-per-example'];
     }
 
     private function createFormatter(string $format, Output $output, ?string $nothingFound = 'No specs found.'): Formatter
