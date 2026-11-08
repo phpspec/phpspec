@@ -44,7 +44,7 @@ Feature: Parallel execution
     And a file "features/support/env.php":
       """
       <?php
-      file_put_contents(__DIR__ . '/../../support.log', "loaded\n", FILE_APPEND);
+      file_put_contents(__DIR__ . '/../../support.log', "loaded\n", FILE_APPEND | LOCK_EX);
       """
     And a step file "features/steps/steps.php":
       """
@@ -61,7 +61,7 @@ Feature: Parallel execution
       <?php
       describe('First', function () {
           it('says which worker ran it', function () {
-              file_put_contents('workers.log', 'worker ' . getenv('PHPSPEC_WORKER') . ' token ' . getenv('TEST_TOKEN') . "\n", FILE_APPEND);
+              file_put_contents('workers.log', 'worker ' . getenv('PHPSPEC_WORKER') . ' token ' . getenv('TEST_TOKEN') . "\n", FILE_APPEND | LOCK_EX);
               expect(true)->toBeTrue();
           });
       });
@@ -71,7 +71,7 @@ Feature: Parallel execution
       <?php
       describe('Second', function () {
           it('says which worker ran it', function () {
-              file_put_contents('workers.log', 'worker ' . getenv('PHPSPEC_WORKER') . ' token ' . getenv('TEST_TOKEN') . "\n", FILE_APPEND);
+              file_put_contents('workers.log', 'worker ' . getenv('PHPSPEC_WORKER') . ' token ' . getenv('TEST_TOKEN') . "\n", FILE_APPEND | LOCK_EX);
               expect(true)->toBeTrue();
           });
       });
@@ -88,7 +88,7 @@ Feature: Parallel execution
       describe('ASlow', function () {
           it('runs', function () {
               usleep(1500000);
-              file_put_contents('workers.log', 'ASlow by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              file_put_contents('workers.log', 'ASlow by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND | LOCK_EX);
               expect(true)->toBeTrue();
           });
       });
@@ -98,7 +98,7 @@ Feature: Parallel execution
       <?php
       describe('BFast', function () {
           it('runs', function () {
-              file_put_contents('workers.log', 'BFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              file_put_contents('workers.log', 'BFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND | LOCK_EX);
               expect(true)->toBeTrue();
           });
       });
@@ -108,7 +108,7 @@ Feature: Parallel execution
       <?php
       describe('CFast', function () {
           it('runs', function () {
-              file_put_contents('workers.log', 'CFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              file_put_contents('workers.log', 'CFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND | LOCK_EX);
               expect(true)->toBeTrue();
           });
       });
@@ -118,7 +118,7 @@ Feature: Parallel execution
       <?php
       describe('DFast', function () {
           it('runs', function () {
-              file_put_contents('workers.log', 'DFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND);
+              file_put_contents('workers.log', 'DFast by worker ' . getenv('PHPSPEC_WORKER') . "\n", FILE_APPEND | LOCK_EX);
               expect(true)->toBeTrue();
           });
       });

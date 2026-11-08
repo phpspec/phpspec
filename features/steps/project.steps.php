@@ -24,6 +24,8 @@ if (!function_exists('_phpspec_remove_dir')) {
             } elseif ($entry->isDir()) {
                 rmdir($path);
             } else {
+                // Git makes its objects read-only, and Windows will not delete those.
+                chmod($path, 0666);
                 unlink($path);
             }
         }
