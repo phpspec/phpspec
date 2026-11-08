@@ -32,15 +32,14 @@ final class InProcessSymbols
     /** @var array<string, array{name: string, owner: string, file: string, content: string|null}> by kind and lowercased name */
     private array $declared = [];
 
-    private readonly string $ownRoot;
+    private readonly ProjectRoot $ownRoot;
 
     /**
      * @param string|null $ownRoot where phpspec and its dependencies live, whose symbols every run shares; the checkout this class is in when null
      */
     public function __construct(?string $ownRoot = null)
     {
-        $root = $ownRoot ?? dirname(__DIR__, 2);
-        $this->ownRoot = rtrim(realpath($root) ?: $root, '/') . '/';
+        $this->ownRoot = ProjectRoot::at($ownRoot ?? dirname(__DIR__, 2));
     }
 
     /**
@@ -113,7 +112,7 @@ final class InProcessSymbols
      */
     private function remember(string $kind, string $name, string|false $file, string $projectDir, array $contents): void
     {
-        if ($file === false || str_starts_with($file, $this->ownRoot)) {
+        if ($file === false || $this->ownRoot->holds($file)) {
             return;
         }
 

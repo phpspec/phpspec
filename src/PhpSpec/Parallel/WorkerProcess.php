@@ -43,6 +43,8 @@ final class WorkerProcess
 
     private ?string $running = null;
 
+    private ?string $stderrFile = null;
+
     /** @var list<string> the files the worker has reported so far */
     private array $reported = [];
 
@@ -118,19 +120,22 @@ final class WorkerProcess
     }
 
     /**
-     * Spawns the child phpspec process with non-blocking stdout/stderr sockets,
+     * Spawns the child phpspec process with a non-blocking socket for its report,
      * keeping its standard input open to hand it files.
      */
     public function start(): void
     {
         $command = $this->buildCommand();
 
-        // Sockets, not pipes: on Windows a read from an empty pipe waits however
+        // A socket, not a pipe: on Windows a read from an empty pipe waits however
         // it was set up, and a worker waiting for its next file would never get it.
+        // Its error stream goes to a file: what a worker last says is read once it
+        // has gone, and a socket on Windows does not keep it that long.
+        $this->stderrFile = (string) tempnam(sys_get_temp_dir(), 'phpspec_worker_stderr_');
         $descriptors = [
             0 => ['pipe', 'r'],
             1 => ['socket'],
-            2 => ['socket'],
+            2 => ['file', $this->stderrFile, 'w'],
         ];
 
         $cwd = getcwd();
@@ -144,7 +149,6 @@ final class WorkerProcess
         $this->process = $process;
 
         stream_set_blocking($this->pipes[1], false);
-        stream_set_blocking($this->pipes[2], false);
     }
 
     /**
@@ -205,7 +209,7 @@ final class WorkerProcess
     }
 
     /**
-     * Non-blocking read of available stdout/stderr data from the child process.
+     * Non-blocking read of what the child process has reported so far.
      */
     public function read(): void
     {
@@ -226,14 +230,7 @@ final class WorkerProcess
             return stream_select($read, $write, $except, 0);
         }) > 0) {
             foreach ($read as $pipe) {
-                $content = stream_get_contents($pipe);
-                if ($content !== false && $content !== '') {
-                    if ($pipe === ($this->pipes[1] ?? null)) {
-                        $this->stdout .= $content;
-                    } else {
-                        $this->stderr .= $content;
-                    }
-                }
+                $this->stdout .= (string) stream_get_contents($pipe);
 
                 // A pipe the worker closed would wake every wait at once.
                 if (feof($pipe)) {
@@ -244,13 +241,13 @@ final class WorkerProcess
     }
 
     /**
-     * The pipes the worker may still write to, for a wait across workers.
+     * The stream the worker reports on, while it is open, for a wait across workers.
      *
      * @return list<resource>
      */
     public function pipes(): array
     {
-        return array_values(array_filter([$this->pipes[1] ?? null, $this->pipes[2] ?? null], 'is_resource'));
+        return array_filter([$this->pipes[1] ?? null], 'is_resource');
     }
 
     /**
@@ -265,6 +262,7 @@ final class WorkerProcess
             $this->closePipes();
             proc_close($process);
             $this->process = null;
+            $this->readStderr();
         }
     }
 
@@ -329,6 +327,7 @@ final class WorkerProcess
             $this->process = null;
         }
 
+        $this->readStderr();
         $results = $this->takeResults();
 
         return $this->ended ? $results : [...$results, ...$this->unreported()];
@@ -401,24 +400,29 @@ final class WorkerProcess
     }
 
     /**
-     * Switches pipes to blocking mode and reads all remaining data.
+     * Reads all that remains of the worker's report.
      */
     private function drainPipes(): void
     {
         if (isset($this->pipes[1]) && is_resource($this->pipes[1])) {
             stream_set_blocking($this->pipes[1], true);
-            $content = stream_get_contents($this->pipes[1]);
-            if ($content !== false && $content !== '') {
-                $this->stdout .= $content;
-            }
+            $this->stdout .= (string) stream_get_contents($this->pipes[1]);
         }
-        if (isset($this->pipes[2]) && is_resource($this->pipes[2])) {
-            stream_set_blocking($this->pipes[2], true);
-            $content = stream_get_contents($this->pipes[2]);
-            if ($content !== false && $content !== '') {
-                $this->stderr .= $content;
-            }
+    }
+
+    /**
+     * Takes what the worker said on its error stream, once it has gone.
+     */
+    private function readStderr(): void
+    {
+        if ($this->stderrFile === null) {
+            return;
         }
+
+        $this->stderr .= (string) file_get_contents($this->stderrFile);
+        $file = $this->stderrFile;
+        $this->stderrFile = null;
+        (new ByReturnValue())->call(static fn(): bool => unlink($file));
     }
 
     /**

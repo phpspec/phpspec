@@ -72,13 +72,24 @@ describe(JsonReport::class, function () {
         }
     });
 
-    it('takes the place of the report it replaces, keeping its mode, and leaves nothing beside it', function () {
+    it('keeps the mode of the report it replaces', function () {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            skip('Windows keeps no mode for a group or for others.');
+        }
+
         (new JsonReport())->render($this->tests, $this->sources, $this->filePath);
         chmod($this->filePath, 0640);
 
         (new JsonReport())->render($this->tests, [], $this->filePath);
 
         expect(fileperms($this->filePath) & 0777)->toBe(0640);
+    });
+
+    it('takes the place of the report it replaces, and leaves nothing beside it', function () {
+        (new JsonReport())->render($this->tests, $this->sources, $this->filePath);
+
+        (new JsonReport())->render($this->tests, [], $this->filePath);
+
         expect(json_decode((string) file_get_contents($this->filePath), true)['sources'])->toBe([]);
         expect(scandir(dirname($this->filePath)))->toBe(['.', '..', 'coverage.json']);
     });

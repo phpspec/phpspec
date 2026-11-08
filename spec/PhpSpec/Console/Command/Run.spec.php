@@ -4,7 +4,12 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run;
 use PhpSpec\Filesystem;
 use PhpSpec\Loader;
+use PhpSpec\Parallel\Wire;
+use PhpSpec\Parallel\WireMark;
+use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Runner;
+use PhpSpec\TemporaryDirectory;
+use Symfony\Component\Console\Tester\CommandTester;
 
 describe(Run::class, function () {
 
@@ -196,6 +201,30 @@ describe(Run::class, function () {
             $tester->execute(['--filter' => 'NonExistent']);
             expect($tester->getStatusCode())->toBe(1);
             expect($tester->getDisplay())->toContain('No example or scenario matches --filter "NonExistent".');
+        });
+
+        it('has a queued worker say it ran a file that met a stop, and wait to be told what next', function () {
+            $dir = TemporaryDirectory::create('phpspec_run_queue_');
+            file_put_contents($dir->path . '/Fails.spec.php', "<?php\ndescribe('Fails', function () { it('fails', fn() => expect(1)->toBe(2)); });\n");
+            file_put_contents($dir->path . '/Next.spec.php', "<?php\ndescribe('Next', function () { it('runs', fn() => expect(1)->toBe(1)); });\n");
+            $wire = new Wire();
+            $tester = new CommandTester(new Run(new Loader(), new Runner(), new Configuration()));
+            $tester->setInputs([$wire->give([$dir->path . '/Fails.spec.php']), $wire->give([$dir->path . '/Next.spec.php'])]);
+
+            try {
+                $tester->execute(['--queue' => true, '--format' => ['wire'], '--stop-on-failure' => true]);
+                $lines = explode("\n", rtrim($tester->getDisplay(), "\n"));
+            } finally {
+                $dir->remove();
+            }
+
+            expect(array_values(array_filter(array_map(static fn(string $line) => is_object($read = $wire->decode($line)) ? $read::class : $read, $lines))))->toBe([
+                SpecificationResult::class,
+                WireMark::class,
+                SpecificationResult::class,
+                WireMark::class,
+                WireMark::class,
+            ]);
         });
 
         it('filters examples by title and hides specs left with no examples', function (Filesystem $execFs) {

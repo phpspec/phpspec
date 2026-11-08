@@ -392,7 +392,7 @@ describe(Pretty::class, function() {
         $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$example])]));
         $text = $output->fetch();
         expect($text)->toContain("  at spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . $line);
-        expect($text)->toContain(realpath(BLAME_SPEC_OUTSIDER) . ":2");
+        expect($text)->toContain(str_replace('\\', '/', realpath(BLAME_SPEC_OUTSIDER)) . ":2");
         expect($text)->not()->toContain("spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . ($line - 7));
     });
 

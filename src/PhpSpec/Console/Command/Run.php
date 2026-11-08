@@ -1085,7 +1085,8 @@ final class Run extends Command implements InternalOptions
 
     /**
      * What a queued worker runs: each file it is handed, loaded and run as it
-     * arrives, until none is left or one stops the run.
+     * arrives, until none is left. A file that met a stop is reported like any
+     * other: the run that started the worker is the one that ends it.
      *
      * @return \Generator<Results>
      */
@@ -1094,13 +1095,7 @@ final class Run extends Command implements InternalOptions
         foreach ($queue as $targets) {
             ArrangingCode::under(...$this->specCodeRoots($targets));
 
-            foreach ($this->runner->stream($this->loader->load($targets, $filter, $tags), $stop) as $result) {
-                yield $result;
-
-                if ($stop->metBy($result)) {
-                    return;
-                }
-            }
+            yield from $this->runner->stream($this->loader->load($targets, $filter, $tags), $stop);
         }
     }
 

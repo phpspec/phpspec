@@ -13,7 +13,7 @@ use PhpSpec\StopConditions;
 describe(WorkerProcess::class, function () {
 
     context('listening to a worker', function () {
-        it('listens over sockets, the one stream a wait and a read can trust on every platform', function () {
+        it('listens for results over one socket, the one stream a wait and a read can trust on every platform', function () {
             $script = tempnam(sys_get_temp_dir(), 'phpspec_worker_spec_');
             file_put_contents($script, '<?php');
             $worker = new WorkerProcess($script);
@@ -25,7 +25,7 @@ describe(WorkerProcess::class, function () {
             $worker->getResults();
             unlink($script);
 
-            expect($types)->toBe(['generic_socket', 'generic_socket']);
+            expect($types)->toBe(['generic_socket']);
         });
 
         it('stops listening to a pipe the worker closed, so a wait is never woken by it again', function () {
@@ -43,6 +43,38 @@ describe(WorkerProcess::class, function () {
             expect($worker->pipes())->toBe([]);
             $worker->getResults();
             unlink($script);
+        });
+    });
+
+    context('what a worker says on its error stream', function () {
+        it('is kept for after the worker has gone, whenever it is read', function () {
+            $script = tempnam(sys_get_temp_dir(), 'phpspec_worker_spec_');
+            file_put_contents($script, '<?php fwrite(STDERR, "last words");');
+            $worker = new WorkerProcess($script);
+            $worker->start();
+
+            $deadline = microtime(true) + 5;
+            while ($worker->isRunning() && microtime(true) < $deadline) {
+                usleep(1000);
+            }
+
+            $worker->getResults();
+            unlink($script);
+
+            expect($worker->getStderr())->toBe('last words');
+        });
+
+        it('is kept when the worker is stopped with the run', function () {
+            $script = tempnam(sys_get_temp_dir(), 'phpspec_worker_spec_');
+            file_put_contents($script, '<?php fwrite(STDERR, "last words"); fgets(STDIN);');
+            $worker = new WorkerProcess($script);
+            $worker->start();
+            usleep(200000);
+
+            $worker->terminate();
+            unlink($script);
+
+            expect($worker->getStderr())->toBe('last words');
         });
     });
 
