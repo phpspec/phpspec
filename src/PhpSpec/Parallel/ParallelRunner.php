@@ -153,15 +153,18 @@ final class ParallelRunner
             foreach ($running as $key => $process) {
                 $process->read();
                 $done = !$process->isRunning();
+                $results = $done ? $process->getResults() : $process->takeResults();
 
-                yield from $done ? $process->getResults() : $process->takeResults();
-
+                // Handed the next file before its results are reported, so a
+                // worker that ran its file is not kept waiting on the report.
                 if ($done) {
                     unset($running[$key]);
                     $last = $process;
                 } elseif ($process->wantsWork()) {
                     $this->hand($process);
                 }
+
+                yield from $results;
             }
         }
 

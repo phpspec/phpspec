@@ -55,6 +55,30 @@ describe(ParallelRunner::class, function () {
             expect(($this->handed)(['a.spec.php' => 10, 'b.spec.php' => 30, 'c.feature' => 20, 'd.feature' => 40, 'e.feature' => 40], null))->toBe(['d.feature', 'e.feature', 'c.feature', 'a.spec.php', 'b.spec.php']);
         });
 
+        it('hands a worker its next file before its result is reported, so the worker never waits on the report', function () {
+            $directory = TemporaryDirectory::create('phpspec_parallel_handing_');
+            $log = $directory->path . '/handed.log';
+            $worker = $directory->path . '/worker.php';
+            file_put_contents($worker, '<?php require ' . var_export(realpath(__DIR__ . '/../../../vendor/autoload.php'), true) . '; $wire = new PhpSpec\\Parallel\\Wire(); while (($line = fgets(STDIN)) !== false) { $file = $wire->given(rtrim($line))[0]; file_put_contents(' . var_export($log, true) . ', basename($file) . "\\n", FILE_APPEND); echo $wire->encode(new PhpSpec\\Result\\SpecificationResult(basename($file), [], $file)), "\\n", $wire->ran(), "\\n"; } echo $wire->ending(), "\\n";');
+            $first = $directory->path . '/a.spec.php';
+            $second = $directory->path . '/b.spec.php';
+            $handedFirst = null;
+
+            try {
+                foreach ((new ParallelRunner([$first => [$first], $second => [$second]], 1, phpspecBin: $worker))->stream() as $result) {
+                    $deadline = microtime(true) + 2;
+                    while ($handedFirst === null && microtime(true) < $deadline && !(is_file($log) && str_contains((string) file_get_contents($log), 'b.spec.php'))) {
+                        usleep(1000);
+                    }
+                    $handedFirst ??= is_file($log) && str_contains((string) file_get_contents($log), 'b.spec.php');
+                }
+
+                expect($handedFirst)->toBeTrue();
+            } finally {
+                $directory->remove();
+            }
+        });
+
         it('hands the files over in the order the seed of a random run gives', function () {
             $sizes = ['a.spec.php' => 10, 'b.spec.php' => 30, 'c.spec.php' => 20, 'd.spec.php' => 40];
 
