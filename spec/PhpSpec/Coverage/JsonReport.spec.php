@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Coverage\JsonReport;
-use RuntimeException;
 
 describe(JsonReport::class, function () {
 
