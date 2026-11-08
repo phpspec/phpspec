@@ -165,9 +165,11 @@ expectation carries **no** offer: the code exists and its behaviour is simply
 wrong, so `state: failing` already says everything.
 
 **Warnings, deprecations and notices.** A PHP warning, deprecation or notice
-raised while an example or a step ran is listed under `warnings`,
-`deprecations` or `notices`: an array of `{ "message", "at" }`, where `at` is
-the line that raised it, in the spec, the steps file or the code under test.
+raised while an example or a step ran, or by the code around it (see
+[Warnings, deprecations and notices](writing-specs.md#warnings-deprecations-and-notices)),
+is listed under `warnings`, `deprecations` or `notices`: an array of
+`{ "message", "at" }`, where `at` is the line that raised it, in the spec, the
+steps file or the code under test.
 An example carries its own on its entry; a scenario carries each on the step
 that raised it. An example or scenario that passed but raised one is reported
 all the same, `state: passing` with its `spec` and `rerun`, so a note never goes

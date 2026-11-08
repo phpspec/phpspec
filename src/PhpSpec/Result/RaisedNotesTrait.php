@@ -31,15 +31,15 @@ trait RaisedNotesTrait
     private array $notices = [];
 
     /**
-     * Files each note raised while this ran under its kind, once however often
-     * it was raised.
+     * Files each note raised while this ran under its kind, with those it was
+     * told of before, once however often it was raised.
      *
      * @param list<array{severity: int, message: string, file: string, line: int}> $notes
      */
     public function raised(array $notes): void
     {
         $unique = [];
-        foreach ($notes as $note) {
+        foreach ([...$this->warnings, ...$this->deprecations, ...$this->notices, ...$notes] as $note) {
             $unique[$note['message'] . ':' . $note['file'] . ':' . $note['line']] = $note;
         }
 

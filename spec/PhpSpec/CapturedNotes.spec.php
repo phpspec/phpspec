@@ -115,4 +115,30 @@ describe(CapturedNotes::class, function () {
 
         expect(array_column($caught->notes(), 'message'))->toBe(['the cache is cold']);
     });
+
+    it('takes what the code it runs raises, keeping it across runs, and answers what the code answered', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(CAPTURED_NOTES_PROJECT), []));
+
+        $answer = $caught->during(function (): int {
+            trigger_error('set up', E_USER_WARNING);
+
+            return 7;
+        });
+        $caught->during(fn() => trigger_error('torn down', E_USER_NOTICE));
+
+        expect($answer)->toBe(7);
+        expect(array_column($caught->notes(), 'message'))->toBe(['set up', 'torn down']);
+    });
+
+    it('keeps what was raised before the code it runs threw', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(CAPTURED_NOTES_PROJECT), []));
+
+        expect(fn() => $caught->during(function (): void {
+            trigger_error('before breaking', E_USER_WARNING);
+
+            throw new RuntimeException('broke');
+        }))->toThrow(RuntimeException::class);
+
+        expect(array_column($caught->notes(), 'message'))->toBe(['before breaking']);
+    });
 });

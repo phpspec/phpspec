@@ -17,15 +17,18 @@ namespace PhpSpec\Specification;
 use Closure;
 use PhpSpec\ArgumentlessFunction;
 use PhpSpec\Attachments;
+use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Mock\HeldCalls;
+use PhpSpec\OwnCode;
 use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\GroupNotes;
 use PhpSpec\Results;
 use PhpSpec\StopRegistry;
 use ReflectionException;
@@ -179,14 +182,17 @@ class Context implements ExampleRegistry, Rebindable, Titled
         // What this context's body and its group hooks hand over, on top of
         // what the contexts around it did.
         $attachments = $this->inherited ?? new Attachments();
+        // What the body and the group hooks raise, outside every example.
+        $setup = new CapturedNotes(OwnCode::here());
+        $teardown = new CapturedNotes(OwnCode::here());
         CoverageRegistry::collector()?->pushContext($this->context);
 
         try {
-            $this->collecting($attachments, function (): void {
+            $setup->during(fn() => $this->collecting($attachments, function (): void {
                 DispatcherRegistry::dispatcher()->pushScope($this);
                 (new ArgumentlessFunction($this->specBlock))();
                 DispatcherRegistry::dispatcher()->popScope();
-            });
+            }));
 
             $this->placeChildren();
             $this->resolveFocus();
@@ -197,11 +203,11 @@ class Context implements ExampleRegistry, Rebindable, Titled
             $ownHooksRan = !$this->pending && $signal === null;
             if ($ownHooksRan) {
                 try {
-                    $this->collecting($attachments, function (): void {
+                    $setup->during(fn() => $this->collecting($attachments, function (): void {
                         foreach ($this->beforeAllHooks as $hook) {
                             (new ArgumentlessFunction($hook))();
                         }
-                    });
+                    }));
                 } catch (PendingException|SkippedException $raised) {
                     $signal = $raised;
                 }
@@ -237,7 +243,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
             }
 
             if ($ownHooksRan) {
-                $this->collecting($attachments, function (): void {
+                $teardown->during(fn() => $this->collecting($attachments, function (): void {
                     foreach ($this->afterAllHooks as $hook) {
                         try {
                             (new ArgumentlessFunction($hook))();
@@ -245,7 +251,7 @@ class Context implements ExampleRegistry, Rebindable, Titled
                             throw new ExampleError((new LateSignal($late, 'afterAll', 'the examples', 'beforeAll or in an example'))->sentence(), $late);
                         }
                     }
-                });
+                }));
             }
         } catch (Throwable $e) {
             $result = new ExampleResult($this->numberedTitle(), [], true);
@@ -256,11 +262,14 @@ class Context implements ExampleRegistry, Rebindable, Titled
             }
             $contextResult = new ContextResult($this->numberedTitle(), [...$results, $result]);
             $contextResult->setError($error);
+            (new GroupNotes($setup->notes(), $teardown->notes()))->settleOn($contextResult->getResults());
 
             return $contextResult;
         } finally {
             CoverageRegistry::collector()?->popContext();
         }
+
+        (new GroupNotes($setup->notes(), $teardown->notes()))->settleOn($results);
 
         return new ContextResult($this->numberedTitle(), $results);
     }
@@ -277,6 +286,23 @@ class Context implements ExampleRegistry, Rebindable, Titled
      * @throws ReflectionException
      */
     private function runExampleWithHooks(Example $example, Attachments $attachments): Results
+    {
+        // What its hooks raise is the example's, as their coverage is; its
+        // body takes its own.
+        $hooks = new CapturedNotes(OwnCode::here());
+        $result = $hooks->during(fn(): Results => $this->runHookedExample($example, $attachments));
+
+        if ($result instanceof ExampleResult) {
+            $result->raised($hooks->notes());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    private function runHookedExample(Example $example, Attachments $attachments): Results
     {
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();

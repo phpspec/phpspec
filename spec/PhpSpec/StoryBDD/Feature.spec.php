@@ -387,6 +387,56 @@ describe(Feature::class, function () {
         expect($steps[1]->isPassed())->toBeTrue();
     });
 
+    context('notes raised outside the steps', function () {
+        this('shop', fn() => function (HookRegistry $hooks, array $loading = []): FeatureResult {
+            $registry = new StepRegistry();
+            $registry->addStep('a customer', fn() => null);
+            $registry->addStep('a basket', fn() => null);
+
+            return (new Feature('shop.feature', new FeatureNode('Shop', '', null, [
+                new ScenarioNode('First', [new StepNode('Given', 'a customer'), new StepNode('And', 'a basket')]),
+                new ScenarioNode('Second', [new StepNode('Given', 'a customer'), new StepNode('And', 'a basket')]),
+            ]), $registry, $hooks, loading: $loading))->run();
+        });
+
+        this('messages', fn() => fn(StepResult $step): array => array_column([...$step->getWarnings(), ...$step->getNotices(), ...$step->getDeprecations()], 'message'));
+
+        it('reports what its steps files and its beforeFeature raised on its first step, and its afterFeature on its last', function () {
+            $hooks = new HookRegistry();
+            $hooks->addBeforeFeature(fn() => trigger_error('the feature sets up', E_USER_WARNING));
+            $hooks->addAfterFeature(fn() => trigger_error('the feature tears down', E_USER_NOTICE));
+
+            [$first, $second] = ($this->shop)($hooks, [['severity' => E_USER_DEPRECATED, 'message' => 'the steps load', 'file' => 'features/steps/shop.steps.php', 'line' => 2]])->getResults();
+
+            expect(($this->messages)($first->getResults()[0]))->toBe(['the feature sets up', 'the steps load']);
+            expect(($this->messages)($second->getResults()[1]))->toBe(['the feature tears down']);
+            expect([...($this->messages)($first->getResults()[1]), ...($this->messages)($second->getResults()[0])])->toBe([]);
+        });
+
+        it('reports what a scenario\'s hooks raise on its first step and on its last', function () {
+            $hooks = new HookRegistry();
+            $hooks->addBeforeScenario(fn() => trigger_error('the scenario sets up', E_USER_WARNING));
+            $hooks->addAfterScenario(fn() => trigger_error('the scenario tears down', E_USER_NOTICE));
+
+            foreach (($this->shop)($hooks)->getResults() as $scenario) {
+                expect(($this->messages)($scenario->getResults()[0]))->toBe(['the scenario sets up']);
+                expect(($this->messages)($scenario->getResults()[1]))->toBe(['the scenario tears down']);
+            }
+        });
+
+        it('reports what a step\'s beforeStep and afterStep raise on that step', function () {
+            $hooks = new HookRegistry();
+            $hooks->addBeforeStep(fn() => trigger_error('the step sets up', E_USER_WARNING));
+            $hooks->addAfterStep(fn() => trigger_error('the step tears down', E_USER_NOTICE));
+
+            foreach (($this->shop)($hooks)->getResults() as $scenario) {
+                foreach ($scenario->getResults() as $step) {
+                    expect(($this->messages)($step))->toBe(['the step sets up', 'the step tears down']);
+                }
+            }
+        });
+    });
+
     it("runs beforeScenario hooks", function () {
         $registry = new StepRegistry();
         $registry->addStep("the hook ran", function () {

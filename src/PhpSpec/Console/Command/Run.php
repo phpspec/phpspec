@@ -255,23 +255,22 @@ final class Run extends Command implements InternalOptions
 
     /**
      * PHP prints a fatal to standard output as well as the error stream, and
-     * standard output is the agent document's, or a worker's wire. Displaying
-     * errors on the error stream leaves it clean: the document names the fatal
-     * itself, and a worker's parent reports what the worker said there. A
-     * worker that already logs its errors there keeps its display as it is,
-     * so each error is said once.
+     * standard output is the agent document's, or a worker's wire. Errors are
+     * displayed on the error stream instead, or not at all when PHP already
+     * logs them there, so each is said once: the document names the fatal
+     * itself, and a worker's parent reports what the worker said there.
      *
      * @return string|null the setting to restore, or null when it was left alone
      */
     private function displayErrorsOffStdout(Formatter $formatter): ?string
     {
-        $loggedToStderr = filter_var(ini_get('log_errors'), FILTER_VALIDATE_BOOLEAN) && ini_get('error_log') === '';
-
-        if ($formatter instanceof Agent || ($formatter instanceof WireFormatter && !$loggedToStderr)) {
-            return (string) ini_set('display_errors', 'stderr');
+        if (!$formatter instanceof Agent && !$formatter instanceof WireFormatter) {
+            return null;
         }
 
-        return null;
+        $loggedToStderr = filter_var(ini_get('log_errors'), FILTER_VALIDATE_BOOLEAN) && ini_get('error_log') === '';
+
+        return (string) ini_set('display_errors', $loggedToStderr ? '0' : 'stderr');
     }
 
     /**

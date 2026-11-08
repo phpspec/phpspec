@@ -117,6 +117,53 @@ describe(Context::class, function() {
         expect($results[1]->getMessage())->toBe('no setup');
     });
 
+    it("reports what its body and beforeAll raise on its first example, and what its afterAll raises on its last", function() {
+        $ctx = new Context("noted", function() {
+            trigger_error('described', E_USER_WARNING);
+            beforeAll(fn() => trigger_error('set up', E_USER_NOTICE));
+            afterAll(fn() => trigger_error('torn down', E_USER_DEPRECATED));
+            it("one", fn() => expect(true)->toBeTrue());
+            it("two", fn() => expect(true)->toBeTrue());
+        });
+        $ctx->setWorld(new Subject());
+
+        [$one, $two] = $ctx->run()->getResults();
+
+        expect(array_column($one->getWarnings(), 'message'))->toBe(['described']);
+        expect(array_column($one->getNotices(), 'message'))->toBe(['set up']);
+        expect(array_column($two->getDeprecations(), 'message'))->toBe(['torn down']);
+        expect([...$two->getWarnings(), ...$two->getNotices(), ...$one->getDeprecations()])->toBe([]);
+    });
+
+    it("reports what an example's beforeEach and afterEach raise on that example", function() {
+        $ctx = new Context("hooked", function() {
+            beforeEach(fn() => trigger_error('set up', E_USER_WARNING));
+            afterEach(fn() => trigger_error('torn down', E_USER_NOTICE));
+            it("one", fn() => expect(true)->toBeTrue());
+            it("two", fn() => expect(true)->toBeTrue());
+        });
+        $ctx->setWorld(new Subject());
+
+        foreach ($ctx->run()->getResults() as $example) {
+            expect(array_column($example->getWarnings(), 'message'))->toBe(['set up']);
+            expect(array_column($example->getNotices(), 'message'))->toBe(['torn down']);
+        }
+    });
+
+    it("reports what its body raised on the error it broke with", function() {
+        $ctx = new Context("broken", function() {
+            trigger_error('described', E_USER_WARNING);
+            beforeAll(function () { throw new \RuntimeException('no setup'); });
+            it("never runs", fn() => expect(true)->toBeTrue());
+        });
+        $ctx->setWorld(new Subject());
+
+        $results = $ctx->run()->getResults();
+
+        expect(end($results)->isError())->toBeTrue();
+        expect(array_column($results[0]->getWarnings(), 'message'))->toBe(['described']);
+    });
+
     it("keeps what an example's hooks hand over about it, its teardown's read once that is done", function() {
         $ctx = new Context("attached", function() {
             beforeEach(function() { \PhpSpec\attach('set up', 'from beforeEach'); });

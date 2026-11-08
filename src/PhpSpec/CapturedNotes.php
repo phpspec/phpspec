@@ -55,6 +55,24 @@ final class CapturedNotes
     }
 
     /**
+     * Runs the code, taking what it raises.
+     *
+     * @template T
+     * @param callable(): T $run
+     * @return T
+     */
+    public function during(callable $run): mixed
+    {
+        $this->listen();
+
+        try {
+            return $run();
+        } finally {
+            $this->stop();
+        }
+    }
+
+    /**
      * @return list<array{severity: int, message: string, file: string, line: int}>
      */
     public function notes(): array

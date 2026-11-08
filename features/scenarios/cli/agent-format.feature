@@ -195,6 +195,85 @@ Feature: Agent output format
     And the step "Given I run the counter" should carry the deprecation "run() is deprecated, use count()" raised at "features/steps/counting.steps.php:4"
     And the step "Given I run the counter" should carry the notice "the counter starts at 2" raised at "features/steps/counting.steps.php:5"
 
+  Scenario: A note a spec file raises outside its examples is reported on the examples it sets up or tears down
+    Given a spec file "spec/App/Group.spec.php":
+      """
+      <?php
+      trigger_error('the file loads', E_USER_WARNING);
+      describe('Group', function () {
+          trigger_error('the group is described', E_USER_WARNING);
+          beforeAll(fn() => trigger_error('the group sets up', E_USER_WARNING));
+          beforeEach(fn() => trigger_error('each example sets up', E_USER_WARNING));
+          afterEach(fn() => trigger_error('each example tears down', E_USER_WARNING));
+          afterAll(fn() => trigger_error('the group tears down', E_USER_WARNING));
+          it('first', fn() => expect(true)->toBeTrue());
+          it('second', fn() => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "warnings" as "8"
+    And the entry "Group > first" should carry the warning "the file loads" raised at "spec/App/Group.spec.php:2"
+    And the entry "Group > first" should carry the warning "the group is described" raised at "spec/App/Group.spec.php:4"
+    And the entry "Group > first" should carry the warning "the group sets up" raised at "spec/App/Group.spec.php:5"
+    And the entry "Group > first" should carry the warning "each example sets up" raised at "spec/App/Group.spec.php:6"
+    And the entry "Group > second" should carry the warning "each example tears down" raised at "spec/App/Group.spec.php:7"
+    And the entry "Group > second" should carry the warning "the group tears down" raised at "spec/App/Group.spec.php:8"
+
+  Scenario: A note a feature's own code raises outside its steps is reported on the steps it sets up or tears down
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: First
+          Given a customer
+        Scenario: Second
+          Given a customer
+      """
+    And a file "features/support/Helper.php":
+      """
+      <?php
+      trigger_error('the support loads', E_USER_WARNING);
+      """
+    And a step file "features/steps/shop.steps.php":
+      """
+      <?php
+      trigger_error('the steps load', E_USER_WARNING);
+      beforeFeature(fn() => trigger_error('the feature sets up', E_USER_WARNING));
+      beforeScenario(fn() => trigger_error('each scenario sets up', E_USER_WARNING));
+      afterScenario(fn() => trigger_error('each scenario tears down', E_USER_WARNING));
+      afterFeature(fn() => trigger_error('the feature tears down', E_USER_WARNING));
+      given('a customer', fn() => null);
+      """
+    When I run phpspec run in a fresh process with option "--story --format=agent"
+    Then the summary should state "warnings" as "8"
+    And the step "Given a customer" of "Shop > First" should carry the warning "the support loads" raised at "features/support/Helper.php:2"
+    And the step "Given a customer" of "Shop > First" should carry the warning "the steps load" raised at "features/steps/shop.steps.php:2"
+    And the step "Given a customer" of "Shop > First" should carry the warning "the feature sets up" raised at "features/steps/shop.steps.php:3"
+    And the step "Given a customer" of "Shop > First" should carry the warning "each scenario sets up" raised at "features/steps/shop.steps.php:4"
+    And the step "Given a customer" of "Shop > Second" should carry the warning "each scenario tears down" raised at "features/steps/shop.steps.php:5"
+    And the step "Given a customer" of "Shop > Second" should carry the warning "the feature tears down" raised at "features/steps/shop.steps.php:6"
+
+  Scenario Outline: A fatal is said once on the error stream, however PHP is set to log it
+    Given a spec file "spec/App/Greedy.spec.php":
+      """
+      <?php
+      describe('Greedy', function () {
+          it('takes all the memory', function () {
+              $taken = [];
+              while (true) {
+                  $taken[] = str_repeat('x', 100000);
+              }
+          });
+      });
+      """
+    When I run phpspec run under php "-d memory_limit=16M <logging>" with option "--format=agent"
+    Then the error stream should contain "Allowed memory size of 16777216 bytes exhausted" exactly 1 times
+
+    Examples:
+      | logging                       |
+      | -d log_errors=1 -d error_log= |
+      | -d log_errors=0               |
+
   Scenario: A boolean failure says what the matcher wanted, not only what it got
     Given a spec file "spec/App/Watch.spec.php":
       """

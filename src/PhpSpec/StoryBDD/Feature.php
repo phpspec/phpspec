@@ -22,6 +22,7 @@ use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\OwnCode;
 use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\GroupNotes;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Results;
@@ -46,12 +47,16 @@ final readonly class Feature implements SpecBlock
      * @param StepRegistry $registry step pattern-to-closure mappings
      * @param HookRegistry $hooks before-feature/scenario/step hooks
      */
+    /**
+     * @param list<array{severity: int, message: string, file: string, line: int}> $loading what its steps and support files raised as they loaded, reported with what sets it up
+     */
     public function __construct(
         private string $path,
         private FeatureNode $featureNode,
         private StepRegistry $registry,
         private HookRegistry $hooks,
         private StepTypes $types = new StepTypes(),
+        private array $loading = [],
     ) {}
 
     /**
@@ -105,7 +110,7 @@ final readonly class Feature implements SpecBlock
             $this->featureNode->tags,
         );
 
-        return new self($this->path, $featureNode, $this->registry, $this->hooks, $this->types);
+        return new self($this->path, $featureNode, $this->registry, $this->hooks, $this->types, $this->loading);
     }
 
     /**
@@ -125,7 +130,10 @@ final readonly class Feature implements SpecBlock
         // What beforeFeature hands over: a copy for each scenario it sets up,
         // or, when it did not pass, read once by the first scenario it decides.
         $setup = new Attachments();
-        $held = $this->attemptCollecting(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature', $setup);
+        // What the feature's own code raises, outside every step.
+        $settingUp = new CapturedNotes(OwnCode::here());
+        $tearingDown = new CapturedNotes(OwnCode::here());
+        $held = $settingUp->during(fn() => $this->attemptCollecting(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature', $setup));
 
         // The last scenario waits for afterFeature, which may break its last step.
         $last = null;
@@ -139,6 +147,8 @@ final readonly class Feature implements SpecBlock
                     $result = $this->runScenario($expanded, $held, $held === null ? $setup->handedDown() : $setup);
                     if ($last !== null) {
                         yield $last;
+                    } else {
+                        (new GroupNotes([...$this->loading, ...$settingUp->notes()]))->settleOn([$result]);
                     }
                     $last = $result;
 
@@ -150,13 +160,17 @@ final readonly class Feature implements SpecBlock
 
             $closed = true;
             $teardown = new Attachments();
-            $after = $this->attemptCollecting(fn() => $this->hooks->runAfterFeature(), 'afterFeature', $teardown);
+            $after = $tearingDown->during(fn() => $this->attemptCollecting(fn() => $this->hooks->runAfterFeature(), 'afterFeature', $teardown));
             if ($last !== null) {
-                yield $after === null ? $last : new ScenarioResult($last->getTitle(), self::brokenAtTheEnd($last->getResults(), $after), $last->getLine(), [...$setup->read(), ...$last->getAttachments(), ...$teardown->read()]);
+                $last = $after === null ? $last : new ScenarioResult($last->getTitle(), self::brokenAtTheEnd($last->getResults(), $after), $last->getLine(), [...$setup->read(), ...$last->getAttachments(), ...$teardown->read()]);
+                (new GroupNotes([], $tearingDown->notes()))->settleOn([$last]);
+
+                yield $last;
             }
         } finally {
             if (!$closed) {
-                $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature');
+                // Its scenarios have been reported: what it raises now has none to go on.
+                $tearingDown->during(fn() => $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature'));
             }
 
             $coverage?->popContext();
@@ -222,7 +236,10 @@ final readonly class Feature implements SpecBlock
         $world = new StepWorld();
         DispatcherRegistry::dispatcher()->addSubscriber($attachments);
 
-        $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');
+        // What its hooks raise is the scenario's, reported on its steps.
+        $settingUp = new CapturedNotes(OwnCode::here());
+        $tearingDown = new CapturedNotes(OwnCode::here());
+        $held = $featureHeld ?? $settingUp->during(fn() => $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario'));
 
         $collector = new StepMatchCollector();
         DispatcherRegistry::dispatcher()->addSubscriber($collector);
@@ -246,8 +263,10 @@ final readonly class Feature implements SpecBlock
             }
 
             $result = $this->runStep($step, $match, $world, $collector);
-            $after = $this->attempt(fn() => $this->hooks->runAfterStep($world), 'afterStep');
+            $afterStep = new CapturedNotes(OwnCode::here());
+            $after = $afterStep->during(fn() => $this->attempt(fn() => $this->hooks->runAfterStep($world), 'afterStep'));
             $result = $after?->after($result) ?? $result;
+            $result->raised($afterStep->notes());
             $stepResults[] = $result;
             $stopped = !$result->isPassed();
         }
@@ -266,11 +285,13 @@ final readonly class Feature implements SpecBlock
         }
 
         if ($featureHeld === null) {
-            $after = $this->attempt(fn() => $this->hooks->runAfterScenario($world), 'afterScenario');
+            $after = $tearingDown->during(fn() => $this->attempt(fn() => $this->hooks->runAfterScenario($world), 'afterScenario'));
             if ($after !== null) {
                 $stepResults = self::brokenAtTheEnd($stepResults, $after);
             }
         }
+
+        (new GroupNotes($settingUp->notes(), $tearingDown->notes()))->settleOn($stepResults);
 
         // What the teardown handed over, and anything a scenario that needed
         // no attention until then did not read.
@@ -366,24 +387,22 @@ final readonly class Feature implements SpecBlock
     {
         $title = $step->keyword . ' ' . $step->text;
 
-        $before = $this->attempt(fn() => $this->hooks->runBeforeStep($world), 'beforeStep');
-        if ($before !== null) {
-            return $before->instead($title);
-        }
-
-        // PHP warnings, deprecations and notices raised inside the step are
-        // collected onto its result (the same net examples run under), so they
-        // report under their kinds instead of leaking raw to the terminal.
+        // PHP warnings, deprecations and notices raised by the step and its
+        // beforeStep are collected onto its result (the same net examples run
+        // under), so they report under their kinds instead of leaking raw to
+        // the terminal.
         $caught = new CapturedNotes(OwnCode::here());
-        $caught->listen();
+        $before = $caught->during(fn() => $this->attempt(fn() => $this->hooks->runBeforeStep($world), 'beforeStep'));
+
+        if ($before !== null) {
+            $result = $before->instead($title);
+            $result->raised($caught->notes());
+
+            return $result;
+        }
 
         $start = hrtime(true);
-        try {
-            $result = $this->executeStep($step, $title, $match, $world, $collector);
-        } finally {
-            $caught->stop();
-        }
-
+        $result = $caught->during(fn() => $this->executeStep($step, $title, $match, $world, $collector));
         $result->setDuration((hrtime(true) - $start) / 1e9);
         $result->raised($caught->notes());
 

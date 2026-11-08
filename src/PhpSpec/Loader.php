@@ -301,9 +301,13 @@ final class Loader
             $this->collectStepFiles($this->stepsPath, $stepFiles);
         }
 
+        // What the support and steps files raise as they load is reported
+        // with what sets up the first feature they load for.
+        $loading = new CapturedNotes(OwnCode::here());
+
         // Helper classes for steps, the Cucumber way: everything under
         // <features>/support loads before any step file needs it.
-        $supportFiles = $this->loadSupport($featuresRoot);
+        $supportFiles = $loading->during(fn(): array => $this->loadSupport($featuresRoot));
 
         // Fresh registry so prior spec execution can't pollute step definitions
         StoryBDDRegistry::init();
@@ -321,7 +325,7 @@ final class Loader
         }
 
         foreach ($uniqueStepFiles as $stepFile) {
-            $definitions = $this->steps->definitions($stepFile);
+            $definitions = $loading->during(fn(): array => $this->steps->definitions($stepFile));
             StoryBDDRegistry::steps()->adopt($definitions['steps']);
             StoryBDDRegistry::hooks()->adopt($definitions['hooks']);
         }
@@ -348,6 +352,7 @@ final class Loader
                 StoryBDDRegistry::steps(),
                 StoryBDDRegistry::hooks(),
                 $types,
+                $features === [] ? $loading->notes() : [],
             );
         }
 

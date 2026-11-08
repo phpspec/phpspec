@@ -91,6 +91,12 @@ then('the output should contain {string} exactly {int} times', function (string 
     }
 });
 
+// What phpspec or PHP said on the error stream alone, the run's standard
+// output left out.
+then('the error stream should contain {string} exactly {int} times', function (string $text, int $times) {
+    expect(substr_count(substr($this->output, strlen($this->stdout ?? '')), $text))->toBe($times);
+});
+
 then('the file {string} should not contain {string}', function (string $path, string $text) {
     $content = (string) file_get_contents($this->projectDir . '/' . $path);
     if (str_contains($content, $text)) {
@@ -303,6 +309,25 @@ then('the step {string} should carry the {word} {string} raised at {string}', fu
     expect($steps[0][$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
 });
 
+$entryNamed = static function (array $entries, string $name): array {
+    $named = array_values(array_filter($entries, fn(array $entry) => ($entry['example'] ?? null) === $name));
+
+    expect($named)->toHaveLength(1);
+
+    return $named[0];
+};
+
+then('the entry {string} should carry the {word} {string} raised at {string}', function (string $name, string $kind, string $message, string $at) use ($events, $entries, $entryNamed) {
+    expect($entryNamed($entries($events($this->stdout ?? $this->output)), $name)[$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
+});
+
+then('the step {string} of {string} should carry the {word} {string} raised at {string}', function (string $title, string $name, string $kind, string $message, string $at) use ($events, $entries, $entryNamed) {
+    $steps = array_values(array_filter($entryNamed($entries($events($this->stdout ?? $this->output)), $name)['steps'] ?? [], fn(array $step) => $step['title'] === $title));
+
+    expect($steps)->toHaveLength(1);
+    expect($steps[0][$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
+});
+
 // What re-runs a report, as the line to paste and as the arguments to hand a
 // process, one argument per line.
 then('the reported entry should rerun as {string}', function (string $line) use ($events, $entries) {
@@ -332,14 +357,6 @@ $rerunsById = static function (array $entry): void {
 
     expect($entry['rerun'] ?? null)->toBe('run ' . $file . '@' . ($entry['id'] ?? ''));
     expect($entry['rerun_argv'][1] ?? null)->toBe($file . '@' . ($entry['id'] ?? ''));
-};
-
-$entryNamed = static function (array $entries, string $name): array {
-    $named = array_values(array_filter($entries, fn(array $entry) => ($entry['example'] ?? null) === $name));
-
-    expect($named)->toHaveLength(1);
-
-    return $named[0];
 };
 
 then('each reported entry should rerun its spec file at its id', function () use ($events, $entries, $rerunsById) {

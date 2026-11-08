@@ -242,6 +242,19 @@ describe(ExampleResult::class, function() {
         expect(array_column($result->getNotices(), 'message'))->toBe(['info']);
     });
 
+    it("adds what it is told was raised later to what it has, each once", function() {
+        $result = new ExampleResult("test", []);
+        $first = ['severity' => E_USER_WARNING, 'message' => 'first', 'file' => 'a.php', 'line' => 1];
+        $later = ['severity' => E_USER_WARNING, 'message' => 'later', 'file' => 'a.php', 'line' => 9];
+        $notice = ['severity' => E_USER_NOTICE, 'message' => 'noted', 'file' => 'a.php', 'line' => 4];
+
+        $result->raised([$first]);
+        $result->raised([$later, $first, $notice]);
+
+        expect($result->getWarnings())->toBe([$first, $later]);
+        expect($result->getNotices())->toBe([$notice]);
+    });
+
     it("is not a context", function() {
         $result = new ExampleResult("test", []);
         expect($result->isContext())->toBe(false);

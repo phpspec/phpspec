@@ -360,6 +360,30 @@ it("instantiates", function (Filesystem $fs) {
         }
     });
 
+    it("reports what its steps and support files raise as they load on the first feature it loads, once", function () {
+        $root = TemporaryDirectory::create('phpspec_loader_noisy_');
+        mkdir($root->path . '/features/steps', 0777, true);
+        mkdir($root->path . '/features/support', 0777, true);
+        file_put_contents($root->path . '/features/a.feature', "Feature: A\n  Scenario: One\n    Given a step\n");
+        file_put_contents($root->path . '/features/b.feature', "Feature: B\n  Scenario: Two\n    Given a step\n");
+        file_put_contents($root->path . '/features/steps/noisy.steps.php', "<?php\ntrigger_error('the steps load', E_USER_WARNING);\ngiven('a step', fn() => null);\n");
+        file_put_contents($root->path . '/features/support/Noisy' . bin2hex(random_bytes(4)) . '.php', "<?php\ntrigger_error('the support loads', E_USER_NOTICE);\n");
+
+        try {
+            $loader = new Loader(featuresPath: $root->path . '/features');
+            [$a, $b] = $loader->load($root->path . '/features')->getSpecifications();
+            $again = $loader->load($root->path . '/features/a.feature')->getSpecifications()[0];
+
+            $noted = static fn($feature): array => array_column([...$feature->run()->getResults()[0]->getResults()[0]->getWarnings(), ...$feature->run()->getResults()[0]->getResults()[0]->getNotices()], 'message');
+
+            expect($noted($a))->toBe(['the steps load', 'the support loads']);
+            expect($noted($b))->toBe([]);
+            expect($noted($again))->toBe([]);
+        } finally {
+            $root->remove();
+        }
+    });
+
     it("finds step definitions anywhere under the features root", function () {
         $root = sys_get_temp_dir() . '/phpspec_loader_root_' . uniqid();
         mkdir($root . '/features/checkout', 0777, true);
