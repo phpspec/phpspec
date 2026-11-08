@@ -32,15 +32,16 @@ final class JsonReport
      * Renders the coverage data as a version 1 JSON document and writes it
      * to the specified file path. Creates parent directories if they do not exist.
      *
-     * The document is written a source file at a time, never held whole, to
-     * a file beside the report that takes its place once complete.
+     * The document is written as its sources come, an array of plain values
+     * at a time, never held whole, to a file beside the report that takes its
+     * place once complete.
      *
      * @param array<string, array{time: float, memory: int, spec_file: string, spec_checksum: string}> $tests per-example metadata keyed by test identifier
-     * @param array<string, array{checksum: string, lines: array<int, array<int, string>>, executable?: list<int>, methods?: array<string, array{start: int, end: int}>}> $sources per-file checksums, line-to-test-identifier coverage and method spans, keyed by relative file path
+     * @param iterable<string, array{checksum: string, lines: array<int, array<int, string>>, executable?: list<int>, methods?: array<string, array{start: int, end: int}>}> $sources per-file checksums, line-to-test-identifier coverage and method spans, keyed by relative file path, each written as it comes
      * @param string $filePath the absolute path to write the JSON file to
      * @throws RuntimeException when the document cannot be encoded as JSON, or written
      */
-    public function render(array $tests, array $sources, string $filePath): void
+    public function render(array $tests, iterable $sources, string $filePath): void
     {
         $dir = dirname($filePath);
         if (!is_dir($dir)) {
@@ -79,25 +80,55 @@ final class JsonReport
     /**
      * @param resource $handle
      * @param array<string, mixed> $tests
-     * @param array<string, mixed> $sources
+     * @param iterable<string, mixed> $sources
      */
-    private function write($handle, array $tests, array $sources): void
+    private function write($handle, array $tests, iterable $sources): void
     {
-        $this->put($handle, "{\n    \"version\": 1,\n    \"tests\": " . $this->encoded($tests, 1) . ",\n    \"sources\": ");
+        $this->writeValue($handle, ['version' => 1, 'tests' => $tests, 'sources' => $sources], 0);
+    }
 
-        if ($sources === []) {
-            $this->put($handle, "[]\n}");
+    /**
+     * Writes the value as the whole document's encoding shows it at this
+     * depth: one that holds arrays a member at a time, any other at once, so
+     * nothing larger than one array of plain values is ever encoded whole. An
+     * iterable that is not an array is written with its keys.
+     *
+     * @param resource $handle
+     */
+    private function writeValue($handle, mixed $value, int $depth): void
+    {
+        if (!is_iterable($value) || (is_array($value) && !$this->holdsArrays($value))) {
+            $this->put($handle, $this->encoded($value, $depth));
 
             return;
         }
 
-        $separator = "{\n";
-        foreach ($sources as $path => $source) {
-            $this->put($handle, $separator . '        ' . $this->encoded((string) $path, 2) . ': ' . $this->encoded($source, 2));
-            $separator = ",\n";
+        $list = is_array($value) && array_is_list($value);
+        $indent = str_repeat('    ', $depth + 1);
+        $written = false;
+
+        foreach ($value as $key => $member) {
+            $this->put($handle, ($written ? ",\n" : ($list ? '[' : '{') . "\n") . $indent . ($list ? '' : $this->encoded((string) $key, $depth + 1) . ': '));
+            $this->writeValue($handle, $member, $depth + 1);
+            $written = true;
         }
 
-        $this->put($handle, "\n    }\n}");
+        // Empty, it is an empty list to the whole document's encoding.
+        $this->put($handle, $written ? "\n" . str_repeat('    ', $depth) . ($list ? ']' : '}') : '[]');
+    }
+
+    /**
+     * @param array<mixed> $value
+     */
+    private function holdsArrays(array $value): bool
+    {
+        foreach ($value as $member) {
+            if (is_iterable($member)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

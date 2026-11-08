@@ -62,9 +62,13 @@ describe(JsonReport::class, function () {
         ];
 
         foreach ([[$tests, $sources], [[], []], [$tests, []]] as [$someTests, $someSources]) {
-            (new JsonReport())->render($someTests, $someSources, $this->filePath);
+            $whole = json_encode(['version' => 1, 'tests' => $someTests, 'sources' => $someSources], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-            expect(file_get_contents($this->filePath))->toBe(json_encode(['version' => 1, 'tests' => $someTests, 'sources' => $someSources], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            (new JsonReport())->render($someTests, $someSources, $this->filePath);
+            expect(file_get_contents($this->filePath))->toBe($whole);
+
+            (new JsonReport())->render($someTests, (fn() => yield from $someSources)(), $this->filePath);
+            expect(file_get_contents($this->filePath))->toBe($whole);
         }
     });
 

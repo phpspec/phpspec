@@ -17,10 +17,9 @@ describe(PerExampleCollector::class, function () {
         $collector->beginExample();
         $collector->endExample('adds two numbers');
 
-        expect($collector->getLines())->toBe([
-            '/project/src/App/Calculator.php' => [
-                12 => ['spec/App/Calculator.spec.php::Calculator > adds two numbers'],
-            ],
+        expect($collector->coveredFiles())->toBe(['/project/src/App/Calculator.php']);
+        expect($collector->linesOf('/project/src/App/Calculator.php'))->toBe([
+            12 => ['spec/App/Calculator.spec.php::Calculator > adds two numbers'],
         ]);
     });
 
@@ -81,7 +80,7 @@ describe(PerExampleCollector::class, function () {
         expect($driver->pause())->toHaveBeenCalled()->twice();
         expect($driver->stop())->toHaveBeenCalled()->once();
         expect($collector->getAggregate())->toBe(['/project/src/App/Calculator.php' => [12 => 1, 13 => -1]]);
-        expect($collector->getLines())->toBe([]);
+        expect($collector->coveredFiles())->toBe([]);
         expect($collector->getTests())->toBe([]);
     });
 
@@ -114,7 +113,7 @@ describe(PerExampleCollector::class, function () {
         $collector->beginExample();
         $collector->endExample('adds');
 
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::adds',
         ]);
         expect($collector->getTests()['spec/App/Calculator.spec.php::adds']['spec_file'])
@@ -134,7 +133,7 @@ describe(PerExampleCollector::class, function () {
         $collector->beginExample();
         $collector->endExample('subtracts');
 
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::adds',
             'spec/App/Calculator.spec.php::subtracts',
         ]);
@@ -174,7 +173,7 @@ describe(PerExampleCollector::class, function () {
 
         $collector->applyState($other->toArray());
 
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::adds',
             'spec/App/Greeter.spec.php::greets',
         ]);

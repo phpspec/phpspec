@@ -810,7 +810,7 @@ describe(Context::class, function() {
         }
 
         expect($log)->toBe(['coverage start', 'beforeEach', 'example', 'afterEach', 'coverage stop']);
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::Calculator > adds two numbers',
         ]);
     });

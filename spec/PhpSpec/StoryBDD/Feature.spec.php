@@ -970,7 +970,7 @@ describe(Feature::class, function () {
             ]), $registry, $hooks))->run();
 
             expect($log)->toBe(['beforeFeature', 'coverage start', 'beforeScenario', 'step', 'afterScenario', 'coverage stop', 'afterFeature']);
-            expect($collector->getLines()['/project/src/App/Basket.php'][9])->toBe(['features/shopping.feature::Shopping > a basket']);
+            expect($collector->linesOf('/project/src/App/Basket.php')[9])->toBe(['features/shopping.feature::Shopping > a basket']);
         });
 
         it('credits each row of an outline as a scenario of its own', function (CoverageDriver $driver) {

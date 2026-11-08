@@ -36,18 +36,20 @@ final class JsonReportBuilder
     ) {}
 
     /**
-     * Builds the tests and sources sections of the JSON coverage report.
+     * Builds the tests and sources sections of the JSON coverage report. The
+     * sources are built as they are read, one at a time, so the report is
+     * never held whole.
      *
      * @param PerExampleCollector $collector the collector holding per-example coverage
      * @param list<string> $sources absolute paths to the source directories to include
      * @param string $projectRoot absolute path to the project root used to relativize paths
-     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string, spec_checksum: string}>, sources: array<string, array{checksum: string, lines: array<int, array<int, string>>, executable: list<int>, methods: array<string, array{start: int, end: int}>}>}
+     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string, spec_checksum: string}>, sources: \Generator<string, array{checksum: string, lines: array<int, list<string>>, executable: list<int>, methods: array<string, array{start: int, end: int}>}>}
      */
     public function build(PerExampleCollector $collector, array $sources, string $projectRoot): array
     {
         return [
             'tests' => $this->buildTests($collector->getTests()),
-            'sources' => $this->buildSources($collector->getLines(), $sources, $projectRoot, $collector->getAggregate()),
+            'sources' => $this->buildSources($collector, $sources, $projectRoot),
         ];
     }
 
@@ -93,38 +95,42 @@ final class JsonReportBuilder
 
     /**
      * Filters covered files down to the source directories, relativizes them against
-     * the project root and pairs each with a content checksum. Paths are
-     * normalised to forward slashes on every platform (Xdebug and realpath()
-     * report backslash paths on Windows).
+     * the project root and pairs each with a content checksum, in the order of
+     * their relative paths. Paths are normalised to forward slashes on every
+     * platform (Xdebug and realpath() report backslash paths on Windows).
      *
-     * @param array<string, array<int, array<int, string>>> $lines file path => line number => test identifiers
+     * @param PerExampleCollector $collector the collector holding per-example coverage
      * @param list<string> $sources absolute paths to the source directories to include
      * @param string $projectRoot absolute path to the project root used to relativize paths
-     * @param array<string, array<int, int>> $aggregate line hit values, for which lines were executable at all
-     * @return array<string, array{checksum: string, lines: array<int, array<int, string>>, executable: list<int>, methods: array<string, array{start: int, end: int}>}>
+     * @return \Generator<string, array{checksum: string, lines: array<int, list<string>>, executable: list<int>, methods: array<string, array{start: int, end: int}>}>
      */
-    private function buildSources(array $lines, array $sources, string $projectRoot, array $aggregate = []): array
+    private function buildSources(PerExampleCollector $collector, array $sources, string $projectRoot): \Generator
     {
         $sourceRoots = array_map(ProjectRoot::at(...), $sources);
         $root = ProjectRoot::at($projectRoot);
-        $sources = [];
+        $files = [];
 
-        foreach ($lines as $file => $fileLines) {
+        foreach ($collector->coveredFiles() as $file) {
             $held = array_filter($sourceRoots, static fn(ProjectRoot $source): bool => $source->holds($file));
 
-            if ($held === [] || str_contains(str_replace('\\', '/', $file), "eval()'d code")) {
-                continue;
+            if ($held !== [] && !str_contains(str_replace('\\', '/', $file), "eval()'d code")) {
+                $files[$root->relative($file)] = $file;
             }
+        }
 
-            $fileLines = $this->kept($file, $fileLines);
+        ksort($files);
+        $aggregate = $collector->getAggregate();
+
+        foreach ($files as $relative => $file) {
+            $fileLines = $this->kept($file, $collector->linesOf($file));
 
             if ($fileLines === []) {
                 continue;
             }
 
-            $relative = $root->relative($file);
             $source = $this->filesystem->read($file);
-            $sources[$relative] = [
+
+            yield $relative => [
                 'checksum' => md5($source),
                 'lines' => $fileLines,
                 // Which lines there were to reach at all, so a reader of the
@@ -137,10 +143,6 @@ final class JsonReportBuilder
                 'methods' => $this->spansLeft($file, Members::in($source)->spans()),
             ];
         }
-
-        ksort($sources);
-
-        return $sources;
     }
 
     /**

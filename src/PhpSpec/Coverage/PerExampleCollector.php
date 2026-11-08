@@ -24,8 +24,11 @@ namespace PhpSpec\Coverage;
  */
 final class PerExampleCollector
 {
-    /** @var array<string, array<int, array<string, true>>> file path => line number => set of test identifiers */
+    /** @var array<string, array<int, list<int>>> file path => line number => the numbers of the tests that ran it, each its place in $tests */
     private array $lines = [];
+
+    /** @var array<string, int> test identifier => its number */
+    private array $numbers = [];
 
     /** @var array<string, array<int, int>> line hit data merged across this process's cycles, in raw driver shape */
     private array $aggregate = [];
@@ -160,20 +163,26 @@ final class PerExampleCollector
     }
 
     /**
-     * Returns executed lines mapped to the test identifiers that covered them.
+     * The files a test ran a line of.
      *
-     * @return array<string, array<int, array<int, string>>> file path => line number => test identifiers
+     * @return list<string>
      */
-    public function getLines(): array
+    public function coveredFiles(): array
     {
-        $result = [];
-        foreach ($this->lines as $file => $lines) {
-            foreach ($lines as $lineNumber => $testIds) {
-                $result[$file][$lineNumber] = array_keys($testIds);
-            }
-        }
+        return array_keys($this->lines);
+    }
 
-        return $result;
+    /**
+     * One file's executed lines, each with the identifiers of the tests that
+     * ran it, read a file at a time so no copy of the whole is ever made.
+     *
+     * @return array<int, list<string>> line number => test identifiers
+     */
+    public function linesOf(string $file): array
+    {
+        $names = array_keys($this->tests);
+
+        return array_map(static fn(array $numbers): array => array_map(static fn(int $number): string => $names[$number], $numbers), $this->lines[$file] ?? []);
     }
 
     /**
@@ -227,18 +236,9 @@ final class PerExampleCollector
      */
     public function toArray(): array
     {
-        $places = array_flip(array_keys($this->tests));
-        $lines = [];
-
-        foreach ($this->lines as $file => $fileLines) {
-            foreach ($fileLines as $lineNumber => $testIds) {
-                $lines[$file][$lineNumber] = array_map(static fn(string $testId): int => $places[$testId], array_keys($testIds));
-            }
-        }
-
         return [
             'tests' => $this->tests,
-            'lines' => $lines,
+            'lines' => $this->lines,
             'aggregate' => $this->aggregate,
         ];
     }
@@ -253,16 +253,17 @@ final class PerExampleCollector
      */
     public function applyState(array $state): void
     {
-        $testIds = array_map('strval', array_keys($state['tests'] ?? []));
+        $numbers = [];
 
         foreach ($state['tests'] ?? [] as $testId => $test) {
+            $numbers[] = $this->numbered((string) $testId);
             $this->tests[(string) $testId] = $test;
         }
 
         foreach ($state['lines'] ?? [] as $file => $lines) {
             foreach ($lines as $lineNumber => $places) {
                 foreach ($places as $place) {
-                    $this->lines[$file][$lineNumber][$testIds[$place]] = true;
+                    $this->ran($file, $lineNumber, ...$numbers[$place]);
                 }
             }
         }
@@ -292,6 +293,7 @@ final class PerExampleCollector
      */
     private function credit(string $testId, array $data): void
     {
+        [$number, $seen] = $this->numbered($testId);
         $this->tests[$testId] = [
             'time' => (hrtime(true) - $this->startTime) / 1e9,
             'memory' => memory_get_peak_usage(),
@@ -301,9 +303,34 @@ final class PerExampleCollector
         foreach ($data as $file => $lines) {
             foreach ($lines as $lineNumber => $hit) {
                 if ($hit >= 1) {
-                    $this->lines[$file][$lineNumber][$testId] = true;
+                    $this->ran($file, $lineNumber, $number, $seen);
                 }
             }
         }
+    }
+
+    /**
+     * The test's number, and whether it had one already: a test named again,
+     * as two examples of one title are, keeps the number it was given.
+     *
+     * @return array{int, bool}
+     */
+    private function numbered(string $testId): array
+    {
+        $seen = isset($this->numbers[$testId]);
+
+        return [$this->numbers[$testId] ??= count($this->numbers), $seen];
+    }
+
+    /**
+     * Records that the test ran the line, once however often it is told.
+     */
+    private function ran(string $file, int $lineNumber, int $number, bool $seen): void
+    {
+        if ($seen && in_array($number, $this->lines[$file][$lineNumber] ?? [], true)) {
+            return;
+        }
+
+        $this->lines[$file][$lineNumber][] = $number;
     }
 }

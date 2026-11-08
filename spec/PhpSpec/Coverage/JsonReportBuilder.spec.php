@@ -35,10 +35,28 @@ describe(JsonReportBuilder::class, function () {
         allow($filesystem->read(any()))->toReturn($source);
 
         $report = (new JsonReportBuilder($filesystem, new Exclusions(['App\\Calculator::sub'], $filesystem, '/project')))->build($collector, ['/project/src'], '/project');
+        $sources = iterator_to_array($report['sources']);
 
-        expect($report['sources']['src/App/Calculator.php']['lines'])->toBe([7 => ['spec/App/Calculator.spec.php::adds']]);
-        expect($report['sources']['src/App/Calculator.php']['executable'])->toBe([7]);
-        expect(array_keys($report['sources']['src/App/Calculator.php']['methods']))->toBe(['add']);
+        expect($sources['src/App/Calculator.php']['lines'])->toBe([7 => ['spec/App/Calculator.spec.php::adds']]);
+        expect($sources['src/App/Calculator.php']['executable'])->toBe([7]);
+        expect(array_keys($sources['src/App/Calculator.php']['methods']))->toBe(['add']);
+    });
+
+    it('reads each source only as the report asks for it, so it never holds the whole report', function (Filesystem $filesystem) {
+        $read = [];
+        allow($filesystem->read(any()))->toReturnUsing(function (string $path) use (&$read): string {
+            $read[] = $path;
+
+            return 'source';
+        });
+
+        $report = (new JsonReportBuilder($filesystem))->build($this->collector, ['/project/src'], '/project');
+
+        expect($read)->not()->toContain('/project/src/App/Calculator.php');
+
+        iterator_to_array($report['sources']);
+
+        expect($read)->toContain('/project/src/App/Calculator.php');
     });
 
     it('keeps only sources under the src path, relative to the project root, with checksums', function (Filesystem $filesystem) {
@@ -48,8 +66,9 @@ describe(JsonReportBuilder::class, function () {
         $builder = new JsonReportBuilder($filesystem);
 
         $report = $builder->build($this->collector, ['/project/src'], '/project');
+        $sources = iterator_to_array($report['sources']);
 
-        expect($report['sources'])->toBe([
+        expect($sources)->toBe([
             'src/App/Calculator.php' => [
                 'checksum' => md5('source code'),
                 'lines' => [
@@ -68,8 +87,9 @@ describe(JsonReportBuilder::class, function () {
         allow($filesystem->read(any()))->toReturn('source code');
 
         $report = (new JsonReportBuilder($filesystem))->build($this->collector, ['/project/src', '/project/vendor/lib'], '/project');
+        $sources = iterator_to_array($report['sources']);
 
-        expect(array_keys($report['sources']))->toBe(['src/App/Calculator.php', 'vendor/lib/functions.php']);
+        expect(array_keys($sources))->toBe(['src/App/Calculator.php', 'vendor/lib/functions.php']);
     });
 
     // A mutation testing tool mutates one method and re-runs the examples that
@@ -79,8 +99,9 @@ describe(JsonReportBuilder::class, function () {
         $builder = new JsonReportBuilder($filesystem);
 
         $report = $builder->build($this->collector, ['/project/src'], '/project');
+        $sources = iterator_to_array($report['sources']);
 
-        expect($report['sources']['src/App/Calculator.php']['methods'])->toBe([
+        expect($sources['src/App/Calculator.php']['methods'])->toBe([
             'add' => ['start' => 5, 'end' => 8],
         ]);
     });
@@ -98,8 +119,9 @@ describe(JsonReportBuilder::class, function () {
         $builder = new JsonReportBuilder($filesystem);
 
         $report = $builder->build($collector, ['C:\\project\\src'], 'C:\\project');
+        $sources = iterator_to_array($report['sources']);
 
-        expect($report['sources'])->toHaveKey('src/App/Calculator.php');
+        expect($sources)->toHaveKey('src/App/Calculator.php');
         expect($report['tests'])->toHaveKey('spec/App/Calculator.spec.php::adds');
     });
 
@@ -110,6 +132,7 @@ describe(JsonReportBuilder::class, function () {
         $builder = new JsonReportBuilder($filesystem);
 
         $report = $builder->build($this->collector, ['/project/src'], '/project');
+        $sources = iterator_to_array($report['sources']);
 
         $test = $report['tests']['spec/App/Calculator.spec.php::Calculator > adds two numbers'];
         expect($test['spec_file'])->toBe('spec/App/Calculator.spec.php');
