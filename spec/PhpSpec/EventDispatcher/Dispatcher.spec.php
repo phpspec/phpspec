@@ -4,7 +4,6 @@ use PhpSpec\EventDispatcher\Dispatcher;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event;
 use PhpSpec\EventDispatcher\Subscriber;
-use PhpSpec\EventDispatcher\Listener;
 
 describe(Dispatcher::class, function() {
 
@@ -28,26 +27,6 @@ describe(Dispatcher::class, function() {
 
         $d->addSubscriber($subscriber);
         $d->dispatch($event, 'test.event');
-        expect($called)->toBe(true);
-    });
-
-    it("dispatches events to listeners", function() {
-        $called = false;
-        $d = new Dispatcher();
-
-        $event = new class implements Event {
-            public function getName(): string { return 'test.listener'; }
-        };
-
-        $listener = new class($called) implements Listener {
-            public function __construct(private &$called) {}
-            public function listen(Event $event): void {
-                $this->called = true;
-            }
-        };
-
-        $d->addListener($listener);
-        $d->dispatch($event, 'test.listener');
         expect($called)->toBe(true);
     });
 

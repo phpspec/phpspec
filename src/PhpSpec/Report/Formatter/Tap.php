@@ -15,37 +15,45 @@
 namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Report\AbstractFormatter;
-use PhpSpec\Result\ContextResult;
-use PhpSpec\Result\ExampleResult;
-use PhpSpec\Result\ScenarioResult;
-use PhpSpec\Result\StepResult;
+use PhpSpec\Result\Outcome;
+use PhpSpec\Result\Outcomes;
+use PhpSpec\Result\State;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @internal
- * Renders results in TAP (Test Anything Protocol) version 13 format: one
- * line per example and per scenario, ok or not ok, with YAML diagnostics for
- * a failure.
+ * Renders results in TAP (Test Anything Protocol) version 13 format: one test
+ * point per example and per scenario, ok or not ok as the run judges it, with
+ * YAML diagnostics for one that fails the run.
  */
 final class Tap extends AbstractFormatter
 {
     private int $testNumber = 0;
+
+    public function __construct(
+        OutputInterface $output,
+        private readonly Outcomes $outcomes,
+    ) {
+        parent::__construct($output);
+    }
 
     /**
      * Batch format keeps the leading plan line (1..N) for backwards compatibility.
      */
     public function format(SuiteResult $results): void
     {
-        $examples = $this->collectExamples($results);
-        $total = count($examples);
+        $outcomes = [];
+        $this->outcomes->walk($results, function (Outcome $outcome) use (&$outcomes): void {
+            $outcomes[] = $outcome;
+        });
 
         $this->output->writeln('TAP version 13');
-        $this->output->writeln("1..{$total}");
+        $this->output->writeln('1..' . count($outcomes));
 
-        foreach ($examples as $i => $example) {
-            $num = $i + 1;
-            $this->outputExample($num, $example);
+        foreach ($outcomes as $i => $outcome) {
+            $this->testPoint($i + 1, $outcome);
         }
     }
 
@@ -59,15 +67,13 @@ final class Tap extends AbstractFormatter
     }
 
     /**
-     * Outputs ok/not ok lines for each example in the result tree.
+     * Outputs a test point for each example and scenario in the result tree.
      */
     public function printResult(Results $result): void
     {
-        $examples = $this->collectExamples($result);
-        foreach ($examples as $example) {
-            $this->testNumber++;
-            $this->outputExample($this->testNumber, $example);
-        }
+        $this->outcomes->walk($result, function (Outcome $outcome): void {
+            $this->testPoint(++$this->testNumber, $outcome);
+        });
     }
 
     /**
@@ -79,101 +85,36 @@ final class Tap extends AbstractFormatter
     }
 
     /**
-     * Outputs a single TAP test line with optional YAML diagnostics.
-     *
-     * @param int $num the test number
-     * @param array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string} $example
+     * One test point: ok, ok with a SKIP directive and its reason for work
+     * left pending or skipped, or not ok with what went wrong, the step that
+     * decided a scenario and where it went wrong.
      */
-    private function outputExample(int $num, array $example): void
+    private function testPoint(int $number, Outcome $outcome): void
     {
-        $title = $example['title'];
+        $name = $outcome->name();
 
-        if ($example['pending'] || $example['skipped']) {
-            $why = $example['reason'] ?? ($example['pending'] ? 'pending' : 'skipped');
-            $this->output->writeln("ok {$num} - {$title} # SKIP {$why}");
-        } elseif ($example['error'] || $example['failure']) {
-            $this->output->writeln("not ok {$num} - {$title}");
-            $this->output->writeln('  ---');
-            $this->output->writeln('  message: ' . $this->yamlEscape($example['message']));
-            $this->output->writeln('  ...');
-        } else {
-            $this->output->writeln("ok {$num} - {$title}");
-        }
-    }
+        if ($outcome->state === State::Pending || $outcome->state === State::Skipped) {
+            $this->output->writeln("ok {$number} - {$name} # SKIP " . ($outcome->reason ?? $outcome->state->value));
 
-    /**
-     * Recursively collects all examples into a flat list with context-prefixed titles.
-     *
-     * @param array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string}> $examples
-     * @return array<int, array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string}>
-     */
-    private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                $examples[] = [
-                    'title' => $prefix ? "{$prefix} {$result->getTitle()}" : $result->getTitle(),
-                    'pending' => $result->isPending(),
-                    'skipped' => $result->isSkipped(),
-                    'reason' => $result->getReason(),
-                    'error' => $result->isError(),
-                    'failure' => $result->isFailure(),
-                    'message' => $result->getMessage(),
-                ];
-            } elseif ($result instanceof ScenarioResult) {
-                $examples[] = $this->scenario($result, $prefix);
-            } elseif ($result instanceof Results) {
-                $newPrefix = $prefix;
-                if ($result instanceof ContextResult) {
-                    $newPrefix = $prefix ? "{$prefix} {$result->getTitle()}" : $result->getTitle();
-                }
-                $this->collectExamples($result, $newPrefix, $examples);
-            }
+            return;
         }
 
-        return $examples;
-    }
+        if (!$outcome->state->failsTheRun()) {
+            $this->output->writeln("ok {$number} - {$name}");
 
-    /**
-     * A scenario as one test point, judged as the run judges it: the first
-     * step that failed, errored or is undefined fails it, a pending one
-     * leaves it to do.
-     *
-     * @return array{title: string, pending: bool, skipped: bool, reason: string|null, error: bool, failure: bool, message: string}
-     */
-    private function scenario(ScenarioResult $scenario, string $prefix): array
-    {
-        $point = [
-            'title' => $prefix ? "{$prefix} {$scenario->getTitle()}" : $scenario->getTitle(),
-            'pending' => false,
-            'skipped' => false,
-            'reason' => null,
-            'error' => false,
-            'failure' => false,
-            'message' => '',
-        ];
-
-        foreach ($scenario->getResults() as $step) {
-            if (!$step instanceof StepResult) {
-                continue;
-            }
-
-            if ($step->isError() || $step->isFailure()) {
-                $said = $step->getError()?->getMessage() ?? $step->getMatch()?->getMessage() ?? '';
-
-                return ['error' => $step->isError(), 'failure' => !$step->isError(), 'message' => trim($step->getTitle() . ': ' . $said, ': ')] + $point;
-            }
-
-            if ($step->isUndefined()) {
-                return ['failure' => true, 'message' => 'Undefined step: ' . $step->getTitle()] + $point;
-            }
-
-            if ($step->isPending() && !$point['pending']) {
-                $point = ['pending' => true, 'reason' => $step->getReason()] + $point;
-            }
+            return;
         }
 
-        return $point;
+        $this->output->writeln("not ok {$number} - {$name}");
+        $this->output->writeln('  ---');
+        $this->output->writeln('  message: ' . $this->yamlEscape($outcome->message ?? ''));
+        if ($outcome->step !== null) {
+            $this->output->writeln('  step: ' . $this->yamlEscape($outcome->step));
+        }
+        if ($outcome->failedAt !== null) {
+            $this->output->writeln('  at: ' . $this->yamlEscape((string) $outcome->failedAt));
+        }
+        $this->output->writeln('  ...');
     }
 
     /**

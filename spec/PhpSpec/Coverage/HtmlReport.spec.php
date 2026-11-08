@@ -54,4 +54,12 @@ describe(HtmlReport::class, function () {
         expect($page)->toContain('<tr class="miss">');
         expect($page)->toContain('Back to index');
     });
+
+    it('reads each file\'s source from below the directories it reports on', function () {
+        $report = new HtmlReport(['src', 'spec/PhpSpec']);
+
+        $report->render(['Coverage/HtmlReport.spec.php' => [18 => 1]], $this->dir);
+
+        expect((string) file_get_contents($this->dir . '/Coverage_HtmlReport.spec.php.html'))->toContain('renders a branded index with the coverage table and meter');
+    });
 });

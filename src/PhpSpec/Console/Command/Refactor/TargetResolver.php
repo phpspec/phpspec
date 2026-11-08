@@ -87,10 +87,10 @@ final readonly class TargetResolver
 
     private function modifiedLast(): RefactorTarget
     {
-        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource($this->root . '/' . $this->config->srcDir());
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentSource(...$this->sourceDirectories());
 
         if ($newest === null) {
-            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $this->config->srcDir()));
+            throw new UnresolvedTargetException(sprintf('No source to refactor under %s.', $this->sourceRootsNamed()));
         }
 
         $fqcn = Members::in($this->filesystem->read($newest))->classes()[0] ?? null;
@@ -162,11 +162,11 @@ final readonly class TargetResolver
 
     /**
      * The class a short name stands for: the one by that name modified last
-     * under the source path.
+     * in any directory the project's classes are in.
      */
     private function classNamed(string $shortName): string
     {
-        $newest = (new RecencyScanner($this->filesystem))->mostRecentNamed($this->root . '/' . $this->config->srcDir(), $shortName . '.php');
+        $newest = (new RecencyScanner($this->filesystem))->mostRecentNamed($shortName . '.php', ...$this->sourceDirectories());
         $declared = $newest === null ? [] : Members::in($this->filesystem->read($newest))->classes();
 
         foreach ($declared as $fqcn) {
@@ -175,7 +175,23 @@ final readonly class TargetResolver
             }
         }
 
-        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->config->srcDir()), 'Describe it first: ' . $this->commandLine->for('describe', $shortName));
+        throw new UnresolvedTargetException(sprintf('No class named %s under %s.', $shortName, $this->sourceRootsNamed()), 'Describe it first: ' . $this->commandLine->for('describe', $shortName));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function sourceDirectories(): array
+    {
+        return array_map(fn(string $directory): string => rtrim($this->root . '/' . $directory, '/'), $this->config->sourceRoots());
+    }
+
+    private function sourceRootsNamed(): string
+    {
+        $roots = array_map(static fn(string $root): string => $root === '' ? '.' : $root, $this->config->sourceRoots());
+        $last = array_pop($roots);
+
+        return $roots === [] ? (string) $last : implode(', ', $roots) . ' or ' . $last;
     }
 
     /**

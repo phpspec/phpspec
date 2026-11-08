@@ -58,6 +58,20 @@ final class Attachments implements Subscriber
     }
 
     /**
+     * What a unit this one's scope sets up starts from: everything handed over
+     * here, unread, so a closure is read at that unit's failure. What the unit
+     * hands over itself wins under the same name, and reading it leaves this
+     * one as it was.
+     */
+    public function handedDown(): self
+    {
+        $unit = new self();
+        $unit->offered = $this->offered;
+
+        return $unit;
+    }
+
+    /**
      * Takes one that arrived over the event bus, which is how a step or an
      * example reaches the collector for the unit it is running in.
      */
@@ -67,9 +81,10 @@ final class Attachments implements Subscriber
     }
 
     /**
-     * Reads everything handed over, now. Called while the run is still standing
-     * where the attachment was made, before any teardown removes what it points
-     * at, so a closure reading a file still finds the file.
+     * Reads everything handed over since the last read, now. Called while the
+     * run is still standing where the attachment was made, before any teardown
+     * removes what it points at, so a closure reading a file still finds the
+     * file; and again once the teardown is done, for what it handed over.
      *
      * A closure that fails says so instead of leaving an empty block, which
      * would read as "the subject printed nothing" rather than "PhpSpec could
@@ -84,6 +99,8 @@ final class Attachments implements Subscriber
         foreach ($this->offered as $name => $value) {
             $read[$name] = $value instanceof Closure ? self::resolve($value) : $value;
         }
+
+        $this->offered = [];
 
         return $read;
     }

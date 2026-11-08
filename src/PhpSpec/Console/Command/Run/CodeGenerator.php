@@ -32,6 +32,7 @@ use PhpSpec\Offers\Offer;
 use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Results;
+use PhpSpec\Source\ComposerJson;
 use PhpSpec\StoryBDD\StepVocabulary;
 use ReflectionClass;
 use RuntimeException;
@@ -70,6 +71,7 @@ final readonly class CodeGenerator
         private ?Chooser $chooser = null,
         private StepsHome $steps = new StepsHome(new Configuration()),
         private Prompt $prompt = new Prompt(),
+        private ?ComposerJson $composer = null,
     ) {
         $this->consent = new Consent('Run with --accept-offers to %s.', $generation, $chooser, $prompt);
         $this->analyser = new SourceAnalyser();
@@ -161,7 +163,7 @@ final readonly class CodeGenerator
      */
     public function apply(Output $output, GenerationCandidates $candidates, bool $fake): array
     {
-        return [
+        $applied = [
             ...$this->generateStepDefinitions($output, $candidates),
             ...$this->generateMissingSpecClasses($output, $candidates->missingSpecClasses),
             ...$this->generateMissingStepClasses($output, $candidates->missingStepClasses),
@@ -170,6 +172,29 @@ final readonly class CodeGenerator
             ...$this->generateClassMethods($output, $candidates->undefinedClassMethods, $fake),
             ...($fake ? $this->fillEmptyMethods($output, $candidates->fakeableMethods) : []),
         ];
+
+        return [...$applied, ...$this->mappedForComposer($output, $applied)];
+    }
+
+    /**
+     * Tells composer.json to load the classes just written that no mapping of
+     * its places, under the offer of the first, whose write needed it.
+     *
+     * @param list<Applied> $applied
+     * @return list<Applied>
+     */
+    private function mappedForComposer(Output $output, array $applied): array
+    {
+        $created = array_values(array_filter($applied, fn(array $one): bool => $one['applied'] && in_array($one['action'], ['create_class', 'create_interface'], true) && !$this->layout->covers($one['target'])));
+        $notice = $created === [] ? null : $this->composer?->autoloadBelow($this->layout->srcPath());
+
+        if ($notice === null) {
+            return [];
+        }
+
+        $output->writeln($notice);
+
+        return [[...$created[0], 'file' => 'composer.json']];
     }
 
     /**
@@ -315,6 +340,15 @@ final readonly class CodeGenerator
                 : "Looks like $describes needs $fqcn"));
             $output->writeln("  <fg=#f59e0b>a class that doesn't exist yet.</>");
 
+            $refusal = $this->unwritable($fqcn);
+
+            if ($refusal !== null) {
+                $output->writeln("  <fg=red>$refusal</>");
+                $applied[] = self::applied('create_class', $fqcn, $location->filePath(), $refusal);
+
+                continue;
+            }
+
             if (!$described) {
                 array_push($applied, ...$this->offerSpecThenClass($output, $fqcn, $specGenerator, $classGenerator));
 
@@ -330,6 +364,16 @@ final readonly class CodeGenerator
         }
 
         return $applied;
+    }
+
+    /**
+     * Why a class cannot be written where the layout files it, or null when
+     * it can: one under no mapping, below a source path composer.json maps to
+     * another namespace.
+     */
+    private function unwritable(string $fqcn): ?string
+    {
+        return $this->layout->covers($fqcn) ? null : $this->composer?->refusal($fqcn, $this->layout->srcPath());
     }
 
     /**
@@ -390,6 +434,14 @@ final readonly class CodeGenerator
             return $applied;
         }
 
+        $refusal = $this->unwritable($fqcn);
+
+        if ($refusal !== null) {
+            $output->writeln("  <fg=red>$refusal</>");
+
+            return [...$applied, self::applied('create_class', $fqcn, $location->filePath(), $refusal)];
+        }
+
         $question = sprintf(
             '  <fg=yellow>Do you want me to create class <fg=white>%s</> in <fg=white>%s</>?</>',
             $fqcn,
@@ -422,6 +474,15 @@ final readonly class CodeGenerator
             $location = ClassLocation::for($fqcn, $this->layout);
 
             if ($location->exists($this->filesystem)) {
+                continue;
+            }
+
+            $refusal = $this->unwritable($fqcn);
+
+            if ($refusal !== null) {
+                $output->writeln("  <fg=red>$refusal</>");
+                $applied[] = self::applied('create_interface', $fqcn, $location->filePath(), $refusal);
+
                 continue;
             }
 

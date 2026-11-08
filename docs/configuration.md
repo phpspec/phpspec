@@ -26,13 +26,9 @@ side by side in the same directory with different configurations.
 
 ```yaml
 spec_path: spec
-src_path: src
 format: pretty
 bootstrap: bootstrap.php
 stop_on_failure: false
-autoload:
-  App\: src/App
-  Acme\: lib/Acme
 ```
 
 ## phpspec.yaml
@@ -44,14 +40,9 @@ Same syntax as `phpspec.yml`, an alternative extension.
 ```json
 {
     "spec_path": "spec",
-    "src_path": "src",
     "format": "pretty",
     "bootstrap": "bootstrap.php",
-    "stop_on_failure": false,
-    "autoload": {
-        "App\\": "src/App",
-        "Acme\\": "lib/Acme"
-    }
+    "stop_on_failure": false
 }
 ```
 
@@ -64,7 +55,6 @@ A PHP file that returns an array:
 
 return [
     'spec_path' => 'spec',
-    'src_path' => 'src',
     'format' => 'dot',
     'stop_on_failure' => true,
 ];
@@ -92,11 +82,20 @@ This affects file discovery, spec generation (`describe` command), and title der
 
 ### `src_path`
 
-Directory containing source files. Used for code generation and coverage filtering. Default: `src`.
+The directory classes are generated in when no mapping places them. Default:
+`src`, so a project keeping its classes there need not set it. Coverage, and
+`refactor`, `next` and `pair` when they look through the source, take it
+together with every directory a mapping names.
 
 ```yaml
 src_path: lib
 ```
+
+In a project with a `composer.json`, each class goes where Composer maps its
+namespace, and `src_path` must be one of the directories `composer.json` maps a
+namespace to: any other stops the run. Without a `composer.json`, a class goes
+where the [`autoload`](#autoload) map puts its namespace, else below
+`src_path` by its whole name: `App\Model\User` in `lib/App/Model/User.php`.
 
 ### `features_path`
 
@@ -200,7 +199,7 @@ stop_on_skipped: true
 
 ### `autoload`
 
-PSR-4 namespace-to-directory mappings, used to autoload classes while specs run and to place the classes PhpSpec generates: a class goes to the directory its own namespace is mapped to, the longest matching prefix winning. A config that states none reads the mappings from `composer.json`; see [Code Generation](code-generation.md#where-generated-classes-go).
+PSR-4 namespace-to-directory mappings for a project without a `composer.json`, used to load classes while specs run and to place the classes PhpSpec generates: a class goes to the directory its own namespace is mapped to, the longest matching prefix winning. A project with a `composer.json` states its autoloading there, and setting `autoload` stops the run; see [Code Generation](code-generation.md#where-generated-classes-go).
 
 ```yaml
 autoload:
@@ -224,13 +223,15 @@ under a mapping is left as written.
 
 ```yaml
 default_namespace: Brew\Acme
-autoload:
-  Brew\Acme\: src/Brew/Acme
-  Another\Acme\: src/Another
 ```
 
-With this, `describe Thing` describes `Brew\Acme\Thing` in
+With `composer.json` mapping `Brew\Acme\` to `src/Brew/Acme` and
+`Another\Acme\` to `src/Another`, `describe Thing` describes `Brew\Acme\Thing` in
 `spec/Brew/Acme/Thing.spec.php`, and `describe Another/Acme/Thing` stays as it is.
+
+A default namespace `composer.json` maps nowhere stops the run while another
+namespace is mapped into `src_path`: its classes could not be written there
+(see [Code Generation](code-generation.md#a-class-under-none-of-the-mapped-namespaces)).
 
 ### `base_url`
 
@@ -251,8 +252,9 @@ coverage_adapter: pcov
 
 PCOV traces the files under `pcov.directory`, which it picks itself when it
 is not set: `src`, `lib` or `app` under the working directory, else all of it.
-A coverage run whose source directory lies outside it is refused, naming the
-directory to set. Xdebug needs `xdebug.mode=coverage`.
+A coverage run reporting on a directory outside it runs itself again in a php
+whose `pcov.directory` holds every directory it reports on; setting that in
+`php.ini` saves the second start. Xdebug needs `xdebug.mode=coverage`.
 
 ### `coverage_exclude`
 
@@ -299,7 +301,7 @@ Each suite supports:
 | Key | Description |
 |---|---|
 | `paths` | Array of directories to scan for spec/feature files |
-| `src` | Source directory for code generation and coverage |
+| `src` | Source directory for code generation, under the same rules as [`src_path`](#src_path) |
 | `steps` | Array of directories containing step definition files (reserved for future use) |
 
 When no `suites` key is present, PhpSpec synthesises a default suite from the flat `spec_path` and `src_path` values:

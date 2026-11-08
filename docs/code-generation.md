@@ -51,29 +51,53 @@ Acme\Thing is under none of the mapped namespaces: Brew\, Another\. Describe:
   >
 ```
 
-Enter takes the first. A `default_namespace` in the config answers for every
-such name, so `describe Thing` becomes `Brew\Acme\Thing` without a question,
-while a name already under a mapping stays as written. With nobody to answer
-(`-n`, `--format=agent`) and no default, nothing is written and the exit code
-is 1; the agent receipt carries the `error` and a `remedy`.
+Enter takes the first. Keeping the name as written files the class below
+`src_path` by its whole name and maps `""` to `src_path` in `composer.json`, so
+Composer finds it there too (see below). It is not offered while `composer.json` maps a namespace into
+`src_path` anywhere but at that namespace's whole name there: with `Other\`
+mapped to `src/`, `src/Brew/Acme/Thing.php` would also be where Composer looks
+for `Other\Brew\Acme\Thing`.
+
+A `default_namespace` in the config answers for every such name, so
+`describe Thing` becomes `Brew\Acme\Thing` without a question, while a name
+already under a mapping stays as written, and so does every name once
+`composer.json` maps `""`. With nobody to answer (`-n`, `--format=agent`) and
+no default, nothing is written and the exit code is 1; the agent receipt
+carries the `error` and a `remedy`.
 
 ## Where Generated Classes Go
 
 A class is written where its own namespace lives, mapping by mapping. The
-mappings come from:
-
-1. The phpspec config, when it states a layout: the `autoload` map, and
-   `src_path` with `psr4_prefix` (or a suite's `src` with `namespace`) as one
-   more mapping. The prefix stands for the directory, so `App\` mapped to
-   `src` puts `App\Model\User` in `src/Model/User.php`.
-2. Otherwise `composer.json`: every entry under `autoload.psr-4`, the first
-   directory of an entry that lists several.
+mappings come from `composer.json`, every entry under `autoload.psr-4`, the
+first directory of an entry that lists several. A project without a
+`composer.json` states them in the phpspec config's
+[`autoload`](configuration.md#autoload) map instead. The prefix stands for the
+directory, so `App\` mapped to `src` puts `App\Model\User` in
+`src/Model/User.php`.
 
 When mappings nest, the longest prefix wins: with `App\` and `App\Legacy\`
 both mapped, `App\Legacy\Order` goes where `App\Legacy\` points. A class
-under no mapping goes below `src_path` (`src` by default) with its whole name
-as directories: `Acme\Thing` in `src/Acme/Thing.php`. The next run finds a
-class at either place without a composer dump.
+under no mapping goes with its whole name as directories below the directory
+`composer.json` maps `""` to, else below `src_path` (`src` by default):
+`Acme\Thing` in `src/Acme/Thing.php`. The next run loads a
+class from that same place without a composer dump, and from nowhere else: a
+class filed elsewhere is not found, as Composer would not find it.
+
+In a project with a `composer.json`, writing a class under no namespace it
+maps also maps `""` to `src_path` under `autoload.psr-4`, so Composer loads
+every class from where PhpSpec writes it, and the run ends saying so:
+
+```
+Composer autoload was updated to include "": "src/". Run composer dumpautoload next.
+```
+
+A `src_path` of `.` leaves `composer.json` as it is, and so does one that
+autoloads by PSR-0 or a classmap. Where `composer.json` maps another namespace
+into `src_path`, as above, such a class is not written, and the run says why:
+
+```
+Brew\Acme\Sombrero cannot be written under src/: Composer maps src/ to Other\.
+```
 
 ## The `exemplify` Command
 

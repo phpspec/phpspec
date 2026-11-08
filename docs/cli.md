@@ -52,8 +52,8 @@ AI-powered, behaviour-preserving refactoring: a plan, then baby steps you
 approve one at a time, the whole spec suite checked after each.
 
 ```bash
-vendor/bin/phpspec refactor                                 # the source file modified last under src_path
-vendor/bin/phpspec refactor Calculator                      # the Calculator modified last under src_path
+vendor/bin/phpspec refactor                                 # the source file modified last
+vendor/bin/phpspec refactor Calculator                      # the Calculator modified last
 vendor/bin/phpspec refactor "App\Calculator"
 vendor/bin/phpspec refactor "App\Calculator::sum"
 vendor/bin/phpspec refactor src/App/Calculator.php
@@ -200,7 +200,7 @@ See [Coding Agents](agent.md) for the JSON receipts and
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
 | `-v` | Verbose mode: shows the duration of each example and step; `--format=agent` reports the passing entries too |
 | `-q` | Quiet mode: suppresses all output, exit code still reflects pass/fail |
-| `--profile[=N]` | Show the N slowest examples, each by its path of titles (default: 10) |
+| `--profile[=N]` | Show the N slowest examples and scenarios, each by its path of titles, as `--filter` matches it (default: 10) |
 
 #### Pretty Formatter (default)
 
@@ -234,14 +234,22 @@ Compact one-character-per-example output:
 
 #### TAP Formatter
 
-Test Anything Protocol output:
+Test Anything Protocol output, one test point per example and per scenario,
+named as `--filter` matches it. Work left pending or skipped is `ok` with a
+`SKIP` directive and its reason; whatever fails the run is `not ok`, with what
+went wrong, the step that decided a scenario, and where it went wrong:
 
 ```
 TAP version 13
-1..5
-ok 1 - adds two numbers
-ok 2 - subtracts two numbers
-not ok 3 - divides by zero
+ok 1 - Calculator > adds two numbers
+ok 2 - Calculator > rounds # SKIP needs the rates API
+not ok 3 - Calculator > divides by zero
+  ---
+  message: Expected an exception to be thrown
+  at: spec/Calculator.spec.php:21
+  ...
+ok 4 - Checkout > Paying
+1..4
 ```
 
 #### JUnit XML Formatter
@@ -254,20 +262,26 @@ vendor/bin/phpspec run --format=junit > results.xml
 
 Each spec is a `testsuite` and each example a `testcase` named by its title,
 with `classname` naming the file, the describe and the contexts around it
-(`HappyHour > HappyHour > at 5pm`, as the pretty sections name an example), so
-one title in two contexts reads apart. A feature is
-a `testsuite` of scenario suites, each step a `testcase` under its scenario. A
-pending or skipped case carries the reason as the `skipped` element's
-`message`. Every case and suite carries `time`, in seconds. PHP warnings,
+(`HappyHour > HappyHour > at 5pm`), so one title in two contexts reads apart. A
+feature is a `testsuite` and each scenario a `testcase` classed under the
+feature, judged as the run judges it: by its first step that fails the run, or
+else its first step left pending or skipped. Every case carries the `file` and
+`line` it is written at. A failure or error carries what went wrong and, under
+it, where; an error also the class it threw as `type`. A pending or skipped
+case carries the reason as the `skipped` element's `message`. Every case and
+suite carries `time`, in seconds. PHP warnings,
 deprecations and notices are left out, as PHPUnit's JUnit log leaves them out:
 the console, the HTML report and `--format=agent` carry them.
 
 #### HTML Formatter
 
 Outputs a self-contained HTML document with passed/failed examples and a
-summary counted in the console's words, ready to open in a browser. An example
-or step that raised a PHP warning, deprecation or notice unfolds to each one,
-with the line that raised it, and the header and its group's bar count them:
+summary counted in the console's words, ready to open in a browser. A spec or
+feature opens when anything in it fails the run, a step with no definition
+included. A failed or errored example or step unfolds to what went wrong and
+where, named from the project root. An example or step that raised a PHP
+warning, deprecation or notice unfolds to each one, with the line that raised
+it, and the header and its group's bar count them:
 
 ```bash
 vendor/bin/phpspec run --format=html > report.html
@@ -321,7 +335,7 @@ rejected with an error rather than silently falling back.
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--all` | Run all suites, both specs and features |
 | `--story` | Run only features (Story BDD) |
-| `--order=ORDER` | Run order: `default` or `random` |
+| `--order=ORDER` | Run order: `default` or `random`; under `--parallel`, the workers are handed the files in the random order |
 | `--seed=SEED` | Shuffle by this whole number, as a random run prints it, to reproduce that order; implies `--order random` |
 
 **Stopping early.** By default a run continues to the end. These flags halt it at
@@ -337,7 +351,7 @@ the same way (useful for tight feedback loops and CI):
 | `--stop-on-deprecation` | deprecation, from an example or a step |
 | `--stop-on-notice` | notice, from an example or a step |
 | `--stop-on-pending` | pending example, or pending or undefined step |
-| `--stop-on-skipped` | skipped example, or step that skipped itself (not one skipped behind a step that failed or was pending) |
+| `--stop-on-skipped` | skipped example, or step that skipped itself (not one skipped behind an earlier step that did not pass) |
 | `--stop-on-problems` | any non-passing result |
 
 ```bash
@@ -420,7 +434,8 @@ vendor/bin/phpspec run spec/App/Calculator.spec.php:14 spec/App/Calculator.spec.
 Each selector selects, and the run takes them all together: a line that runs
 a whole context keeps every example in it, nested contexts included, even when
 another selector points inside one of them. A path given whole alongside one
-of its lines runs whole.
+of its lines runs whole, and so does every file of a directory given whole,
+each once: `./spec/App` and `spec/App` are one path.
 
 ### Bootstrap
 
@@ -457,15 +472,37 @@ carries the same `--config`.
 
 | Option | Description |
 |---|---|
-| `--parallel[=N]` | Run specs across N worker processes (defaults to the number of CPU cores) |
+| `--parallel[=N]` | Run specs across N worker processes (defaults to the number of CPU cores, or the fewer a container's CPU quota allows; 4 when the machine does not say) |
 
 ```bash
 vendor/bin/phpspec run --parallel        # one worker per CPU core
 vendor/bin/phpspec run --parallel=4      # four workers
 ```
 
-Each worker runs a slice of the spec files in its own process, set up as the
-run was: the same php settings, and the extensions its command line loaded.
+Each worker runs in its own process, set up as the run was: the same php
+settings, and the extensions its command line loaded. It is handed one file at
+a time and the next as soon as it is through, so a slow file holds no other
+back: the features first, the largest first, then the specs in the order they
+are found. A file given with `:LINE` or `@ID` selectors goes to one worker with all
+of them, so it runs what it would run alone, each block once. The run that
+starts the workers only finds the files: each worker loads the ones it runs,
+so a `features/support` file runs in every worker that runs a feature, never
+in the process that started them.
+
+Each worker is told which one it is, from 1, as `PHPSPEC_WORKER` and as
+`TEST_TOKEN` (the name ParaTest and Laravel use), so the specs it runs can keep
+state of their own, a database above all. Seeding one per worker and rolling
+each example back is much faster than seeding before every example:
+
+```php
+// bootstrap.php: a database per worker, seeded once
+$database = 'app_test_' . (getenv('PHPSPEC_WORKER') ?: '0');
+```
+
+```php
+beforeEach(fn () => $this->db->beginTransaction());
+afterEach(fn () => $this->db->rollBack());
+```
 `php -d memory_limit=1G -d extension=pcov vendor/bin/phpspec run --parallel`
 gives every worker a 1G ceiling and PCOV. Extensions go over by name, so one
 loaded from a path outside `extension_dir` reaches a worker only if
@@ -474,9 +511,10 @@ PhpSpec's own wire (`--format=wire`, one JSON line per spec or feature); the
 parent renders them as they arrive, in whichever format
 was asked for, with everything a single process would show: a failure's values
 and code, an error's site, what an example printed. A worker that dies is
-reported as an error on the file it was running, naming its exit code. Coverage
-(`--coverage*`) composes with `--parallel`: workers collect per-example
-coverage and the parent merges it. A worker whose coverage never reaches the
+reported as an error on the file it was running, naming its exit code and what
+it said; the other workers run the files it was never handed. Coverage
+(`--coverage*`) composes with `--parallel`: workers collect coverage, per
+example only for `--coverage-json`, and the parent merges it. A worker whose coverage never reaches the
 parent, because it died or the run stopped it, fails the run with the reason
 and what the worker said, rather than a smaller number. `--format=agent` is
 parallel-safe too: the
@@ -531,7 +569,7 @@ printf 'y\n' | SHELL_INTERACTIVE=1 vendor/bin/phpspec run   # answer the first q
 | `--coverage-html=DIR` | Generate HTML coverage report in the specified directory |
 | `--coverage-clover=FILE` | Generate Clover XML coverage report |
 | `--coverage-json=FILE` | Generate JSON coverage report with per-example detail (experimental) |
-| `--coverage-src=DIR` | Source directory to scope coverage reports to (overrides config `src_path`) |
+| `--coverage-src=DIR` | Source directory to scope coverage reports to, instead of every directory the project's classes are in |
 | `--coverage-min=PCT` | Fail if coverage is below the threshold (0-100) |
 
 ```bash
@@ -548,8 +586,10 @@ coverage mode (`xdebug.mode=coverage`). With nothing named in the config, the
 run takes PCOV when it is enabled, else Xdebug;
 [`coverage_adapter`](configuration.md#coverage_adapter) names one. A run that
 cannot collect says which engine it needs and the command that switches it on.
-Xdebug records only the source directory and the directories guard reads,
-from the moment the run starts collecting; PCOV records its `pcov.directory`.
+Xdebug records only the source directories and the directories guard reads,
+from the moment the run starts collecting; PCOV records its `pcov.directory`,
+and a run reporting on a directory outside it runs itself again with a
+`pcov.directory` that holds them all.
 
 A line counts as covered when an example or a scenario runs it. That includes
 an example's `this` bindings and `beforeEach`/`afterEach` hooks, a scenario's
@@ -557,8 +597,8 @@ background and `beforeScenario`/`afterScenario` hooks, and a closure declared
 in `describe` that an example calls. Code that runs only in
 `beforeAll`/`afterAll`, `beforeFeature`/`afterFeature` or the `describe` body
 itself does not count. Every run counts the same way: coverage options can be
-combined with `--parallel`, whose workers collect coverage per example and the
-parent process merges their results before rendering the reports. Workers can
+combined with `--parallel`, whose workers collect coverage and the parent
+process merges their results before rendering the reports. Workers can
 compile a file differently: PHP folds a class constant into its value when the
 class is already loaded, so a line can be code in one worker and none in
 another. A line one worker ran is covered. A line nobody ran is not counted

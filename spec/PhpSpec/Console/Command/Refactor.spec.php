@@ -346,6 +346,22 @@ describe(Refactor::class, function () {
             expect($this->project->files[$this->cwd . '/src/App/Checkout/CheckoutService.php'])->toBe($original);
         });
 
+        it('lets a step write PHP in any directory the project\'s classes are in, and names them all when it writes elsewhere', function () {
+            ($this->run)([
+                ($this->plan)('Move the policy into the library'),
+                ($this->step)(['lib/Acme/Policy.php' => "<?php\n"]),
+            ], [$this->green, $this->green], ['', ''], settings: ['autoload' => ['Acme\\' => 'lib/Acme']]);
+
+            expect($this->project->files[$this->cwd . '/lib/Acme/Policy.php'] ?? null)->toBe("<?php\n");
+
+            $tester = ($this->run)([
+                ($this->plan)('Use a vendored policy'),
+                ($this->step)(['vendor/acme/Policy.php' => "<?php\n"]),
+            ], [$this->green], [''], settings: ['autoload' => ['Acme\\' => 'lib/Acme']]);
+
+            expect($tester->getDisplay())->toContain('The step writes vendor/acme/Policy.php, which is not a PHP file under src, lib/Acme or spec: nothing of it was written.');
+        });
+
         it('stops before the first step having written nothing, when that is turned down', function () {
             $tester = ($this->run)([
                 ($this->plan)('Introduce a DiscountPolicy abstraction'),

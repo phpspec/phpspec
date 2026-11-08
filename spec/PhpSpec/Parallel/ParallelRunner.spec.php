@@ -1,15 +1,11 @@
 <?php
 
 use PhpSpec\Parallel\ParallelRunner;
+use PhpSpec\SeededShuffle;
 use PhpSpec\StopConditions;
+use PhpSpec\TemporaryDirectory;
 
 describe(ParallelRunner::class, function () {
-    context('detectCpuCount', function () {
-        it('returns at least 1', function () {
-            expect(ParallelRunner::detectCpuCount())->toBeGreaterThan(0);
-        });
-    });
-
     context('constructor', function () {
         it('enforces minimum of 1 worker', function () {
             $runner = new ParallelRunner([], 0);
@@ -33,6 +29,63 @@ describe(ParallelRunner::class, function () {
         });
     });
 
+    context('handing the files over', function () {
+        this('handed', fn() => function (array $sizes, ?int $seed): array {
+            $directory = TemporaryDirectory::create('phpspec_parallel_order_');
+            $log = $directory->path . '/handed.log';
+            $worker = $directory->path . '/worker.php';
+            file_put_contents($worker, '<?php while (($line = fgets(STDIN)) !== false) { file_put_contents(' . var_export($log, true) . ', basename(json_decode($line, true)["give"][0]) . "\\n", FILE_APPEND); echo "{\\"wire\\":1,\\"ran\\":true}\\n"; } echo "{\\"wire\\":1,\\"end\\":true}\\n";');
+            $targets = [];
+
+            foreach ($sizes as $name => $size) {
+                file_put_contents($directory->path . '/' . $name, str_repeat('x', $size));
+                $targets[$directory->path . '/' . $name] = [$directory->path . '/' . $name];
+            }
+
+            try {
+                iterator_to_array((new ParallelRunner($targets, 1, phpspecBin: $worker, seed: $seed))->stream(), false);
+
+                return file($log, FILE_IGNORE_NEW_LINES);
+            } finally {
+                $directory->remove();
+            }
+        });
+
+        it('hands the features over first, the largest first, then the specs in the order they were found', function () {
+            expect(($this->handed)(['a.spec.php' => 10, 'b.spec.php' => 30, 'c.feature' => 20, 'd.feature' => 40, 'e.feature' => 40], null))->toBe(['d.feature', 'e.feature', 'c.feature', 'a.spec.php', 'b.spec.php']);
+        });
+
+        it('hands a worker its next file before its result is reported, so the worker never waits on the report', function () {
+            $directory = TemporaryDirectory::create('phpspec_parallel_handing_');
+            $log = $directory->path . '/handed.log';
+            $worker = $directory->path . '/worker.php';
+            file_put_contents($worker, '<?php require ' . var_export(realpath(__DIR__ . '/../../../vendor/autoload.php'), true) . '; $wire = new PhpSpec\\Parallel\\Wire(); while (($line = fgets(STDIN)) !== false) { $file = $wire->given(rtrim($line))[0]; file_put_contents(' . var_export($log, true) . ', basename($file) . "\\n", FILE_APPEND); echo $wire->encode(new PhpSpec\\Result\\SpecificationResult(basename($file), [], $file)) . "\\n" . $wire->ran() . "\\n"; } echo $wire->ending(), "\\n";');
+            $first = $directory->path . '/a.spec.php';
+            $second = $directory->path . '/b.spec.php';
+            $handedFirst = null;
+
+            try {
+                foreach ((new ParallelRunner([$first => [$first], $second => [$second]], 1, phpspecBin: $worker))->stream() as $result) {
+                    $deadline = microtime(true) + 2;
+                    while ($handedFirst === null && microtime(true) < $deadline && !(is_file($log) && str_contains((string) file_get_contents($log), 'b.spec.php'))) {
+                        usleep(1000);
+                    }
+                    $handedFirst ??= is_file($log) && str_contains((string) file_get_contents($log), 'b.spec.php');
+                }
+
+                expect($handedFirst)->toBeTrue();
+            } finally {
+                $directory->remove();
+            }
+        });
+
+        it('hands the files over in the order the seed of a random run gives', function () {
+            $sizes = ['a.spec.php' => 10, 'b.spec.php' => 30, 'c.spec.php' => 20, 'd.spec.php' => 40];
+
+            expect(($this->handed)($sizes, 42))->toBe((new SeededShuffle(42))->of(array_keys($sizes)));
+        });
+    });
+
     context('with spec files', function () {
         it('runs a simple spec and returns results', function () {
             $tmpDir = sys_get_temp_dir() . '/phpspec_parallel_' . uniqid();
@@ -53,7 +106,7 @@ describe(ParallelRunner::class, function () {
             chdir($tmpDir);
 
             try {
-                $runner = new ParallelRunner([$tmpDir . '/spec/Test.spec.php'], 1);
+                $runner = new ParallelRunner([$tmpDir . '/spec/Test.spec.php' => [$tmpDir . '/spec/Test.spec.php']], 1);
                 $results = iterator_to_array($runner->stream(), false);
 
                 expect(count($results))->toBeGreaterThan(0);
@@ -82,7 +135,7 @@ describe(ParallelRunner::class, function () {
             chdir($tmpDir);
 
             try {
-                $runner = new ParallelRunner([$tmpDir . '/spec/Dying.spec.php'], 1, coveragePartialDir: $tmpDir . '/coverage');
+                $runner = new ParallelRunner([$tmpDir . '/spec/Dying.spec.php' => [$tmpDir . '/spec/Dying.spec.php']], 1, coveragePartialDir: $tmpDir . '/coverage');
                 iterator_to_array($runner->stream(), false);
 
                 expect($runner->lostCoverage())->toHaveCount(1);
@@ -119,7 +172,7 @@ describe(ParallelRunner::class, function () {
                     $tmpDir . '/spec/Test2.spec.php',
                     $tmpDir . '/spec/Test3.spec.php',
                 ];
-                $runner = new ParallelRunner($paths, 2);
+                $runner = new ParallelRunner(array_combine($paths, array_map(static fn(string $path): array => [$path], $paths)), 2);
                 $results = iterator_to_array($runner->stream(), false);
 
                 expect(count($results))->toBe(3);
@@ -151,7 +204,7 @@ describe(ParallelRunner::class, function () {
 
             try {
                 $stop = new StopConditions(onFailure: true);
-                $runner = new ParallelRunner([$tmpDir . '/spec/Fail.spec.php'], 1, $stop);
+                $runner = new ParallelRunner([$tmpDir . '/spec/Fail.spec.php' => [$tmpDir . '/spec/Fail.spec.php']], 1, $stop);
                 $results = iterator_to_array($runner->stream(), false);
 
                 expect(count($results))->toBeGreaterThan(0);

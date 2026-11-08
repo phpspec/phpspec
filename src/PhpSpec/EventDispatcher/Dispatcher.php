@@ -22,15 +22,12 @@ use PhpSpec\Specification\ExampleRegistry;
  * Instance-based event bus that coordinates DSL functions, spec tree building, and result collection.
  *
  * Manages a scope stack to track the current context/example registry during spec
- * file loading, and dispatches events to registered subscribers and listeners.
+ * file loading, and dispatches events to registered subscribers.
  *
  * Accessed via {@see DispatcherRegistry::dispatcher()}.
  */
 final class Dispatcher
 {
-    /** @var Listener[] Registered listeners that receive all events */
-    private array $listeners = [];
-
     /** @var Subscriber[] Registered subscribers that receive specific named events */
     private array $subscribers = [];
 
@@ -41,7 +38,7 @@ final class Dispatcher
     private array $scopeStack = [];
 
     /**
-     * Dispatches an event to all matching subscribers and all listeners.
+     * Dispatches an event to all matching subscribers.
      *
      * @param Event $event the event instance to dispatch
      * @param string $eventName the event name to match against subscriber registrations
@@ -61,20 +58,6 @@ final class Dispatcher
                 }
             }
         }
-
-        foreach ($this->listeners as $listener) {
-            $listener->listen($event);
-        }
-    }
-
-    /**
-     * Registers a listener that receives all dispatched events.
-     *
-     * @param Listener $listener the listener to add
-     */
-    public function addListener(Listener $listener): void
-    {
-        $this->listeners[] = $listener;
     }
 
     /**

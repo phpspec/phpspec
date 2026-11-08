@@ -246,7 +246,7 @@ final class CommandDispatcher
         $recency = new RecencyScanner($this->filesystem);
         $cwd = getcwd() ?: '.';
         $recentFeature = $recency->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './'));
-        $recentSource = $recency->mostRecentSource($cwd . '/' . $this->config->srcDir());
+        $recentSource = $recency->mostRecentSource(...array_map(static fn(string $root): string => $cwd . '/' . $root, $this->config->sourceRoots()));
 
         $next = (new SuiteNarrator())->next($outcome, $this->roleState->current(), $recentFeature, $recentSource);
 
@@ -437,9 +437,14 @@ final class CommandDispatcher
         // not class_exists(), which reports false for a class whose source is
         // right there but fails to autoload (a PSR-4 mismatch) and would have us
         // offer to create a file that already exists.
-        $location = ClassLocation::for($fqcn, $this->config->getSourceLayout());
+        $layout = $this->config->getSourceLayout();
+        $location = ClassLocation::for($fqcn, $layout);
+        $composer = $this->config->composerJson($this->filesystem);
+        $refusal = $layout->covers($fqcn) ? null : $composer?->refusal($fqcn, $layout->srcPath());
 
-        if (!$location->exists($this->filesystem)) {
+        if ($refusal !== null) {
+            $this->output->error($refusal);
+        } elseif (!$location->exists($this->filesystem)) {
             $question = sprintf('Do you want me to create class <fg=white>%s</> for you?', $fqcn);
             if ($this->chooser->choose($question, 'create-class', 'create classes')) {
                 try {
@@ -448,6 +453,12 @@ final class CommandDispatcher
 
                     if ($this->filesystem->exists($location->filePath())) {
                         $this->output->fileDisplay($location->filePath(), $this->filesystem->read($location->filePath()), true);
+                    }
+
+                    $notice = $layout->covers($fqcn) ? null : $composer?->autoloadBelow($layout->srcPath());
+
+                    if ($notice !== null) {
+                        $this->output->getOutput()->writeln($notice);
                     }
                 } catch (RuntimeException $e) {
                     $this->output->error($e->getMessage());
@@ -939,23 +950,12 @@ final class CommandDispatcher
     }
 
     /**
-     * Registers a fallback autoloader for classes generated during the session.
-     *
-     * Composer caches "not found" results in $missingClasses, so newly
-     * created files won't be found on subsequent autoload attempts.
-     * This PSR-0 autoloader checks the filesystem on every call.
+     * Registers the project's autoloader for the classes generated during the
+     * session: Composer caches a class it did not find, so one created after
+     * it looked would never load.
      */
     private function registerAutoloader(): void
     {
-        $srcPath = $this->config->srcDir() === '' ? '.' : $this->config->srcDir();
-
-        spl_autoload_register(function (string $class) use ($srcPath) {
-            $file = $srcPath . '/' . str_replace('\\', '/', $class) . '.php';
-            if (file_exists($file)) {
-                require $file;
-            }
-        });
-
         $this->config->registerAutoloaders();
     }
 }

@@ -2,11 +2,18 @@
 
 use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\Extensions\FormatterExtension;
+use PhpSpec\ProjectRoot;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Result\Outcome;
+use PhpSpec\Result\Outcomes;
+use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
+use PhpSpec\StoryBDD\StepError;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(FormatterBridge::class, function () {
@@ -17,112 +24,61 @@ describe(FormatterBridge::class, function () {
             return 'test';
         }
 
-        public function formatPass(string $title): string
+        public function formatPass(Outcome $outcome): string
         {
-            return "OK: $title";
+            return "OK: {$outcome->name()}";
         }
 
-        public function formatFail(string $title, string $message): string
+        public function formatFail(Outcome $outcome): string
         {
-            return "FAIL: $title - $message";
+            return "FAIL: {$outcome->name()} - {$outcome->message}";
         }
     });
 
-    it('outputs pass lines via the extension', function () {
+    this('outcomes', fn() => new Outcomes(ProjectRoot::at('/project')));
+
+    it('formats each example under its describe and contexts, by how it ended', function () {
         $output = new BufferedOutput();
-        $bridge = new FormatterBridge($this->extension, $output);
+        $suite = new SuiteResult([new SpecificationResult('Calc', [new ContextResult('Calc', [
+            new ExampleResult('adds', [MatchResult::passed()]),
+            new ExampleResult('subtracts', [MatchResult::failed(1, 2, 'Expected 1 to be 2', __FILE__, __LINE__)]),
+        ])])]);
 
-        $example = new ExampleResult('works', []);
-        $spec = new SpecificationResult('Test', [$example]);
-        $suite = new SuiteResult([$spec]);
+        (new FormatterBridge($this->extension, $output, $this->outcomes))->format($suite);
+        $text = $output->fetch();
 
-        $bridge->format($suite);
-
-        expect($output->fetch())->toContain('OK: works');
+        expect($text)->toContain('OK: Calc > adds');
+        expect($text)->toContain('FAIL: Calc > subtracts - Expected 1 to be 2');
     });
 
-    it('outputs fail lines via the extension', function () {
+    it('formats each scenario of a feature, under the feature', function () {
         $output = new BufferedOutput();
-        $bridge = new FormatterBridge($this->extension, $output);
+        $failing = new StepResult('Then it subtracts', 'failure');
+        $failing->setError(new StepError('Expected 1 to be 2', new \RuntimeException('Expected 1 to be 2')));
+        $suite = new SuiteResult([new FeatureResult('Calc', [
+            new ScenarioResult('Adds', [new StepResult('Then it adds', 'passed')]),
+            new ScenarioResult('Subtracts', [$failing]),
+        ], '/project/features/calc.feature')]);
 
-        $failedMatch = MatchResult::failed(true, false, 'Expected true to be false', __FILE__, __LINE__);
-        $example = new ExampleResult('broken', [$failedMatch]);
-        $spec = new SpecificationResult('Test', [$example]);
-        $suite = new SuiteResult([$spec]);
+        (new FormatterBridge($this->extension, $output, $this->outcomes))->format($suite);
+        $text = $output->fetch();
 
-        $bridge->format($suite);
-
-        expect($output->fetch())->toContain('FAIL: broken');
+        expect($text)->toContain('OK: Calc > Adds');
+        expect($text)->toContain('FAIL: Calc > Subtracts - Expected 1 to be 2');
     });
 
-    it('outputs pending lines via the extension', function () {
+    it('sums up what it formatted, then says how long the run took', function () {
         $output = new BufferedOutput();
-        $bridge = new FormatterBridge($this->extension, $output);
-
-        $example = new ExampleResult('todo', [], false, true);
-        $spec = new SpecificationResult('Test', [$example]);
-        $suite = new SuiteResult([$spec]);
-
-        $bridge->format($suite);
-
-        expect($output->fetch())->toContain('PENDING: todo');
-    });
-
-    it('counts errors in the summary', function () {
-        $output = new BufferedOutput();
-        $bridge = new FormatterBridge($this->extension, $output);
-
-        $example = new ExampleResult('crash', [], isError: true);
-        $example->setError(new \PhpSpec\Specification\ExampleError('boom', new \RuntimeException('boom')));
-        $spec = new SpecificationResult('Test', [$example]);
-        $suite = new SuiteResult([$spec]);
-
-        $bridge->format($suite);
-
-        expect($output->fetch())->toContain('1 example (0 passed, 0 failed, 0 pending, 1 errored)');
-    });
-
-    it('walks nested context results', function () {
-        $output = new BufferedOutput();
-        $bridge = new FormatterBridge($this->extension, $output);
-
-        $example = new ExampleResult('nested', []);
-        $context = new ContextResult('inner', [$example]);
-        $spec = new SpecificationResult('Test', [$context]);
-        $suite = new SuiteResult([$spec]);
-
-        $bridge->format($suite);
-
-        expect($output->fetch())->toContain('OK: nested');
-    });
-
-    it('shows duration when available', function () {
-        $output = new BufferedOutput();
-        $bridge = new FormatterBridge($this->extension, $output);
-
-        $example = new ExampleResult('timed', []);
-        $spec = new SpecificationResult('Test', [$example]);
-        $suite = new SuiteResult([$spec]);
+        $suite = new SuiteResult([
+            new SpecificationResult('Calc', [new ExampleResult('adds', [MatchResult::passed()])]),
+            new FeatureResult('Calc', [new ScenarioResult('Waits', [new StepResult('Given a step', 'undefined')])], '/project/features/calc.feature'),
+        ]);
         $suite->setDuration(1.5);
 
-        $bridge->format($suite);
-
-        expect($output->fetch())->toContain('Finished in 1.5');
-    });
-
-    it('counts totals for the summary', function () {
-        $output = new BufferedOutput();
-        $bridge = new FormatterBridge($this->extension, $output);
-
-        $pass = new ExampleResult('a', []);
-        $pass2 = new ExampleResult('b', []);
-        $spec = new SpecificationResult('Test', [$pass, $pass2]);
-        $suite = new SuiteResult([$spec]);
-
-        $bridge->format($suite);
-
+        (new FormatterBridge($this->extension, $output, $this->outcomes))->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain('2 examples');
-        expect($text)->toContain('2 passed');
+
+        expect($text)->toContain('1 example, 1 scenario (1 passed, 1 undefined)');
+        expect($text)->toContain('Finished in 1.5');
     });
 });

@@ -195,6 +195,85 @@ Feature: Agent output format
     And the step "Given I run the counter" should carry the deprecation "run() is deprecated, use count()" raised at "features/steps/counting.steps.php:4"
     And the step "Given I run the counter" should carry the notice "the counter starts at 2" raised at "features/steps/counting.steps.php:5"
 
+  Scenario: A note a spec file raises outside its examples is reported on the examples it sets up or tears down
+    Given a spec file "spec/App/Group.spec.php":
+      """
+      <?php
+      trigger_error('the file loads', E_USER_WARNING);
+      describe('Group', function () {
+          trigger_error('the group is described', E_USER_WARNING);
+          beforeAll(fn() => trigger_error('the group sets up', E_USER_WARNING));
+          beforeEach(fn() => trigger_error('each example sets up', E_USER_WARNING));
+          afterEach(fn() => trigger_error('each example tears down', E_USER_WARNING));
+          afterAll(fn() => trigger_error('the group tears down', E_USER_WARNING));
+          it('first', fn() => expect(true)->toBeTrue());
+          it('second', fn() => expect(true)->toBeTrue());
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the summary should state "warnings" as "8"
+    And the entry "Group > first" should carry the warning "the file loads" raised at "spec/App/Group.spec.php:2"
+    And the entry "Group > first" should carry the warning "the group is described" raised at "spec/App/Group.spec.php:4"
+    And the entry "Group > first" should carry the warning "the group sets up" raised at "spec/App/Group.spec.php:5"
+    And the entry "Group > first" should carry the warning "each example sets up" raised at "spec/App/Group.spec.php:6"
+    And the entry "Group > second" should carry the warning "each example tears down" raised at "spec/App/Group.spec.php:7"
+    And the entry "Group > second" should carry the warning "the group tears down" raised at "spec/App/Group.spec.php:8"
+
+  Scenario: A note a feature's own code raises outside its steps is reported on the steps it sets up or tears down
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: First
+          Given a customer
+        Scenario: Second
+          Given a customer
+      """
+    And a file "features/support/Helper.php":
+      """
+      <?php
+      trigger_error('the support loads', E_USER_WARNING);
+      """
+    And a step file "features/steps/shop.steps.php":
+      """
+      <?php
+      trigger_error('the steps load', E_USER_WARNING);
+      beforeFeature(fn() => trigger_error('the feature sets up', E_USER_WARNING));
+      beforeScenario(fn() => trigger_error('each scenario sets up', E_USER_WARNING));
+      afterScenario(fn() => trigger_error('each scenario tears down', E_USER_WARNING));
+      afterFeature(fn() => trigger_error('the feature tears down', E_USER_WARNING));
+      given('a customer', fn() => null);
+      """
+    When I run phpspec run in a fresh process with option "--story --format=agent"
+    Then the summary should state "warnings" as "8"
+    And the step "Given a customer" of "Shop > First" should carry the warning "the support loads" raised at "features/support/Helper.php:2"
+    And the step "Given a customer" of "Shop > First" should carry the warning "the steps load" raised at "features/steps/shop.steps.php:2"
+    And the step "Given a customer" of "Shop > First" should carry the warning "the feature sets up" raised at "features/steps/shop.steps.php:3"
+    And the step "Given a customer" of "Shop > First" should carry the warning "each scenario sets up" raised at "features/steps/shop.steps.php:4"
+    And the step "Given a customer" of "Shop > Second" should carry the warning "each scenario tears down" raised at "features/steps/shop.steps.php:5"
+    And the step "Given a customer" of "Shop > Second" should carry the warning "the feature tears down" raised at "features/steps/shop.steps.php:6"
+
+  Scenario Outline: A fatal is said once on the error stream, however PHP is set to log it
+    Given a spec file "spec/App/Greedy.spec.php":
+      """
+      <?php
+      describe('Greedy', function () {
+          it('takes all the memory', function () {
+              $taken = [];
+              while (true) {
+                  $taken[] = str_repeat('x', 100000);
+              }
+          });
+      });
+      """
+    When I run phpspec run under php "-d memory_limit=16M <logging>" with option "--format=agent"
+    Then the error stream should contain "Allowed memory size of 16777216 bytes exhausted" exactly 1 times
+
+    Examples:
+      | logging                       |
+      | -d log_errors=1 -d error_log= |
+      | -d log_errors=0               |
+
   Scenario: A boolean failure says what the matcher wanted, not only what it got
     Given a spec file "spec/App/Watch.spec.php":
       """
@@ -311,6 +390,271 @@ Feature: Agent output format
     When I run phpspec run with option "features/ --format=agent"
     Then the output should be valid JSON
     And the reported entry should have attached "watch.log" containing "CANNOT READ --watch"
+
+  Scenario: An example's hooks hand over context as its body does, its teardown's read once that is done
+    Given a spec file "spec/App/Hooked.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Hooked', function () {
+          beforeEach(function () {
+              attach('set up', 'from beforeEach');
+          });
+
+          afterEach(function () {
+              attach('torn down', 'from afterEach');
+          });
+
+          it('fails', function () {
+              attach('ran', 'from the example');
+              expect(1)->toBe(2);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have attached "set up" containing "from beforeEach"
+    And the reported entry should have attached "ran" containing "from the example"
+    And the reported entry should have attached "torn down" containing "from afterEach"
+
+  Scenario: A scenario's hooks hand over context as its steps do, its teardown's read once that is done
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/hooked.feature":
+      """
+      Feature: Hooked
+        Scenario: Fails
+          Given a step that fails after attaching
+      """
+    And a step file "features/steps/hooked.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeScenario(function () {
+          attach('set up', 'from beforeScenario');
+      });
+
+      afterScenario(function () {
+          attach('torn down', 'from afterScenario');
+      });
+
+      given('a step that fails after attaching', function () {
+          attach('ran', 'from the step');
+          expect(1)->toBe(2);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have attached "set up" containing "from beforeScenario"
+    And the reported entry should have attached "ran" containing "from the step"
+    And the reported entry should have attached "torn down" containing "from afterScenario"
+
+  Scenario: A beforeAll that passes hands over to each example under it that fails, read at that failure
+    Given a spec file "spec/App/Server.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Server', function () {
+          beforeAll(function () {
+              file_put_contents('server.log', 'booted');
+              attach('server.log', fn () => file_get_contents('server.log'));
+              attach('port', '8080');
+          });
+
+          it('answers', function () {
+              file_put_contents('server.log', ', answered 500', FILE_APPEND);
+              attach('port', '7070');
+              expect(1)->toBe(2);
+          });
+
+          it('passes', fn () => expect(1)->toBe(1));
+
+          context('when busy', function () {
+              beforeAll(fn () => attach('port', '9090'));
+
+              it('queues', fn () => expect(1)->toBe(2));
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry "App\Server > answers" should have attached "server.log" containing "booted, answered 500"
+    And the reported entry "App\Server > answers" should have attached "port" containing "7070"
+    And the reported entry "App\Server > when busy > queues" should have attached "server.log" containing "booted, answered 500"
+    And the reported entry "App\Server > when busy > queues" should have attached "port" containing "9090"
+
+  Scenario: A beforeAll that skips hands over to the first example it leaves out, once
+    Given a spec file "spec/App/Remote.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Remote', function () {
+          beforeAll(function () {
+              attach('network', 'no route to host');
+              skip('no network');
+          });
+
+          context('when online', function () {
+              it('fetches', fn () => expect(1)->toBe(2));
+          });
+
+          it('posts', fn () => expect(1)->toBe(2));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry "App\Remote > when online > fetches" should have attached "network" containing "no route to host"
+    And the reported entry "App\Remote > posts" should have attached nothing
+
+  Scenario: An afterAll that breaks carries what it handed over and what the setup did, its own winning
+    Given a spec file "spec/App/Server.spec.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      describe('App\Server', function () {
+          beforeAll(function () {
+              attach('server.log', 'booted');
+              attach('state', 'up');
+          });
+
+          afterAll(function () {
+              attach('state', 'stuck');
+              throw new RuntimeException('would not stop');
+          });
+
+          it('answers', fn () => expect(1)->toBe(1));
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry "App\Server" should have attached "server.log" containing "booted"
+    And the reported entry "App\Server" should have attached "state" containing "stuck"
+
+  Scenario: A beforeFeature that passes hands over to each scenario that fails, the scenario's own winning
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/server.feature":
+      """
+      Feature: Server
+        Scenario: Answers
+          Given a failing step
+        Scenario: Passes
+          Given a passing step
+        Scenario: Queues
+          Given a failing step on its own port
+      """
+    And a step file "features/steps/server.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeFeature(function () {
+          attach('server.log', 'booted');
+          attach('port', '8080');
+      });
+
+      given('a failing step', fn () => expect(1)->toBe(2));
+      given('a passing step', fn () => expect(1)->toBe(1));
+      given('a failing step on its own port', function () {
+          attach('port', '7070');
+          expect(1)->toBe(2);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry "Server > Answers" should have attached "server.log" containing "booted"
+    And the reported entry "Server > Answers" should have attached "port" containing "8080"
+    And the reported entry "Server > Queues" should have attached "port" containing "7070"
+
+  Scenario: A beforeFeature that skips hands over to the first scenario, once
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/remote.feature":
+      """
+      Feature: Remote
+        Scenario: Fetches
+          Given a step
+        Scenario: Posts
+          Given a step
+      """
+    And a step file "features/steps/remote.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeFeature(function () {
+          attach('network', 'no route to host');
+          skip('no network');
+      });
+
+      given('a step', fn () => expect(1)->toBe(2));
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry "Remote > Fetches" should have attached "network" containing "no route to host"
+    And the reported entry "Remote > Posts" should have attached nothing
+
+  Scenario: An afterFeature that breaks carries what it handed over and what the setup did on the last scenario, its own winning
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/server.feature":
+      """
+      Feature: Server
+        Scenario: Answers
+          Given a passing step
+      """
+    And a step file "features/steps/server.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      beforeFeature(function () {
+          attach('server.log', 'booted');
+          attach('state', 'up');
+      });
+
+      afterFeature(function () {
+          attach('state', 'stuck');
+          throw new RuntimeException('would not stop');
+      });
+
+      given('a passing step', fn () => expect(1)->toBe(1));
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry "Server > Answers" should have attached "server.log" containing "booted"
+    And the reported entry "Server > Answers" should have attached "state" containing "stuck"
+
+  Scenario: A scenario whose step threw is an error, the step placed where it broke
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/divide.feature":
+      """
+      Feature: Divide
+        Scenario: By zero
+          Given a breaking step
+      """
+    And a step file "features/steps/divide.steps.php":
+      """
+      <?php
+      given('a breaking step', function () {
+          throw new RuntimeException('division by zero');
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry should be "error" at "features/divide.feature:2"
+    And the reported entry's first step should be "error" at "features/steps/divide.steps.php:3"
+    And the summary should state "errors" as "1"
+    And the summary should state "failing" as "0"
 
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
@@ -878,6 +1222,32 @@ Feature: Agent output format
     And no file "src/App/Coupon.php" should be generated
     When I accept the offers phpspec made
     Then a class file "src/App/Coupon.php" should be generated
+
+  Scenario: Taking a class offer where composer.json autoloads no classes maps them there, and the receipt names composer.json
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"name": "acme/kata"}
+      """
+    And a spec file "spec/Pins.spec.php":
+      """
+      <?php
+      describe('Pins', function () {
+          it('stand ten', function () {
+              expect(new Pins())->toBeAnInstanceOf(Pins::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    And I accept the offers phpspec made with option "--format=agent"
+    Then the output should contain:
+      """
+      "files":["src/Pins.php","composer.json"]
+      """
+    And the file "composer.json" should contain:
+      """
+      "": "src/"
+      """
 
   Scenario: A missing method surfaces as an offer, and accept by id writes it
     Given a class "src/App/Calc.php":

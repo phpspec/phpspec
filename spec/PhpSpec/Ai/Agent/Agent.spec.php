@@ -11,6 +11,7 @@ use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
+use PhpSpec\Source\ComposerAutoload;
 
 require_once __DIR__ . '/../ReplayProvider.php';
 
@@ -157,6 +158,36 @@ describe(Agent::class, function () {
         expect($one->proposals[0]->path)->toBe('spec/Brew/Coupon.spec.php');
         expect($named->proposals[0]->path)->toBe('spec/Acme/Coupon.spec.php');
         expect($several->proposals[0]->path)->toBe('spec/Coupon.spec.php');
+    });
+
+    it('names a bare class the source holds by where it lies, as the layout maps it', function (Filesystem $fs) {
+        $src = getcwd() . '/src';
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p === $src);
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => $p === $src);
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => $p === $src ? ['Coupon.php'] : []);
+        $replay = new ReplayProvider([new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe(Roastery\\Coupon::class, fn() => null);"])])]);
+        $config = new Configuration(['src_path' => 'src'], '.', new ComposerAutoload(['Roastery\\' => ['src/'], 'Tools\\' => ['tools/']]));
+
+        $outcome = (new Agent($config, $fs, $replay))->chat('generate', 'a spec for a Coupon');
+
+        expect($outcome->proposals[0]->path)->toBe('spec/Roastery/Coupon.spec.php');
+    });
+
+    it('names a bare class found in any directory the project\'s classes are in', function (Filesystem $fs) {
+        $lib = getcwd() . '/lib/Acme';
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [getcwd() . '/lib', $lib], true));
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, [getcwd() . '/lib', $lib], true));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
+            getcwd() . '/lib' => ['Acme'],
+            $lib => ['Coupon.php'],
+            default => [],
+        });
+        $replay = new ReplayProvider([new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe(Acme\\Coupon::class, fn() => null);"])])]);
+        $config = new Configuration(['autoload' => ['Brew\\' => 'src/Brew', 'Acme\\' => 'lib/Acme']]);
+
+        $outcome = (new Agent($config, $fs, $replay))->chat('generate', 'a spec for a Coupon');
+
+        expect($outcome->proposals[0]->path)->toBe('spec/Acme/Coupon.spec.php');
     });
 
     it('forces the tool channel via toolChoice: required with several tools declared', function (Filesystem $fs) {

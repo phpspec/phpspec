@@ -15,7 +15,6 @@
 namespace PhpSpec\Specification;
 
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\ExpectationStarted;
 use PhpSpec\EventDispatcher\Event\MatchCreated;
 use PhpSpec\Result\MatchResult;
 
@@ -38,7 +37,7 @@ final readonly class EventfulExpectation
     ) {}
 
     /**
-     * Dispatches ExpectationStarted and MatchCreated events with a deferred matcher closure.
+     * Judges the match on the line it is written and dispatches the MatchCreated event carrying the result.
      *
      * @param \Closure $match matcher callback receiving the subject
      * @param string $message failure message template
@@ -55,8 +54,6 @@ final readonly class EventfulExpectation
      */
     public function createMatchEvent(\Closure $match, string $message, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false, bool $impliedTarget = false, ?\Closure $actual = null, ?array $expects = null, ...$values): void
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
-
         // Judged here, on the line the expectation is written: an object the
         // example changes afterwards is not what this expectation was about.
         $result = match (true) {

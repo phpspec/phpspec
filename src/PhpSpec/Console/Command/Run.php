@@ -36,6 +36,7 @@ use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Coverage\Exclusions;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
+use PhpSpec\Extensions\ListenerBridge;
 use PhpSpec\FileLoadException;
 use PhpSpec\FilterRegistry;
 use PhpSpec\Guard\Coverage;
@@ -48,6 +49,9 @@ use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Parallel\WireFormatter;
+use PhpSpec\Parallel\WorkQueue;
+use PhpSpec\Process\ChildPhp;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
@@ -60,20 +64,25 @@ use PhpSpec\Report\Formatter\Pretty;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Report\Formatter\Tap;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\Outcomes;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 use PhpSpec\Runner;
+use PhpSpec\RunTargets;
 use PhpSpec\StopConditions;
 use PhpSpec\StoryBDD\TagExpression;
+use PhpSpec\TemporaryDirectory;
 use PhpSpec\TitleFilter;
 use Random\RandomException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 use Symfony\Component\Console\Output\StreamOutput;
 
@@ -86,6 +95,9 @@ final class Run extends Command implements InternalOptions
 {
     /** @var array<int, string> partial coverage state files written by parallel workers */
     private array $coveragePartials = [];
+
+    /** The directory the parallel workers write their partial coverage to, until it is merged. */
+    private ?TemporaryDirectory $coverageDirectory = null;
 
     /** @var list<string> why the coverage of each worker that never handed it over was lost */
     private array $coverageLost = [];
@@ -156,6 +168,8 @@ final class Run extends Command implements InternalOptions
             ->addOption('coverage-src', null, Option::VALUE_REQUIRED, 'Source directory to scope coverage reports to (overrides config src_path)')
             ->addOption('coverage-partial', null, Option::VALUE_REQUIRED, 'Dump raw coverage state to a file (internal, used by parallel workers)')
             ->addOption('suite-check', null, Option::VALUE_NONE, 'Run every example whatever the config stops on, keeping no offers (internal, used by refactor\'s suite check)')
+            ->addOption('queue', null, Option::VALUE_NONE, 'Run the files handed over on standard input, one at a time (internal, used by parallel workers)')
+            ->addOption('coverage-per-example', null, Option::VALUE_NONE, 'Credit each covered line to the example that ran it (internal, used by parallel workers)')
             ->addOption('parallel', null, Option::VALUE_OPTIONAL, 'Run specs in parallel processes (--parallel=N for N workers)', false)
             ->setDescription('Runs specifications');
     }
@@ -215,16 +229,19 @@ final class Run extends Command implements InternalOptions
         // line the command would otherwise print (the seed, the profile table, the
         // coverage verdict, an error) is routed off the console: what an agent
         // needs is told to the formatter instead and rides inside the document.
+        // A parallel worker's console is the wire, so its human lines go to the
+        // error stream, which the run that started it reports when it stops.
         // For every other format the two are the same stream.
         $document = $formatter instanceof Agent ? $formatter : null;
-        $prose = $document !== null ? new BufferedOutput() : $output;
+        $prose = match (true) {
+            $document !== null => new BufferedOutput(),
+            $formatter instanceof WireFormatter && $output instanceof ConsoleOutputInterface => $output->getErrorOutput(),
+            default => $output,
+        };
         $document?->targets($files);
         $document?->rerunsWith($this->childOptions($input));
 
-        // PHP prints a fatal to standard output as well as the error stream, and
-        // standard output is the document's. Sending its own reports to the error
-        // stream leaves the channel clean; the document names the fatal itself.
-        $displayErrors = $document !== null ? (string) ini_set('display_errors', 'stderr') : null;
+        $displayErrors = $this->displayErrorsOffStdout($formatter);
 
         try {
             return $this->perform($input, $prose, $formatter, $files, $given);
@@ -234,6 +251,26 @@ final class Run extends Command implements InternalOptions
                 ini_set('display_errors', $displayErrors);
             }
         }
+    }
+
+    /**
+     * PHP prints a fatal to standard output as well as the error stream, and
+     * standard output is the agent document's, or a worker's wire. Errors are
+     * displayed on the error stream instead, or not at all when PHP already
+     * logs them there, so each is said once: the document names the fatal
+     * itself, and a worker's parent reports what the worker said there.
+     *
+     * @return string|null the setting to restore, or null when it was left alone
+     */
+    private function displayErrorsOffStdout(Formatter $formatter): ?string
+    {
+        if (!$formatter instanceof Agent && !$formatter instanceof WireFormatter) {
+            return null;
+        }
+
+        $loggedToStderr = filter_var(ini_get('log_errors'), FILTER_VALIDATE_BOOLEAN) && ini_get('error_log') === '';
+
+        return (string) ini_set('display_errors', $loggedToStderr ? '0' : 'stderr');
     }
 
     /**
@@ -252,6 +289,7 @@ final class Run extends Command implements InternalOptions
      */
     private function perform(Input $input, Output $prose, Formatter $formatter, string $files, array $given): int
     {
+        $asked = RunTargets::of(implode(',', $given));
         $refused = (new OptionValues($input))->problem();
 
         if ($refused !== null) {
@@ -275,13 +313,13 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, "Paths file lists no path: $pathsFrom", 'List the spec and feature paths to run in it, one per line.');
         }
 
-        $missing = self::missingPath($given);
+        $missing = self::missingPath($asked);
 
         if ($missing !== null) {
             return $this->stopped($prose, $formatter, "Path not found: $missing", 'Check the path, or give none to run the configured suite.');
         }
 
-        $unrunnable = $this->unrunnablePath($given);
+        $unrunnable = $this->unrunnablePath($asked);
 
         if ($unrunnable !== null) {
             return $this->stopped($prose, $formatter, "Not a spec or a feature: $unrunnable", 'Name a spec file (*' . $this->config->getSpecSuffix() . '), a feature file or a directory of them.');
@@ -311,7 +349,7 @@ final class Run extends Command implements InternalOptions
         // whole delta against a fraction of the coverage and cry wolf, and its
         // verdict would land in the middle of the report the parent parses.
         // The parent judges once, having merged what every worker collected.
-        $worker = $input->getOption('coverage-partial') !== null;
+        $worker = $formatter instanceof WireFormatter;
 
         // A guard section this cannot read leaves guard off, and off is exactly
         // what a typo must not be able to do quietly: the whole point of the
@@ -328,6 +366,14 @@ final class Run extends Command implements InternalOptions
 
         if ($formatter instanceof Agent) {
             $formatter->runningWith($coverageReporter instanceof CoverageReporter, $guard !== null ? 'on' : 'off');
+        }
+
+        if ($coverageReporter instanceof CoverageRefusal && $coverageReporter->restart !== []) {
+            if ($formatter instanceof Agent) {
+                $formatter->handedOver();
+            }
+
+            return $this->runAgainUnder($coverageReporter->restart);
         }
 
         if ($coverageReporter instanceof CoverageRefusal) {
@@ -354,13 +400,15 @@ final class Run extends Command implements InternalOptions
             return $this->stopped($prose, $formatter, $e->getMessage(), $e instanceof FileLoadException ? $e->remedy() : null);
         }
 
-        $emptied = $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given);
+        // A worker runs a slice of the run: whether the run selected anything
+        // is for the run that started it to say.
+        $emptied = $worker || $this->ranAnything($results) ? null : $this->narrowedToNothingBy($input, $given, $asked);
 
         if ($emptied !== null) {
             $status = $this->stopped($prose, $formatter, ...$emptied);
 
-            if ($this->onlySelectors($given) && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
-                $this->showCodeAround($prose, $given);
+            if ($asked->onlySelects() && ($formatter instanceof Pretty || $formatter instanceof Dot)) {
+                $this->showCodeAround($prose, $asked);
             }
 
             return $status;
@@ -426,7 +474,7 @@ final class Run extends Command implements InternalOptions
                 $formatter->applied($applied);
             }
 
-            return 0;
+            return array_filter($applied, static fn(array $one): bool => !$one['applied']) === [] ? self::SUCCESS : self::FAILURE;
         }
 
         // When pair mode spawned this run (it sets an env var naming a report
@@ -505,23 +553,18 @@ final class Run extends Command implements InternalOptions
     /**
      * The lines around each targeted line, the target in bold, so the line
      * can be corrected by sight: most misses are off by one or two.
-     *
-     * @param list<string> $given
      */
-    private function showCodeAround(Output $prose, array $given): void
+    private function showCodeAround(Output $prose, RunTargets $asked): void
     {
-        foreach ($given as $target) {
-            if (preg_match('/^(.*):(\d+)$/', $target, $at) !== 1) {
-                continue;
-            }
+        foreach ($asked->each() as $file => ['lines' => $lines]) {
+            foreach ($lines as $line) {
+                $code = (new SurroundingCode($file, $line))->toArray();
 
-            $lines = (new SurroundingCode($at[1], (int) $at[2]))->toArray();
-            if ($lines === []) {
-                continue;
+                if ($code !== []) {
+                    $prose->writeln('');
+                    PrettyViews::surroundingCode($prose, $code, $line, blamed: false);
+                }
             }
-
-            $prose->writeln('');
-            PrettyViews::surroundingCode($prose, $lines, (int) $at[2], blamed: false);
         }
     }
 
@@ -535,7 +578,7 @@ final class Run extends Command implements InternalOptions
      * @param list<string> $given the paths as given on the command line
      * @return array{0: string, 1: string}|null the message and the remedy
      */
-    private function narrowedToNothingBy(Input $input, array $given): ?array
+    private function narrowedToNothingBy(Input $input, array $given, RunTargets $asked): ?array
     {
         $tags = $input->getOption('tags');
 
@@ -553,30 +596,11 @@ final class Run extends Command implements InternalOptions
             return null;
         }
 
-        if ($this->onlySelectors($given)) {
+        if ($asked->onlySelects()) {
             return ['No example at ' . implode(', ', $given), 'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.'];
         }
 
         return [sprintf('No example or scenario in %s.', implode(', ', $given)), 'Name a spec, a feature or a directory holding them, or give none to run the configured suite.'];
-    }
-
-    /**
-     * Whether every path given selects examples in a file: a "file:LINE", or
-     * a "file@ID" for one of several examples a line declares.
-     *
-     * @param list<string> $given the paths as given on the command line
-     */
-    private function onlySelectors(array $given): bool
-    {
-        return $given !== [] && array_filter($given, static fn(string $path): bool => self::fileOf($path) === $path) === [];
-    }
-
-    /**
-     * The file a path names, with any ":LINE" or "@ID" selector left off.
-     */
-    private static function fileOf(string $path): string
-    {
-        return (string) preg_replace('/(?::\d+|@[0-9a-f]{12})$/', '', $path);
     }
 
     private function ranAnything(Results $results): bool
@@ -755,11 +779,9 @@ final class Run extends Command implements InternalOptions
             return null;
         }
 
-        // The JSON report names the example that ran each line, and parallel
-        // workers dump the same state for the parent to merge.
-        $perExample = $input->getOption('coverage-json') !== null
-            || $input->getOption('coverage-partial') !== null
-            || $input->getOption('parallel') !== false;
+        // Only the JSON report names the example that ran each line: a run
+        // asked for one credits each, and so do the workers it starts.
+        $perExample = $input->getOption('coverage-json') !== null || $input->getOption('coverage-per-example');
 
         $reporter = new CoverageReporter($this->engines, Exclusions::of($this->config, new RealFilesystem(), (string) getcwd()));
 
@@ -774,10 +796,9 @@ final class Run extends Command implements InternalOptions
      */
     private function tracedDirectories(Input $input, ?Inspection $guard): array
     {
-        $source = $input->getOption('coverage-src') ?? $this->config->getSrcPath();
         $guarded = $guard === null ? [] : ($this->config->getGuardConfig()['paths'] ?? []);
 
-        return array_values(array_unique([(string) $source, ...$guarded]));
+        return array_values(array_unique([...$this->coverageSources($input), ...$guarded]));
     }
 
     /**
@@ -850,13 +871,12 @@ final class Run extends Command implements InternalOptions
      * outright are checked: a configured default may be absent in a project
      * with nothing to run yet, which is not a mistake.
      *
-     * @param list<string> $given the paths the caller named, a line number allowed after a file
      */
-    private static function missingPath(array $given): ?string
+    private static function missingPath(RunTargets $asked): ?string
     {
-        foreach ($given as $path) {
-            if (!file_exists(self::fileOf($path))) {
-                return $path;
+        foreach ($asked->files() as $target => $file) {
+            if (!file_exists($file)) {
+                return $target;
             }
         }
 
@@ -887,16 +907,12 @@ final class Run extends Command implements InternalOptions
     /**
      * The first path given that is a file run cannot take: neither a spec
      * nor a feature.
-     *
-     * @param list<string> $given
      */
-    private function unrunnablePath(array $given): ?string
+    private function unrunnablePath(RunTargets $asked): ?string
     {
-        foreach ($given as $path) {
-            $file = self::fileOf($path);
-
+        foreach ($asked->files() as $target => $file) {
             if (is_file($file) && !str_ends_with($file, $this->config->getSpecSuffix()) && !str_ends_with($file, '.feature')) {
-                return $path;
+                return $target;
             }
         }
 
@@ -950,8 +966,7 @@ final class Run extends Command implements InternalOptions
             }
         }
 
-        foreach (array_map('trim', explode(',', $files)) as $given) {
-            $path = self::fileOf($given);
+        foreach (RunTargets::of($files)->files() as $path) {
             $roots[] = is_file($path) ? dirname($path) : $path;
         }
 
@@ -969,7 +984,11 @@ final class Run extends Command implements InternalOptions
         ArrangingCode::under(...$this->specCodeRoots($files));
 
         $tags = $input->getOption('tags');
-        $suite = $this->loader->load($files, $filter, is_string($tags) ? $tags : null);
+        $parallel = $input->getOption('parallel');
+        $queue = $formatter instanceof WireFormatter && $input->getOption('queue') ? new WorkQueue($this->standardInput($input), $formatter) : null;
+        // A parallel run's workers load their own files; this one only finds
+        // them. A queued worker loads each file as it is handed over.
+        $suite = $parallel === false && $queue === null ? $this->loader->load($files, $filter, is_string($tags) ? $tags : null) : null;
 
         $stop = $this->stopConditions($input);
 
@@ -984,70 +1003,123 @@ final class Run extends Command implements InternalOptions
         }
 
         $formatter->begin();
+        $listeners = $this->listenersFor($formatter);
+        $listeners?->began();
 
-        $start = hrtime(true);
-        $accumulated = [];
-
-        $parallel = $input->getOption('parallel');
-        if ($parallel !== false) {
-            $workers = $parallel !== null ? (int) $parallel : null;
-            $paths = [];
-            foreach ($suite->getSpecifications() as $spec) {
-                if (method_exists($spec, 'getPath')) {
-                    $paths[] = $spec->getPath();
-                }
-            }
-
-            // Whether coverage is being collected, not whether the caller
-            // asked for a report: guard asks for coverage of its own, and a
-            // worker that was never told to dump it leaves the parent with
-            // nothing to judge.
-            $coveragePartialDir = $collectingWith !== null
-                ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
-                : null;
-
-            $parallelRunner = new ParallelRunner(
-                $paths,
-                $workers,
-                $stop,
-                coveragePartialDir: $coveragePartialDir,
-                childOptions: $this->childOptions($input),
-                filter: is_string($filter) ? $filter : null,
-                tags: is_string($tags) ? $tags : null,
-                phpOptions: $this->engines->switches($collectingWith),
-            );
-            $stream = $parallelRunner->stream();
-        } else {
-            $parallelRunner = null;
-            $stream = $this->runner->stream($suite, $stop, $seed);
-        }
-
-        $lineTargeted = str_contains($files, ':');
-
+        // Whatever stops the run, a listener told it began is told it ended.
         try {
-            foreach ($stream as $result) {
-                if (($filter !== null || $lineTargeted) && self::countLeaves($result) === 0) {
-                    continue;
+            $start = hrtime(true);
+            $accumulated = [];
+
+            if ($queue !== null) {
+                $parallelRunner = null;
+                $stream = $this->queued($queue, $filter, is_string($tags) ? $tags : null, $stop);
+            } elseif ($suite === null) {
+                $workers = $parallel !== null ? (int) $parallel : null;
+                // Each file goes to one worker with everything its targets select
+                // in it, so a block two selectors name runs once, as it does here.
+                // The parent only finds the files: each worker loads its own,
+                // and selects by the filter and tags it is handed.
+                $targets = RunTargets::of($files);
+                $paths = [];
+                foreach ($this->loader->files($files) as $path) {
+                    $paths[$path] = $targets->targetsFor($path);
                 }
 
-                $formatter->printResult($result);
-                $accumulated[] = $result;
+                // Whether coverage is being collected, not whether the caller
+                // asked for a report: guard asks for coverage of its own, and a
+                // worker that was never told to dump it leaves the parent with
+                // nothing to judge.
+                $this->coverageDirectory = $collectingWith !== null ? TemporaryDirectory::create('phpspec_coverage_') : null;
+                $coveragePartialDir = $this->coverageDirectory?->path;
+
+                $parallelRunner = new ParallelRunner(
+                    $paths,
+                    $workers,
+                    $stop,
+                    coveragePartialDir: $coveragePartialDir,
+                    childOptions: $this->childOptions($input),
+                    filter: is_string($filter) ? $filter : null,
+                    tags: is_string($tags) ? $tags : null,
+                    phpOptions: $this->engines->switches($collectingWith),
+                    seed: $seed,
+                    perExample: $input->getOption('coverage-json') !== null,
+                );
+                $stream = $parallelRunner->stream();
+            } else {
+                $parallelRunner = null;
+                $stream = $this->runner->stream($suite, $stop, $seed);
             }
+
+            $lineTargeted = RunTargets::of($files)->selectsWithin();
+
+            try {
+                foreach ($stream as $result) {
+                    if (($filter !== null || $lineTargeted) && self::countLeaves($result) === 0) {
+                        continue;
+                    }
+
+                    $formatter->printResult($result);
+                    $listeners?->heard($result);
+                    $accumulated[] = $result;
+                }
+            } finally {
+                FilterRegistry::reset();
+                LineTargetRegistry::reset();
+            }
+
+            if ($parallelRunner !== null) {
+                $this->coveragePartials = $parallelRunner->getCoveragePartials();
+                $this->coverageLost = $parallelRunner->lostCoverage();
+            }
+
+            $results = new SuiteResult($accumulated);
+            $results->setDuration((hrtime(true) - $start) / 1e9);
+            $formatter->end($results);
+
+            return $results;
         } finally {
-            FilterRegistry::reset();
-            LineTargetRegistry::reset();
+            $listeners?->ended();
+        }
+    }
+
+    /**
+     * What a queued worker runs: each file it is handed, loaded and run as it
+     * arrives, until none is left. A file that met a stop is reported like any
+     * other: the run that started the worker is the one that ends it.
+     *
+     * @return \Generator<Results>
+     */
+    private function queued(WorkQueue $queue, ?string $filter, ?string $tags, StopConditions $stop): \Generator
+    {
+        foreach ($queue as $targets) {
+            ArrangingCode::under(...$this->specCodeRoots($targets));
+
+            yield from $this->runner->stream($this->loader->load($targets, $filter, $tags), $stop);
+        }
+    }
+
+    /**
+     * @return resource
+     */
+    private function standardInput(Input $input)
+    {
+        return ($input instanceof StreamableInputInterface ? $input->getStream() : null) ?? STDIN;
+    }
+
+    /**
+     * The listener extensions to tell what the run sees, none in a parallel
+     * worker: its results reach the run that started it, which tells them.
+     */
+    private function listenersFor(Formatter $formatter): ?ListenerBridge
+    {
+        $listeners = $this->extensionLoader?->getListeners() ?? [];
+
+        if ($listeners === [] || $formatter instanceof WireFormatter) {
+            return null;
         }
 
-        if ($parallelRunner !== null) {
-            $this->coveragePartials = $parallelRunner->getCoveragePartials();
-            $this->coverageLost = $parallelRunner->lostCoverage();
-        }
-
-        $results = new SuiteResult($accumulated);
-        $results->setDuration((hrtime(true) - $start) / 1e9);
-        $formatter->end($results);
-
-        return $results;
+        return new ListenerBridge($listeners, new Outcomes(ProjectRoot::here()));
     }
 
     /**
@@ -1174,19 +1246,19 @@ final class Run extends Command implements InternalOptions
 
     public function internalOptions(): array
     {
-        return ['coverage-partial', 'suite-check'];
+        return ['coverage-partial', 'suite-check', 'queue', 'coverage-per-example'];
     }
 
     private function createFormatter(string $format, Output $output, ?string $nothingFound = 'No specs found.'): Formatter
     {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
-            return new FormatterBridge($this->extensionLoader->getFormatter($format), $output);
+            return new FormatterBridge($this->extensionLoader->getFormatter($format), $output, new Outcomes(ProjectRoot::here()));
         }
 
         return match ($format) {
             'dot' => new Dot($output, $nothingFound),
-            'tap' => new Tap($output),
-            'junit' => new Junit($output),
+            'tap' => new Tap($output, new Outcomes(ProjectRoot::here())),
+            'junit' => new Junit($output, new Outcomes(ProjectRoot::here())),
             'html' => new Html($output),
             'wire' => new WireFormatter($output),
             'agent' => new Agent(
@@ -1217,7 +1289,7 @@ final class Run extends Command implements InternalOptions
             return;
         }
         $output->writeln('');
-        $output->writeln("Top $count slowest examples:");
+        $output->writeln("Top $count slowest examples and scenarios:");
         foreach ($slowest as $timing) {
             $output->writeln(sprintf('  <fg=yellow>%.4fs</> %s', $timing->duration, $timing->path));
         }
@@ -1240,8 +1312,11 @@ final class Run extends Command implements InternalOptions
             $this->coverageLost = [];
         }
 
+        $this->coverageDirectory?->remove();
+        $this->coverageDirectory = null;
+
         return $reporter->report($output, new CoverageOptions(
-            srcPath: $input->getOption('coverage-src') ?? $this->config->getSrcPath(),
+            sources: $this->coverageSources($input),
             showText: (bool) $input->getOption('coverage'),
             cloverPath: $input->getOption('coverage-clover'),
             htmlPath: $input->getOption('coverage-html'),
@@ -1249,6 +1324,39 @@ final class Run extends Command implements InternalOptions
             coverageMin: $input->getOption('coverage-min'),
             partialPath: $input->getOption('coverage-partial'),
         ));
+    }
+
+    /**
+     * Runs this run again in a php set up as this one and started with the
+     * arguments, its input and output this one's, and answers with its exit
+     * code. The run started is told so, and never starts another.
+     *
+     * @param list<string> $arguments php options, then the command
+     */
+    private function runAgainUnder(array $arguments): int
+    {
+        $process = proc_open(
+            [PHP_BINARY, ...(new ChildPhp())->options(), ...$arguments],
+            [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+            $pipes,
+            null,
+            [...getenv(), CoverageEngines::RESTARTED => '1'],
+        );
+
+        return is_resource($process) ? proc_close($process) : self::FAILURE;
+    }
+
+    /**
+     * The directories coverage reports on: the one --coverage-src names, else
+     * every directory the project's classes are in.
+     *
+     * @return list<string>
+     */
+    private function coverageSources(Input $input): array
+    {
+        $named = $input->getOption('coverage-src');
+
+        return is_string($named) ? [$named] : $this->config->sourceRoots();
     }
 
     /**
@@ -1314,6 +1422,7 @@ final class Run extends Command implements InternalOptions
             $generation,
             $this->config->getSpecSuffix(),
             steps: new StepsHome($this->config),
+            composer: $this->config->composerJson(),
         );
     }
 }

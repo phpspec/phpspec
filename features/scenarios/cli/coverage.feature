@@ -157,3 +157,32 @@ Feature: JSON coverage report
     When I run phpspec pair with input "/run"
     Then the output should not contain "no coverage driver"
     And the output should contain "1 passed"
+
+  Scenario: The text report covers every directory the project's classes are in, naming each file from the project root
+    Given a class "lib/Acme/Ledger.php":
+      """
+      <?php
+
+      namespace Acme;
+
+      class Ledger
+      {
+          public function total(): int
+          {
+              return 1;
+          }
+      }
+      """
+    And a spec file "spec/Acme/Ledger.spec.php":
+      """
+      <?php
+
+      describe('Ledger', function () {
+          it('totals', function () {
+              expect((new Acme\Ledger())->total())->toBe(1);
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--coverage"
+    Then the output should contain "src/App/Calculator.php"
+    And the output should contain "lib/Acme/Ledger.php"

@@ -32,12 +32,42 @@ describe(Attachments::class, function () {
         expect($attachments->read())->toBe(['log' => 'CANNOT READ --watch']);
     });
 
+    it('reads each one once, so a later read has only what was handed over since', function () {
+        $attachments = new Attachments();
+        $attachments->add('stdout', 'before the teardown');
+
+        expect($attachments->read())->toBe(['stdout' => 'before the teardown']);
+
+        $attachments->add('screenshot', 'during the teardown');
+
+        expect($attachments->read())->toBe(['screenshot' => 'during the teardown']);
+        expect($attachments->isEmpty())->toBeTrue();
+    });
+
     it('keeps the latest under a name, so a helper offering it every poll leaves one', function () {
         $attachments = new Attachments();
         $attachments->add('log', 'first look');
         $attachments->add('log', 'second look');
 
         expect($attachments->read())->toBe(['log' => 'second look']);
+    });
+
+    it('hands down what it holds, unread, to a unit it sets up, whose own wins and whose reading leaves it as it was', function () {
+        $reads = 0;
+        $setup = new Attachments();
+        $setup->add('log', function () use (&$reads) {
+            $reads++;
+
+            return 'booted';
+        });
+        $setup->add('port', '8080');
+
+        $unit = $setup->handedDown();
+        $unit->add('port', '7070');
+
+        expect($reads)->toBe(0);
+        expect($unit->read())->toBe(['log' => 'booted', 'port' => '7070']);
+        expect($setup->read())->toBe(['log' => 'booted', 'port' => '8080']);
     });
 
     it('says a closure could not be read rather than showing an empty block', function () {

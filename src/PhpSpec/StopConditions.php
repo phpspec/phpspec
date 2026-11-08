@@ -15,6 +15,7 @@
 namespace PhpSpec;
 
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 
 /**
@@ -62,18 +63,22 @@ final readonly class StopConditions
     public function metBy(Results $result): bool
     {
         if ($result instanceof ExampleResult) {
-            return ($this->onFailure && ($result->isFailure() || $result->isError()))
-                || ($this->onError && $result->isError())
+            $state = $result->state();
+
+            return ($this->onFailure && ($state === State::Failed || $state === State::Errored))
+                || ($this->onError && $state === State::Errored)
                 || $this->metByNotesOf($result)
-                || ($this->onPending && $result->isPending())
-                || ($this->onSkipped && $result->isSkipped());
+                || ($this->onPending && $state === State::Pending)
+                || ($this->onSkipped && $state === State::Skipped);
         }
 
         if ($result instanceof StepResult) {
-            return ($this->onFailure && ($result->isFailure() || $result->isError()))
-                || ($this->onError && $result->isError())
+            $state = $result->state();
+
+            return ($this->onFailure && ($state === State::Failed || $state === State::Errored))
+                || ($this->onError && $state === State::Errored)
                 || $this->metByNotesOf($result)
-                || ($this->onPending && ($result->isPending() || $result->isUndefined()))
+                || ($this->onPending && ($state === State::Pending || $state === State::Undefined))
                 || ($this->onSkipped && $result->isSkippedForAReason());
         }
 

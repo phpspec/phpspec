@@ -68,6 +68,15 @@ class ContextResult implements Results
     }
 
     /**
+     * Whether the result is the one the context reports its own error on: a
+     * context whose body or group hooks broke adds it after what ran.
+     */
+    public function carriesItsError(Results $result): bool
+    {
+        return $this->isError() && $this->exampleResults !== [] && $result === $this->exampleResults[array_key_last($this->exampleResults)];
+    }
+
+    /**
      * Checks whether this context has an error.
      */
     public function isError(): bool

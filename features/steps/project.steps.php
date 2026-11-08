@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\TemporaryDirectory;
+
 /**
  * Project setup steps — beforeScenario hook and all Given steps
  * for creating temporary project structures.
@@ -22,6 +24,8 @@ if (!function_exists('_phpspec_remove_dir')) {
             } elseif ($entry->isDir()) {
                 rmdir($path);
             } else {
+                // Git makes its objects read-only, and Windows will not delete those.
+                chmod($path, 0666);
                 unlink($path);
             }
         }
@@ -48,13 +52,16 @@ beforeScenario(function () {
         }
     }
 
-    $this->projectDir = sys_get_temp_dir() . '/phpspec_feat_' . uniqid();
-    mkdir($this->projectDir, 0777, true);
-    mkdir($this->projectDir . '/spec', 0777, true);
-    mkdir($this->projectDir . '/src', 0777, true);
+    // A directory of its own: another worker's scenario must never write into
+    // it, nor clean it away.
+    $this->projectDir = TemporaryDirectory::create('phpspec_feat_')->path;
+    mkdir($this->projectDir . '/spec');
+    mkdir($this->projectDir . '/src');
 
     // Symlink vendor for PhpSpec class + function autoloading
-    symlink(realpath(__DIR__ . '/../../vendor'), $this->projectDir . '/vendor');
+    if (!symlink(realpath(__DIR__ . '/../../vendor'), $this->projectDir . '/vendor')) {
+        throw new RuntimeException(sprintf('The vendor directory could not be linked into "%s".', $this->projectDir));
+    }
 
     // Default phpspec.json with App\ autoloading
     file_put_contents($this->projectDir . '/phpspec.json', json_encode([

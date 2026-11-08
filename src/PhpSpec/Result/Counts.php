@@ -103,37 +103,27 @@ final class Counts
             $this->warnings += count($result->getWarnings());
             $this->deprecations += count($result->getDeprecations());
             $this->notices += count($result->getNotices());
-            if ($result->isPending()) {
-                $this->pending++;
-            } elseif ($result->isSkipped()) {
-                $this->exampleSkipped++;
-            } elseif ($result->isError()) {
-                $this->errors++;
-            } elseif ($result->isFailure()) {
-                $this->failures++;
-            } elseif ($result->isRisky()) {
-                $this->risky++;
-            } else {
-                $this->passes++;
-            }
+            match ($result->state()) {
+                State::Pending => $this->pending++,
+                State::Skipped => $this->exampleSkipped++,
+                State::Errored => $this->errors++,
+                State::Failed => $this->failures++,
+                State::Risky => $this->risky++,
+                default => $this->passes++,
+            };
         } elseif ($result instanceof StepResult) {
             $this->steps++;
             $this->stepWarnings += count($result->getWarnings());
             $this->stepDeprecations += count($result->getDeprecations());
             $this->stepNotices += count($result->getNotices());
-            if ($result->isPassed()) {
-                $this->stepPasses++;
-            } elseif ($result->isError()) {
-                $this->stepErrors++;
-            } elseif ($result->isFailure()) {
-                $this->stepFailures++;
-            } elseif ($result->isPending()) {
-                $this->stepPending++;
-            } elseif ($result->isUndefined()) {
-                $this->undefined++;
-            } elseif ($result->isSkipped()) {
-                $this->skipped++;
-            }
+            match ($result->state()) {
+                State::Errored => $this->stepErrors++,
+                State::Failed => $this->stepFailures++,
+                State::Pending => $this->stepPending++,
+                State::Undefined => $this->undefined++,
+                State::Skipped => $this->skipped++,
+                default => $this->stepPasses++,
+            };
         } elseif ($result instanceof FeatureResult) {
             $this->features++;
             foreach ($result->getResults() as $child) {

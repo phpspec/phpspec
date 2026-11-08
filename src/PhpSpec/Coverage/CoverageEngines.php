@@ -27,14 +27,19 @@ final readonly class CoverageEngines
 {
     private const array OFF = ['pcov.enabled=0', 'xdebug.mode=off'];
 
+    /** Set in the environment of a phpspec run again to trace what PCOV did not, so that one runs no other */
+    public const string RESTARTED = 'PHPSPEC_PCOV_RESTARTED';
+
     /**
      * @param CoverageAdapter|null $named the engine the config names, or null for whichever is enabled
      * @param string $invocation the command line this process was started by, which the remedies repeat
+     * @param list<string> $command that command line, word by word, to run again under PCOV; empty when it must not be
      */
     public function __construct(
         private ?CoverageAdapter $named,
         private PhpRuntime $php,
         private string $invocation,
+        private array $command = [],
     ) {}
 
     /**
@@ -47,7 +52,7 @@ final readonly class CoverageEngines
         $argv ??= $_SERVER['argv'] ?? [];
         $words = array_values(array_map('strval', array_filter(is_array($argv) ? $argv : [], 'is_scalar')));
 
-        return new self($config->coverageAdapter(), new LivePhpRuntime(), (new CommandLine(null))->for(...$words));
+        return new self($config->coverageAdapter(), new LivePhpRuntime(), (new CommandLine(null))->for(...$words), getenv(self::RESTARTED) === false ? $words : []);
     }
 
     /**
@@ -143,6 +148,7 @@ final readonly class CoverageEngines
             sprintf('PCOV traces %s, not %s', $this->php->pcovDirectory(), implode(' or ', array_map($this->name(...), $outside))),
             sprintf('php -d pcov.enabled=1 -d pcov.directory=%s %s', $directory, $this->invocation),
             $options,
+            $this->command === [] ? [] : ['-d', 'pcov.enabled=1', '-d', 'pcov.directory=' . $directory, ...$this->command],
         );
     }
 

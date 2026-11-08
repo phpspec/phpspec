@@ -75,7 +75,7 @@ Feature: Coverage engines
       """
     And the exit code should not be 0
 
-  Scenario: PCOV refuses a source directory outside the one it traces, naming the ways past it
+  Scenario: PCOV tracing less than the run reports on runs phpspec again, tracing a directory that holds it all
     Given a class "lib/Acme/Multiplier.php":
       """
       <?php
@@ -90,11 +90,42 @@ Feature: Coverage engines
           }
       }
       """
-    When I run phpspec run under PCOV with coverage options "--coverage --coverage-src=lib"
-    Then the output should contain "PCOV traces src, not lib"
-    And the output should contain "-d pcov.directory=lib"
-    And the output should contain "Set pcov.directory=lib in php.ini to trace it in every run."
-    And the exit code should be 1
+    And a spec file "spec/Acme/Multiplier.spec.php":
+      """
+      <?php
+
+      describe('Multiplier', function () {
+          it('multiplies', function () {
+              expect((new Acme\Multiplier())->multiply(2, 3))->toBe(6);
+          });
+      });
+      """
+    When I run phpspec run under PCOV with coverage options "--coverage"
+    Then the output should contain "src/App/Calculator.php"
+    And the output should contain "lib/Acme/Multiplier.php"
+    And the output should not contain "PCOV traces"
+    And the output should contain "Once you spec, you never go back!" exactly 1 times
+    And the exit code should be 0
+
+  Scenario: A coding agent reads one document from a run that started itself again under PCOV
+    Given a class "lib/Acme/Multiplier.php":
+      """
+      <?php
+
+      namespace Acme;
+
+      class Multiplier
+      {
+          public function multiply(int $a, int $b): int
+          {
+              return $a * $b;
+          }
+      }
+      """
+    When I run phpspec run under PCOV with coverage options "--coverage --format=agent"
+    Then the output should contain "run_started" exactly 1 times
+    And the output should contain "summary" exactly 1 times
+    And the exit code should be 0
 
   Scenario: Parallel workers collect with PCOV as the parent does
     Given a class "src/App/Greeter.php":

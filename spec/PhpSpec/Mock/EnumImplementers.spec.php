@@ -101,7 +101,7 @@ describe(EnumImplementers::class, function () {
             $composer = new ClassLoader($root . '/vendor');
             $composer->addPsr4($namespace . 'Domain\\', $root . '/domain');
             $composer->addPsr4($namespace . 'Lib\\', $root . '/vendor/lib');
-            $configured = new ProjectAutoloader([$namespace . 'Alt\\' => $root . '/alt'], new SourceLayout('contracts'), $root);
+            $configured = new ProjectAutoloader(new SourceLayout('contracts', [$namespace . 'Alt' => 'alt']), $root);
             $own = new OwnCode(ProjectRoot::at($root), [ProjectRoot::at($root . '/vendor')]);
 
             expect(EnumImplementers::of([[$composer, 'loadClass']], $own)->firstCaseOf($namespace . '\\Labelled'))->toBe(constant($namespace . 'Domain\\Zeta::Last'));
@@ -142,7 +142,7 @@ describe(EnumImplementers::class, function () {
         ], ['' => 'project/contracts/', 'Out' => 'outside/']);
 
         try {
-            $configured = new ProjectAutoloader([$namespace . 'Out\\' => $root . '/outside'], new SourceLayout('contracts'), $root . '/project');
+            $configured = new ProjectAutoloader(new SourceLayout('contracts', [$namespace . 'Out' => '../outside']), $root . '/project');
             $own = new OwnCode(ProjectRoot::at($root . '/project'), []);
 
             expect(EnumImplementers::of([$configured], $own)->firstCaseOf($namespace . '\\Labelled'))->toBeNull();

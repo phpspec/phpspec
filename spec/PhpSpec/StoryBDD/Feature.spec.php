@@ -387,6 +387,56 @@ describe(Feature::class, function () {
         expect($steps[1]->isPassed())->toBeTrue();
     });
 
+    context('notes raised outside the steps', function () {
+        this('shop', fn() => function (HookRegistry $hooks, array $loading = []): FeatureResult {
+            $registry = new StepRegistry();
+            $registry->addStep('a customer', fn() => null);
+            $registry->addStep('a basket', fn() => null);
+
+            return (new Feature('shop.feature', new FeatureNode('Shop', '', null, [
+                new ScenarioNode('First', [new StepNode('Given', 'a customer'), new StepNode('And', 'a basket')]),
+                new ScenarioNode('Second', [new StepNode('Given', 'a customer'), new StepNode('And', 'a basket')]),
+            ]), $registry, $hooks, loading: $loading))->run();
+        });
+
+        this('messages', fn() => fn(StepResult $step): array => array_column([...$step->getWarnings(), ...$step->getNotices(), ...$step->getDeprecations()], 'message'));
+
+        it('reports what its steps files and its beforeFeature raised on its first step, and its afterFeature on its last', function () {
+            $hooks = new HookRegistry();
+            $hooks->addBeforeFeature(fn() => trigger_error('the feature sets up', E_USER_WARNING));
+            $hooks->addAfterFeature(fn() => trigger_error('the feature tears down', E_USER_NOTICE));
+
+            [$first, $second] = ($this->shop)($hooks, [['severity' => E_USER_DEPRECATED, 'message' => 'the steps load', 'file' => 'features/steps/shop.steps.php', 'line' => 2]])->getResults();
+
+            expect(($this->messages)($first->getResults()[0]))->toBe(['the feature sets up', 'the steps load']);
+            expect(($this->messages)($second->getResults()[1]))->toBe(['the feature tears down']);
+            expect([...($this->messages)($first->getResults()[1]), ...($this->messages)($second->getResults()[0])])->toBe([]);
+        });
+
+        it('reports what a scenario\'s hooks raise on its first step and on its last', function () {
+            $hooks = new HookRegistry();
+            $hooks->addBeforeScenario(fn() => trigger_error('the scenario sets up', E_USER_WARNING));
+            $hooks->addAfterScenario(fn() => trigger_error('the scenario tears down', E_USER_NOTICE));
+
+            foreach (($this->shop)($hooks)->getResults() as $scenario) {
+                expect(($this->messages)($scenario->getResults()[0]))->toBe(['the scenario sets up']);
+                expect(($this->messages)($scenario->getResults()[1]))->toBe(['the scenario tears down']);
+            }
+        });
+
+        it('reports what a step\'s beforeStep and afterStep raise on that step', function () {
+            $hooks = new HookRegistry();
+            $hooks->addBeforeStep(fn() => trigger_error('the step sets up', E_USER_WARNING));
+            $hooks->addAfterStep(fn() => trigger_error('the step tears down', E_USER_NOTICE));
+
+            foreach (($this->shop)($hooks)->getResults() as $scenario) {
+                foreach ($scenario->getResults() as $step) {
+                    expect(($this->messages)($step))->toBe(['the step sets up', 'the step tears down']);
+                }
+            }
+        });
+    });
+
     it("runs beforeScenario hooks", function () {
         $registry = new StepRegistry();
         $registry->addStep("the hook ran", function () {
@@ -410,6 +460,103 @@ describe(Feature::class, function () {
         $result = $feature->run();
         $steps = $result->getResults()[0]->getResults();
         expect($steps[0]->isPassed())->toBeTrue();
+    });
+
+    it("keeps what a scenario's hooks hand over about it, its teardown's read once that is done", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a step that fails", function () {
+            \PhpSpec\attach('ran', 'from the step');
+            throw new \RuntimeException('boom');
+        });
+        $hooks = new HookRegistry();
+        $hooks->addBeforeScenario(function () {
+            \PhpSpec\attach('set up', 'from beforeScenario');
+        });
+        $hooks->addAfterScenario(function () {
+            \PhpSpec\attach('torn down', 'from afterScenario');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Attached',
+            '',
+            null,
+            [new ScenarioNode('Fails', [new StepNode('Given', 'a step that fails')])]
+        ), $registry, $hooks);
+
+        expect($feature->run()->getResults()[0]->getAttachments())->toBe(['set up' => 'from beforeScenario', 'ran' => 'from the step', 'torn down' => 'from afterScenario']);
+    });
+
+    it("hands what a beforeFeature handed over to each scenario that fails, the scenario's own winning", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a failing step", fn() => throw new \RuntimeException('boom'));
+        $registry->addStep("a passing step", function () {});
+        $registry->addStep("a failing step on its own port", function () {
+            \PhpSpec\attach('port', '7070');
+            throw new \RuntimeException('boom');
+        });
+        $hooks = new HookRegistry();
+        $hooks->addBeforeFeature(function () {
+            \PhpSpec\attach('log', 'booted');
+            \PhpSpec\attach('port', '8080');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode('Server', '', null, [
+            new ScenarioNode('Answers', [new StepNode('Given', 'a failing step')]),
+            new ScenarioNode('Passes', [new StepNode('Given', 'a passing step')]),
+            new ScenarioNode('Queues', [new StepNode('Given', 'a failing step on its own port')]),
+        ]), $registry, $hooks);
+
+        expect(array_map(fn($scenario) => $scenario->getAttachments(), $feature->run()->getResults()))->toBe([
+            ['log' => 'booted', 'port' => '8080'],
+            [],
+            ['log' => 'booted', 'port' => '7070'],
+        ]);
+    });
+
+    it("puts what a beforeFeature that did not pass handed over on the first scenario, once", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a step", function () {});
+        $skipping = new HookRegistry();
+        $skipping->addBeforeFeature(function () {
+            \PhpSpec\attach('network', 'no route to host');
+            skip('no network');
+        });
+        $throwing = new HookRegistry();
+        $throwing->addBeforeFeature(function () {
+            \PhpSpec\attach('log', 'port taken');
+            throw new \RuntimeException('would not start');
+        });
+        $node = new FeatureNode('Remote', '', null, [
+            new ScenarioNode('Fetches', [new StepNode('Given', 'a step')]),
+            new ScenarioNode('Posts', [new StepNode('Given', 'a step')]),
+        ]);
+
+        expect(array_map(fn($scenario) => $scenario->getAttachments(), (new Feature('test.feature', $node, $registry, $skipping))->run()->getResults()))->toBe([['network' => 'no route to host'], []]);
+        expect(array_map(fn($scenario) => $scenario->getAttachments(), (new Feature('test.feature', $node, $registry, $throwing))->run()->getResults()))->toBe([['log' => 'port taken'], []]);
+    });
+
+    it("puts what the setup, the last scenario and a broken afterFeature handed over on that scenario, the later winning", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a failing step on its own port", function () {
+            \PhpSpec\attach('port', '7070');
+            throw new \RuntimeException('boom');
+        });
+        $hooks = new HookRegistry();
+        $hooks->addBeforeFeature(function () {
+            \PhpSpec\attach('log', 'booted');
+            \PhpSpec\attach('port', '8080');
+            \PhpSpec\attach('state', 'up');
+        });
+        $hooks->addAfterFeature(function () {
+            \PhpSpec\attach('state', 'stuck');
+            throw new \RuntimeException('would not stop');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode('Server', '', null, [
+            new ScenarioNode('Queues', [new StepNode('Given', 'a failing step on its own port')]),
+        ]), $registry, $hooks);
+
+        expect($feature->run()->getResults()[0]->getAttachments())->toBe(['log' => 'booted', 'port' => '7070', 'state' => 'stuck']);
     });
 
     it("runs multiple scenarios independently", function () {
@@ -537,6 +684,90 @@ describe(Feature::class, function () {
 
         $feature->run();
         expect($log)->toBe(['step', 'afterScenario', 'afterScenario']);
+    });
+
+    it("runs no step after a pending or undefined one, and keeps each later one no definition matches undefined", function () {
+        $registry = new StepRegistry();
+        $ran = [];
+        $registry->addStep("a pending step", function () {
+            pending('Wait');
+        });
+        $registry->addStep("a following step", function () use (&$ran) {
+            $ran[] = 'following';
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Stopping',
+            '',
+            null,
+            [
+                new ScenarioNode('Waits', [
+                    new StepNode('Given', 'a pending step'),
+                    new StepNode('Then', 'a following step'),
+                    new StepNode('And', 'a step nobody wrote'),
+                ]),
+                new ScenarioNode('Lacks a step', [
+                    new StepNode('Given', 'a step nobody wrote'),
+                    new StepNode('Then', 'a following step'),
+                ]),
+            ]
+        ), $registry, new HookRegistry());
+
+        [$waits, $lacks] = $feature->run()->getResults();
+
+        expect($ran)->toBe([]);
+        expect(array_map(fn($step) => [$step->isPending(), $step->isSkipped(), $step->isUndefined()], $waits->getResults()))->toBe([[true, false, false], [false, true, false], [false, false, true]]);
+        expect(array_map(fn($step) => [$step->isSkipped(), $step->isUndefined()], $lacks->getResults()))->toBe([[false, true], [true, false]]);
+    });
+
+    it("keeps a step no definition matches undefined behind a beforeScenario hook that broke", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a defined step", function () {});
+        $hooks = new HookRegistry();
+        $hooks->addBeforeScenario(function () {
+            throw new \RuntimeException('database down');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Held',
+            '',
+            null,
+            [new ScenarioNode('Held', [
+                new StepNode('Given', 'a defined step'),
+                new StepNode('Then', 'a defined step'),
+                new StepNode('And', 'a step nobody wrote'),
+            ])]
+        ), $registry, $hooks);
+
+        $steps = $feature->run()->getResults()[0]->getResults();
+
+        expect($steps[0]->isError())->toBeTrue();
+        expect($steps[1]->isSkipped())->toBeTrue();
+        expect($steps[2]->isUndefined())->toBeTrue();
+    });
+
+    it("runs no step hook around a step no definition matches, so one that throws leaves it undefined", function () {
+        $ran = [];
+        $hooks = new HookRegistry();
+        $hooks->addBeforeStep(function () use (&$ran) {
+            $ran[] = 'before';
+        });
+        $hooks->addAfterStep(function () use (&$ran) {
+            $ran[] = 'after';
+            throw new \RuntimeException('log full');
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Gap',
+            '',
+            null,
+            [new ScenarioNode('Unwritten', [new StepNode('Given', 'a step nobody wrote')])]
+        ), new StepRegistry(), $hooks);
+
+        $steps = $feature->run()->getResults()[0]->getResults();
+
+        expect($ran)->toBe([]);
+        expect($steps[0]->isUndefined())->toBeTrue();
     });
 
     it("runs afterStep hooks after each executed step but not for cascade-skipped ones", function () {
@@ -789,7 +1020,7 @@ describe(Feature::class, function () {
             ]), $registry, $hooks))->run();
 
             expect($log)->toBe(['beforeFeature', 'coverage start', 'beforeScenario', 'step', 'afterScenario', 'coverage stop', 'afterFeature']);
-            expect($collector->getLines()['/project/src/App/Basket.php'][9])->toBe(['features/shopping.feature::Shopping > a basket']);
+            expect($collector->linesOf('/project/src/App/Basket.php')[9])->toBe(['features/shopping.feature::Shopping > a basket']);
         });
 
         it('credits each row of an outline as a scenario of its own', function (CoverageDriver $driver) {

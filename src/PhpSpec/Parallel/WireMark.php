@@ -12,21 +12,15 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\EventDispatcher\Event;
-
-use PhpSpec\EventDispatcher\Event;
+namespace PhpSpec\Parallel;
 
 /**
  * @internal
- * Dispatched when an expectation matcher evaluates to a failure.
+ * What a worker says on the wire besides a result: that it ran the file it
+ * was handed and wants another, or that it reported everything it ran.
  */
-final readonly class ExpectationFailed implements Event
+enum WireMark
 {
-    public const NAME = 'expectation.failed';
-
-    /** {@inheritdoc} */
-    public function getName(): string
-    {
-        return self::NAME;
-    }
+    case Ran;
+    case Ended;
 }

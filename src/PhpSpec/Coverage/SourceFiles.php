@@ -19,16 +19,19 @@ use PhpSpec\ProjectRoot;
 
 /**
  * @internal
- * The PHP files under a source directory. Coverage engines report only the
+ * The PHP files under the source directories. Coverage engines report only the
  * files coverage was recorded for, so a file with none recorded during an
  * example or scenario is missing from the count rather than counted as
  * uncovered.
  */
 final readonly class SourceFiles
 {
+    /**
+     * @param list<string> $directories
+     */
     public function __construct(
         private Filesystem $filesystem,
-        private string $directory,
+        private array $directories,
         private ProjectRoot $root,
     ) {}
 
@@ -44,14 +47,17 @@ final readonly class SourceFiles
         $recorded = array_flip(array_map($this->root->relative(...), array_keys($hits)));
         $unrecorded = [];
 
-        foreach ($this->filesUnder($this->directory) as $file) {
-            $name = $this->root->relative($file);
+        foreach ($this->directories as $directory) {
+            foreach ($this->filesUnder($directory) as $file) {
+                $name = $this->root->relative($file);
 
-            if (!isset($recorded[$name]) && !$exclusions->leavesOut($file)) {
-                $unrecorded[] = $name;
+                if (!isset($recorded[$name]) && !$exclusions->leavesOut($file)) {
+                    $unrecorded[] = $name;
+                }
             }
         }
 
+        $unrecorded = array_values(array_unique($unrecorded));
         sort($unrecorded);
 
         return $unrecorded;

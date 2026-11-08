@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Result;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Results;
 use PhpSpec\Specification\ExampleError;
 
@@ -144,16 +145,72 @@ final class ExampleResult implements Results
     }
 
     /**
+     * How the example ended. Left out with pending() or skip() comes first, as
+     * its body never ran; then broken, then failing, then checking nothing.
+     */
+    public function state(): State
+    {
+        return match (true) {
+            $this->isPending => State::Pending,
+            $this->isSkipped => State::Skipped,
+            $this->isError => State::Errored,
+            $this->isFailure() => State::Failed,
+            $this->risky => State::Risky,
+            default => State::Passed,
+        };
+    }
+
+    /**
+     * How the example ended, under the name it is given, its places named from
+     * the project root.
+     *
+     * @param list<string> $titles the titles that lead to it, its own last
+     */
+    public function outcome(array $titles, ProjectRoot $root): Outcome
+    {
+        $state = $this->state();
+
+        return new Outcome(
+            Kind::Example,
+            $titles,
+            $state,
+            $state === State::Failed || $state === State::Errored ? $this->getMessage() : null,
+            $state === State::Risky ? 'no expectation' : $this->reason,
+            $this->failedAt()?->relativeTo($root),
+            $this->writtenAt()?->relativeTo($root),
+            $this->duration,
+            errorType: $state === State::Errored ? $this->error?->getType() : null,
+        );
+    }
+
+    /**
+     * Where the example is written: the line its it() is declared on.
+     */
+    public function writtenAt(): ?Location
+    {
+        return Location::at($this->file, $this->line);
+    }
+
+    /**
+     * Where the example went wrong: its first failing expectation, or where its
+     * error says to look from the file it is declared in; nowhere when it
+     * passed or was left out.
+     */
+    public function failedAt(): ?Location
+    {
+        return match ($this->state()) {
+            State::Failed => $this->failingMatch()?->location(),
+            State::Errored => $this->error?->brokeAt($this->file),
+            default => null,
+        };
+    }
+
+    /**
      * Checks whether any match result in this example is a failure.
      */
     public function isFailure(): bool
     {
-        foreach ($this->matchResults as $matchResult) {
-            if ($matchResult->isFailure()) {
-                return true;
-            }
-        }
-        return false;
+        return $this->failingMatch() !== null;
     }
 
     /**
@@ -161,12 +218,7 @@ final class ExampleResult implements Results
      */
     public function getFailureMessage(): string
     {
-        foreach ($this->matchResults as $matchResult) {
-            if ($matchResult->isFailure()) {
-                return (string) $matchResult->getMessage();
-            }
-        }
-        return '';
+        return (string) $this->failingMatch()?->getMessage();
     }
 
     /**
@@ -304,5 +356,20 @@ final class ExampleResult implements Results
     public function isContext(): bool
     {
         return false;
+    }
+
+    /**
+     * The first expectation that did not hold, for a reader that shows the
+     * values it compared; null when none failed.
+     */
+    public function failingMatch(): ?MatchResult
+    {
+        foreach ($this->matchResults as $matchResult) {
+            if ($matchResult->isFailure()) {
+                return $matchResult;
+            }
+        }
+
+        return null;
     }
 }

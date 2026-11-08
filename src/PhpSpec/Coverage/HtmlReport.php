@@ -26,6 +26,11 @@ use PhpSpec\Report\HtmlTheme;
 final class HtmlReport
 {
     /**
+     * @param list<string> $sources the directories the report's file names are under
+     */
+    public function __construct(private readonly array $sources = ['src']) {}
+
+    /**
      * Renders the coverage data as HTML files in the specified directory.
      * Creates an index.html overview and individual per-file HTML pages.
      *
@@ -177,8 +182,7 @@ final class HtmlReport
      */
     private function findSourceFile(string $relativePath): ?string
     {
-        // Try common locations
-        foreach (['src/', './src/', ''] as $prefix) {
+        foreach ([...array_map(static fn(string $source): string => rtrim($source, '/') . '/', $this->sources), ''] as $prefix) {
             $path = $prefix . $relativePath;
             if (file_exists($path)) {
                 return $path;

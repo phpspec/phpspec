@@ -443,6 +443,110 @@ Feature: Code generation
     Then a class file "src/TaskList.php" should be generated
     And no file "src/Tasker/TaskList.php" should be generated
 
+  Scenario: A class generated where composer.json autoloads no classes is mapped there for Composer, which is told to dump
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {
+          "name": "acme/kata",
+          "require": {}
+      }
+      """
+    And a spec file "spec/StringCalculator.spec.php":
+      """
+      <?php
+      describe('StringCalculator', function () {
+          it('exists', function () {
+              expect(new StringCalculator())->toBeAnInstanceOf(StringCalculator::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--accept-offers"
+    Then a class file "src/StringCalculator.php" should be generated
+    And the file "composer.json" should contain:
+      """
+      {
+          "name": "acme/kata",
+          "require": {},
+          "autoload": {
+              "psr-4": {
+                  "": "src/"
+              }
+          }
+      }
+      """
+    And the output should contain:
+      """
+      Composer autoload was updated to include "": "src/". Run composer dumpautoload next.
+      """
+
+  Scenario: A class generated at the project root leaves composer.json as it is
+    Given a file "composer.json":
+      """
+      {"name": "acme/kata"}
+      """
+    And a phpspec.yaml config:
+      """
+      src_path: .
+      """
+    And a spec file "spec/BowlingGame.spec.php":
+      """
+      <?php
+      describe('BowlingGame', function () {
+          it('exists', function () {
+              expect(new BowlingGame())->toBeAnInstanceOf(BowlingGame::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--accept-offers"
+    Then a class file "BowlingGame.php" should be generated
+    And the file "composer.json" should not contain "autoload"
+    And the output should not contain "Composer autoload"
+
+  Scenario: The agent summary names composer.json among the files written when generating a class maps it for Composer
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"name": "acme/kata"}
+      """
+    And a spec file "spec/Frame.spec.php":
+      """
+      <?php
+      describe('Frame', function () {
+          it('exists', function () {
+              expect(new Frame())->toBeAnInstanceOf(Frame::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--accept-offers --format=agent"
+    Then the output should contain:
+      """
+      "files":["src/Frame.php","composer.json"]
+      """
+
+  Scenario: A source path composer.json maps leaves each class where composer maps its namespace
+    Given a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Roastery\\": "src/"}}}
+      """
+    And a phpspec.yaml config:
+      """
+      src_path: src
+      default_namespace: Roastery
+      """
+    And a spec file "spec/Roastery/Repository/InMemoryRoastRepository.spec.php":
+      """
+      <?php
+      describe('Roastery\Repository\InMemoryRoastRepository', function () {
+          it('starts empty', function () {
+              expect(new Roastery\Repository\InMemoryRoastRepository())->toBeAnInstanceOf(Roastery\Repository\InMemoryRoastRepository::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/Repository/InMemoryRoastRepository.php" should be generated
+    And no file "src/Roastery/Repository/InMemoryRoastRepository.php" should be generated
+
   Scenario: A class lands in the directory composer maps its own namespace to, not the first mapping's
     Given no phpspec.json config
     And a file "composer.json":
@@ -462,7 +566,7 @@ Feature: Code generation
     Then a class file "src/Another/Thing.php" should be generated
     And no file "src/Brew/Another/Thing.php" should be generated
 
-  Scenario: A class under none of the mapped namespaces keeps its whole name under the source path, and the next run finds it
+  Scenario: A class under none of the mapped namespaces keeps its whole name under the source path, mapped there for Composer, and the next run finds it
     Given no phpspec.json config
     And a file "composer.json":
       """
@@ -480,35 +584,82 @@ Feature: Code generation
     When I run phpspec run with option "--accept-offers"
     Then a class file "src/Acme/Thing.php" should be generated
     And no file "src/Brew/Acme/Thing.php" should be generated
+    And the file "composer.json" should contain:
+      """
+      "Brew\\": "src/Brew/",
+      """
+    And the file "composer.json" should contain:
+      """
+      "": "src/"
+      """
+    And the output should contain:
+      """
+      Composer autoload was updated to include "": "src/". Run composer dumpautoload next.
+      """
     When I run phpspec run
     Then the output should contain "1 example (1 passed)"
 
-  Scenario: A method lands in the file its class was loaded from, wherever composer says the namespace lives
+  Scenario: A class filed under its whole name below a composer mapping is not loaded, as Composer would not load it
     Given no phpspec.json config
     And a file "composer.json":
       """
       {"autoload": {"psr-4": {"Tasker\\": "src/"}}}
       """
-    And a class "src/Tasker/TaskList.php":
+    And a class "src/Tasker/Misfiled.php":
       """
       <?php
       namespace Tasker;
 
-      class TaskList {}
+      class Misfiled {}
       """
-    And a spec file "spec/Tasker/TaskList.spec.php":
+    And a spec file "spec/Tasker/Misfiled.spec.php":
       """
       <?php
-      describe('Tasker\TaskList', function () {
-          it('adds a task', function () {
-              (new Tasker\TaskList())->add('write the spec');
+      describe('Tasker\Misfiled', function () {
+          it('exists', function () {
+              expect(new Tasker\Misfiled())->toBeAnInstanceOf(Tasker\Misfiled::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process
+    Then the exit code should be 1
+    And the output should contain "Tasker\Misfiled,"
+    And the output should contain "a class that doesn't exist yet"
+
+  Scenario: A method lands in the file its class was loaded from, wherever in the source that is
+    Given a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Tasker\\": "src/"}}}
+      """
+    And a phpspec.yaml config:
+      """
+      bootstrap: bootstrap.php
+      """
+    And a file "bootstrap.php":
+      """
+      <?php
+      require __DIR__ . '/src/legacy/Ledger.php';
+      """
+    And a class "src/legacy/Ledger.php":
+      """
+      <?php
+      namespace Tasker;
+
+      class Ledger {}
+      """
+    And a spec file "spec/Tasker/Ledger.spec.php":
+      """
+      <?php
+      describe('Tasker\Ledger', function () {
+          it('records an entry', function () {
+              (new Tasker\Ledger())->record('write the spec');
               expect(true)->toBeTrue();
           });
       });
       """
-    When I run phpspec run with option "--accept-offers"
-    Then the class "src/Tasker/TaskList.php" should contain "function add"
-    And no file "src/TaskList.php" should be generated
+    When I run phpspec run in a fresh process with option "--accept-offers"
+    Then the class "src/legacy/Ledger.php" should contain "function record"
+    And no file "src/Ledger.php" should be generated
 
   Scenario: A class generated under a composer mapping is found by the next run
     Given no phpspec.json config
@@ -592,7 +743,7 @@ Feature: Code generation
     And it should contain a describe block for "Another\Acme\Thing"
     And no file "spec/Acme/Thing.spec.php" should be generated
 
-  Scenario: Keeping a name as written describes it under its own path
+  Scenario: Keeping a name as written describes it under its own path, and maps it there for Composer
     Given no phpspec.json config
     And a file "composer.json":
       """
@@ -601,6 +752,64 @@ Feature: Code generation
     When I run phpspec describe "Acme/Thing" answering "0"
     Then a spec file "spec/Acme/Thing.spec.php" should be generated
     And it should contain a describe block for "Acme\Thing"
+    And the file "composer.json" should contain:
+      """
+      "": "src/"
+      """
+    And the output should contain:
+      """
+      Composer autoload was updated to include "": "src/". Run composer dumpautoload next.
+      """
+
+  Scenario: A name is not offered as written when composer.json maps the source path to another namespace
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Other\\": "src/"}}}
+      """
+    When I run phpspec describe "Brew/Acme/Sombrero" answering "1"
+    Then the output should contain "[1] Other\Brew\Acme\Sombrero"
+    And the output should not contain "as written"
+    And a spec file "spec/Other/Brew/Acme/Sombrero.spec.php" should be generated
+    And it should contain a describe block for "Other\Brew\Acme\Sombrero"
+
+  Scenario: A name composer.json maps to its fallback directory is described as written, without asking
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Brew\\": "src/Brew/", "": "src/"}}}
+      """
+    When I run phpspec describe "Acme/Thing" with option "-n"
+    Then the exit code should be 0
+    And a spec file "spec/Acme/Thing.spec.php" should be generated
+    And the output should not contain "under none of the mapped namespaces"
+
+  Scenario: A class under no namespace composer.json maps is not written where composer maps the source path to another namespace
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Other\\": "src/"}}}
+      """
+    And a spec file "spec/Brew/Acme/Sombrero.spec.php":
+      """
+      <?php
+      describe('Brew\Acme\Sombrero', function () {
+          it('exists', function () {
+              expect(new Brew\Acme\Sombrero())->toBeAnInstanceOf(Brew\Acme\Sombrero::class);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--accept-offers"
+    Then the output should contain:
+      """
+      Brew\Acme\Sombrero cannot be written under src/: Composer maps src/ to Other\.
+      """
+    And the exit code should be 1
+    And no file "src/Brew/Acme/Sombrero.php" should be generated
+    And the file "composer.json" should not contain:
+      """
+      "":
+      """
 
   Scenario: A default namespace takes in every name under no mapping, and leaves a mapped one alone
     Given a phpspec.yaml config:

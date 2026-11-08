@@ -22,6 +22,7 @@ use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\OwnCode;
 use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\GroupNotes;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Results;
@@ -46,12 +47,16 @@ final readonly class Feature implements SpecBlock
      * @param StepRegistry $registry step pattern-to-closure mappings
      * @param HookRegistry $hooks before-feature/scenario/step hooks
      */
+    /**
+     * @param list<array{severity: int, message: string, file: string, line: int}> $loading what its steps and support files raised as they loaded, reported with what sets it up
+     */
     public function __construct(
         private string $path,
         private FeatureNode $featureNode,
         private StepRegistry $registry,
         private HookRegistry $hooks,
         private StepTypes $types = new StepTypes(),
+        private array $loading = [],
     ) {}
 
     /**
@@ -105,7 +110,7 @@ final readonly class Feature implements SpecBlock
             $this->featureNode->tags,
         );
 
-        return new self($this->path, $featureNode, $this->registry, $this->hooks, $this->types);
+        return new self($this->path, $featureNode, $this->registry, $this->hooks, $this->types, $this->loading);
     }
 
     /**
@@ -122,7 +127,13 @@ final readonly class Feature implements SpecBlock
         $coverage?->beginSpec($this->path);
         $coverage?->pushContext($this->featureNode->title);
 
-        $held = $this->attempt(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature');
+        // What beforeFeature hands over: a copy for each scenario it sets up,
+        // or, when it did not pass, read once by the first scenario it decides.
+        $setup = new Attachments();
+        // What the feature's own code raises, outside every step.
+        $settingUp = new CapturedNotes(OwnCode::here());
+        $tearingDown = new CapturedNotes(OwnCode::here());
+        $held = $settingUp->during(fn() => $this->attemptCollecting(fn() => $this->hooks->runBeforeFeature(), 'beforeFeature', $setup));
 
         // The last scenario waits for afterFeature, which may break its last step.
         $last = null;
@@ -133,9 +144,11 @@ final readonly class Feature implements SpecBlock
                 $expansions = $scenario instanceof ScenarioOutlineNode ? $scenario->expand() : [$scenario];
 
                 foreach ($expansions as $expanded) {
-                    $result = $this->runScenario($expanded, $held);
+                    $result = $this->runScenario($expanded, $held, $held === null ? $setup->handedDown() : $setup);
                     if ($last !== null) {
                         yield $last;
+                    } else {
+                        (new GroupNotes([...$this->loading, ...$settingUp->notes()]))->settleOn([$result]);
                     }
                     $last = $result;
 
@@ -146,13 +159,18 @@ final readonly class Feature implements SpecBlock
             }
 
             $closed = true;
-            $after = $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature');
+            $teardown = new Attachments();
+            $after = $tearingDown->during(fn() => $this->attemptCollecting(fn() => $this->hooks->runAfterFeature(), 'afterFeature', $teardown));
             if ($last !== null) {
-                yield $after === null ? $last : new ScenarioResult($last->getTitle(), self::brokenAtTheEnd($last->getResults(), $after), $last->getLine(), $last->getAttachments());
+                $last = $after === null ? $last : new ScenarioResult($last->getTitle(), self::brokenAtTheEnd($last->getResults(), $after), $last->getLine(), [...$setup->read(), ...$last->getAttachments(), ...$teardown->read()]);
+                (new GroupNotes([], $tearingDown->notes()))->settleOn([$last]);
+
+                yield $last;
             }
         } finally {
             if (!$closed) {
-                $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature');
+                // Its scenarios have been reported: what it raises now has none to go on.
+                $tearingDown->during(fn() => $this->attempt(fn() => $this->hooks->runAfterFeature(), 'afterFeature'));
             }
 
             $coverage?->popContext();
@@ -188,8 +206,9 @@ final readonly class Feature implements SpecBlock
      * included, as around an example.
      *
      * @param HookOutcome|null $featureHeld what a beforeFeature raised, deciding every scenario without running its hooks or steps
+     * @param Attachments $attachments what the scenario and its hooks hand over, on top of what beforeFeature did
      */
-    private function runScenario(ScenarioNode $scenario, ?HookOutcome $featureHeld = null): ScenarioResult
+    private function runScenario(ScenarioNode $scenario, ?HookOutcome $featureHeld, Attachments $attachments): ScenarioResult
     {
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();
@@ -197,7 +216,7 @@ final readonly class Feature implements SpecBlock
         DoubleLabels::start();
 
         try {
-            return $this->runScenarioWithHooks($scenario, $featureHeld);
+            return $this->runScenarioWithHooks($scenario, $featureHeld, $attachments);
         } finally {
             DoubleLabels::restore($outerLabels);
             $coverage?->endExample($scenario->title);
@@ -210,44 +229,46 @@ final readonly class Feature implements SpecBlock
      *
      * @param ScenarioNode $scenario the scenario to execute
      * @param HookOutcome|null $featureHeld what a beforeFeature raised, deciding every scenario without running its hooks or steps
+     * @param Attachments $attachments what the scenario hands over, from its beforeScenario to its afterScenario: a step attaches in one place and a later step's failure is what makes it worth reading
      */
-    private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld): ScenarioResult
+    private function runScenarioWithHooks(ScenarioNode $scenario, ?HookOutcome $featureHeld, Attachments $attachments): ScenarioResult
     {
         $world = new StepWorld();
-        $held = $featureHeld ?? $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario');
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
+        // What its hooks raise is the scenario's, reported on its steps.
+        $settingUp = new CapturedNotes(OwnCode::here());
+        $tearingDown = new CapturedNotes(OwnCode::here());
+        $held = $featureHeld ?? $settingUp->during(fn() => $this->attempt(fn() => $this->hooks->runBeforeScenario($world), 'beforeScenario'));
 
         $collector = new StepMatchCollector();
         DispatcherRegistry::dispatcher()->addSubscriber($collector);
 
-        // What the scenario hands over about itself, for as long as it runs: a
-        // step attaches in one place and a later step's failure is what makes it
-        // worth reading.
-        $attachments = new Attachments();
-        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
-
         $stepResults = [];
-        $failed = false;
+        $stopped = false;
 
         foreach ([...($this->featureNode->background->steps ?? []), ...$scenario->steps] as $step) {
             $title = $step->keyword . ' ' . $step->text;
+            $match = $this->registry->match($step->text);
 
             if ($held !== null) {
-                $stepResults[] = $stepResults === [] ? $held->instead($title) : new StepResult($title, 'skipped');
+                $stepResults[] = $stepResults === [] ? $held->instead($title) : $this->notRun($title, $match);
                 continue;
             }
 
-            if ($failed) {
-                $stepResults[] = new StepResult($title, 'skipped');
+            if ($stopped || $match === null) {
+                $stepResults[] = $this->notRun($title, $match);
+                $stopped = true;
                 continue;
             }
 
-            $result = $this->runStep($step, $world, $collector);
-            $after = $this->attempt(fn() => $this->hooks->runAfterStep($world), 'afterStep');
+            $result = $this->runStep($step, $match, $world, $collector);
+            $afterStep = new CapturedNotes(OwnCode::here());
+            $after = $afterStep->during(fn() => $this->attempt(fn() => $this->hooks->runAfterStep($world), 'afterStep'));
             $result = $after?->after($result) ?? $result;
+            $result->raised($afterStep->notes());
             $stepResults[] = $result;
-            if ($result->isFailure() || $result->isError() || $result->isSkipped()) {
-                $failed = true;
-            }
+            $stopped = !$result->isPassed();
         }
 
         if ($held !== null && $stepResults === []) {
@@ -264,10 +285,18 @@ final readonly class Feature implements SpecBlock
         }
 
         if ($featureHeld === null) {
-            $after = $this->attempt(fn() => $this->hooks->runAfterScenario($world), 'afterScenario');
+            $after = $tearingDown->during(fn() => $this->attempt(fn() => $this->hooks->runAfterScenario($world), 'afterScenario'));
             if ($after !== null) {
                 $stepResults = self::brokenAtTheEnd($stepResults, $after);
             }
+        }
+
+        (new GroupNotes($settingUp->notes(), $tearingDown->notes()))->settleOn($stepResults);
+
+        // What the teardown handed over, and anything a scenario that needed
+        // no attention until then did not read.
+        if (!$attachments->isEmpty() && self::needsAttention($stepResults)) {
+            $attached = [...$attached, ...$attachments->read()];
         }
 
         DispatcherRegistry::dispatcher()->removeSubscriber($collector);
@@ -276,6 +305,17 @@ final readonly class Feature implements SpecBlock
         // An outline expansion is addressed by its own examples-table row; every
         // other scenario by its keyword line.
         return new ScenarioResult($scenario->title, $stepResults, $scenario->exampleLine ?? $scenario->line, $attached);
+    }
+
+    private function attemptCollecting(\Closure $hooks, string $name, Attachments $attachments): ?HookOutcome
+    {
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
+        try {
+            return $this->attempt($hooks, $name);
+        } finally {
+            DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
+        }
     }
 
     /**
@@ -324,41 +364,45 @@ final readonly class Feature implements SpecBlock
     }
 
     /**
-     * Executes a single step by matching it against the registry, running hooks,
-     * and collecting match expectations. Returns undefined/pending/failed/passed status.
+     * A step that does not run: skipped behind the step the scenario stopped
+     * at, or undefined when no definition matches it, its step hooks unrun
+     * either way, so every step a scenario lacks is offered at once.
+     */
+    private function notRun(string $title, ?StepMatch $match): StepResult
+    {
+        return new StepResult($title, $match === null ? 'undefined' : 'skipped');
+    }
+
+    /**
+     * Runs a step a definition matches: its beforeStep hook, then its body,
+     * collecting match expectations. Returns pending/skipped/failed/errored/passed status.
      *
      * @param StepNode $step the step node to execute
+     * @param StepMatch $match the definition it matched, with the arguments taken from its text
      * @param object $world shared state object bound as $this inside step closures
      * @param StepMatchCollector $collector shared match collector for the scenario
      * @throws PendingException caught internally and reported as pending
      */
-    private function runStep(StepNode $step, object $world, StepMatchCollector $collector): StepResult
+    private function runStep(StepNode $step, StepMatch $match, object $world, StepMatchCollector $collector): StepResult
     {
         $title = $step->keyword . ' ' . $step->text;
 
-        $before = $this->attempt(fn() => $this->hooks->runBeforeStep($world), 'beforeStep');
-        if ($before !== null) {
-            return $before->instead($title);
-        }
-        $match = $this->registry->match($step->text);
-
-        if ($match === null) {
-            return new StepResult($title, 'undefined');
-        }
-
-        // PHP warnings, deprecations and notices raised inside the step are
-        // collected onto its result (the same net examples run under), so they
-        // report under their kinds instead of leaking raw to the terminal.
+        // PHP warnings, deprecations and notices raised by the step and its
+        // beforeStep are collected onto its result (the same net examples run
+        // under), so they report under their kinds instead of leaking raw to
+        // the terminal.
         $caught = new CapturedNotes(OwnCode::here());
-        $caught->listen();
+        $before = $caught->during(fn() => $this->attempt(fn() => $this->hooks->runBeforeStep($world), 'beforeStep'));
+
+        if ($before !== null) {
+            $result = $before->instead($title);
+            $result->raised($caught->notes());
+
+            return $result;
+        }
 
         $start = hrtime(true);
-        try {
-            $result = $this->executeStep($step, $title, $match, $world, $collector);
-        } finally {
-            $caught->stop();
-        }
-
+        $result = $caught->during(fn() => $this->executeStep($step, $title, $match, $world, $collector));
         $result->setDuration((hrtime(true) - $start) / 1e9);
         $result->raised($caught->notes());
 

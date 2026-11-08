@@ -41,40 +41,44 @@ final class RecencyScanner
      */
     public function mostRecentFeature(string $featuresDir): ?string
     {
-        return $this->mostRecentWhere($featuresDir, static fn(string $entry): bool => str_ends_with($entry, '.feature'));
+        return $this->mostRecentWhere([$featuresDir], static fn(string $entry): bool => str_ends_with($entry, '.feature'));
     }
 
     /**
      * The path of the most recently modified `.php` file under the given source
-     * directory, or null when the directory is absent or holds no source.
+     * directories, or null when they are absent or hold no source.
      */
-    public function mostRecentSource(string $srcDir): ?string
+    public function mostRecentSource(string ...$srcDirs): ?string
     {
-        return $this->mostRecentWhere($srcDir, static fn(string $entry): bool => str_ends_with($entry, '.php'));
+        return $this->mostRecentWhere(array_values($srcDirs), static fn(string $entry): bool => str_ends_with($entry, '.php'));
     }
 
     /**
      * The path of the most recently modified file of the given name anywhere
-     * under the directory, or null when there is none.
+     * under the directories, or null when there is none.
      */
-    public function mostRecentNamed(string $dir, string $fileName): ?string
+    public function mostRecentNamed(string $fileName, string ...$dirs): ?string
     {
-        return $this->mostRecentWhere($dir, static fn(string $entry): bool => $entry === $fileName);
+        return $this->mostRecentWhere(array_values($dirs), static fn(string $entry): bool => $entry === $fileName);
     }
 
     /**
+     * @param list<string> $dirs
      * @param \Closure(string): bool $matches whether a file of this name counts
      */
-    private function mostRecentWhere(string $dir, \Closure $matches): ?string
+    private function mostRecentWhere(array $dirs, \Closure $matches): ?string
     {
-        if (!$this->filesystem->exists($dir) || !$this->filesystem->isDir($dir)) {
-            return null;
-        }
-
         $mostRecent = null;
         $mostRecentMtime = -1;
+        $files = [];
 
-        foreach ($this->filesInTree($dir, $matches) as $file) {
+        foreach ($dirs as $dir) {
+            if ($this->filesystem->exists($dir) && $this->filesystem->isDir($dir)) {
+                array_push($files, ...$this->filesInTree($dir, $matches));
+            }
+        }
+
+        foreach ($files as $file) {
             $mtime = $this->filesystem->mtime($file);
             if ($mtime > $mostRecentMtime) {
                 $mostRecentMtime = $mtime;

@@ -15,18 +15,21 @@
 namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\CodeGeneration\SurroundingCode;
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\FirstDifference;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Report\Typed;
-use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\Location;
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Result\Outcome;
+use PhpSpec\Result\Outcomes;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
-use PhpSpec\Specification\ExampleError;
 use PhpSpec\Specification\Expectation;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -46,6 +49,16 @@ final class DetailSections
     /** @var array<string, list<callable(OutputInterface): void>> */
     private array $sections = [];
 
+    private readonly Outcomes $outcomes;
+
+    /**
+     * @param ProjectRoot $root what every place is named from
+     */
+    public function __construct(private readonly ProjectRoot $root)
+    {
+        $this->outcomes = new Outcomes($root);
+    }
+
     /**
      * Renders every non-empty section, in severity order.
      */
@@ -57,7 +70,11 @@ final class DetailSections
             if ($node instanceof FeatureResult) {
                 $this->collectFeature($node);
             } elseif ($node instanceof SpecificationResult) {
-                $this->collectChildren($node->getResults(), $node->getTitle());
+                $this->outcomes->walk($node, function (Outcome $outcome, ExampleResult|ScenarioResult $example): void {
+                    if ($example instanceof ExampleResult) {
+                        $this->collectExample($outcome, $example);
+                    }
+                });
             }
         }
 
@@ -75,75 +92,67 @@ final class DetailSections
     }
 
     /**
-     * Walks a specification subtree, threading the title path down.
-     *
-     * @param array<int, mixed> $children
-     */
-    private function collectChildren(array $children, string $path): void
-    {
-        foreach ($children as $child) {
-            if ($child instanceof ContextResult) {
-                if ($child->isError() && $child->getError() !== null) {
-                    if ($child->getError()->missingClass() === null) {
-                        $this->collectContextError($child, $path . ' > ' . $child->getTitle());
-                    }
-
-                    continue;
-                }
-
-                $this->collectChildren($child->getResults(), $path . ' > ' . $child->getTitle());
-            } elseif ($child instanceof ExampleResult) {
-                $this->collectExample($child, $path);
-            }
-        }
-    }
-
-    /**
      * A missing class is not detailed here: the run offers to generate it,
      * and that offer names it.
      */
-    private function collectExample(ExampleResult $example, string $path): void
+    private function collectExample(Outcome $outcome, ExampleResult $example): void
     {
-        $title = $path . ' > ' . $example->getTitle();
+        $title = $outcome->name();
 
-        if ($example->isError()) {
-            $error = $example->getError();
-            if ($error !== null && $error->missingClass() === null) {
-                $at = self::blameFor($example, $error);
-                $code = (new SurroundingCode($at['file'], $at['line']))->toArray();
-                $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error, $at, $code): void {
-                    $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
-                    $output->write(PHP_EOL . '  Error: ' . $error->getMessage() . PHP_EOL . PHP_EOL);
-                    PrettyViews::surroundingCode($output, $code, $at['line']);
-                    PrettyViews::location($output, $at, $error->getFilteredTrace());
-                };
-                $this->attachPrinted('Errors', $example->getOutput());
-                $this->attachHandedOver('Errors', $example->getAttachments());
-            }
-        } elseif ($example->isFailure()) {
-            $failures = array_values(array_filter(
-                $example->getResults(),
-                static fn(MatchResult $result): bool => $result->isFailure(),
-            ));
-            if ($failures !== []) {
-                $this->sections['Failures'][] = function (OutputInterface $output) use ($title, $failures): void {
-                    $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
-                    foreach ($failures as $failure) {
-                        $this->matchFailure($output, $failure);
-                    }
-                };
-                $this->attachPrinted('Failures', $example->getOutput());
-                $this->attachHandedOver('Failures', $example->getAttachments());
-            }
-        } elseif ($example->isPending()) {
-            $this->sections['Pending'][] = self::reasonEntry('yellow', $title, $example->getReason());
-        } elseif ($example->isSkipped()) {
-            $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $example->getReason());
-        } elseif ($example->isRisky()) {
-            $this->sections['Risky'][] = self::reasonEntry('yellow', $title, 'No expectation in this example.');
-        }
+        match ($outcome->state) {
+            State::Errored => $this->collectError($outcome, $example),
+            State::Failed => $this->collectFailures($title, $example),
+            State::Pending => $this->sections['Pending'][] = self::reasonEntry('yellow', $title, $outcome->reason),
+            State::Skipped => $this->sections['Skipped'][] = self::reasonEntry('cyan', $title, $outcome->reason),
+            State::Risky => $this->sections['Risky'][] = self::reasonEntry('yellow', $title, $outcome->reason),
+            default => null,
+        };
 
         $this->collectNotes($example, $title);
+    }
+
+    /**
+     * An example whose code threw, the break of a context's body or group
+     * hooks among them: what it threw, and the code where it broke, else where
+     * it is written, which is all there is when it broke while its arguments
+     * were being resolved.
+     */
+    private function collectError(Outcome $outcome, ExampleResult $example): void
+    {
+        $error = $example->getError();
+        if ($error === null || $error->missingClass() !== null) {
+            return;
+        }
+
+        $site = $example->failedAt() ?? $example->writtenAt();
+        $code = $site === null ? [] : (new SurroundingCode($site->file, $site->line))->toArray();
+        $this->sections['Errors'][] = function (OutputInterface $output) use ($outcome, $error, $site, $code): void {
+            $output->write(PHP_EOL . '  <fg=red>• ' . $outcome->name() . '</>' . PHP_EOL);
+            $output->write(PHP_EOL . '  ' . $outcome->errorType . ': ' . $outcome->message . PHP_EOL . PHP_EOL);
+            if ($site !== null) {
+                PrettyViews::surroundingCode($output, $code, $site->line);
+                PrettyViews::location($output, $site->relativeTo($this->root), $error->getFilteredTrace(), $this->root);
+            }
+        };
+        $this->attachPrinted('Errors', $example->getOutput());
+        $this->attachHandedOver('Errors', $example->getAttachments());
+    }
+
+    private function collectFailures(string $title, ExampleResult $example): void
+    {
+        $failures = array_values(array_filter(
+            $example->getResults(),
+            static fn(MatchResult $result): bool => $result->isFailure(),
+        ));
+
+        $this->sections['Failures'][] = function (OutputInterface $output) use ($title, $failures): void {
+            $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
+            foreach ($failures as $failure) {
+                $this->matchFailure($output, $failure);
+            }
+        };
+        $this->attachPrinted('Failures', $example->getOutput());
+        $this->attachHandedOver('Failures', $example->getAttachments());
     }
 
     /**
@@ -153,57 +162,14 @@ final class DetailSections
     private function collectNotes(ExampleResult|StepResult $result, string $title): void
     {
         foreach ($result->getWarnings() as $warning) {
-            $this->sections['Warnings'][] = self::noteEntry($title, $warning);
+            $this->sections['Warnings'][] = $this->noteEntry($title, $warning);
         }
         foreach ($result->getDeprecations() as $deprecation) {
-            $this->sections['Deprecations'][] = self::noteEntry($title, $deprecation);
+            $this->sections['Deprecations'][] = $this->noteEntry($title, $deprecation);
         }
         foreach ($result->getNotices() as $notice) {
-            $this->sections['Notices'][] = self::noteEntry($title, $notice);
+            $this->sections['Notices'][] = $this->noteEntry($title, $notice);
         }
-    }
-
-    private function collectContextError(ContextResult $context, string $title): void
-    {
-        $error = $context->getError();
-        $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
-            $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
-            $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
-            $blame = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
-            PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $blame['line']);
-            $output->write(PHP_EOL . '  at ' . $blame['file'] . ':' . $blame['line'] . PHP_EOL);
-        };
-    }
-
-    /**
-     * The line an example's error is shown at: the site when it is the user's
-     * code, else the frame of the spec that led there, else the line that
-     * declares the example, which is all there is when the error came while
-     * its arguments were being resolved.
-     *
-     * @return array{file: string, line: int}
-     */
-    private static function blameFor(ExampleResult $example, ExampleError $error): array
-    {
-        $blame = $error->blame();
-        $declared = $example->getFile() !== null && $example->getLine() !== null
-            ? ['file' => $example->getFile(), 'line' => $example->getLine()]
-            : null;
-        $isSite = $blame !== null && $blame['file'] === $error->getFile() && $blame['line'] === $error->getLine();
-
-        if ($blame !== null && ($isSite || $declared === null)) {
-            return $blame;
-        }
-
-        if ($declared !== null) {
-            $inSpec = $error->lineIn($declared['file']);
-
-            if ($inSpec !== null) {
-                return ['file' => $declared['file'], 'line' => $inSpec];
-            }
-        }
-
-        return $declared ?? $blame ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
     }
 
     private function collectFeature(FeatureResult $feature): void
@@ -235,20 +201,28 @@ final class DetailSections
                     $seen[$key][] = $scenario->getTitle();
                 } elseif ($step->isError() && $error !== null) {
                     $seen[$key] = [$scenario->getTitle()];
-                    $this->sections['Errors'][] = static function (OutputInterface $output) use ($feature, $step, $error, $key, &$seen): void {
+                    $site = $step->failedAt();
+                    $this->sections['Errors'][] = function (OutputInterface $output) use ($feature, $step, $error, $site, $key, &$seen): void {
                         self::brokenStep($output, $feature, $step, $seen[$key]);
                         $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
-                        $blame = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
-                        PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $blame['line']);
-                        PrettyViews::location($output, $blame, $error->getFilteredTrace());
+                        if ($site !== null) {
+                            PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $site->line);
+                            PrettyViews::location($output, $site->relativeTo($this->root), $error->getFilteredTrace(), $this->root);
+                        }
                     };
                     $this->attachPrinted('Errors', $step->getOutput());
                 } elseif ($step->isFailure() && $error !== null) {
                     $seen[$key] = [$scenario->getTitle()];
+                    $match = $step->getMatch();
                     $message = $error->getMessage();
-                    $this->sections['Failures'][] = static function (OutputInterface $output) use ($feature, $step, $message, $key, &$seen): void {
+                    $this->sections['Failures'][] = function (OutputInterface $output) use ($feature, $step, $match, $message, $key, &$seen): void {
                         self::brokenStep($output, $feature, $step, $seen[$key]);
-                        $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
+                        if ($match === null) {
+                            $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
+
+                            return;
+                        }
+                        $this->matchFailure($output, $match);
                     };
                     $this->attachPrinted('Failures', $step->getOutput());
                 } elseif ($step->isPending()) {
@@ -331,11 +305,11 @@ final class DetailSections
             }
         }
 
-        $line = $failure->getLine();
-        if ($line !== null) {
+        $at = $failure->location();
+        if ($at !== null) {
             $output->write(PHP_EOL);
-            PrettyViews::surroundingCode($output, $failure->getCode(), $line);
-            $output->write(PHP_EOL . '  at ' . $failure->getFile() . ':' . $line . PHP_EOL);
+            PrettyViews::surroundingCode($output, $failure->getCode(), $at->line);
+            $output->write(PHP_EOL . '  at ' . $at->relativeTo($this->root) . PHP_EOL);
         }
     }
 
@@ -468,12 +442,16 @@ final class DetailSections
      * @param array{message: string, file: string, line: int} $note
      * @return callable(OutputInterface): void
      */
-    private static function noteEntry(string $title, array $note): callable
+    private function noteEntry(string $title, array $note): callable
     {
-        return static function (OutputInterface $output) use ($title, $note): void {
+        $at = Location::at($note['file'], $note['line'])?->relativeTo($this->root);
+
+        return static function (OutputInterface $output) use ($title, $note, $at): void {
             $output->write(PHP_EOL . '  <fg=yellow>• ' . $title . '</>' . PHP_EOL);
             $output->write(PHP_EOL . '  ' . $note['message'] . PHP_EOL);
-            $output->write(PHP_EOL . '  at ' . $note['file'] . ':' . $note['line'] . PHP_EOL);
+            if ($at !== null) {
+                $output->write(PHP_EOL . '  at ' . $at . PHP_EOL);
+            }
         };
     }
 }

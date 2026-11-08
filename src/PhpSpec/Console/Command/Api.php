@@ -72,7 +72,10 @@ final class Api extends Command
         $this->entries($output, 'Spec DSL', $document['dsl']);
         $this->entries($output, 'Matchers', [$document['negation'], ...$document['matchers']]);
         $this->entries($output, 'Mocks', $document['mocks']['functions']);
+        $this->entries($output, 'Stubs, after allow()', $document['mocks']['stubs']);
         $this->entries($output, 'Mock expectations', $document['mocks']['expectations']);
+        $this->entries($output, 'Call counts', $document['mocks']['counts']);
+        $output->writeln('  ' . $document['mocks']['note']);
         $this->entries($output, 'Argument matchers', $document['mocks']['argument_matchers']);
         $this->entries($output, 'Story BDD steps', $document['story']['steps']);
         $this->entries($output, 'Story BDD hooks', $document['story']['hooks']);

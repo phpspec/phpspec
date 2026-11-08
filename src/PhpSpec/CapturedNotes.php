@@ -20,6 +20,7 @@ namespace PhpSpec;
  * goes, keeping each with where it was raised rather than letting it reach
  * the terminal. A deprecation a library raised for another library calling it
  * is left out: nothing the project changes in its own code makes it go away.
+ * A warning or notice the code silenced with @ is left to it, as PHP leaves it.
  */
 final class CapturedNotes
 {
@@ -33,8 +34,18 @@ final class CapturedNotes
     public function listen(): void
     {
         set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
-            if (!$this->deprecationBetweenLibraries($severity, $file, $line, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS))) {
-                $this->notes[] = ['severity' => $severity, 'message' => $message, 'file' => $file, 'line' => $line];
+            // Returning false lets PHP keep it for error_get_last(). A user
+            // deprecation is kept even so: libraries silence theirs for
+            // production, not for the tests.
+            if ($severity !== E_USER_DEPRECATED && (error_reporting() & $severity) === 0) {
+                return false;
+            }
+
+            $frames = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
+            if (!$this->deprecationBetweenLibraries($severity, $file, $line, $frames)) {
+                $note = ['severity' => $severity, 'message' => $message, 'file' => $file, 'line' => $line];
+                $this->notes[] = $this->raisedLoading($frames) ? $note + ['loading' => true] : $note;
             }
 
             return true;
@@ -47,11 +58,52 @@ final class CapturedNotes
     }
 
     /**
+     * Runs the code, taking what it raises.
+     *
+     * @template T
+     * @param callable(): T $run
+     * @return T
+     */
+    public function during(callable $run): mixed
+    {
+        $this->listen();
+
+        try {
+            return $run();
+        } finally {
+            $this->stop();
+        }
+    }
+
+    /**
      * @return list<array{severity: int, message: string, file: string, line: int}>
      */
     public function notes(): array
     {
         return $this->notes;
+    }
+
+    /**
+     * Whether a file raised it as it loaded, which happens once in a process,
+     * rather than code that an example, a step or a hook called.
+     *
+     * @param list<array{function?: string, file?: string, line?: int}> $frames the handler's own first, outward from where it was raised
+     */
+    private function raisedLoading(array $frames): bool
+    {
+        foreach (array_slice($frames, 1) as $frame) {
+            $function = $frame['function'] ?? '';
+
+            if (in_array($function, ['include', 'include_once', 'require', 'require_once'], true)) {
+                return true;
+            }
+
+            if (str_starts_with($function, '{closure')) {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /**

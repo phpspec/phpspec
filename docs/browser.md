@@ -4,12 +4,10 @@ PhpSpec includes a lightweight HTTP client for testing web endpoints. Use `visit
 
 ## Configuration
 
-Add `base_url` to your `phpspec.json`:
+Add `base_url` to your `phpspec.yml`:
 
-```json
-{
-    "base_url": "http://localhost:8080"
-}
+```yaml
+base_url: http://localhost:8080
 ```
 
 ## Quick Example
@@ -28,20 +26,20 @@ describe('User API', function () {
     });
 
     it('creates a user', function () {
-        $response = post('/api/users', json: ['name' => 'Chuck']);
+        $response = post('/api/users', ['json' => ['name' => 'Chuck']]);
 
         expect($response)->toHaveStatus(201);
         expect($response)->toHavePath('name', 'Chuck');
     });
 
     it('updates a user', function () {
-        $response = put('/api/users/1', json: ['name' => 'Updated']);
+        $response = put('/api/users/1', ['json' => ['name' => 'Updated']]);
 
         expect($response)->toBeOk();
     });
 
     it('patches a user', function () {
-        $response = patch('/api/users/1', json: ['name' => 'Patched']);
+        $response = patch('/api/users/1', ['json' => ['name' => 'Patched']]);
 
         expect($response)->toBeOk();
     });

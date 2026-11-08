@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\EventDispatcher\Event\MatchCreated;
+use PhpSpec\EventDispatcher\Subscriber;
 use PhpSpec\Specification\Expectation;
 
 describe(Expectation::class, function() {
@@ -348,19 +350,21 @@ describe(Expectation::class, function() {
         it("carries the matcher name and both values onto the failed result", function() {
             $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
             $captured = [];
-            $listener = new class($captured) implements \PhpSpec\EventDispatcher\Listener {
+            $collector = new class($captured) implements Subscriber {
                 public function __construct(private array &$captured) {}
-                public function listen(\PhpSpec\EventDispatcher\Event $event): void
+                public function getSubscribedEvents(): array
                 {
-                    if ($event instanceof \PhpSpec\EventDispatcher\Event\MatchCreated) {
-                        $this->captured[] = ($event->getMatch())();
-                    }
+                    return [MatchCreated::NAME => 'onMatchCreated'];
+                }
+                public function onMatchCreated(MatchCreated $event): void
+                {
+                    $this->captured[] = ($event->getMatch())();
                 }
             };
 
             try {
                 $isolated = new \PhpSpec\EventDispatcher\Dispatcher();
-                $isolated->addListener($listener);
+                $isolated->addSubscriber($collector);
                 \PhpSpec\EventDispatcher\DispatcherRegistry::set($isolated);
 
                 (new Expectation("the haystack", __FILE__, __LINE__))->toContain("missing needle");
@@ -381,19 +385,21 @@ describe(Expectation::class, function() {
         $failureOf = function (Closure $expectation): \PhpSpec\Result\MatchResult {
             $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
             $captured = [];
-            $listener = new class($captured) implements \PhpSpec\EventDispatcher\Listener {
+            $collector = new class($captured) implements Subscriber {
                 public function __construct(private array &$captured) {}
-                public function listen(\PhpSpec\EventDispatcher\Event $event): void
+                public function getSubscribedEvents(): array
                 {
-                    if ($event instanceof \PhpSpec\EventDispatcher\Event\MatchCreated) {
-                        $this->captured[] = ($event->getMatch())();
-                    }
+                    return [MatchCreated::NAME => 'onMatchCreated'];
+                }
+                public function onMatchCreated(MatchCreated $event): void
+                {
+                    $this->captured[] = ($event->getMatch())();
                 }
             };
 
             try {
                 $isolated = new \PhpSpec\EventDispatcher\Dispatcher();
-                $isolated->addListener($listener);
+                $isolated->addSubscriber($collector);
                 \PhpSpec\EventDispatcher\DispatcherRegistry::set($isolated);
 
                 $expectation();

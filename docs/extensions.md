@@ -50,7 +50,8 @@ Each entry is a fully-qualified class name. The class must implement the appropr
 
 ### Formatters
 
-Custom output formatters for spec results.
+Custom output formatters. Each example and each scenario reaches the formatter
+as an `Outcome`, by how it ended:
 
 ```php
 <?php
@@ -58,6 +59,7 @@ Custom output formatters for spec results.
 namespace Acme\PhpSpecGithub;
 
 use PhpSpec\Extensions\FormatterExtension;
+use PhpSpec\Result\Outcome;
 
 class GithubActionsFormatter extends FormatterExtension
 {
@@ -66,32 +68,48 @@ class GithubActionsFormatter extends FormatterExtension
         return 'github';
     }
 
-    public function formatPass(string $title): string
+    public function formatPass(Outcome $outcome): string
     {
-        return "::notice ::$title";
+        return "::notice ::{$outcome->name()}";
     }
 
-    public function formatFail(string $title, string $message): string
+    public function formatFail(Outcome $outcome): string
     {
-        return "::error ::$title - $message";
+        $at = $outcome->failedAt ?? $outcome->writtenAt;
+
+        return sprintf('::error file=%s,line=%d,title=%s::%s', $at?->file, $at?->line, $outcome->name(), $outcome->message);
     }
 
-    public function formatPending(string $title): string
+    public function formatPending(Outcome $outcome): string
     {
-        return "::warning ::$title (pending)";
-    }
-
-    public function formatError(string $title, string $message): string
-    {
-        return "::error ::$title - $message";
-    }
-
-    public function formatSummary(int $total, int $passed, int $failed, int $pending, int $errors): string
-    {
-        return sprintf('%d example%s (%d passed, %d failed, %d pending, %d errored)', $total, $total === 1 ? '' : 's', $passed, $failed, $pending, $errors);
+        return "::warning ::{$outcome->name()} ({$outcome->reason})";
     }
 }
 ```
+
+An `Outcome` carries:
+
+| Member | What it holds |
+|---|---|
+| `kind` | `Kind::Example` or `Kind::Scenario` |
+| `name()` | The titles that lead to it, joined as `--filter` matches them: `Calc > when empty > adds`, `Calc > Subtracts` |
+| `title()`, `titles` | Its own title; every title, its own last |
+| `state` | `State::Passed`, `Failed`, `Errored`, `Pending`, `Skipped`, `Risky` or `Undefined`; `failsTheRun()` says whether it fails the run |
+| `message` | What went wrong, for one that failed or errored, or a scenario with a step no definition matches |
+| `reason` | Why it was left pending or skipped, when it said; `no expectation` for a risky example |
+| `failedAt` | Where it went wrong, a `Location` with `file` (from the project root) and `line`: the failing expectation, or the project's code an error came from; null when nothing did |
+| `writtenAt` | Where it is written: its `it()` line, or its `Scenario:` line in the feature file |
+| `duration` | Seconds it took; a scenario's are its steps' |
+| `step` | For a scenario, the step that decided how it ended |
+
+A scenario ends as its deciding step did (see [Step States](story-bdd.md#step-states)).
+Each outcome reaches one method by its state: `formatPass` for passed and
+risky, `formatFail` for failed and undefined, `formatError` for errored,
+`formatPending` for pending and `formatSkipped` for skipped. `formatError`
+falls back to `formatFail` and `formatSkipped` to `formatPending`; override
+`format(Outcome $outcome)` to take every state in one place.
+`formatSummary(array $outcomes)` writes the closing line from every outcome it
+was handed: `2 examples, 3 scenarios (4 passed, 1 failed)` unless overridden.
 
 Use with `--format github` or set as default:
 
@@ -193,7 +211,10 @@ vendor/bin/phpspec lint
 
 ### Listeners
 
-React to lifecycle events during a spec run.
+Hear how the run goes: when the suite begins and ends, and each example and
+each scenario as an `Outcome` (see [Formatters](#formatters)), once its spec
+file or feature has run. Stories and `--parallel` runs are heard the same
+way, each outcome once.
 
 ```php
 <?php
@@ -201,15 +222,16 @@ React to lifecycle events during a spec run.
 namespace Acme\PhpSpecProfiler;
 
 use PhpSpec\Extensions\ListenerExtension;
+use PhpSpec\Result\Outcome;
 
 class SlowTestReporter extends ListenerExtension
 {
     private array $slow = [];
 
-    public function afterExample(string $title, float $duration): void
+    public function completed(Outcome $outcome): void
     {
-        if ($duration > 0.5) {
-            $this->slow[] = [$title, $duration];
+        if ($outcome->duration > 0.5) {
+            $this->slow[] = [$outcome->name(), $outcome->duration];
         }
     }
 
@@ -221,28 +243,25 @@ class SlowTestReporter extends ListenerExtension
 
         usort($this->slow, fn($a, $b) => $b[1] <=> $a[1]);
         echo "\nSlow examples:\n";
-        foreach ($this->slow as [$title, $duration]) {
-            printf("  %.3fs  %s\n", $duration, $title);
+        foreach ($this->slow as [$name, $duration]) {
+            printf("  %.3fs  %s\n", $duration, $name);
         }
     }
 }
 ```
 
-Available events:
+Every method is optional:
 
-| Event | Arguments |
+| Method | Told |
 |---|---|
-| `beforeSuite()` | none |
-| `afterSuite()` | none |
-| `beforeSpec(string $title)` | Spec file title |
-| `afterSpec(string $title)` | Spec file title |
-| `beforeExample(string $title)` | Example title |
-| `afterExample(string $title, float $duration)` | Example title and duration in seconds |
-| `onPass(string $title)` | Passed example |
-| `onFail(string $title, string $message)` | Failed example with error message |
-| `onError(string $title, string $message)` | Errored example with exception message |
-| `onPending(string $title)` | Pending example |
-| `onSkipped(string $title)` | Skipped example |
+| `beforeSuite()` | Once, before anything runs |
+| `afterSuite()` | Once, after everything has been reported |
+| `completed(Outcome $outcome)` | Each example and scenario; by default it calls the method for how it ended |
+| `onPass(Outcome $outcome)` | Passed, or an example that checked nothing |
+| `onFail(Outcome $outcome)` | Failed, or a scenario with a step no definition matches |
+| `onError(Outcome $outcome)` | Errored |
+| `onPending(Outcome $outcome)` | Left pending |
+| `onSkipped(Outcome $outcome)` | Skipped |
 
 ### Browsers
 
@@ -341,6 +360,7 @@ acme/phpspec-nyan-formatter/
 namespace Acme\PhpSpecNyanFormatter;
 
 use PhpSpec\Extensions\FormatterExtension;
+use PhpSpec\Result\Outcome;
 
 class NyanFormatter extends FormatterExtension
 {
@@ -349,14 +369,14 @@ class NyanFormatter extends FormatterExtension
         return 'nyan';
     }
 
-    public function formatPass(string $title): string
+    public function formatPass(Outcome $outcome): string
     {
-        return "~=[,,_,,]:3 $title";
+        return "~=[,,_,,]:3 {$outcome->name()}";
     }
 
-    public function formatFail(string $title, string $message): string
+    public function formatFail(Outcome $outcome): string
     {
-        return "=[,,_,,]= $title\n  $message";
+        return "=[,,_,,]= {$outcome->name()}\n  {$outcome->message}";
     }
 }
 ```
@@ -377,7 +397,7 @@ Each extension type has a base class with the minimum contract:
 | Formatter | `FormatterExtension` | `getName()`, `formatPass()`, `formatFail()` |
 | Matcher | `MatcherExtension` | `getName()`, `match()`, `failureMessage()` |
 | Command | `CommandExtension` | `getName()`, `execute()` |
-| Listener | `ListenerExtension` | At least one event method |
+| Listener | `ListenerExtension` | None; override what it should hear |
 
 All base classes live in `PhpSpec\Extensions\`.
 

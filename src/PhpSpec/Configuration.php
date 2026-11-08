@@ -18,13 +18,15 @@ use BackedEnum;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Coverage\CoverageAdapter;
+use PhpSpec\Source\ComposerAutoload;
+use PhpSpec\Source\ComposerJson;
 use PhpSpec\Source\ProjectAutoloader;
 use Symfony\Component\Yaml\Yaml;
 
 /**
  * A project's configuration: its settings, the root its paths are relative
- * to, and the PSR-4 mappings its composer.json declares. Built from values it
- * touches no disk; {@see load()} reads what a project states.
+ * to, and the autoloading its composer.json declares, when it has one. Built
+ * from values it touches no disk; {@see load()} reads what a project states.
  */
 final class Configuration
 {
@@ -32,7 +34,6 @@ final class Configuration
     private const KNOWN_KEYS = [
         'spec_path' => 'string',
         'src_path' => 'string',
-        'psr4_prefix' => 'string',
         'spec_suffix' => 'string',
         'features_path' => 'string',
         'steps_path' => 'string',
@@ -58,14 +59,14 @@ final class Configuration
     /**
      * @param array<string, mixed> $config the settings, as a config file states them
      * @param string $rootDir the project root the paths are relative to
-     * @param array<string, string> $composerMappings PSR-4 prefix to directory, as composer.json declares them
+     * @param ComposerAutoload|null $composer what composer.json declares, or null for a project without one
      * @param string|null $settingsFile the file the settings were read from, when there is one
      * @param bool $named whether the settings file was named with --config rather than found under the root
      */
     public function __construct(
         private array $config = [],
         private string $rootDir = '.',
-        private array $composerMappings = [],
+        private ?ComposerAutoload $composer = null,
         private ?string $settingsFile = null,
         private bool $named = false,
     ) {}
@@ -73,7 +74,8 @@ final class Configuration
     /**
      * What a project states: phpspec.yaml, phpspec.yml, phpspec.json or
      * phpspec.php under the root, the first found, or the file --config names;
-     * and the PSR-4 mappings of its composer.json.
+     * and the autoloading of its composer.json, which the settings must leave
+     * to it.
      *
      * @param string $rootDir project root directory containing the config files
      * @param Filesystem|null $filesystem the filesystem to read through
@@ -84,8 +86,10 @@ final class Configuration
         $fs = $filesystem ?? new RealFilesystem();
         $path = $configFile ?? self::settingsFile($rootDir, $fs);
         $settings = $path === null ? [] : self::readFile($path, $fs);
+        $configuration = new self($settings, $rootDir, ComposerAutoload::of($rootDir, $fs), $path, $configFile !== null);
+        $configuration->checkAgainstComposer();
 
-        return new self($settings, $rootDir, self::readComposerMappings($rootDir, $fs), $path, $configFile !== null);
+        return $configuration;
     }
 
     /**
@@ -177,7 +181,30 @@ final class Configuration
             self::checkSetting($path, (string) $key, $value);
         }
 
+        self::checkNoNamespaceMapping($path, $settings);
+
         return $settings;
+    }
+
+    /**
+     * Refuses a key that would map a namespace to a directory, psr4_prefix or
+     * a suite's namespace: composer.json does that, or autoload without one.
+     *
+     * @param array<mixed> $settings
+     */
+    private static function checkNoNamespaceMapping(string $path, array $settings): void
+    {
+        $keys = array_key_exists('psr4_prefix', $settings) ? ['psr4_prefix'] : [];
+
+        foreach (is_array($settings['suites'] ?? null) ? $settings['suites'] : [] as $name => $suite) {
+            if (is_array($suite) && array_key_exists('namespace', $suite)) {
+                $keys[] = 'suites.' . $name . '.namespace';
+            }
+        }
+
+        if ($keys !== []) {
+            throw new ConfigurationException(sprintf('%s: %s is not a setting: composer.json maps namespaces to directories, or autoload does in a project without one.', $path, $keys[0]));
+        }
     }
 
     private static function checkSetting(string $path, string $key, mixed $value): void
@@ -222,30 +249,57 @@ final class Configuration
     }
 
     /**
-     * @return array<string, string>
+     * Refuses settings that would autoload beside Composer: an autoload map;
+     * a source path, the top-level one or a suite's, that is not a directory
+     * composer.json maps a namespace to; or a default namespace no mapping
+     * places whose classes the source path cannot take.
      */
-    private static function readComposerMappings(string $rootDir, Filesystem $fs): array
+    private function checkAgainstComposer(): void
     {
-        $path = rtrim($rootDir, '/') . '/composer.json';
-
-        if (!$fs->exists($path)) {
-            return [];
+        if ($this->settingsFile === null || $this->composer === null) {
+            return;
         }
 
-        $composer = json_decode($fs->read($path), true);
-        $declared = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
-        $mappings = [];
+        if (array_key_exists('autoload', $this->config)) {
+            throw new ConfigurationException(sprintf('%s: autoload cannot be set in a project with a composer.json.', $this->settingsFile));
+        }
 
-        foreach (is_array($declared) ? $declared : [] as $prefix => $directory) {
-            $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
+        if ($this->composer->directories() === []) {
+            return;
+        }
 
-            if (is_string($prefix) && is_string($directory) && $directory !== '') {
-                $mappings[$prefix] = ltrim($directory, './');
+        $sourcePaths = ['src_path' => $this->config['src_path'] ?? null];
+
+        foreach (is_array($this->config['suites'] ?? null) ? $this->config['suites'] : [] as $name => $suite) {
+            $sourcePaths['suites.' . $name . '.src'] = is_array($suite) ? ($suite['src'] ?? null) : null;
+        }
+
+        foreach ($sourcePaths as $key => $sourcePath) {
+            if (is_string($sourcePath) && !$this->composer->mapsTo($sourcePath)) {
+                throw new ConfigurationException(sprintf(
+                    '%s: %s "%s" is not a directory composer.json maps a namespace to: %s.',
+                    $this->settingsFile,
+                    $key,
+                    $sourcePath,
+                    implode(', ', $this->composer->directories()),
+                ));
             }
         }
 
-        return $mappings;
+        $default = trim((string) $this->get('default_namespace', ''), '\\');
+        $claim = $default === '' || $this->srcDir() === '' || $this->composer->places($default) ? null : $this->composer->claimOn($this->srcDir());
+
+        if ($claim !== null) {
+            throw new ConfigurationException(sprintf(
+                '%s: default_namespace "%s" is under no namespace composer.json maps, and %s/ cannot take its classes: %s.',
+                $this->settingsFile,
+                $default,
+                $this->srcDir(),
+                $claim,
+            ));
+        }
     }
+
     /**
      * Retrieves a configuration value by key.
      *
@@ -266,11 +320,26 @@ final class Configuration
     }
 
     /**
-     * Returns the source directory generated classes are written under.
+     * Returns the source directory, where a class under no mapping is
+     * generated: the one the config states, else `src`.
      */
     public function getSrcPath(): string
     {
-        return $this->layout()['src'];
+        $srcPath = $this->config['src_path'] ?? $this->suiteValue('src');
+
+        return is_string($srcPath) ? $srcPath : './src';
+    }
+
+    /**
+     * Every directory the project's classes are in, relative to the project
+     * root, as a walk through the source takes them: the source directory
+     * and each mapped one, once each, none inside another.
+     *
+     * @return list<string>
+     */
+    public function sourceRoots(): array
+    {
+        return $this->getSourceLayout()->roots();
     }
 
     /**
@@ -292,22 +361,10 @@ final class Configuration
     }
 
     /**
-     * Returns the PSR-4 namespace prefix mapped to the source directory.
-     * When set, namespace segments matching the prefix are not reflected
-     * in the directory structure during code generation; '' means every
-     * segment becomes a directory.
-     */
-    public function getPsr4Prefix(): string
-    {
-        return $this->layout()['prefix'];
-    }
-
-    /**
-     * Where a class's source file lives, mapping by mapping: the ones the
-     * config states (`autoload`, and `src_path` with `psr4_prefix` or a
-     * suite's `src` with `namespace`), else every PSR-4 mapping composer.json
-     * declares. A class under no mapping goes below `src_path`, `src` by
-     * default, and into `default_namespace` first when the config names one.
+     * Where a class's source file lives, mapping by mapping: the ones
+     * composer.json declares or, in a project without one, the `autoload` map
+     * the config states. A class under no mapping goes below `src_path`, `src`
+     * by default, and into `default_namespace` first when the config names one.
      */
     public function getSourceLayout(): SourceLayout
     {
@@ -315,7 +372,7 @@ final class Configuration
         $default = $this->get('default_namespace');
 
         return new SourceLayout(
-            $this->projectDir(is_string($srcPath) ? $srcPath : 'src'),
+            $this->srcDir(),
             $this->mappings(),
             is_string($default) && trim($default, '\\') !== '' ? $default : null,
         );
@@ -326,59 +383,20 @@ final class Configuration
      */
     private function mappings(): array
     {
-        $src = $this->config['src_path'] ?? $this->suiteValue('src');
-        $prefix = $this->config['psr4_prefix'] ?? $this->suiteValue('namespace');
-        $autoload = $this->config['autoload'] ?? null;
-
-        if (!is_string($src) && !is_string($prefix) && !is_array($autoload)) {
-            return $this->composerMappings();
+        if ($this->composer !== null) {
+            return $this->composer->mappings();
         }
 
+        $autoload = $this->config['autoload'] ?? null;
         $mappings = [];
 
-        foreach (is_array($autoload) ? $autoload : [] as $mappedPrefix => $directory) {
-            if (is_string($mappedPrefix) && is_string($directory)) {
-                $mappings[$mappedPrefix] = ltrim($directory, './');
+        foreach (is_array($autoload) ? $autoload : [] as $prefix => $directory) {
+            if (is_string($prefix) && is_string($directory)) {
+                $mappings[$prefix] = $this->projectDir($directory);
             }
         }
 
-        if (is_string($prefix) && trim($prefix, '\\') !== '') {
-            $mappings[$prefix] = ltrim(is_string($src) ? $src : './src', './');
-        }
-
         return $mappings;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function composerMappings(): array
-    {
-        return $this->composerMappings;
-    }
-
-    /**
-     * Where generated classes go: the layout the config states (`src_path`
-     * and `psr4_prefix`, or a suite's `src` and `namespace`), else the first
-     * PSR-4 mapping composer.json declares, else `src/` with every namespace
-     * segment as a directory. A config that states an `autoload` map keeps
-     * that last layout, as it always has.
-     *
-     * @return array{src: string, prefix: string}
-     */
-    private function layout(): array
-    {
-        $src = $this->config['src_path'] ?? $this->suiteValue('src');
-        $prefix = $this->config['psr4_prefix'] ?? $this->suiteValue('namespace');
-
-        if (is_string($src) || is_string($prefix) || isset($this->config['autoload'])) {
-            return [
-                'src' => is_string($src) ? $src : './src',
-                'prefix' => is_string($prefix) ? rtrim($prefix, '\\') : '',
-            ];
-        }
-
-        return $this->composerLayout() ?? ['src' => './src', 'prefix' => ''];
     }
 
     private function projectDir(string $path): string
@@ -406,23 +424,6 @@ final class Configuration
         }
 
         return null;
-    }
-
-    /**
-     * The layout of the first PSR-4 mapping in composer.json, or null when
-     * there is none to read.
-     *
-     * @return array{src: string, prefix: string}|null
-     */
-    private function composerLayout(): ?array
-    {
-        if ($this->composerMappings === []) {
-            return null;
-        }
-
-        $prefix = (string) array_key_first($this->composerMappings);
-
-        return ['src' => rtrim($this->composerMappings[$prefix], '/'), 'prefix' => rtrim($prefix, '\\')];
     }
 
     /**
@@ -845,14 +846,20 @@ final class Configuration
     }
 
     /**
-     * Registers the autoloader of the project's classes: PSR-4 from the
-     * "autoload" config map (prefix => baseDir), then the source layout.
+     * The project's composer.json, to change, or null for a project without one.
+     */
+    public function composerJson(Filesystem $filesystem = new RealFilesystem()): ?ComposerJson
+    {
+        return $this->composer === null ? null : new ComposerJson(rtrim($this->rootDir, '/') . '/composer.json', $filesystem);
+    }
+
+    /**
+     * Registers the autoloader of the project's classes, loading each from
+     * where the source layout puts it.
      */
     public function registerAutoloaders(): void
     {
-        $autoload = $this->get('autoload');
-
-        spl_autoload_register(new ProjectAutoloader(is_array($autoload) ? $autoload : [], $this->getSourceLayout(), rtrim($this->rootDir, '/')));
+        spl_autoload_register(new ProjectAutoloader($this->getSourceLayout(), rtrim($this->rootDir, '/')));
     }
 
     /**

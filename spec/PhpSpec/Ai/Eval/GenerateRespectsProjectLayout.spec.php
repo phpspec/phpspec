@@ -9,8 +9,8 @@ use PhpSpec\Filesystem;
 require_once __DIR__ . '/../ReplayProvider.php';
 
 // E10 (eval) — an inferred generate target must land in the project's
-// CONFIGURED layout, not hardcoded src/spec/features. Covers a custom src_path
-// with a PSR-4 prefix (stripped, exactly like phpspec's own generators), a
+// CONFIGURED layout, not hardcoded src/spec/features. Covers an autoload map
+// (the prefix stripped, exactly like phpspec's own generators), a
 // custom spec_path (mirrors the full namespace), and a custom features_path.
 describe('E10 generate: inferred paths respect the project layout', function () {
 
@@ -32,8 +32,8 @@ describe('E10 generate: inferred paths respect the project layout', function () 
         new Response('', [new ToolCall('1', 'propose_edit', ['path' => $path, 'content' => $content])]),
     ]);
 
-    it('places inferred code under the configured src_path with the PSR-4 prefix stripped', function (Filesystem $fs) use ($agentFor, $editCall) {
-        $agent = $agentFor($fs, ['src_path' => 'lib', 'psr4_prefix' => 'App', 'ai' => ['provider' => 'google', 'api_key' => 'x']], $editCall('src/App/Coupon.php', '<?php // impl'));
+    it('places inferred code under the directory the configured autoload map gives its namespace, the prefix stripped', function (Filesystem $fs) use ($agentFor, $editCall) {
+        $agent = $agentFor($fs, ['src_path' => 'lib', 'autoload' => ['App\\' => 'lib'], 'ai' => ['provider' => 'google', 'api_key' => 'x']], $editCall('src/App/Coupon.php', '<?php // impl'));
 
         $outcome = $agent->chat('generate', 'implement the apply method on App\\Coupon');
 

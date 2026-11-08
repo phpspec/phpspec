@@ -2,6 +2,7 @@
 
 use PhpSpec\ObjectName;
 use PhpSpec\Parallel\Wire;
+use PhpSpec\Parallel\WireMark;
 use PhpSpec\Report\ReportedObject;
 use PhpSpec\Report\Typed;
 use PhpSpec\Result\ContextResult;
@@ -230,12 +231,33 @@ describe(Wire::class, function () {
         expect($steps[5]->getReason())->toBe('Needs the gateway');
     });
 
-    it("answers null for a line that is not on the wire, and true for the line that ends it", function () {
+    it('carries that a note was raised by a file loading, and adds nothing to one that was not', function () {
+        $wire = new Wire();
+        $loading = ['severity' => E_USER_WARNING, 'message' => 'loads', 'file' => 'a.php', 'line' => 1, 'loading' => true];
+        $called = ['severity' => E_USER_WARNING, 'message' => 'called', 'file' => 'a.php', 'line' => 2];
+        $example = new ExampleResult('warns', [MatchResult::passed()]);
+        $example->setWarnings([$loading, $called]);
+
+        $read = $wire->decode($wire->encode(new SpecificationResult('A', [$example], 'a.spec.php')));
+
+        expect($read->getResults()[0]->getWarnings())->toBe([$loading, $called]);
+    });
+
+    it('answers null for a line that is not on the wire, and the mark for a worker saying it ran its file or ended its report', function () {
         $wire = new Wire();
 
         expect($wire->decode('Bootstrap loaded...'))->toBeNull();
         expect($wire->decode('{"json": "but not the wire"}'))->toBeNull();
         expect($wire->decode(''))->toBeNull();
-        expect($wire->decode($wire->ending()))->toBe(true);
+        expect($wire->decode($wire->ran()))->toBe(WireMark::Ran);
+        expect($wire->decode($wire->ending()))->toBe(WireMark::Ended);
+    });
+
+    it('hands a worker a file by its targets, read back whole, and nothing off a line that hands it none', function () {
+        $wire = new Wire();
+
+        expect($wire->given($wire->give(['spec/A.spec.php:3', 'spec/Ä.spec.php@e0953166a73b'])))->toBe(['spec/A.spec.php:3', 'spec/Ä.spec.php@e0953166a73b']);
+        expect($wire->given($wire->ran()))->toBeNull();
+        expect($wire->given('spec/A.spec.php'))->toBeNull();
     });
 });

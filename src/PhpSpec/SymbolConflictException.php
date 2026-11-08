@@ -12,21 +12,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\EventDispatcher\Event;
-
-use PhpSpec\EventDispatcher\Event;
+namespace PhpSpec;
 
 /**
  * @internal
- * Dispatched when the suite finishes execution.
+ * Thrown when an in-process run would see a class or function an earlier
+ * run declared other than as its project's files declare it, so the run
+ * goes to a fresh process instead.
  */
-final readonly class SuiteFinished implements Event
-{
-    public const NAME = 'suite.finished';
-
-    /** {@inheritdoc} */
-    public function getName(): string
-    {
-        return self::NAME;
-    }
-}
+final class SymbolConflictException extends \RuntimeException {}

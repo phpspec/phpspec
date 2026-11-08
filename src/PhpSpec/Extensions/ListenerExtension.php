@@ -14,107 +14,48 @@
 
 namespace PhpSpec\Extensions;
 
+use PhpSpec\Result\Outcome;
+use PhpSpec\Result\State;
+
 /**
- * Base class for listener extensions. All event methods have empty defaults.
- * Override only the methods you need.
+ * Base class for listener extensions: told when the suite begins and ends,
+ * and of each example and each scenario as an Outcome, by how it ended, once
+ * its spec file or feature has run. Override only what you need.
  */
 abstract class ListenerExtension
 {
-    /**
-     * Called before the suite begins running.
-     *
-     * @return void
-     */
     public function beforeSuite(): void {}
 
-    /**
-     * Called after the entire suite has finished running.
-     *
-     * @return void
-     */
     public function afterSuite(): void {}
 
     /**
-     * Called before a specification file begins running.
-     *
-     * @param string $title The specification title or path
-     *
-     * @return void
+     * An example or a scenario has run; tells the method for how it ended.
      */
-    public function beforeSpec(string $title): void {}
+    public function completed(Outcome $outcome): void
+    {
+        match ($outcome->state) {
+            State::Passed, State::Risky => $this->onPass($outcome),
+            State::Failed, State::Undefined => $this->onFail($outcome),
+            State::Errored => $this->onError($outcome),
+            State::Pending => $this->onPending($outcome),
+            State::Skipped => $this->onSkipped($outcome),
+        };
+    }
 
     /**
-     * Called after a specification file has finished running.
-     *
-     * @param string $title The specification title
-     *
-     * @return void
+     * An example or scenario that passed, or an example that checked nothing.
      */
-    public function afterSpec(string $title): void {}
+    public function onPass(Outcome $outcome): void {}
 
     /**
-     * Called before an individual example begins running.
-     *
-     * @param string $title The example title
-     *
-     * @return void
+     * An example or scenario that failed, or a scenario with a step no
+     * definition matches.
      */
-    public function beforeExample(string $title): void {}
+    public function onFail(Outcome $outcome): void {}
 
-    /**
-     * Called after an individual example has finished running, regardless of outcome.
-     *
-     * @param string $title    The example title
-     * @param float  $duration The example execution time in seconds
-     *
-     * @return void
-     */
-    public function afterExample(string $title, float $duration): void {}
+    public function onError(Outcome $outcome): void {}
 
-    /**
-     * Called when an example passes.
-     *
-     * @param string $title The example title
-     *
-     * @return void
-     */
-    public function onPass(string $title): void {}
+    public function onPending(Outcome $outcome): void {}
 
-    /**
-     * Called when an example fails.
-     *
-     * @param string $title   The example title
-     * @param string $message The failure message
-     *
-     * @return void
-     */
-    public function onFail(string $title, string $message): void {}
-
-    /**
-     * Called when an example encounters an error.
-     *
-     * @param string $title   The example title
-     * @param string $message The error message
-     *
-     * @return void
-     */
-    public function onError(string $title, string $message): void {}
-
-    /**
-     * Called when an example is marked as pending.
-     *
-     * @param string $title The example title
-     *
-     * @return void
-     */
-    public function onPending(string $title): void {}
-
-    /**
-     * Called when an example is skipped.
-     *
-     * @param string $title The example title
-     *
-     * @return void
-     */
-    public function onSkipped(string $title): void {}
+    public function onSkipped(Outcome $outcome): void {}
 }

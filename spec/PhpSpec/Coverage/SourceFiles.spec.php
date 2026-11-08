@@ -33,9 +33,20 @@ describe(SourceFiles::class, function () {
             '/app/src/README.md' => 'notes',
         ]);
 
-        $unrecorded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unrecorded(['/app/src/Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
+        $unrecorded = (new SourceFiles($fs, ['/app/src'], ProjectRoot::at('/app')))->unrecorded(['/app/src/Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
 
         expect($unrecorded)->toBe(['src/Reports/Monthly.php', 'src/Untested.php']);
+    });
+
+    it('names them under every source directory it is given', function (Filesystem $fs) use ($tree, $class) {
+        $tree($fs, [
+            '/app/src/Greeter.php' => $class('Greeter'),
+            '/app/lib/Ledger.php' => $class('Ledger'),
+        ]);
+
+        $unrecorded = (new SourceFiles($fs, ['/app/src', '/app/lib'], ProjectRoot::at('/app')))->unrecorded([], new Exclusions([], $fs, '/app'));
+
+        expect($unrecorded)->toBe(['lib/Ledger.php', 'src/Greeter.php']);
     });
 
     it('leaves out a file coverage leaves out, by the config or for having nothing to cover', function (Filesystem $fs) use ($tree, $class) {
@@ -44,7 +55,7 @@ describe(SourceFiles::class, function () {
             '/app/src/Pricing.php' => "<?php\nnamespace App;\ninterface Pricing\n{\n    public function price(): int;\n}\n",
         ]);
 
-        $unrecorded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unrecorded([], new Exclusions(['src/Generated/'], $fs, '/app'));
+        $unrecorded = (new SourceFiles($fs, ['/app/src'], ProjectRoot::at('/app')))->unrecorded([], new Exclusions(['src/Generated/'], $fs, '/app'));
 
         expect($unrecorded)->toBe([]);
     });
@@ -52,7 +63,7 @@ describe(SourceFiles::class, function () {
     it('knows a file with coverage recorded however the engine spelled its path', function (Filesystem $fs) use ($tree, $class) {
         $tree($fs, ['/app/src/Greeter.php' => $class('Greeter')]);
 
-        $unrecorded = (new SourceFiles($fs, '/app/src', ProjectRoot::at('/app')))->unrecorded(['\\app\\src\\Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
+        $unrecorded = (new SourceFiles($fs, ['/app/src'], ProjectRoot::at('/app')))->unrecorded(['\\app\\src\\Greeter.php' => [7 => 1]], new Exclusions([], $fs, '/app'));
 
         expect($unrecorded)->toBe([]);
     });

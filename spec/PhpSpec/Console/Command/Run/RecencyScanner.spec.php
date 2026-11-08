@@ -91,7 +91,27 @@ describe(RecencyScanner::class, function () {
             default => 100,
         });
 
-        expect((new RecencyScanner($fs))->mostRecentNamed('src', 'Till.php'))->toBe('src/App/Legacy/Till.php');
-        expect((new RecencyScanner($fs))->mostRecentNamed('src', 'Nope.php'))->toBeNull();
+        expect((new RecencyScanner($fs))->mostRecentNamed('Till.php', 'src'))->toBe('src/App/Legacy/Till.php');
+        expect((new RecencyScanner($fs))->mostRecentNamed('Nope.php', 'src'))->toBeNull();
+    });
+
+    it('looks through several directories as through one, skipping one that is not there', function (Filesystem $fs) {
+        allow($fs->exists(any()))->toReturnUsing(fn(string $p): bool => $p !== 'gone');
+        allow($fs->isDir(any()))->toReturnUsing(fn(string $p): bool => in_array($p, ['src', 'lib'], true));
+        allow($fs->scandir(any()))->toReturnUsing(fn(string $p): array => match ($p) {
+            'src' => ['Till.php'],
+            'lib' => ['Till.php', 'Ledger.php'],
+            default => [],
+        });
+        allow($fs->mtime(any()))->toReturnUsing(fn(string $p): int => match ($p) {
+            'src/Till.php' => 300,
+            'lib/Till.php' => 200,
+            'lib/Ledger.php' => 400,
+            default => 0,
+        });
+        $scanner = new RecencyScanner($fs);
+
+        expect($scanner->mostRecentSource('src', 'gone', 'lib'))->toBe('lib/Ledger.php');
+        expect($scanner->mostRecentNamed('Till.php', 'lib', 'src'))->toBe('src/Till.php');
     });
 });

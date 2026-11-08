@@ -4,6 +4,9 @@ use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\SuiteResult;
+use PhpSpec\Result\StepResult;
+use PhpSpec\Result\ScenarioResult;
+use PhpSpec\Result\FeatureResult;
 
 describe(SuiteResult::class, function() {
 
@@ -87,9 +90,9 @@ describe(SuiteResult::class, function() {
 
         $slowest = $result->getSlowestExamples(2);
         expect($slowest)->toHaveCount(2);
-        expect($slowest[0]->path)->toBe("spec > slow");
+        expect($slowest[0]->path)->toBe("slow");
         expect($slowest[0]->duration)->toBe(0.5);
-        expect($slowest[1]->path)->toBe("spec > medium");
+        expect($slowest[1]->path)->toBe("medium");
     });
 
     it("collects slowest examples from nested contexts", function() {
@@ -104,8 +107,23 @@ describe(SuiteResult::class, function() {
 
         $slowest = $result->getSlowestExamples(10);
         expect($slowest)->toHaveCount(2);
-        expect($slowest[0]->path)->toBe("spec > ctx > nested");
-        expect($slowest[1]->path)->toBe("spec > top");
+        expect($slowest[0]->path)->toBe("ctx > nested");
+        expect($slowest[1]->path)->toBe("top");
+    });
+
+    it("collects the slowest scenarios too, each named by its feature, its steps' time its own", function() {
+        $step = new StepResult("Given a slow step", "passed");
+        $step->setDuration(0.75);
+        $example = new ExampleResult("quick", []);
+        $example->setDuration(0.25);
+        $result = new SuiteResult([
+            new SpecificationResult("spec", [$example]),
+            new FeatureResult("Slow", [new ScenarioResult("Waits", [$step], 2)], "features/slow.feature"),
+        ]);
+
+        $slowest = $result->getSlowestExamples(10);
+
+        expect(array_map(fn($timing) => [$timing->path, $timing->duration], $slowest))->toBe([["Slow > Waits", 0.75], ["quick", 0.25]]);
     });
 
     it("skips pending examples in slowest", function() {
@@ -119,7 +137,7 @@ describe(SuiteResult::class, function() {
 
         $slowest = $result->getSlowestExamples(10);
         expect($slowest)->toHaveCount(1);
-        expect($slowest[0]->path)->toBe("spec > passing");
+        expect($slowest[0]->path)->toBe("passing");
     });
 
     it("getAllExamples collects from nested contexts", function() {

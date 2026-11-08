@@ -12,21 +12,14 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\EventDispatcher\Event;
-
-use PhpSpec\EventDispatcher\Event;
+namespace PhpSpec\Result;
 
 /**
- * @internal
- * Dispatched when the suite begins execution.
+ * What an outcome is the outcome of: an example of a spec, or a scenario of a
+ * feature.
  */
-final readonly class SuiteStarted implements Event
+enum Kind: string
 {
-    public const NAME = 'suite.started';
-
-    /** {@inheritdoc} */
-    public function getName(): string
-    {
-        return self::NAME;
-    }
+    case Example = 'example';
+    case Scenario = 'scenario';
 }

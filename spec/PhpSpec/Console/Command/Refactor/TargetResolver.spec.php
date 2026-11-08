@@ -44,21 +44,21 @@ describe(TargetResolver::class, function () {
 
     context('with no argument', function () {
 
-        it('takes the source modified last under the source path, and its spec', function () {
+        it('takes the source modified last in any directory the project\'s classes are in, and its spec', function () {
             $target = $this->resolver->resolve(null);
 
-            expect($target->fqcn)->toBe('App\\Till');
-            expect($target->sourceFile)->toBe('/proj/src/App/Till.php');
-            expect($target->specFile)->toBe('/proj/spec/App/Till.spec.php');
+            expect($target->fqcn)->toBe('Acme\\Ledger');
+            expect($target->sourceFile)->toBe('/proj/lib/Acme/Ledger.php');
+            expect($target->specFile)->toBe('/proj/spec/Acme/Ledger.spec.php');
             expect($target->method)->toBeNull();
         });
 
         it('refuses the source modified last when it has no spec, saying how to give it one', function () {
             $files = $this->project['files'];
-            unset($files['/proj/spec/App/Till.spec.php']);
+            unset($files['/proj/spec/Acme/Ledger.spec.php']);
             $this->project['files'] = $files;
 
-            expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'App\\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe App/Till');
+            expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'Acme\\Ledger has no spec, so nothing would catch a refactoring that broke it. Describe it first: phpspec describe Acme/Ledger');
         });
 
         context('in a phpspec started with a config of its own', function () {
@@ -66,22 +66,22 @@ describe(TargetResolver::class, function () {
 
             it('names the describe that gives the class a spec as this phpspec was started, with that config', function () {
                 $files = $this->project['files'];
-                unset($files['/proj/spec/App/Till.spec.php']);
+                unset($files['/proj/spec/Acme/Ledger.spec.php']);
                 $this->project['files'] = $files;
 
-                expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'App\\Till has no spec, so nothing would catch a refactoring that broke it. Describe it first: vendor/bin/phpspec describe App/Till --config=conf/qa.yml');
+                expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'Acme\\Ledger has no spec, so nothing would catch a refactoring that broke it. Describe it first: vendor/bin/phpspec describe Acme/Ledger --config=conf/qa.yml');
             });
         });
 
         it('refuses when there is no source, naming where it looked', function () {
             $this->project['files'] = [];
 
-            expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'No source to refactor under src.');
+            expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'No source to refactor under src or lib/Acme.');
         });
 
         it('refuses a source modified last that declares no class', function () {
             $files = $this->project['files'];
-            $files['/proj/src/App/helpers.php'] = ["<?php\nfunction helper(): void {}\n", 300];
+            $files['/proj/src/App/helpers.php'] = ["<?php\nfunction helper(): void {}\n", 400];
             $this->project['files'] = $files;
 
             expect(fn() => $this->resolver->resolve(null))->toThrow(UnresolvedTargetException::class, 'src/App/helpers.php, the source modified last, declares no class to refactor.');
@@ -112,8 +112,12 @@ describe(TargetResolver::class, function () {
             expect($this->resolver->resolve('Basket')->fqcn)->toBe('App\\Basket');
         });
 
-        it('refuses a short name no class under the source path answers to, one elsewhere included', function () {
-            expect(fn() => $this->resolver->resolve('Ledger'))->toThrow(UnresolvedTargetException::class, 'No class named Ledger under src. Describe it first: phpspec describe Ledger');
+        it('resolves a short name to a class in any directory the project\'s classes are in', function () {
+            expect($this->resolver->resolve('Ledger')->fqcn)->toBe('Acme\\Ledger');
+        });
+
+        it('refuses a short name no class answers to, naming where it looked', function () {
+            expect(fn() => $this->resolver->resolve('Drawer'))->toThrow(UnresolvedTargetException::class, 'No class named Drawer under src or lib/Acme. Describe it first: phpspec describe Drawer');
         });
 
         it('resolves a class named with slashes as with backslashes', function () {

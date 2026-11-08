@@ -341,8 +341,8 @@ vendor/bin/phpspec refactor spec/App/Calculator.spec.php
 
 | Input | Source File | Spec File |
 |---|---|---|
-| none | the source file modified last under `src_path` | the spec of the class it declares |
-| `Calculator` | the `Calculator.php` modified last under `src_path` | the spec of the class it declares |
+| none | the source file modified last in any directory the project's classes are in | the spec of the class it declares |
+| `Calculator` | the `Calculator.php` modified last in any directory the project's classes are in | the spec of the class it declares |
 | `App\Calculator` or `App/Calculator` | `src/App/Calculator.php` | `spec/App/Calculator.spec.php` |
 | `App\Calculator::sum` | `src/App/Calculator.php` (focused on `sum`) | `spec/App/Calculator.spec.php` |
 | `src/App/Calculator.php` | that file | the spec of the class it declares |
@@ -372,8 +372,8 @@ written, the question says so:
 The model works the GOOS way (*Growing Object-Oriented Software, Guided by
 Tests*): behaviour moves to the object that has the data, a new collaborator
 gets its own spec first, and the subject's spec talks to it through a double.
-A step may only write PHP files under `src_path` or `spec_path`; anything else
-stops the run before it writes a line.
+A step may only write PHP files where the project's classes are, or under
+`spec_path`; anything else stops the run before it writes a line.
 
 When nothing is worth changing, it says so in its own words: `Nothing to refactor in App\Till: Till does one thing, and its names say what.`
 

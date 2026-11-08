@@ -91,6 +91,16 @@ describe(CoverageEngines::class, function () {
             ]);
         });
 
+        it('says how to run phpspec again under PCOV tracing what the run reports on, when it knows the command it was started by', function (PhpRuntime $php) use ($runtime) {
+            $runtime($php, loaded: [CoverageAdapter::Pcov], enabled: [CoverageAdapter::Pcov], pcovDirectory: 'src', untraced: ['lib']);
+
+            $started = new CoverageEngines(null, $php, 'vendor/bin/phpspec run --coverage', ['vendor/bin/phpspec', 'run', '--coverage']);
+            $unknown = new CoverageEngines(null, $php, 'vendor/bin/phpspec run --coverage');
+
+            expect($started->inThisProcess(['./src', 'lib'])->restart)->toBe(['-d', 'pcov.enabled=1', '-d', 'pcov.directory=.', 'vendor/bin/phpspec', 'run', '--coverage']);
+            expect($unknown->inThisProcess(['./src', 'lib'])->restart)->toBe([]);
+        });
+
         it('offers Xdebug as a way past only when Xdebug is loaded', function (PhpRuntime $php) use ($runtime) {
             $runtime($php, loaded: [CoverageAdapter::Pcov], enabled: [CoverageAdapter::Pcov], untraced: ['lib']);
 

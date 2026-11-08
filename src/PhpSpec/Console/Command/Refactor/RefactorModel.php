@@ -299,11 +299,13 @@ final class RefactorModel
     private function proposal(string $path, string $content): Proposal
     {
         $path = (string) preg_replace('~^(\./)+~', '', str_replace('\\', '/', $path));
-        $roots = [$this->config->srcDir(), $this->config->specDir()];
+        $roots = [...$this->config->sourceRoots(), $this->config->specDir()];
         $under = array_filter($roots, static fn(string $root): bool => str_starts_with($path, $root . '/'));
 
         if ($under === [] || !str_ends_with($path, '.php') || in_array('..', explode('/', $path), true)) {
-            throw new RefusedStepException(sprintf('The step writes %s, which is not a PHP file under %s or %s: nothing of it was written.', $path === '' ? 'a file with no path' : $path, ...$roots));
+            $last = array_pop($roots);
+
+            throw new RefusedStepException(sprintf('The step writes %s, which is not a PHP file under %s or %s: nothing of it was written.', $path === '' ? 'a file with no path' : $path, implode(', ', $roots), $last));
         }
 
         $file = $this->root . '/' . $path;

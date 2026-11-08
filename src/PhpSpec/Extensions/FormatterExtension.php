@@ -14,76 +14,108 @@
 
 namespace PhpSpec\Extensions;
 
+use PhpSpec\Result\Kind;
+use PhpSpec\Result\Outcome;
+use PhpSpec\Result\State;
+
 /**
- * Base class for formatter extensions. Subclasses must implement getName(),
- * formatPass(), and formatFail(). Other methods have sensible defaults.
+ * Base class for formatter extensions: each example and each scenario is
+ * handed over as an Outcome, by how it ended. Subclasses implement getName(),
+ * formatPass() and formatFail(); the rest fall back to those.
  */
 abstract class FormatterExtension
 {
     /**
-     * Returns the formatter name used with --format.
-     *
-     * @return string
+     * The name used with --format.
      */
     abstract public function getName(): string;
 
     /**
-     * Formats a passing example.
-     *
-     * @param string $title The example title
-     *
-     * @return string
+     * An example or scenario that passed, or an example that checked nothing.
      */
-    abstract public function formatPass(string $title): string;
+    abstract public function formatPass(Outcome $outcome): string;
 
     /**
-     * Formats a failing example.
-     *
-     * @param string $title   The example title
-     * @param string $message The failure message
-     *
-     * @return string
+     * An example or scenario that failed, or a scenario with a step no
+     * definition matches.
      */
-    abstract public function formatFail(string $title, string $message): string;
+    abstract public function formatFail(Outcome $outcome): string;
 
-    /**
-     * Formats a pending example.
-     *
-     * @param string $title The example title
-     *
-     * @return string
-     */
-    public function formatPending(string $title): string
+    public function formatError(Outcome $outcome): string
     {
-        return "PENDING: $title";
+        return $this->formatFail($outcome);
+    }
+
+    public function formatPending(Outcome $outcome): string
+    {
+        return 'PENDING: ' . $outcome->name();
+    }
+
+    public function formatSkipped(Outcome $outcome): string
+    {
+        return $this->formatPending($outcome);
     }
 
     /**
-     * Formats an errored example.
-     *
-     * @param string $title   The example title
-     * @param string $message The error message
-     *
-     * @return string
+     * Formats an outcome by how it ended.
      */
-    public function formatError(string $title, string $message): string
+    public function format(Outcome $outcome): string
     {
-        return $this->formatFail($title, $message);
+        return match ($outcome->state) {
+            State::Passed, State::Risky => $this->formatPass($outcome),
+            State::Failed, State::Undefined => $this->formatFail($outcome),
+            State::Errored => $this->formatError($outcome),
+            State::Pending => $this->formatPending($outcome),
+            State::Skipped => $this->formatSkipped($outcome),
+        };
     }
 
     /**
-     * Formats the final summary line shown after all examples have run.
+     * The line after every outcome: how many examples and scenarios there
+     * were, and how they ended.
      *
-     * @param int $total   Total number of examples
-     * @param int $passed  Number of passing examples
-     * @param int $failed  Number of failing examples
-     * @param int $pending Number of pending or skipped examples
-     * @param int $errors  Number of errored examples
-     *
-     * @return string
+     * @param list<Outcome> $outcomes
      */
-    public function formatSummary(int $total, int $passed, int $failed, int $pending, int $errors): string
+    public function formatSummary(array $outcomes): string
     {
-        return sprintf('%d example%s (%d passed, %d failed, %d pending, %d errored)', $total, $total === 1 ? '' : 's', $passed, $failed, $pending, $errors);
+        $ended = $this->endings($outcomes);
+
+        return implode(', ', $this->kinds($outcomes)) . ($ended === [] ? '' : ' (' . implode(', ', $ended) . ')');
+    }
+
+    /**
+     * @param list<Outcome> $outcomes
+     * @return list<string>
+     */
+    private function kinds(array $outcomes): array
+    {
+        $counted = [];
+
+        foreach (Kind::cases() as $kind) {
+            $count = count(array_filter($outcomes, static fn(Outcome $outcome): bool => $outcome->kind === $kind));
+            if ($count > 0 || ($outcomes === [] && $kind === Kind::Example)) {
+                $counted[] = $count . ' ' . $kind->value . ($count === 1 ? '' : 's');
+            }
+        }
+
+        return $counted;
+    }
+
+    /**
+     * @param list<Outcome> $outcomes
+     * @return list<string>
+     */
+    private function endings(array $outcomes): array
+    {
+        $ended = [];
+
+        foreach (State::cases() as $state) {
+            $count = count(array_filter($outcomes, static fn(Outcome $outcome): bool => $outcome->state === $state));
+            if ($count > 0) {
+                $ended[] = $count . ' ' . $state->value;
+            }
+        }
+
+        return $ended;
     }
 }

@@ -33,6 +33,17 @@ describe(CoverageData::class, function () {
         expect(array_keys($filtered))->toBe(['PhpSpec/Loader.php', 'PhpSpec/Mock/Double.php']);
     });
 
+    it('filterData keeps the files of several source directories, named from the project root, and passes over one that is not there', function () {
+        $data = [
+            realpath('src') . '/PhpSpec/Loader.php' => [1 => 1],
+            realpath('spec') . '/PhpSpec/Loader.spec.php' => [1 => 1],
+            realpath('features') . '/steps/runner.steps.php' => [1 => 1],
+        ];
+
+        expect(array_keys(CoverageData::filterData($data, 'src', 'spec')))->toBe(['spec/PhpSpec/Loader.spec.php', 'src/PhpSpec/Loader.php']);
+        expect(array_keys(CoverageData::filterData($data, 'src', 'nowhere')))->toBe(['PhpSpec/Loader.php']);
+    });
+
     it('filterData matches Windows-style backslash paths', function () {
         $realSrc = (string) realpath('src');
         $windowsStyleFile = str_replace('/', '\\', $realSrc . '/PhpSpec/Loader.php');

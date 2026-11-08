@@ -3,12 +3,31 @@
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
+use PhpSpec\TemporaryDirectory;
 use PhpSpec\Filesystem;
 use PhpSpec\Suite;
 
 describe(Loader::class, function () {
 
-    it("instantiates", function (Filesystem $fs) {
+    it("names the spec and feature files its targets name, in the order a load finds them, and loads none of them", function () {
+    $root = TemporaryDirectory::create('phpspec_loader_files_');
+    foreach (['spec/App', 'features/support', 'features/steps', 'features/shop'] as $directory) {
+        mkdir($root->path . '/' . $directory, 0777, true);
+    }
+    file_put_contents($root->path . '/spec/App/Basket.spec.php', '<?php throw new \RuntimeException("required");');
+    file_put_contents($root->path . '/features/shop/paying.feature', "Feature: Paying\n  Scenario: By card\n    Given a card\n");
+    file_put_contents($root->path . '/features/support/env.php', '<?php define("PHPSPEC_LOADER_FILES_SUPPORT_RAN", true);');
+    file_put_contents($root->path . '/features/steps/steps.php', '<?php define("PHPSPEC_LOADER_FILES_STEPS_RAN", true);');
+    $loader = new Loader(null, '.spec.php', $root->path . '/features');
+
+    $files = $loader->files($root->path . '/spec,' . $root->path . '/features/shop/paying.feature:2');
+
+    expect($files)->toBe([$root->path . '/spec/App/Basket.spec.php', $root->path . '/features/shop/paying.feature']);
+    expect([defined('PHPSPEC_LOADER_FILES_SUPPORT_RAN'), defined('PHPSPEC_LOADER_FILES_STEPS_RAN')])->toBe([false, false]);
+    $root->remove();
+});
+
+it("instantiates", function (Filesystem $fs) {
         $loader = new Loader($fs);
         expect($loader)->toBeAnInstanceOf(Loader::class);
     });
@@ -317,6 +336,51 @@ describe(Loader::class, function () {
             expect($suite->getSpecifications())->toHaveCount(2);
         } finally {
             exec('rm -rf ' . escapeshellarg($root));
+        }
+    });
+
+    it("loads a steps file once in all the loads it is asked for, as a worker loads each file it is handed", function () {
+        $root = TemporaryDirectory::create('phpspec_loader_loads_');
+        $function = 'loader_loads_' . bin2hex(random_bytes(8));
+        mkdir($root->path . '/features/steps', 0777, true);
+        file_put_contents($root->path . '/features/one.feature', "Feature: One\n  Scenario: First\n    Given a shared step\n");
+        file_put_contents($root->path . '/features/two.feature', "Feature: Two\n  Scenario: Second\n    Given a shared step\n");
+        file_put_contents($root->path . '/features/steps/shared.steps.php', "<?php\nfunction {$function}(): bool { return true; }\ngiven('a shared step', function () { expect({$function}())->toBeTrue(); });\n");
+
+        try {
+            $loader = new Loader(featuresPath: $root->path . '/features');
+
+            foreach (['one', 'two'] as $name) {
+                $feature = $loader->load($root->path . "/features/{$name}.feature")->getSpecifications()[0];
+
+                expect($feature->run()->getResults()[0]->getResults()[0]->isPassed())->toBeTrue();
+            }
+        } finally {
+            $root->remove();
+        }
+    });
+
+    it("reports what its steps and support files raise as they load on the first feature it loads, once", function () {
+        $root = TemporaryDirectory::create('phpspec_loader_noisy_');
+        mkdir($root->path . '/features/steps', 0777, true);
+        mkdir($root->path . '/features/support', 0777, true);
+        file_put_contents($root->path . '/features/a.feature', "Feature: A\n  Scenario: One\n    Given a step\n");
+        file_put_contents($root->path . '/features/b.feature', "Feature: B\n  Scenario: Two\n    Given a step\n");
+        file_put_contents($root->path . '/features/steps/noisy.steps.php', "<?php\ntrigger_error('the steps load', E_USER_WARNING);\ngiven('a step', fn() => null);\n");
+        file_put_contents($root->path . '/features/support/Noisy' . bin2hex(random_bytes(4)) . '.php', "<?php\ntrigger_error('the support loads', E_USER_NOTICE);\n");
+
+        try {
+            $loader = new Loader(featuresPath: $root->path . '/features');
+            [$a, $b] = $loader->load($root->path . '/features')->getSpecifications();
+            $again = $loader->load($root->path . '/features/a.feature')->getSpecifications()[0];
+
+            $noted = static fn($feature): array => array_column([...$feature->run()->getResults()[0]->getResults()[0]->getWarnings(), ...$feature->run()->getResults()[0]->getResults()[0]->getNotices()], 'message');
+
+            expect($noted($a))->toBe(['the steps load', 'the support loads']);
+            expect($noted($b))->toBe([]);
+            expect($noted($again))->toBe([]);
+        } finally {
+            $root->remove();
         }
     });
 

@@ -14,7 +14,7 @@ describe(Answers::class, function () {
             file_put_contents($root . '/src/' . $path, str_replace('NS', $namespace, $code));
         }
 
-        $loader = new ProjectAutoloader([], new SourceLayout('src', [$namespace => 'src']), $root);
+        $loader = new ProjectAutoloader(new SourceLayout('src', [$namespace => 'src']), $root);
         spl_autoload_register($loader);
         Answers::reset();
 

@@ -111,4 +111,4 @@ Requires PCOV enabled, or Xdebug in coverage mode (`xdebug.mode=coverage`).
 - [Matchers](matchers.md): All 30+ available matchers
 - [Mocking](mocking.md): Test doubles with `mock()` and `allow()`
 - [CLI Reference](cli.md): All commands and options
-- [Configuration](configuration.md): `phpspec.json` reference
+- [Configuration](configuration.md): the config file reference

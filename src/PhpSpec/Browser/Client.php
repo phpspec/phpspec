@@ -15,6 +15,7 @@
 namespace PhpSpec\Browser;
 
 use Closure;
+use PhpSpec\ByReturnValue;
 
 /**
  * @internal
@@ -86,14 +87,14 @@ final class Client implements Browser
         if ($this->transport) {
             ['body' => $body, 'headers' => $rawHeaders] = ($this->transport)($url, $context);
         } else {
-            $http_response_header = [];
-            set_error_handler(fn() => true);
-            try {
+            $rawHeaders = [];
+            $body = (new ByReturnValue())->call(static function () use ($url, $context, &$rawHeaders): string|false {
+                $http_response_header = [];
                 $body = file_get_contents($url, false, $context);
-            } finally {
-                restore_error_handler();
-            }
-            $rawHeaders = $http_response_header;
+                $rawHeaders = $http_response_header;
+
+                return $body;
+            });
         }
 
         if ($body === false) {

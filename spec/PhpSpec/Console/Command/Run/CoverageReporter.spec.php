@@ -73,7 +73,7 @@ describe(CoverageReporter::class, function () {
                 $collector->beginSpec('spec/Probe.spec.php');
                 $collector->beginExample();
                 $collector->endExample('probes');
-                $reporter->report(new BufferedOutput(), new CoverageOptions(srcPath: 'src'));
+                $reporter->report(new BufferedOutput(), new CoverageOptions(sources: ['src']));
 
                 expect($reporter->adapter())->toBeAnInstanceOf(CoverageAdapter::class);
                 expect($reporter->hits())->not()->toBeEmpty();
@@ -89,7 +89,7 @@ describe(CoverageReporter::class, function () {
                 $collector->beginSpec('spec/Probe.spec.php');
                 $collector->beginExample();
                 $collector->endExample('probes');
-                $reporter->report(new BufferedOutput(), new CoverageOptions(srcPath: 'src'));
+                $reporter->report(new BufferedOutput(), new CoverageOptions(sources: ['src']));
 
                 expect($collector->getTests())->toHaveKey('spec/Probe.spec.php::probes');
             });
@@ -107,7 +107,7 @@ describe(CoverageReporter::class, function () {
         it('reports nothing when collection was never started', function () {
             $output = new BufferedOutput();
             $reporter = $this->reporter;
-            $options = new CoverageOptions(srcPath: 'src');
+            $options = new CoverageOptions(sources: ['src']);
 
             expect($reporter->report($output, $options))->toBeNull();
             expect($output->fetch())->toBe('');
@@ -133,7 +133,7 @@ describe(CoverageReporter::class, function () {
             $output = new BufferedOutput();
             $reporter = new CoverageReporter(new CoverageEngines(null, $php, ''), new Exclusions(['Excluded.php'], $fs, dirname($fixture)));
 
-            $verdict = $reporter->report($output, new CoverageOptions(srcPath: dirname($fixture), showText: true));
+            $verdict = $reporter->report($output, new CoverageOptions(sources: [dirname($fixture)], showText: true));
 
             expect($verdict->percentage->value())->toBe(100.0);
             expect($output->fetch())->not()->toContain('Excluded.php');
@@ -157,7 +157,7 @@ describe(CoverageReporter::class, function () {
 
             try {
                 $verdict = $reporter->report($output, new CoverageOptions(
-                    srcPath: dirname($fixture),
+                    sources: [dirname($fixture)],
                     showText: true,
                     cloverPath: $dir . '/clover.xml',
                     htmlPath: $dir . '/html',
@@ -200,7 +200,7 @@ describe(CoverageReporter::class, function () {
 
             try {
                 $verdict = $reporter->report($output, new CoverageOptions(
-                    srcPath: dirname($fixture),
+                    sources: [dirname($fixture)],
                     coverageMin: '90',
                 ));
 
@@ -227,7 +227,7 @@ describe(CoverageReporter::class, function () {
             $reporter = $this->reporter;
 
             try {
-                $exitCode = $reporter->report($output, new CoverageOptions(srcPath: 'src', partialPath: $partialPath));
+                $exitCode = $reporter->report($output, new CoverageOptions(sources: ['src'], partialPath: $partialPath));
 
                 expect($exitCode)->toBeNull();
                 $state = json_decode((string) file_get_contents($partialPath), true);
@@ -252,7 +252,7 @@ describe(CoverageReporter::class, function () {
             $reporter = $this->reporter;
 
             $reporter->mergePartials([$unreadable], ['Coverage is incomplete: a worker exited with code 255 before handing over its coverage.']);
-            $refusal = $reporter->report($output, new CoverageOptions(srcPath: 'src', showText: true, coverageMin: '90'));
+            $refusal = $reporter->report($output, new CoverageOptions(sources: ['src'], showText: true, coverageMin: '90'));
 
             expect($refusal)->toBeAnInstanceOf(CoverageRefusal::class);
             expect($refusal->reason)->toBe("Coverage is incomplete: a worker exited with code 255 before handing over its coverage.\nCoverage is incomplete: a worker handed over coverage that could not be read.");

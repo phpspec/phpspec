@@ -31,21 +31,33 @@ trait RaisedNotesTrait
     private array $notices = [];
 
     /**
-     * Files each note raised while this ran under its kind, once however often
-     * it was raised.
+     * Files each note raised while this ran under its kind, with those it was
+     * told of before, once however often it was raised.
      *
      * @param list<array{severity: int, message: string, file: string, line: int}> $notes
      */
     public function raised(array $notes): void
     {
         $unique = [];
-        foreach ($notes as $note) {
+        foreach ([...$this->warnings, ...$this->deprecations, ...$this->notices, ...$notes] as $note) {
             $unique[$note['message'] . ':' . $note['file'] . ':' . $note['line']] = $note;
         }
 
         $this->warnings = $this->ofSeverity($unique, E_WARNING, E_USER_WARNING);
         $this->deprecations = $this->ofSeverity($unique, E_DEPRECATED, E_USER_DEPRECATED);
         $this->notices = $this->ofSeverity($unique, E_NOTICE, E_USER_NOTICE);
+    }
+
+    /**
+     * Keeps, of every kind, only the notes the callback answers true for.
+     *
+     * @param callable(array{severity: int, message: string, file: string, line: int, loading?: true}): bool $keep
+     */
+    public function keepNotes(callable $keep): void
+    {
+        $this->warnings = array_values(array_filter($this->warnings, $keep));
+        $this->deprecations = array_values(array_filter($this->deprecations, $keep));
+        $this->notices = array_values(array_filter($this->notices, $keep));
     }
 
     /**

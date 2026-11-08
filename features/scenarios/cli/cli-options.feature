@@ -267,6 +267,55 @@ Feature: CLI options
     And the output should contain "second example" exactly 1 times
     And the output should contain "2 examples"
 
+  Scenario: A whole file asked for alongside one of its lines runs whole however the two are spelled
+    Given a spec file "spec/App/Whole.spec.php":
+      """
+      <?php
+      describe('Whole', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "./spec/App/Whole.spec.php:3 spec/App/Whole.spec.php"
+    Then all examples should pass
+    And the output should contain "first example" exactly 1 times
+    And the output should contain "second example" exactly 1 times
+
+  Scenario: A directory asked for alongside a line of a file inside it runs the whole directory, each file once
+    Given a spec file "spec/App/Whole.spec.php":
+      """
+      <?php
+      describe('Whole', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App spec/App/Whole.spec.php:3"
+    Then all examples should pass
+    And the output should contain "first example" exactly 1 times
+    And the output should contain "second example" exactly 1 times
+
+  Scenario: An id that selects no example stops the run without heading a spec it ran nothing of
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php@deadbeef0000"
+    Then the output should contain "No example at spec/App/Calc.spec.php@deadbeef0000"
+    And the output should not contain "Spec:"
+    And the exit code should be 1
+
   Scenario: A line in a describe but in none of its examples keeps the whole describe, whatever other lines are asked for
     Given a spec file "spec/App/Selection.spec.php":
       """
@@ -562,6 +611,92 @@ Feature: CLI options
       """
     And the file "report.html" should contain "⚠ totals are rounded"
 
+  Scenario: The HTML report opens a feature red when a step has no definition, and says where an error broke
+    Given a spec file "spec/App/Divide.spec.php":
+      """
+      <?php
+      describe('Divide', function () {
+          it('by zero', function () {
+              throw new RuntimeException('division by zero');
+          });
+      });
+      """
+    And a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Paying
+          Given a step nobody defined
+      """
+    When I run phpspec run with option "-f html -o report.html"
+    Then the file "report.html" should contain:
+      """
+      <details class="example errored">
+      """
+    And the file "report.html" should contain:
+      """
+      <p class="message">RuntimeException: division by zero</p>
+      """
+    And the file "report.html" should contain:
+      """
+      <p class="where">at spec/App/Divide.spec.php:4</p>
+      """
+    When I run phpspec run with option "features/ -f html -o stories.html"
+    Then the file "stories.html" should contain:
+      """
+      <details class="group failed" open>
+      <summary>Shop <span class="count">1 step · 1 undefined</span></summary>
+      """
+    And the file "stories.html" should contain:
+      """
+      <p class="message">Undefined step: Given a step nobody defined</p>
+      """
+
+  Scenario: The HTML report tells an error from a failure in its header and group bars
+    Given a spec file "spec/App/Ledger.spec.php":
+      """
+      <?php
+      describe('Ledger', function () {
+          it('balances', fn () => expect(1)->toBe(2));
+          it('opens', function () {
+              throw new RuntimeException('disk full');
+          });
+      });
+      """
+    And a feature file "features/a_ledger.feature":
+      """
+      Feature: Ledger
+        Scenario: Balances
+          Given a failing step
+        Scenario: Opens
+          Given a breaking step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given("a failing step", fn () => expect(1)->toBe(2));
+      given("a breaking step", function () {
+          throw new RuntimeException('disk full');
+      });
+      """
+    When I run phpspec run with option "-f html -o report.html"
+    Then the file "report.html" should contain:
+      """
+      <p class="meta">2 examples · 1 failed · 1 errored</p>
+      """
+    And the file "report.html" should contain:
+      """
+      <span class="count">2 examples · 1 failed · 1 errored</span>
+      """
+    When I run phpspec run with option "features/ -f html -o stories.html"
+    Then the file "stories.html" should contain:
+      """
+      <p class="meta">2 steps · 1 failed · 1 errored</p>
+      """
+    And the file "stories.html" should contain:
+      """
+      <span class="count">2 steps · 1 failed · 1 errored</span>
+      """
+
   Scenario: Unknown formats are rejected instead of silently falling back
     Given a spec file "spec/App/BadFormat.spec.php":
       """
@@ -717,7 +852,23 @@ Feature: CLI options
       """
     When I run phpspec run with option "--profile"
     Then the output should contain "slowest examples"
-    And the output should contain "s Profile > Profile > runs quickly"
+    And the output should contain "s Profile > runs quickly"
+
+  Scenario: Profile lists the slowest scenarios too
+    Given a feature file "features/slow.feature":
+      """
+      Feature: Slow
+        Scenario: Waits
+          Given a slow step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a slow step', fn () => usleep(20000));
+      """
+    When I run phpspec run with option "features/ --profile"
+    Then the output should contain "slowest examples and scenarios"
+    And the output should contain "s Slow > Waits"
 
   Scenario: Bootstrap file
     Given a file "bootstrap.php":
@@ -1265,8 +1416,8 @@ Feature: CLI options
       });
       """
     When I run phpspec run with option "--format tap"
-    Then the output should contain "ok 1 - TapReasons is pending # SKIP Needs the rates API"
-    And the output should contain "ok 2 - TapReasons is skipped # SKIP No network on this machine"
+    Then the output should contain "ok 1 - TapReasons > is pending # SKIP Needs the rates API"
+    And the output should contain "ok 2 - TapReasons > is skipped # SKIP No network on this machine"
 
   Scenario: A run a stop option cut short says so
     Given a spec file "spec/App/Careful.spec.php":
@@ -1291,8 +1442,101 @@ Feature: CLI options
       """
     When I run phpspec run with option "--story --format tap"
     Then the output should contain "1..1"
-    And the output should contain "not ok 1 - Paying"
+    And the output should contain "not ok 1 - Shop > Paying"
     And the output should contain "Undefined step: When I pay"
+
+  Scenario: TAP judges a scenario as the run does, and says where one went wrong
+    Given a feature file "features/remote.feature":
+      """
+      Feature: Remote
+        Scenario: Skipped by its hook
+          Given a step
+        Scenario: Waits, then lacks a step
+          Given a pending step
+          Then a step nobody defined
+        Scenario: Fails
+          Given a failing step
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      beforeScenario(function () {
+          static $first = true;
+          if ($first) {
+              $first = false;
+              skip('no network');
+          }
+      });
+      given('a step', fn () => expect(1)->toBe(1));
+      given('a pending step', fn () => pending('later'));
+      given('a failing step', fn () => expect(1)->toBe(2));
+      """
+    When I run phpspec run with option "--story --format tap"
+    Then the output should contain "ok 1 - Remote > Skipped by its hook # SKIP no network"
+    And the output should contain:
+      """
+      not ok 2 - Remote > Waits, then lacks a step
+        ---
+        message: "Undefined step: Then a step nobody defined"
+        step: Then a step nobody defined
+        ...
+      """
+    And the output should contain:
+      """
+      not ok 3 - Remote > Fails
+        ---
+        message: Expected 1 to be 2
+        step: Given a failing step
+        at: features/steps/steps.php:11
+        ...
+      """
+    And the exit code should be 1
+
+  Scenario: JUnit reports each scenario as one testcase, judged as the run judges it
+    Given a feature file "features/shop.feature":
+      """
+      Feature: Shop
+        Scenario: Pays
+          Given a passing step
+        Scenario: Refunds
+          Given a failing step
+          Then a passing step
+        Scenario: Later
+          Given a pending step
+        Scenario: Unknown
+          Given a step nobody defined
+      """
+    And a step file "features/steps/steps.php":
+      """
+      <?php
+      given('a passing step', fn () => expect(1)->toBe(1));
+      given('a failing step', fn () => expect(1)->toBe(2));
+      given('a pending step', fn () => pending('needs the gateway'));
+      """
+    When I run phpspec run with option "--story --format junit"
+    Then the output should contain:
+      """
+      <testsuite name="Shop" type="feature" file="features/shop.feature" tests="4" failures="2" errors="0" skipped="1"
+      """
+    And the output should contain:
+      """
+      <testcase name="Refunds" classname="Shop" file="features/shop.feature" line="4"
+      """
+    And the output should contain:
+      """
+      <failure message="Expected 1 to be 2">Expected 1 to be 2
+
+      features/steps/steps.php:3</failure>
+      """
+    And the output should contain:
+      """
+      <skipped message="needs the gateway"/>
+      """
+    And the output should contain:
+      """
+      <failure message="Undefined step: Given a step nobody defined">
+      """
+    And the output should not contain "Given a passing step"
 
   Scenario: JUnit carries the reason an example was left pending or skipped
     Given a spec file "spec/App/JunitReasons.spec.php":

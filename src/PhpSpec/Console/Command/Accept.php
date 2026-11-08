@@ -228,6 +228,7 @@ final class Accept extends Command
             Generation::Accepts,
             $this->config->getSpecSuffix(),
             steps: new StepsHome($this->config, $this->filesystem),
+            composer: $this->config->composerJson($this->filesystem),
         );
 
         return $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');

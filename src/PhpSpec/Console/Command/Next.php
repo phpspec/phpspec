@@ -437,7 +437,7 @@ final class Next extends Command
         return new Grounding(
             $summary,
             ProjectPath::relativeOrNull($recency->mostRecentFeature($featuresDir)),
-            ProjectPath::relativeOrNull($recency->mostRecentSource(getcwd() . '/' . $this->config->srcDir())),
+            ProjectPath::relativeOrNull($recency->mostRecentSource(...$this->sourceDirectories(getcwd() ?: '.'))),
             namedFiles: $this->workingStoryFiles($summary, $recency),
         );
     }
@@ -463,7 +463,7 @@ final class Next extends Command
         $candidates = [$feature, ...$this->stepsServing($cwd . '/' . $feature)];
 
         $spec = $recency->mostRecentSource($cwd . '/' . $this->config->specDir());
-        $source = $recency->mostRecentSource($cwd . '/' . $this->config->srcDir());
+        $source = $recency->mostRecentSource(...$this->sourceDirectories($cwd));
         foreach ([$spec, $source] as $absolute) {
             if ($absolute !== null) {
                 $candidates[] = ProjectPath::relativeOrNull($absolute) ?? $absolute;
@@ -478,6 +478,14 @@ final class Next extends Command
         }
 
         return $files;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function sourceDirectories(string $cwd): array
+    {
+        return array_map(static fn(string $root): string => $cwd . '/' . $root, $this->config->sourceRoots());
     }
 
     /**

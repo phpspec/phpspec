@@ -118,8 +118,8 @@ describe(Dot::class, function() {
         $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$pending, $skipped])]));
 
         $text = str_replace("\r\n", "\n", $output->fetch());
-        expect($text)->toContain("Pending:\n\n  • MySpec > fetches the rates\n    Needs the rates API\n");
-        expect($text)->toContain("Skipped:\n\n  • MySpec > posts the order\n    No network here\n");
+        expect($text)->toContain("Pending:\n\n  • fetches the rates\n    Needs the rates API\n");
+        expect($text)->toContain("Skipped:\n\n  • posts the order\n    No network here\n");
     });
 
     it("formats results with nested contexts", function() {
@@ -271,7 +271,7 @@ describe(Dot::class, function() {
         $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("R");
         expect($text)->toContain("1 risky");
-        expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");
+        expect($text)->toContain("Risky:\n\n  • calls the code\n    no expectation\n");
     });
 
     it("formats skipped results with S", function() {
@@ -549,8 +549,8 @@ describe(Dot::class, function() {
         $formatter->format($suite);
         $text = $output->fetch();
         expect($text)->toContain("Errors:");
-        expect($text)->toContain("Spec > err1");
-        expect($text)->toContain("Spec > err2");
+        expect($text)->toContain("• err1");
+        expect($text)->toContain("• err2");
         expect($text)->toContain("2 errored");
     });
 
@@ -568,11 +568,11 @@ describe(Dot::class, function() {
         $formatter->format($suite);
         $text = $output->fetch();
         expect($text)->toContain("Failures:");
-        expect($text)->toContain("MySpec > fails");
+        expect($text)->toContain("• fails");
         expect($text)->toContain('expected: "the needle"');
         expect($text)->toContain('got: "the haystack text"');
         expect($text)->toContain("Skipped:");
-        expect($text)->toContain("MySpec > skipped one");
+        expect($text)->toContain("• skipped one");
     });
 
     it("formats suite with no examples", function() {

@@ -5,6 +5,7 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Console\Prompt;
 use PhpSpec\Console\Command\Describe;
 use PhpSpec\Filesystem;
+use PhpSpec\Source\ComposerJson;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -81,6 +82,43 @@ describe(Describe::class, function() {
             expect($fs->write(satisfy($specFile('spec/Acme/Thing.spec.php')), any()))->toBeCalled();
 
             (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt))->run(new ArrayInput(['class' => 'Acme/Thing']), new NullOutput());
+        });
+
+        it("maps the name kept as written for Composer, and says so", function (Filesystem $fs, Prompt $prompt) use ($mapped) {
+            $files = new ArrayObject(['/app/composer.json' => '{"autoload": {"psr-4": {"Brew\\\\": "src/Brew/", "Another\\\\": "src/Another/"}}}']);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($files[$path]));
+            allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $files[$path] ?? '');
+            allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use ($files): void {
+                $files[$path] = $content;
+            });
+            allow($fs->mkdir(any()));
+            allow($prompt->ask(any()))->toReturn('0');
+
+            $output = new BufferedOutput();
+            (new Describe(new SpecGenerator('spec', $fs), $mapped(), $prompt, new ComposerJson('/app/composer.json', $fs)))->run(new ArrayInput(['class' => 'Acme/Thing']), $output);
+
+            expect($files['/app/composer.json'])->toContain('"": "src/"');
+            expect($output->fetch())->toContain('Composer autoload was updated to include "": "src/". Run composer dumpautoload next.');
+        });
+
+        it("does not offer the name as written where Composer maps the source path to another namespace", function (Filesystem $fs, Prompt $prompt) use ($specFile) {
+            $files = new ArrayObject(['/app/composer.json' => '{"autoload": {"psr-4": {"Other\\\\": "src/"}}}']);
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($files[$path]));
+            allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $files[$path] ?? '');
+            allow($fs->mkdir(any()));
+            $answers = ['0', '1'];
+            allow($prompt->ask(any()))->toReturnUsing(function () use (&$answers) {
+                return array_shift($answers);
+            });
+            expect($fs->write(satisfy($specFile('spec/Other/Brew/Acme/Sombrero.spec.php')), any()))->toBeCalled();
+
+            $output = new BufferedOutput();
+            (new Describe(new SpecGenerator('spec', $fs), new SourceLayout('src', ['Other\\' => 'src']), $prompt, new ComposerJson('/app/composer.json', $fs)))->run(new ArrayInput(['class' => 'Brew/Acme/Sombrero']), $output);
+
+            $said = $output->fetch();
+            expect($said)->not()->toContain('as written');
+            expect($said)->toContain('from 1 to 1');
+            expect($files['/app/composer.json'])->toBe('{"autoload": {"psr-4": {"Other\\\\": "src/"}}}');
         });
 
         it("puts it into the default namespace without asking", function (Filesystem $fs, Prompt $prompt) use ($mapped, $specFile) {

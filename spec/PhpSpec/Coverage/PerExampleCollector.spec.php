@@ -17,10 +17,9 @@ describe(PerExampleCollector::class, function () {
         $collector->beginExample();
         $collector->endExample('adds two numbers');
 
-        expect($collector->getLines())->toBe([
-            '/project/src/App/Calculator.php' => [
-                12 => ['spec/App/Calculator.spec.php::Calculator > adds two numbers'],
-            ],
+        expect($collector->coveredFiles())->toBe(['/project/src/App/Calculator.php']);
+        expect($collector->linesOf('/project/src/App/Calculator.php'))->toBe([
+            12 => ['spec/App/Calculator.spec.php::Calculator > adds two numbers'],
         ]);
     });
 
@@ -81,7 +80,7 @@ describe(PerExampleCollector::class, function () {
         expect($driver->pause())->toHaveBeenCalled()->twice();
         expect($driver->stop())->toHaveBeenCalled()->once();
         expect($collector->getAggregate())->toBe(['/project/src/App/Calculator.php' => [12 => 1, 13 => -1]]);
-        expect($collector->getLines())->toBe([]);
+        expect($collector->coveredFiles())->toBe([]);
         expect($collector->getTests())->toBe([]);
     });
 
@@ -105,6 +104,37 @@ describe(PerExampleCollector::class, function () {
         expect(array_keys($collector->getTests()))->toBe(['spec/App/Calculator.spec.php::Calculator > runs a spec']);
     });
 
+    it('keeps each line at the most any example made of it: run, then code, then no code', function (CoverageDriver $driver) {
+        allow($driver->start());
+        allow($driver->stop())->toReturnUsing(function () {
+            static $cycle = 0;
+            $cycle++;
+
+            return [
+                1 => ['/project/src/App/Calculator.php' => [12 => -1, 13 => -2, 14 => 1, 15 => -2]],
+                2 => ['/project/src/App/Calculator.php' => [12 => 1, 13 => -1, 14 => -1, 16 => -1], '/project/src/App/Other.php' => [3 => 1]],
+                3 => ['/project/src/App/Calculator.php' => [12 => -1, 13 => -2, 15 => -2, 17 => 1]],
+            ][$cycle];
+        });
+        $collector = new PerExampleCollector($driver);
+        $collector->beginSpec('spec/App/Calculator.spec.php');
+
+        foreach (['adds', 'subtracts', 'divides'] as $title) {
+            $collector->beginExample();
+            $collector->endExample($title);
+        }
+
+        expect($collector->getAggregate())->toBe([
+            '/project/src/App/Calculator.php' => [12 => 1, 13 => -1, 14 => 1, 15 => -2, 16 => -1, 17 => 1],
+            '/project/src/App/Other.php' => [3 => 1],
+        ]);
+        expect($collector->linesOf('/project/src/App/Calculator.php'))->toBe([
+            14 => ['spec/App/Calculator.spec.php::adds'],
+            12 => ['spec/App/Calculator.spec.php::subtracts'],
+            17 => ['spec/App/Calculator.spec.php::divides'],
+        ]);
+    });
+
     it('normalises away a leading ./ from the spec path in test identifiers', function (CoverageDriver $driver) {
         allow($driver->start());
         allow($driver->stop())->toReturn(['/project/src/App/Calculator.php' => [12 => 1]]);
@@ -114,7 +144,7 @@ describe(PerExampleCollector::class, function () {
         $collector->beginExample();
         $collector->endExample('adds');
 
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::adds',
         ]);
         expect($collector->getTests()['spec/App/Calculator.spec.php::adds']['spec_file'])
@@ -134,7 +164,7 @@ describe(PerExampleCollector::class, function () {
         $collector->beginExample();
         $collector->endExample('subtracts');
 
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::adds',
             'spec/App/Calculator.spec.php::subtracts',
         ]);
@@ -153,7 +183,28 @@ describe(PerExampleCollector::class, function () {
 
         $state = $collector->toArray();
         expect(array_keys($state['tests']))->toBe(['spec/App/Calculator.spec.php::adds', 'spec/App/Calculator.spec.php::subtracts']);
-        expect($state['lines'])->toBe(['/project/src/App/Calculator.php' => [12 => [0, 1]]]);
+        expect($state['lines'])->toBe(['/project/src/App/Calculator.php' => [12 => base64_encode(pack('V*', 0, 1))]]);
+    });
+
+    it('takes a test numbered past a byte from another process, and reads it back by name', function (CoverageDriver $driver) {
+        $names = array_map(static fn(int $number): string => "spec/A.spec.php::test {$number}", range(0, 299));
+        $tests = array_fill_keys($names, ['time' => 0.1, 'memory' => 1, 'spec_file' => 'spec/A.spec.php']);
+        $collector = new PerExampleCollector($driver);
+
+        $collector->applyState(['tests' => $tests, 'lines' => ['/project/src/A.php' => [7 => base64_encode(pack('V*', 299, 256, 3))]], 'aggregate' => []]);
+
+        expect($collector->linesOf('/project/src/A.php'))->toBe([7 => ['spec/A.spec.php::test 299', 'spec/A.spec.php::test 256', 'spec/A.spec.php::test 3']]);
+    });
+
+    it('adds a test named again to a line whose other tests only look like it, byte by byte', function (CoverageDriver $driver) {
+        $names = array_map(static fn(int $number): string => "spec/A.spec.php::test {$number}", range(0, 256));
+        $tests = array_fill_keys($names, ['time' => 0.1, 'memory' => 1, 'spec_file' => 'spec/A.spec.php']);
+        $collector = new PerExampleCollector($driver);
+
+        $collector->applyState(['tests' => $tests, 'lines' => ['/project/src/A.php' => [7 => base64_encode(pack('V*', 0, 1))]], 'aggregate' => []]);
+        $collector->applyState(['tests' => ['spec/A.spec.php::test 256' => $tests['spec/A.spec.php::test 256']], 'lines' => ['/project/src/A.php' => [7 => base64_encode(pack('V*', 0))]], 'aggregate' => []]);
+
+        expect($collector->linesOf('/project/src/A.php')[7])->toBe(['spec/A.spec.php::test 0', 'spec/A.spec.php::test 1', 'spec/A.spec.php::test 256']);
     });
 
     it('exports its state and merges state from another collector', function (CoverageDriver $driver, CoverageDriver $otherDriver) {
@@ -174,7 +225,7 @@ describe(PerExampleCollector::class, function () {
 
         $collector->applyState($other->toArray());
 
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::adds',
             'spec/App/Greeter.spec.php::greets',
         ]);

@@ -22,7 +22,7 @@ namespace PhpSpec\Coverage;
 final readonly class CoverageOptions
 {
     /**
-     * @param string $srcPath the source directory to scope the reports to
+     * @param list<string> $sources the source directories to scope the reports to
      * @param bool $showText whether to render the text coverage report
      * @param string|null $cloverPath path for the Clover XML report, or null to skip
      * @param string|null $htmlPath directory for the HTML report, or null to skip
@@ -31,7 +31,7 @@ final readonly class CoverageOptions
      * @param string|null $partialPath path to dump raw collector state to instead of rendering reports; used internally by parallel workers
      */
     public function __construct(
-        public string $srcPath,
+        public array $sources,
         public bool $showText = false,
         public ?string $cloverPath = null,
         public ?string $htmlPath = null,

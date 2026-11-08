@@ -40,6 +40,8 @@ final class Loader
      */
     private Filesystem $fs;
 
+    private readonly StepsFileCache $steps;
+
     public function __construct(
         ?Filesystem $filesystem = null,
         private string $specSuffix = '.spec.php',
@@ -47,6 +49,7 @@ final class Loader
         private ?string $stepsPath = null,
     ) {
         $this->fs = $filesystem ?? new RealFilesystem();
+        $this->steps = new StepsFileCache();
     }
 
     /**
@@ -65,11 +68,10 @@ final class Loader
         }
 
         $blocks = [];
-        $steps = new StepsFileCache();
 
-        foreach ($this->targets($files) as $path => ['lines' => $lines, 'ids' => $ids]) {
+        foreach (RunTargets::of($files)->each() as $path => ['lines' => $lines, 'ids' => $ids]) {
             if ($this->runsAsFeatures($path)) {
-                $blocks = array_merge($blocks, $this->loadFeatures($path, $steps, $lines));
+                $blocks = array_merge($blocks, $this->loadFeatures($path, $lines));
             } else {
                 LineTargetRegistry::add($path, ...$lines);
                 LineTargetRegistry::addIds($path, ...$ids);
@@ -86,6 +88,34 @@ final class Loader
         }
 
         return new Suite($blocks);
+    }
+
+    /**
+     * The spec and feature files the targets name, in the order a load finds
+     * them, found without loading any: no feature is parsed and no support or
+     * steps file is required, so nothing they do happens here.
+     *
+     * @param string|null $files the targets, comma-separated; ./spec when none
+     * @return list<string>
+     */
+    public function files(?string $files): array
+    {
+        $found = [];
+
+        foreach (array_keys(RunTargets::of($files ?: './spec')->each()) as $path) {
+            if (!$this->runsAsFeatures($path)) {
+                array_push($found, ...$this->specFiles($path));
+
+                continue;
+            }
+
+            $featureFiles = [];
+            $stepFiles = [];
+            $this->scanFeatures($path, $featureFiles, $stepFiles);
+            array_push($found, ...$featureFiles);
+        }
+
+        return $found;
     }
 
     /**
@@ -126,47 +156,6 @@ final class Loader
         }
 
         return $kept;
-    }
-
-    /**
-     * The paths to load, each with the lines its "path:LINE" selectors
-     * target and the example ids its "path@ID" selectors name. A path asked
-     * for whole has neither, and a selector on it does not narrow it.
-     *
-     * @param string $files the comma-separated paths
-     * @return array<string, array{lines: list<int>, ids: list<string>}>
-     */
-    private function targets(string $files): array
-    {
-        $targets = [];
-        $whole = [];
-
-        foreach (array_map('trim', explode(',', $files)) as $path) {
-            if ($path === '') {
-                continue;
-            }
-
-            if (preg_match('/^(.+)(?::(\d+)|@([0-9a-f]{12}))$/', $path, $matches) !== 1
-                || (!str_ends_with($matches[1], '.feature') && !str_ends_with($matches[1], $this->specSuffix))
-            ) {
-                $whole[$path] = true;
-                $targets[$path] = ['lines' => [], 'ids' => []];
-
-                continue;
-            }
-
-            if (!isset($whole[$matches[1]])) {
-                $targets[$matches[1]] ??= ['lines' => [], 'ids' => []];
-
-                if (($matches[3] ?? '') !== '') {
-                    $targets[$matches[1]]['ids'][] = $matches[3];
-                } else {
-                    $targets[$matches[1]]['lines'][] = (int) ($matches[2] ?? 0);
-                }
-            }
-        }
-
-        return $targets;
     }
 
     /**
@@ -229,26 +218,34 @@ final class Loader
     }
 
     /**
-     * Recursively scans a directory for *.spec.php files and creates Specification objects.
+     * The specifications under a path, in the order they are found.
      *
-     * @param string $directory root directory to scan
+     * @param string $directory a spec file, or a directory to scan
      * @return array<Specification>
      */
     private function loadSuite(string $directory): array
     {
-        $specifications = [];
+        return array_map($this->loadFile(...), $this->specFiles($directory));
+    }
 
-        if (!$this->fs->isFile($directory) && !$this->fs->isDir($directory)) {
+    /**
+     * The spec files a path names: itself, or every one under it, recursively.
+     *
+     * @return list<string>
+     */
+    private function specFiles(string $directory): array
+    {
+        if ($this->fs->isFile($directory)) {
+            return str_ends_with($directory, $this->specSuffix) ? [$directory] : [];
+        }
+
+        if (!$this->fs->isDir($directory)) {
             return [];
         }
 
-        if ($this->fs->isFile($directory)) {
-            return str_ends_with($directory, $this->specSuffix) ? [$this->loadFile($directory)] : [];
-        }
+        $files = [];
 
-        $files = $this->fs->scandir($directory);
-
-        foreach ($files as $file) {
+        foreach ($this->fs->scandir($directory) as $file) {
             if ($file === '.' || $file === '..') {
                 continue;
             }
@@ -256,14 +253,13 @@ final class Loader
             $filePath = self::join($directory, $file);
 
             if ($this->fs->isDir($filePath)) {
-                $subdirectoryFilePaths = $this->loadSuite($filePath);
-                $specifications = array_merge($specifications, $subdirectoryFilePaths);
+                array_push($files, ...$this->specFiles($filePath));
             } elseif ($this->fs->isFile($filePath) && str_ends_with($file, $this->specSuffix)) {
-                $specifications[] = $this->loadFile($filePath);
+                $files[] = $filePath;
             }
         }
 
-        return $specifications;
+        return $files;
     }
 
     /**
@@ -282,11 +278,10 @@ final class Loader
      * address.
      *
      * @param string $path directory or file containing .feature files
-     * @param StepsFileCache $steps the steps files this load has required, shared by every feature path it is given
      * @param list<int> $lines the line numbers from "file.feature:LINE" paths, none to load all scenarios
      * @return array<\PhpSpec\StoryBDD\Feature>
      */
-    private function loadFeatures(string $path, StepsFileCache $steps, array $lines = []): array
+    private function loadFeatures(string $path, array $lines = []): array
     {
         $parser = new GherkinParser();
         $featureFiles = [];
@@ -306,9 +301,13 @@ final class Loader
             $this->collectStepFiles($this->stepsPath, $stepFiles);
         }
 
+        // What the support and steps files raise as they load is reported
+        // with what sets up the first feature they load for.
+        $loading = new CapturedNotes(OwnCode::here());
+
         // Helper classes for steps, the Cucumber way: everything under
         // <features>/support loads before any step file needs it.
-        $supportFiles = $this->loadSupport($featuresRoot);
+        $supportFiles = $loading->during(fn(): array => $this->loadSupport($featuresRoot));
 
         // Fresh registry so prior spec execution can't pollute step definitions
         StoryBDDRegistry::init();
@@ -326,7 +325,7 @@ final class Loader
         }
 
         foreach ($uniqueStepFiles as $stepFile) {
-            $definitions = $steps->definitions($stepFile);
+            $definitions = $loading->during(fn(): array => $this->steps->definitions($stepFile));
             StoryBDDRegistry::steps()->adopt($definitions['steps']);
             StoryBDDRegistry::hooks()->adopt($definitions['hooks']);
         }
@@ -353,6 +352,7 @@ final class Loader
                 StoryBDDRegistry::steps(),
                 StoryBDDRegistry::hooks(),
                 $types,
+                $features === [] ? $loading->notes() : [],
             );
         }
 

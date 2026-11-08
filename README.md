@@ -176,7 +176,7 @@ See the [docs/](docs/) directory for detailed documentation:
 6. [Story BDD](docs/story-bdd.md): Gherkin features and step definitions
 7. [Code Generation](docs/code-generation.md): Spec, class, interface, method stub generation
 8. [CLI Reference](docs/cli.md): Commands and options
-9. [Configuration](docs/configuration.md): phpspec.json reference
+9. [Configuration](docs/configuration.md): config file reference
 10. [Architecture](docs/architecture.md): Internal design
 11. [Roadmap](docs/roadmap.md): Status and planned features
 

@@ -14,12 +14,15 @@
 
 namespace PhpSpec\Report\Formatter\Pretty;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\CountLines;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\Location;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Result\State;
 use PhpSpec\Result\StepResult;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -36,6 +39,17 @@ final class PrettyViews
      * cut at the same place and a reader comparing them sees the same text.
      */
     private const PRINTED_MAX = 4000;
+
+    /** The colour and the glyph each state is shown with, beside its title. */
+    private const GLYPHS = [
+        'passed' => ['green', '✓'],
+        'failed' => ['red', '✘'],
+        'errored' => ['red', '✘'],
+        'pending' => ['yellow', '○'],
+        'skipped' => ['cyan', '-'],
+        'risky' => ['yellow', '!'],
+        'undefined' => ['bright-blue', '?'],
+    ];
 
     /** The colour each tone of a counted outcome is printed in. */
     private const TONES = ['passed' => 'green', 'failed' => 'red', 'warned' => 'yellow', 'skipped' => 'cyan', 'undefined' => 'bright-blue'];
@@ -71,23 +85,15 @@ final class PrettyViews
     public static function example(OutputInterface $output, ExampleResult $example, int $indentation, bool $verbose = false): void
     {
         $output->write(PHP_EOL . str_repeat(' ', $indentation));
-        if ($example->isPending()) {
-            self::outcome($output, 'yellow', '○', $example->getTitle(), $example->getReason());
-        } elseif ($example->isSkipped()) {
-            self::outcome($output, 'cyan', '-', $example->getTitle(), $example->getReason());
-        } elseif ($example->isError() || $example->isFailure()) {
-            self::outcome($output, 'red', '✘', $example->getTitle());
-        } elseif ($example->isRisky()) {
-            self::outcome($output, 'yellow', '!', $example->getTitle(), 'no expectation');
-        } else {
-            self::outcome($output, 'green', '✓', $example->getTitle());
-            if ($verbose) {
-                self::duration($output, $example->getDuration());
-            }
+        $state = $example->state();
+        [$colour, $glyph] = self::GLYPHS[$state->value];
+        self::outcome($output, $colour, $glyph, $example->getTitle(), $state === State::Risky ? 'no expectation' : $example->getReason());
+        if ($state === State::Passed && $verbose) {
+            self::duration($output, $example->getDuration());
         }
         // A failing example shows what it printed with its failure, in the
         // detail at the end, so it is not said twice.
-        if (!$example->isFailure() && !$example->isError()) {
+        if ($state !== State::Failed && $state !== State::Errored) {
             self::printedOutput($output, $example->getOutput(), $indentation + 2);
         }
         self::notes($output, $indentation, $example);
@@ -119,22 +125,14 @@ final class PrettyViews
     public static function step(OutputInterface $output, StepResult $step, bool $verbose = false): void
     {
         $output->write(PHP_EOL . '    ');
-        if ($step->isPassed()) {
-            self::outcome($output, 'green', '✓', $step->getTitle());
-            if ($verbose) {
-                self::duration($output, $step->getDuration());
-            }
-        } elseif ($step->isFailure() || $step->isError()) {
-            self::outcome($output, 'red', '✘', $step->getTitle());
-        } elseif ($step->isPending()) {
-            self::outcome($output, 'yellow', '○', $step->getTitle(), $step->getReason());
-        } elseif ($step->isUndefined()) {
-            self::outcome($output, 'bright-blue', '?', $step->getTitle());
-        } elseif ($step->isSkipped()) {
-            self::outcome($output, 'cyan', '-', $step->getTitle(), $step->getReason());
+        $state = $step->state();
+        [$colour, $glyph] = self::GLYPHS[$state->value];
+        self::outcome($output, $colour, $glyph, $step->getTitle(), $step->getReason());
+        if ($state === State::Passed && $verbose) {
+            self::duration($output, $step->getDuration());
         }
 
-        if (!$step->isFailure() && !$step->isError()) {
+        if ($state !== State::Failed && $state !== State::Errored) {
             self::printedOutput($output, $step->getOutput(), 6);
         }
         self::notes($output, 4, $step);
@@ -233,23 +231,25 @@ final class PrettyViews
     }
 
     /**
-     * Where an error is blamed, followed by the other frames of the trace,
-     * innermost first. The blamed place itself is not repeated.
+     * Where an error is blamed, followed by the other frames of the trace
+     * that are the user's code, each named from the project root.
      *
-     * @param array{file: string, line: int} $at
-     * @param array<int, array{file?: string, line?: int}> $trace
+     * @param array<int, array<string, mixed>> $trace
      */
-    public static function location(OutputInterface $output, array $at, array $trace): void
+    public static function location(OutputInterface $output, Location $at, array $trace, ProjectRoot $root): void
     {
-        $output->write(PHP_EOL . '  at ' . $at['file'] . ':' . $at['line'] . PHP_EOL);
+        $output->write(PHP_EOL . '  at ' . $at . PHP_EOL);
 
-        $others = array_filter(
-            $trace,
-            static fn(array $frame): bool => ($frame['file'] ?? null) !== $at['file'] || ($frame['line'] ?? null) !== $at['line'],
-        );
+        $others = [];
+        foreach ($trace as $frame) {
+            $frameAt = Location::at(is_string($frame['file'] ?? null) ? $frame['file'] : null, is_int($frame['line'] ?? null) ? $frame['line'] : null)?->relativeTo($root);
+            if ($frameAt !== null && (string) $frameAt !== (string) $at) {
+                $others[] = $frameAt;
+            }
+        }
 
-        foreach (array_slice($others, 0, 5) as $frame) {
-            $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
+        foreach (array_slice($others, 0, 5) as $frameAt) {
+            $output->write('     ' . $frameAt . PHP_EOL);
         }
     }
 

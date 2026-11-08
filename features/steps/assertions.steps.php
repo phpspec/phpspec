@@ -91,6 +91,12 @@ then('the output should contain {string} exactly {int} times', function (string 
     }
 });
 
+// What phpspec or PHP said on the error stream alone, the run's standard
+// output left out.
+then('the error stream should contain {string} exactly {int} times', function (string $text, int $times) {
+    expect(substr_count(substr($this->output, strlen($this->stdout ?? '')), $text))->toBe($times);
+});
+
 then('the file {string} should not contain {string}', function (string $path, string $text) {
     $content = (string) file_get_contents($this->projectDir . '/' . $path);
     if (str_contains($content, $text)) {
@@ -240,6 +246,21 @@ then('the reported entry should have attached {string} containing {string}', fun
     expect(is_array($attached) ? ($attached['value'] ?? $attached['error'] ?? '') : (string) $attached)->toContain($text);
 });
 
+then('the reported entry {string} should have attached {string} containing {string}', function (string $example, string $name, string $text) use ($events, $entries) {
+    $named = array_values(array_filter($entries($events($this->stdout ?? $this->output)), fn(array $entry) => ($entry['example'] ?? null) === $example));
+    $attached = $named[0]['attachments'][$name] ?? null;
+
+    expect($named)->toHaveLength(1);
+    expect(is_array($attached) ? ($attached['value'] ?? $attached['error'] ?? '') : (string) $attached)->toContain($text);
+});
+
+then('the reported entry {string} should have attached nothing', function (string $example) use ($events, $entries) {
+    $named = array_values(array_filter($entries($events($this->stdout ?? $this->output)), fn(array $entry) => ($entry['example'] ?? null) === $example));
+
+    expect($named)->toHaveLength(1);
+    expect($named[0]['attachments'] ?? [])->toBe([]);
+});
+
 // What the subject printed is a diagnosis about the entry it printed under, and
 // it reaches the reader as data instead of landing in the middle of the report.
 then('the reported entry should have printed {string}', function (string $text) use ($events, $entries) {
@@ -257,6 +278,12 @@ then('the summary should state {string} as {string}', function (string $key, str
     expect($summary['event'] ?? null)->toBe('summary');
     expect(array_key_exists($key, $summary))->toBeTrue();
     expect(json_encode($summary[$key]))->toBe($value);
+});
+
+then('the reported entry\'s first step should be {string} at {string}', function (string $state, string $at) use ($events, $entries) {
+    $step = $entries($events($this->stdout ?? $this->output))[0]['steps'][0] ?? [];
+
+    expect([$step['state'] ?? null, $step['at'] ?? null])->toBe([$state, $at]);
 });
 
 then('the reported entry should be {string} at {string}', function (string $state, string $spec) use ($events, $entries) {
@@ -277,6 +304,25 @@ then('the reported entry should carry the {word} {string} raised at {string}', f
 then('the step {string} should carry the {word} {string} raised at {string}', function (string $title, string $kind, string $message, string $at) use ($events, $entries) {
     $entry = $entries($events($this->stdout ?? $this->output))[0] ?? [];
     $steps = array_values(array_filter($entry['steps'] ?? [], fn(array $step) => $step['title'] === $title));
+
+    expect($steps)->toHaveLength(1);
+    expect($steps[0][$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
+});
+
+$entryNamed = static function (array $entries, string $name): array {
+    $named = array_values(array_filter($entries, fn(array $entry) => ($entry['example'] ?? null) === $name));
+
+    expect($named)->toHaveLength(1);
+
+    return $named[0];
+};
+
+then('the entry {string} should carry the {word} {string} raised at {string}', function (string $name, string $kind, string $message, string $at) use ($events, $entries, $entryNamed) {
+    expect($entryNamed($entries($events($this->stdout ?? $this->output)), $name)[$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
+});
+
+then('the step {string} of {string} should carry the {word} {string} raised at {string}', function (string $title, string $name, string $kind, string $message, string $at) use ($events, $entries, $entryNamed) {
+    $steps = array_values(array_filter($entryNamed($entries($events($this->stdout ?? $this->output)), $name)['steps'] ?? [], fn(array $step) => $step['title'] === $title));
 
     expect($steps)->toHaveLength(1);
     expect($steps[0][$kind . 's'] ?? [])->toContain(['message' => $message, 'at' => $at]);
@@ -311,14 +357,6 @@ $rerunsById = static function (array $entry): void {
 
     expect($entry['rerun'] ?? null)->toBe('run ' . $file . '@' . ($entry['id'] ?? ''));
     expect($entry['rerun_argv'][1] ?? null)->toBe($file . '@' . ($entry['id'] ?? ''));
-};
-
-$entryNamed = static function (array $entries, string $name): array {
-    $named = array_values(array_filter($entries, fn(array $entry) => ($entry['example'] ?? null) === $name));
-
-    expect($named)->toHaveLength(1);
-
-    return $named[0];
 };
 
 then('each reported entry should rerun its spec file at its id', function () use ($events, $entries, $rerunsById) {
@@ -523,3 +561,14 @@ then('a step file should be generated with step definitions', function () {
 then('no file {string} should be generated', function (string $path) {
     expect(file_exists($this->projectDir . '/' . $path))->toBeFalse();
 });
+
+$listsInMocks = static fn(string $key): Closure => function (string $names) use ($key) {
+    $mocks = json_decode($this->stdout ?? $this->output, true)['mocks'] ?? [];
+
+    expect(array_column($mocks[$key] ?? [], 'name'))->toBe(array_map('trim', explode(',', $names)));
+};
+
+then('the api should list the mock functions {string}', $listsInMocks('functions'));
+then('the api should list the stubs {string}', $listsInMocks('stubs'));
+then('the api should list the call counts {string}', $listsInMocks('counts'));
+then('the api should list the mock expectations {string}', $listsInMocks('expectations'));

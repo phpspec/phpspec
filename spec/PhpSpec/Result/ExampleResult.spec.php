@@ -1,7 +1,10 @@
 <?php
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\Kind;
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Result\State;
 use PhpSpec\Specification\ExampleError;
 
 describe(ExampleResult::class, function() {
@@ -19,6 +22,85 @@ describe(ExampleResult::class, function() {
 
         $result = new ExampleResult("test", [$passing, $failing]);
         expect($result->isFailure())->toBe(true);
+    });
+
+    it("is in one state: left out before broken, broken before failing, failing before checking nothing", function() {
+        $failing = MatchResult::failed("a", "b", "fail", __FILE__, __LINE__);
+        $risky = new ExampleResult("checks nothing", []);
+        $risky->markRisky();
+        $riskyAndFailing = new ExampleResult("checks nothing and fails", [$failing]);
+        $riskyAndFailing->markRisky();
+
+        expect(array_map(fn(ExampleResult $result) => $result->state(), [
+            new ExampleResult("passes", [MatchResult::passed()]),
+            new ExampleResult("fails", [$failing]),
+            new ExampleResult("breaks", [], true),
+            new ExampleResult("waits", [], isPending: true),
+            new ExampleResult("skips", [], isSkipped: true),
+            $risky,
+            new ExampleResult("breaks and fails", [$failing], true),
+            new ExampleResult("waits and breaks", [], true, isPending: true),
+            new ExampleResult("skips and breaks", [$failing], true, isSkipped: true),
+            new ExampleResult("waits and skips", [], isPending: true, isSkipped: true),
+            $riskyAndFailing,
+        ]))->toBe([State::Passed, State::Failed, State::Errored, State::Pending, State::Skipped, State::Risky, State::Errored, State::Pending, State::Skipped, State::Pending, State::Failed]);
+    });
+
+    it("is written where it was declared, and nowhere until then", function() {
+        $result = new ExampleResult("adds", []);
+
+        expect($result->writtenAt())->toBeNull();
+
+        $result->declaredAt('/project/spec/Calc.spec.php', 12);
+
+        expect((string) $result->writtenAt())->toBe('/project/spec/Calc.spec.php:12');
+    });
+
+    it("failed at its first failing expectation, and nowhere when that site did not travel", function() {
+        $first = MatchResult::failed("a", "b", "first", __FILE__, $line = __LINE__);
+        $second = MatchResult::failed("c", "d", "second", __FILE__, __LINE__);
+
+        expect((string) (new ExampleResult("fails", [MatchResult::passed(), $first, $second]))->failedAt())->toBe(__FILE__ . ':' . $line);
+        expect((new ExampleResult("fails", [MatchResult::failed("a", "b", "lost", '', 0)]))->failedAt())->toBeNull();
+    });
+
+    it("broke where its error says to look, from the file it is declared in", function() {
+        $result = new ExampleResult("breaks", [], true);
+        $result->setError(ExampleError::fromReport("boom", "LogicException", "/project/vendor/acme/Client.php", 5, [['file' => '/project/src/App/Gateway.php', 'line' => 8], ['file' => '/project/spec/App/Basket.spec.php', 'line' => 7]]));
+        $result->declaredAt('/project/spec/App/Basket.spec.php', 3);
+
+        expect((string) $result->failedAt())->toBe('/project/spec/App/Basket.spec.php:7');
+    });
+
+    it("failed nowhere when it passed or was left out", function() {
+        $failing = MatchResult::failed("a", "b", "fail", __FILE__, __LINE__);
+
+        expect((new ExampleResult("passes", [MatchResult::passed()]))->failedAt())->toBeNull();
+        expect((new ExampleResult("waits", [$failing], isPending: true))->failedAt())->toBeNull();
+    });
+
+    it("tells its outcome under the name it is given: what went wrong, why it was left out, where, and how long it took", function() {
+        $root = ProjectRoot::at('/project');
+        $failing = new ExampleResult("subtracts", [MatchResult::failed(1, 2, "Expected 1 to be 2", '/project/spec/Calc.spec.php', 8)]);
+        $failing->declaredAt('/project/spec/Calc.spec.php', 7);
+        $failing->setDuration(0.5);
+        $risky = new ExampleResult("checks nothing", []);
+        $risky->markRisky();
+        $outcome = $failing->outcome(['Calc', 'subtracts'], $root);
+
+        expect([$outcome->kind, $outcome->titles, $outcome->state, $outcome->message, $outcome->reason, $outcome->duration])->toBe([Kind::Example, ['Calc', 'subtracts'], State::Failed, "Expected 1 to be 2", null, 0.5]);
+        expect([(string) $outcome->failedAt, (string) $outcome->writtenAt])->toBe(['spec/Calc.spec.php:8', 'spec/Calc.spec.php:7']);
+        expect([(new ExampleResult("waits", [], isPending: true, reason: "not yet"))->outcome(['waits'], $root)->reason, $risky->outcome(['checks nothing'], $root)->reason])->toBe(["not yet", "no expectation"]);
+        expect((new ExampleResult("passes", [MatchResult::passed()]))->outcome(['passes'], $root)->message)->toBeNull();
+    });
+
+    it("names in its outcome the class of what it threw, when it errored", function() {
+        $root = ProjectRoot::at('/project');
+        $broken = new ExampleResult("breaks", [], true);
+        $broken->setError(new ExampleError("boom", new \LogicException("boom")));
+
+        expect($broken->outcome(['breaks'], $root)->errorType)->toBe('LogicException');
+        expect((new ExampleResult("passes", [MatchResult::passed()]))->outcome(['passes'], $root)->errorType)->toBeNull();
     });
 
     it("is an error when flagged", function() {
@@ -158,6 +240,34 @@ describe(ExampleResult::class, function() {
         expect(array_column($result->getWarnings(), 'message'))->toBe(['oops']);
         expect($result->getDeprecations())->toBe([$deprecated]);
         expect(array_column($result->getNotices(), 'message'))->toBe(['info']);
+    });
+
+    it("adds what it is told was raised later to what it has, each once", function() {
+        $result = new ExampleResult("test", []);
+        $first = ['severity' => E_USER_WARNING, 'message' => 'first', 'file' => 'a.php', 'line' => 1];
+        $later = ['severity' => E_USER_WARNING, 'message' => 'later', 'file' => 'a.php', 'line' => 9];
+        $notice = ['severity' => E_USER_NOTICE, 'message' => 'noted', 'file' => 'a.php', 'line' => 4];
+
+        $result->raised([$first]);
+        $result->raised([$later, $first, $notice]);
+
+        expect($result->getWarnings())->toBe([$first, $later]);
+        expect($result->getNotices())->toBe([$notice]);
+    });
+
+    it("keeps only the notes it is told to, of every kind", function() {
+        $result = new ExampleResult("test", []);
+        $result->raised([
+            ['severity' => E_USER_WARNING, 'message' => 'keep', 'file' => 'a.php', 'line' => 1],
+            ['severity' => E_USER_WARNING, 'message' => 'drop', 'file' => 'a.php', 'line' => 2],
+            ['severity' => E_USER_NOTICE, 'message' => 'drop', 'file' => 'a.php', 'line' => 3],
+            ['severity' => E_USER_DEPRECATED, 'message' => 'drop', 'file' => 'a.php', 'line' => 4],
+        ]);
+
+        $result->keepNotes(static fn(array $note): bool => $note['message'] === 'keep');
+
+        expect(array_column($result->getWarnings(), 'message'))->toBe(['keep']);
+        expect([...$result->getNotices(), ...$result->getDeprecations()])->toBe([]);
     });
 
     it("is not a context", function() {

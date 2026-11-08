@@ -153,6 +153,64 @@ Feature: Configuration
     When I run phpspec run
     Then all examples should pass
 
+  Scenario: An autoload map beside composer.json stops the run
+    Given a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Roastery\\": "src/"}}}
+      """
+    And a phpspec.yaml config:
+      """
+      autoload:
+        Tools\: tools
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "phpspec.yaml: autoload cannot be set in a project with a composer.json."
+
+  Scenario: A source path composer.json maps no namespace to stops the run, naming the directories it maps
+    Given a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Roastery\\": "src/", "Tools\\": ["tools/", "lib/tools/"]}}}
+      """
+    And a phpspec.yaml config:
+      """
+      src_path: lib
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain:
+      """
+      phpspec.yaml: src_path "lib" is not a directory composer.json maps a namespace to: src, tools, lib/tools.
+      """
+
+  Scenario: A default namespace whose classes cannot be written under the source path stops describe before it writes
+    Given a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Roastery\\": "src/"}}}
+      """
+    And a phpspec.yaml config:
+      """
+      src_path: src
+      default_namespace: Roaster
+      """
+    When I run phpspec describe "Domain/Cup" with option "--format=agent"
+    Then the exit code should be 1
+    And the output should contain:
+      """
+      phpspec.yaml: default_namespace \"Roaster\" is under no namespace composer.json maps, and src/ cannot take its classes: Composer maps src/ to Roastery\\.
+      """
+    And no file "spec/Roaster/Domain/Cup.spec.php" should be generated
+
+  Scenario: A psr4_prefix left from an earlier release stops the run
+    Given a phpspec.yaml config:
+      """
+      src_path: src
+      psr4_prefix: App\
+      """
+    When I run phpspec run
+    Then the exit code should be 1
+    And the output should contain "phpspec.yaml: psr4_prefix is not a setting: composer.json maps namespaces to directories, or autoload does in a project without one."
+
   Scenario: Auto-detects vendor/autoload.php
     Given a PSR-4 project with Composer autoloading
     And a spec file "spec/App/AutoDetect.spec.php":

@@ -69,6 +69,30 @@ describe(CapturedNotes::class, function () {
         ]);
     });
 
+    it('leaves a warning or notice the code silenced with @ to PHP, so error_get_last() still holds it', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+        $caught->listen();
+        error_clear_last();
+        @trigger_error('probing', E_USER_WARNING);
+        $last = error_get_last();
+        @trigger_error('not yet', E_USER_NOTICE);
+        $caught->stop();
+
+        expect($caught->notes())->toBe([]);
+        expect($last['message'] ?? null)->toBe('probing');
+    });
+
+    it('keeps a deprecation silenced with @, as libraries raise theirs for the tests to see', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+        $caught->listen();
+        @trigger_error('old', E_USER_DEPRECATED); $line = __LINE__;
+        $caught->stop();
+
+        expect($caught->notes())->toBe([['severity' => E_USER_DEPRECATED, 'message' => 'old', 'file' => __FILE__, 'line' => $line]]);
+    });
+
     it('keeps a deprecation a library raised for the project calling it, by trigger_error or trigger_deprecation', function () {
         $caught = new CapturedNotes($this->project);
 
@@ -90,5 +114,68 @@ describe(CapturedNotes::class, function () {
         $caught->stop();
 
         expect(array_column($caught->notes(), 'message'))->toBe(['the cache is cold']);
+    });
+
+    it('takes what the code it runs raises, keeping it across runs, and answers what the code answered', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(CAPTURED_NOTES_PROJECT), []));
+
+        $answer = $caught->during(function (): int {
+            trigger_error('set up', E_USER_WARNING);
+
+            return 7;
+        });
+        $caught->during(fn() => trigger_error('torn down', E_USER_NOTICE));
+
+        expect($answer)->toBe(7);
+        expect(array_column($caught->notes(), 'message'))->toBe(['set up', 'torn down']);
+    });
+
+    it('keeps what was raised before the code it runs threw', function () {
+        $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(CAPTURED_NOTES_PROJECT), []));
+
+        expect(fn() => $caught->during(function (): void {
+            trigger_error('before breaking', E_USER_WARNING);
+
+            throw new RuntimeException('broke');
+        }))->toThrow(RuntimeException::class);
+
+        expect(array_column($caught->notes(), 'message'))->toBe(['before breaking']);
+    });
+
+    context('telling a file loading from code being called', function () {
+        this('loading', fn() => function (string $source): array {
+            $file = (string) tempnam(sys_get_temp_dir(), 'phpspec_loading_');
+            file_put_contents($file, $source);
+            $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+            try {
+                $caught->during(function () use ($file): void {
+                    require $file;
+                });
+            } finally {
+                unlink($file);
+            }
+
+            return array_column($caught->notes(), 'loading', 'message');
+        });
+
+        it('marks what a file raises at its top level, whether directly or through a function it calls', function () {
+            $function = 'loading_note_' . bin2hex(random_bytes(6));
+
+            expect(($this->loading)("<?php\ntrigger_error('at the top', E_USER_WARNING);\n"))->toBe(['at the top' => true]);
+            expect(($this->loading)("<?php\nfunction {$function}() { trigger_error('through a function', E_USER_WARNING); }\n{$function}();\n"))->toBe(['through a function' => true]);
+        });
+
+        it('marks what PHP says as it compiles a file', function () {
+            expect(($this->loading)("<?php\nuse RuntimeException;\n"))->toBe(["The use statement with non-compound name 'RuntimeException' has no effect" => true]);
+        });
+
+        it('leaves unmarked what code an example called raises, a closure being what it ran in', function () {
+            $caught = new CapturedNotes(new OwnCode(ProjectRoot::at(__DIR__), []));
+
+            $caught->during(fn() => trigger_error('called', E_USER_WARNING));
+
+            expect($caught->notes()[0])->not()->toHaveKey('loading');
+        });
     });
 });

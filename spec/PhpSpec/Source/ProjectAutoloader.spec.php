@@ -26,34 +26,46 @@ describe(ProjectAutoloader::class, function () {
         rmdir($root);
     });
 
-    it('loads a class from the autoload map first, then from where the layout puts it', function () {
+    it('loads a class from where the layout puts it: the directory its namespace is mapped to, else its whole name below the source path', function () {
         $namespace = 'LoadFx' . bin2hex(random_bytes(4));
         $root = ($this->project)([
             'mapped/Mapped.php' => "<?php\nnamespace {$namespace};\nfinal class Mapped {}\n",
-            'mapped/Both.php' => "<?php\nnamespace {$namespace};\nfinal class Both { const FROM = 'map'; }\n",
-            'src/Both.php' => "<?php\nnamespace {$namespace};\nfinal class Both { const FROM = 'layout'; }\n",
-            'src/Laid.php' => "<?php\nnamespace {$namespace};\nfinal class Laid {}\n",
+            "src/{$namespace}Free/Laid.php" => "<?php\nnamespace {$namespace}Free;\nfinal class Laid {}\n",
         ]);
-        $loader = new ProjectAutoloader([$namespace . '\\' => $root . '/mapped'], new SourceLayout('src', [$namespace => 'src']), $root);
+        $loader = new ProjectAutoloader(new SourceLayout('src', [$namespace => 'mapped']), $root);
 
         try {
             $loader($namespace . '\\Mapped');
-            $loader($namespace . '\\Both');
-            $loader($namespace . '\\Laid');
+            $loader($namespace . 'Free\\Laid');
             $loader($namespace . '\\Missing');
 
             expect(class_exists($namespace . '\\Mapped', false))->toBeTrue();
-            expect(constant($namespace . '\\Both::FROM'))->toBe('map');
-            expect(class_exists($namespace . '\\Laid', false))->toBeTrue();
+            expect(class_exists($namespace . 'Free\\Laid', false))->toBeTrue();
             expect(class_exists($namespace . '\\Missing', false))->toBeFalse();
         } finally {
             ($this->cleanUp)($root);
         }
     });
 
-    it('names the directories it loads from: the autoload map\'s, the source path and each mapped one, under the project', function () {
-        $loader = new ProjectAutoloader(['Extra\\' => '/elsewhere/extra'], new SourceLayout('src', ['Domain' => 'domain']), '/project');
+    it('leaves a class under a mapping unloaded when it is filed anywhere but where the mapping puts it', function () {
+        $namespace = 'LoadFx' . bin2hex(random_bytes(4));
+        $root = ($this->project)([
+            "src/{$namespace}/Misfiled.php" => "<?php\nnamespace {$namespace};\nfinal class Misfiled {}\n",
+        ]);
+        $loader = new ProjectAutoloader(new SourceLayout('src', [$namespace => 'src']), $root);
 
-        expect($loader->directories())->toBe(['/elsewhere/extra', '/project/src', '/project/domain']);
+        try {
+            $loader($namespace . '\\Misfiled');
+
+            expect(class_exists($namespace . '\\Misfiled', false))->toBeFalse();
+        } finally {
+            ($this->cleanUp)($root);
+        }
+    });
+
+    it('names the directories it loads from: the source path and each mapped one, under the project', function () {
+        $loader = new ProjectAutoloader(new SourceLayout('src', ['Domain' => 'domain']), '/project');
+
+        expect($loader->directories())->toBe(['/project/src', '/project/domain']);
     });
 });

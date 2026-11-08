@@ -4,7 +4,12 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run;
 use PhpSpec\Filesystem;
 use PhpSpec\Loader;
+use PhpSpec\Parallel\Wire;
+use PhpSpec\Parallel\WireMark;
+use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Runner;
+use PhpSpec\TemporaryDirectory;
+use Symfony\Component\Console\Tester\CommandTester;
 
 describe(Run::class, function () {
 
@@ -198,6 +203,30 @@ describe(Run::class, function () {
             expect($tester->getDisplay())->toContain('No example or scenario matches --filter "NonExistent".');
         });
 
+        it('has a queued worker say it ran a file that met a stop, and wait to be told what next', function () {
+            $dir = TemporaryDirectory::create('phpspec_run_queue_');
+            file_put_contents($dir->path . '/Fails.spec.php', "<?php\ndescribe('Fails', function () { it('fails', fn() => expect(1)->toBe(2)); });\n");
+            file_put_contents($dir->path . '/Next.spec.php', "<?php\ndescribe('Next', function () { it('runs', fn() => expect(1)->toBe(1)); });\n");
+            $wire = new Wire();
+            $tester = new CommandTester(new Run(new Loader(), new Runner(), new Configuration()));
+            $tester->setInputs([$wire->give([$dir->path . '/Fails.spec.php']), $wire->give([$dir->path . '/Next.spec.php'])]);
+
+            try {
+                $tester->execute(['--queue' => true, '--format' => ['wire'], '--stop-on-failure' => true]);
+                $lines = explode("\n", rtrim($tester->getDisplay(), "\n"));
+            } finally {
+                $dir->remove();
+            }
+
+            expect(array_values(array_filter(array_map(static fn(string $line) => is_object($read = $wire->decode($line)) ? $read::class : $read, $lines))))->toBe([
+                SpecificationResult::class,
+                WireMark::class,
+                SpecificationResult::class,
+                WireMark::class,
+                WireMark::class,
+            ]);
+        });
+
         it('filters examples by title and hides specs left with no examples', function (Filesystem $execFs) {
             $dir = sys_get_temp_dir() . '/phpspec_run_filter_' . uniqid();
             mkdir($dir, 0777, true);
@@ -348,13 +377,13 @@ describe(Run::class, function () {
         });
 
         it('PSR-4 autoloader loads matching class from filesystem', function (Filesystem $execFs) {
-            $tmpDir = sys_get_temp_dir();
+            $root = sys_get_temp_dir() . '/phpspec_run_autoload_' . uniqid();
             $ns = 'PhpSpecAutoloadTest' . uniqid() . '\\';
             $className = 'TestClass';
-            $file = $tmpDir . '/' . $className . '.php';
-            file_put_contents($file, '<?php namespace ' . rtrim($ns, '\\') . '; class ' . $className . ' {}');
+            mkdir($root . '/lib', 0777, true);
+            file_put_contents($root . '/lib/' . $className . '.php', '<?php namespace ' . rtrim($ns, '\\') . '; class ' . $className . ' {}');
 
-            $config = new Configuration(['autoload' => [$ns => $tmpDir . '/']]);
+            $config = new Configuration(['autoload' => [$ns => 'lib/']], $root);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
 
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
@@ -362,7 +391,9 @@ describe(Run::class, function () {
 
             $fqcn = $ns . $className;
             $loaded = class_exists($fqcn, true);
-            unlink($file);
+            unlink($root . '/lib/' . $className . '.php');
+            rmdir($root . '/lib');
+            rmdir($root);
             expect($loaded)->toBeTrue();
         });
 

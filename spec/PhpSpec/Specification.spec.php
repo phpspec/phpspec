@@ -47,6 +47,21 @@ describe(Specification::class, function() {
         expect($examples[0]->getError()?->getType())->toBe('ParseError');
     });
 
+    it("reports what the spec file raises as it loads on its first example", function() {
+        $file = sys_get_temp_dir() . '/phpspec_loud_' . bin2hex(random_bytes(6)) . '.spec.php';
+        file_put_contents($file, "<?php\ntrigger_error('the file loads', E_USER_WARNING);\ndescribe('Loud', function () {\n    it('one', fn() => expect(true)->toBeTrue());\n    it('two', fn() => expect(true)->toBeTrue());\n});\n");
+
+        try {
+            [$loud] = (new Specification($file))->run()->getResults();
+        } finally {
+            unlink($file);
+        }
+
+        [$one, $two] = $loud->getResults();
+        expect(array_column($one->getWarnings(), 'message'))->toBe(['the file loads']);
+        expect($two->getWarnings())->toBe([]);
+    });
+
     it("announces the spec file to the active coverage collector", function (CoverageDriver $driver) {
         allow($driver->start());
         allow($driver->stop())->toReturn([]);

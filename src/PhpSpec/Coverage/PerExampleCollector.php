@@ -24,8 +24,11 @@ namespace PhpSpec\Coverage;
  */
 final class PerExampleCollector
 {
-    /** @var array<string, array<int, array<string, true>>> file path => line number => set of test identifiers */
+    /** @var array<string, array<int, string>> file path => line number => the numbers of the tests that ran it, each its place in $tests, packed four bytes apiece: a large suite runs millions of pairs */
     private array $lines = [];
+
+    /** @var array<string, int> test identifier => its number */
+    private array $numbers = [];
 
     /** @var array<string, array<int, int>> line hit data merged across this process's cycles, in raw driver shape */
     private array $aggregate = [];
@@ -140,9 +143,7 @@ final class PerExampleCollector
             return;
         }
 
-        $data = $this->driver->stop();
-        $this->aggregated($data);
-        $this->credit($this->testId($title), $data);
+        $this->collected($this->driver->stop(), $this->testId($title));
     }
 
     /**
@@ -156,24 +157,30 @@ final class PerExampleCollector
         }
 
         $this->pending = false;
-        $this->aggregated($this->driver->stop());
+        $this->collected($this->driver->stop());
     }
 
     /**
-     * Returns executed lines mapped to the test identifiers that covered them.
+     * The files a test ran a line of.
      *
-     * @return array<string, array<int, array<int, string>>> file path => line number => test identifiers
+     * @return list<string>
      */
-    public function getLines(): array
+    public function coveredFiles(): array
     {
-        $result = [];
-        foreach ($this->lines as $file => $lines) {
-            foreach ($lines as $lineNumber => $testIds) {
-                $result[$file][$lineNumber] = array_keys($testIds);
-            }
-        }
+        return array_keys($this->lines);
+    }
 
-        return $result;
+    /**
+     * One file's executed lines, each with the identifiers of the tests that
+     * ran it, read a file at a time so no copy of the whole is ever made.
+     *
+     * @return array<int, list<string>> line number => test identifiers
+     */
+    public function linesOf(string $file): array
+    {
+        $names = array_keys($this->tests);
+
+        return array_map(static fn(string $numbers): array => array_map(static fn(int $number): string => $names[$number], array_values((array) unpack('V*', $numbers))), $this->lines[$file] ?? []);
     }
 
     /**
@@ -223,22 +230,13 @@ final class PerExampleCollector
      * names its tests by their place in the test list: a test's name, repeated
      * on every line it ran, would make the state many times the size.
      *
-     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string}>, lines: array<string, array<int, list<int>>>, aggregate: array<string, array<int, int>>}
+     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string}>, lines: array<string, array<int, string>>, aggregate: array<string, array<int, int>>}
      */
     public function toArray(): array
     {
-        $places = array_flip(array_keys($this->tests));
-        $lines = [];
-
-        foreach ($this->lines as $file => $fileLines) {
-            foreach ($fileLines as $lineNumber => $testIds) {
-                $lines[$file][$lineNumber] = array_map(static fn(string $testId): int => $places[$testId], array_keys($testIds));
-            }
-        }
-
         return [
             'tests' => $this->tests,
-            'lines' => $lines,
+            'lines' => array_map(static fn(array $lines): array => array_map(base64_encode(...), $lines), $this->lines),
             'aggregate' => $this->aggregate,
         ];
     }
@@ -249,20 +247,21 @@ final class PerExampleCollector
      * what the other process recorded is kept apart from this one's, to be
      * merged by what each of them compiled.
      *
-     * @param array{tests?: array<string, array{time: float, memory: int, spec_file: string}>, lines?: array<string, array<int, list<int>>>, aggregate?: array<string, array<int, int>>} $state state produced by toArray()
+     * @param array{tests?: array<string, array{time: float, memory: int, spec_file: string}>, lines?: array<string, array<int, string>>, aggregate?: array<string, array<int, int>>} $state state produced by toArray()
      */
     public function applyState(array $state): void
     {
-        $testIds = array_map('strval', array_keys($state['tests'] ?? []));
+        $numbers = [];
 
         foreach ($state['tests'] ?? [] as $testId => $test) {
+            $numbers[] = $this->numbered((string) $testId);
             $this->tests[(string) $testId] = $test;
         }
 
         foreach ($state['lines'] ?? [] as $file => $lines) {
             foreach ($lines as $lineNumber => $places) {
-                foreach ($places as $place) {
-                    $this->lines[$file][$lineNumber][$testIds[$place]] = true;
+                foreach ((array) unpack('V*', (string) base64_decode($places)) as $place) {
+                    $this->ran($file, $lineNumber, ...$numbers[$place]);
                 }
             }
         }
@@ -271,39 +270,98 @@ final class PerExampleCollector
     }
 
     /**
-     * Merges line hits into the aggregate, keeping the highest value per line.
+     * Merges what the driver recorded into the aggregate, crediting the test
+     * that ran it, when there is one, with every line it ran.
      *
-     * @param array<string, array<int, int>> $data file path => line => hit value
+     * @param array<string, array<int, int>> $data file => line => 1 for a line that ran, -1 for code that did not, -2 for a line that is not code
      */
-    private function aggregated(array $data): void
+    private function collected(array $data, ?string $testId = null): void
     {
+        $test = $testId === null ? null : $this->credit($testId);
+
         foreach ($data as $file => $lines) {
-            foreach ($lines as $lineNumber => $hit) {
-                $this->aggregate[$file][$lineNumber] = max($this->aggregate[$file][$lineNumber] ?? $hit, $hit);
+            // Searched natively: each cycle holds every line of every file
+            // compiled so far, of which a test runs a few.
+            $run = array_keys($lines, 1, true);
+            $this->aggregated($file, $lines, $run);
+
+            if ($test !== null) {
+                foreach ($run as $lineNumber) {
+                    $this->ran($file, $lineNumber, ...$test);
+                }
             }
         }
     }
 
     /**
-     * Records the test as having run every line it hit, with its duration and
-     * peak memory.
+     * Merges one file's lines into the aggregate, each at the most any cycle
+     * made of it: run, then code, then no code.
      *
-     * @param array<string, array<int, int>> $data what the driver collected while the test ran
+     * @param array<int, int> $lines line => 1, -1 or -2
+     * @param list<int> $run the lines among them that ran
      */
-    private function credit(string $testId, array $data): void
+    private function aggregated(string $file, array $lines, array $run): void
     {
+        if (!isset($this->aggregate[$file])) {
+            $this->aggregate[$file] = $lines;
+
+            return;
+        }
+
+        $noCode = array_keys($this->aggregate[$file], -2, true);
+        $this->aggregate[$file] += $lines;
+
+        foreach ($run as $lineNumber) {
+            $this->aggregate[$file][$lineNumber] = 1;
+        }
+
+        foreach ($noCode as $lineNumber) {
+            if (($lines[$lineNumber] ?? null) === -1) {
+                $this->aggregate[$file][$lineNumber] = -1;
+            }
+        }
+    }
+
+    /**
+     * Records the test's duration and peak memory.
+     *
+     * @return array{string, bool} its number, packed, and whether it had one already
+     */
+    private function credit(string $testId): array
+    {
+        $test = $this->numbered($testId);
         $this->tests[$testId] = [
             'time' => (hrtime(true) - $this->startTime) / 1e9,
             'memory' => memory_get_peak_usage(),
             'spec_file' => (string) $this->specPath,
         ];
 
-        foreach ($data as $file => $lines) {
-            foreach ($lines as $lineNumber => $hit) {
-                if ($hit >= 1) {
-                    $this->lines[$file][$lineNumber][$testId] = true;
-                }
-            }
+        return $test;
+    }
+
+    /**
+     * The test's number, packed, and whether it had one already: a test named
+     * again, as two examples of one title are, keeps the number it was given.
+     *
+     * @return array{string, bool}
+     */
+    private function numbered(string $testId): array
+    {
+        $seen = isset($this->numbers[$testId]);
+
+        return [pack('V', $this->numbers[$testId] ??= count($this->numbers)), $seen];
+    }
+
+    /**
+     * Records that the test ran the line, once however often it is told.
+     */
+    private function ran(string $file, int $lineNumber, string $number, bool $seen): void
+    {
+        if ($seen && in_array($number, str_split($this->lines[$file][$lineNumber] ?? '', 4), true)) {
+            return;
         }
+
+        $this->lines[$file][$lineNumber] ??= '';
+        $this->lines[$file][$lineNumber] .= $number;
     }
 }

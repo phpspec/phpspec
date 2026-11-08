@@ -4,6 +4,7 @@ use PhpSpec\Configuration;
 use PhpSpec\ConfigurationException;
 use PhpSpec\Coverage\CoverageAdapter;
 use PhpSpec\Filesystem;
+use PhpSpec\Source\ComposerAutoload;
 use PhpSpec\StopConditions;
 
 describe(Configuration::class, function () {
@@ -67,6 +68,20 @@ describe(Configuration::class, function () {
             }
         });
 
+        it('refuses psr4_prefix, and a suite\'s namespace, saying what maps namespaces instead', function (Filesystem $fs) use ($yaml) {
+            $yaml($fs, "psr4_prefix: App\\\n");
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: psr4_prefix is not a setting: composer.json maps namespaces to directories, or autoload does in a project without one.',
+            );
+
+            $yaml($fs, "suites:\n  main:\n    paths: [spec]\n    namespace: App\n");
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: suites.main.namespace is not a setting: composer.json maps namespaces to directories, or autoload does in a project without one.',
+            );
+        });
+
         it('refuses a file that does not hold a map of settings', function (Filesystem $fs) use ($yaml) {
             $yaml($fs, "just a string\n");
 
@@ -78,12 +93,88 @@ describe(Configuration::class, function () {
     });
 
     it('is built from values and touches no disk', function () {
-        $config = new Configuration(['spec_path' => 'tests', 'autoload' => ['Brew\\' => 'lib/Brew']], '/app', ['App\\' => 'src/']);
+        $config = new Configuration(['spec_path' => 'tests', 'autoload' => ['Brew\\' => 'lib/Brew']], '/app');
 
         expect($config->getSpecPath())->toBe('tests');
         expect($config->getSourceLayout()->mappings())->toBe(['Brew' => 'lib/Brew']);
         expect((new Configuration())->getSourceLayout()->mappings())->toBe([]);
-        expect((new Configuration([], '/app', ['App\\' => 'src/']))->getSourceLayout()->mappings())->toBe(['App' => 'src']);
+        expect((new Configuration([], '/app', new ComposerAutoload(['App\\' => ['src/']])))->getSourceLayout()->mappings())->toBe(['App' => 'src']);
+    });
+
+    it('keeps the directories of an autoload map as written, one above the project root included', function () {
+        $layout = (new Configuration(['autoload' => ['App\\' => '../shared/src/', 'Tools\\' => './tools']], '/app'))->getSourceLayout();
+
+        expect($layout->mappings())->toBe(['App' => '../shared/src', 'Tools' => 'tools']);
+    });
+
+    context('a project with a composer.json leaves the autoloading to it', function () {
+        $project = function (Filesystem $fs, string $settings, array $composer): void {
+            allow($fs->exists(any()))->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.yaml', '/app/composer.json'], true));
+            allow($fs->read(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml' ? $settings : json_encode($composer));
+        };
+
+        it('lays classes out by its mappings alone, the source path stated beside them, or a suite\'s, included', function (Filesystem $fs) use ($project) {
+            foreach (["src_path: src\ndefault_namespace: Roastery\n", "suites:\n  main:\n    paths: [spec]\n    src: ./src/\n"] as $settings) {
+                $project($fs, $settings, ['autoload' => ['psr-4' => ['Roastery\\' => 'src/']]]);
+
+                $layout = Configuration::load('/app', $fs)->getSourceLayout();
+
+                expect($layout->mappings())->toBe(['Roastery' => 'src']);
+                expect($layout->relativeFileFor('Roastery\\Repository\\InMemoryRoastRepository'))->toBe(str_replace('/', DIRECTORY_SEPARATOR, 'src/Repository/InMemoryRoastRepository.php'));
+            }
+        });
+
+        it('refuses an autoload map', function (Filesystem $fs) use ($project) {
+            $project($fs, "autoload:\n  Tools\\: tools\n", ['require' => ['php' => '^8.3']]);
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: autoload cannot be set in a project with a composer.json.',
+            );
+        });
+
+        it('refuses a source path, or a suite\'s, it maps no namespace to, naming the directories it maps', function (Filesystem $fs) use ($project) {
+            $composer = ['autoload' => ['psr-4' => ['Roastery\\' => 'src/', 'Tools\\' => ['tools/', 'lib/tools/']]]];
+
+            $project($fs, "src_path: lib\n", $composer);
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: src_path "lib" is not a directory composer.json maps a namespace to: src, tools, lib/tools.',
+            );
+
+            $project($fs, "suites:\n  main:\n    paths: [spec]\n    src: lib\n", $composer);
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: suites.main.src "lib" is not a directory composer.json maps a namespace to: src, tools, lib/tools.',
+            );
+        });
+
+        it('refuses a default namespace it places nowhere while another namespace claims the source path', function (Filesystem $fs) use ($project) {
+            $project($fs, "default_namespace: Roaster\n", ['autoload' => ['psr-4' => ['Roastery\\' => 'src/']]]);
+
+            expect(fn() => Configuration::load('/app', $fs))->toThrow(
+                ConfigurationException::class,
+                '/app/phpspec.yaml: default_namespace "Roaster" is under no namespace composer.json maps, and src/ cannot take its classes: Composer maps src/ to Roastery\\.',
+            );
+        });
+
+        it('takes a default namespace it places, or one the source path is free to take', function (Filesystem $fs) use ($project) {
+            foreach ([
+                ["default_namespace: Roastery\\Beans\n", ['Roastery\\' => 'src/']],
+                ["default_namespace: Roaster\n", ['Roastery\\' => 'src/Roastery/']],
+                ["default_namespace: Roaster\n", ['Roastery\\' => 'src/', '' => 'lib/']],
+            ] as [$settings, $psr4]) {
+                $project($fs, $settings, ['autoload' => ['psr-4' => $psr4]]);
+
+                expect(Configuration::load('/app', $fs)->getSourceLayout()->defaultNamespace())->not()->toBeNull();
+            }
+        });
+
+        it('takes any source path while it maps no namespace', function (Filesystem $fs) use ($project) {
+            $project($fs, "src_path: lib\n", ['require' => ['php' => '^8.3']]);
+
+            expect(Configuration::load('/app', $fs)->getSrcPath())->toBe('lib');
+        });
     });
 
     it('returns defaults when no config file exists', function (Filesystem $fs) {
@@ -98,14 +189,14 @@ describe(Configuration::class, function () {
         expect($config->getBaseUrl())->toBeNull();
     });
 
-    it('lays generated classes out by the first PSR-4 mapping in composer.json when nothing configures it', function (Filesystem $fs) {
+    it('takes src as the source path when nothing configures it, and walks every directory composer.json maps besides', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
-        allow($fs->read(any()))->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/', 'Tests\\' => 'tests/']]]));
+        allow($fs->read(any()))->toReturn(json_encode(['autoload' => ['psr-4' => ['App\\' => 'app/', 'Database\\Factories\\' => 'database/factories/']]]));
 
         $config = Configuration::load('/app', $fs);
 
-        expect($config->getSrcPath())->toBe('src');
-        expect($config->getPsr4Prefix())->toBe('Tasker');
+        expect($config->getSrcPath())->toBe('./src');
+        expect($config->sourceRoots())->toBe(['src', 'app', 'database/factories']);
     });
 
     it('lays every composer mapping out, not only the first', function (Filesystem $fs) {
@@ -130,24 +221,11 @@ describe(Configuration::class, function () {
         expect($layout->withinDefaultNamespace('Thing'))->toBe('Brew\\Acme\\Thing');
     });
 
-    it('lays out by src_path and psr4_prefix as one mapping when the config states them', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.yaml');
-        allow($fs->read(any()))->toReturn("src_path: lib\npsr4_prefix: App\\\n");
-
-        $layout = (Configuration::load('/app', $fs))->getSourceLayout();
-
-        expect($layout->mappings())->toBe(['App' => 'lib']);
-        expect($layout->srcPath())->toBe('lib');
-    });
-
     it('takes the first directory of a composer mapping that lists several', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
         allow($fs->read(any()))->toReturn(json_encode(['autoload' => ['psr-4' => ['App\\' => ['src/', 'lib/']]]]));
 
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->getSrcPath())->toBe('src');
-        expect($config->getPsr4Prefix())->toBe('App');
+        expect(Configuration::load('/app', $fs)->getSourceLayout()->mappings())->toBe(['App' => 'src']);
     });
 
     // A real directory for the autoloader, which reads the disk; composer.json
@@ -191,22 +269,10 @@ describe(Configuration::class, function () {
         $autoloadingFrom($root, Configuration::load($root, $fs), fn() => expect(class_exists('Tasker\\MappedByPrefix'))->toBeTrue());
     });
 
-    it('still loads a class filed under its full namespace path', function (Filesystem $fs) use ($projectWith, $autoloadingFrom) {
+    it('loads a class under a mapping from nowhere else, as Composer would not', function (Filesystem $fs) use ($projectWith, $autoloadingFrom) {
         $root = $projectWith($fs, 'src/', 'src/Tasker/FiledInFull.php', "<?php\nnamespace Tasker;\nclass FiledInFull {}\n");
 
-        $autoloadingFrom($root, Configuration::load($root, $fs), fn() => expect(class_exists('Tasker\\FiledInFull'))->toBeTrue());
-    });
-
-    it('keeps a configured layout over the one composer.json declares', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.json', '/app/composer.json'], true));
-        allow($fs->read(any()))->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json'
-            ? json_encode(['src_path' => 'lib'])
-            : json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/']]]));
-
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->getSrcPath())->toBe('lib');
-        expect($config->getPsr4Prefix())->toBe('');
+        $autoloadingFrom($root, Configuration::load($root, $fs), fn() => expect(class_exists('Tasker\\FiledInFull'))->toBeFalse());
     });
 
     it('loads from phpspec.json when it exists', function (Filesystem $fs) {
@@ -832,26 +898,6 @@ describe(Configuration::class, function () {
         $config = Configuration::load('/app', $fs);
 
         expect($config->getSrcPath())->toBe('lib');
-    });
-
-    it('returns psr4_prefix from top-level config', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn('psr4_prefix: App\\Models\\');
-        $config = Configuration::load('/app', $fs);
-        expect($config->getPsr4Prefix())->toBe('App\\Models');
-    });
-
-    it('returns namespace from suite config as psr4_prefix', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("suites:\n  default:\n    namespace: App\n    src: src");
-        $config = Configuration::load('/app', $fs);
-        expect($config->getPsr4Prefix())->toBe('App');
     });
 
     it('loads an explicit config file instead of the working directory cascade', function (Filesystem $fs) {

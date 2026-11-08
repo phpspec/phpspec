@@ -16,17 +16,19 @@ namespace PhpSpec\Specification;
 
 use Closure;
 use PhpSpec\ArgumentlessFunction;
+use PhpSpec\Attachments;
+use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\ContextRan;
-use PhpSpec\EventDispatcher\Event\ContextStarted;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Mock\HeldCalls;
+use PhpSpec\OwnCode;
 use PhpSpec\Report\DoubleLabels;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\GroupNotes;
 use PhpSpec\Results;
 use PhpSpec\StopRegistry;
 use ReflectionException;
@@ -79,6 +81,9 @@ class Context implements ExampleRegistry, Rebindable, Titled
 
     /** The skip() or pending() a beforeAll above this context raised, leaving all of it out. */
     private PendingException|SkippedException|null $leftOutBy = null;
+
+    /** What the contexts around this one handed over, none for a spec file's own. */
+    private ?Attachments $inherited = null;
 
     /** @var bool whether this context is focused (exclusive execution) */
     private bool $focused = false;
@@ -174,13 +179,20 @@ class Context implements ExampleRegistry, Rebindable, Titled
     {
         $results = [];
         $filter = FilterRegistry::current();
+        // What this context's body and its group hooks hand over, on top of
+        // what the contexts around it did.
+        $attachments = $this->inherited ?? new Attachments();
+        // What the body and the group hooks raise, outside every example.
+        $setup = new CapturedNotes(OwnCode::here());
+        $teardown = new CapturedNotes(OwnCode::here());
         CoverageRegistry::collector()?->pushContext($this->context);
 
         try {
-            DispatcherRegistry::dispatcher()->dispatch(new ContextStarted($this->numberedTitle()), ContextStarted::NAME);
-            DispatcherRegistry::dispatcher()->pushScope($this);
-            (new ArgumentlessFunction($this->specBlock))();
-            DispatcherRegistry::dispatcher()->popScope();
+            $setup->during(fn() => $this->collecting($attachments, function (): void {
+                DispatcherRegistry::dispatcher()->pushScope($this);
+                (new ArgumentlessFunction($this->specBlock))();
+                DispatcherRegistry::dispatcher()->popScope();
+            }));
 
             $this->placeChildren();
             $this->resolveFocus();
@@ -191,9 +203,11 @@ class Context implements ExampleRegistry, Rebindable, Titled
             $ownHooksRan = !$this->pending && $signal === null;
             if ($ownHooksRan) {
                 try {
-                    foreach ($this->beforeAllHooks as $hook) {
-                        (new ArgumentlessFunction($hook))();
-                    }
+                    $setup->during(fn() => $this->collecting($attachments, function (): void {
+                        foreach ($this->beforeAllHooks as $hook) {
+                            (new ArgumentlessFunction($hook))();
+                        }
+                    }));
                 } catch (PendingException|SkippedException $raised) {
                     $signal = $raised;
                 }
@@ -207,14 +221,15 @@ class Context implements ExampleRegistry, Rebindable, Titled
                 if ($block instanceof Context) {
                     $block->setWorld($this->world);
                     $block->inheritHooks($this->beforeEachHooks, $this->afterEachHooks, $this->bindings);
+                    $block->inheritAttachments($signal === null ? $attachments->handedDown() : $attachments);
                     if ($signal !== null) {
                         $block->leaveOutBy($signal);
                     }
                 }
 
                 $result = match (true) {
-                    $signal !== null && $block instanceof Example => $block->leftOutBy($signal),
-                    $block instanceof Example && !$block->isPending() => $this->runExampleWithHooks($block),
+                    $signal !== null && $block instanceof Example => $block->leftOutBy($signal, $attachments),
+                    $block instanceof Example && !$block->isPending() => $this->runExampleWithHooks($block, $attachments->handedDown()),
                     default => $block->run(),
                 };
                 if ($block instanceof Context && $result->getResults() === [] && $filter !== null) {
@@ -228,28 +243,33 @@ class Context implements ExampleRegistry, Rebindable, Titled
             }
 
             if ($ownHooksRan) {
-                foreach ($this->afterAllHooks as $hook) {
-                    try {
-                        (new ArgumentlessFunction($hook))();
-                    } catch (PendingException|SkippedException $late) {
-                        throw new ExampleError((new LateSignal($late, 'afterAll', 'the examples', 'beforeAll or in an example'))->sentence(), $late);
+                $teardown->during(fn() => $this->collecting($attachments, function (): void {
+                    foreach ($this->afterAllHooks as $hook) {
+                        try {
+                            (new ArgumentlessFunction($hook))();
+                        } catch (PendingException|SkippedException $late) {
+                            throw new ExampleError((new LateSignal($late, 'afterAll', 'the examples', 'beforeAll or in an example'))->sentence(), $late);
+                        }
                     }
-                }
+                }));
             }
         } catch (Throwable $e) {
-            DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->numberedTitle(), $this), ContextRan::NAME);
             $result = new ExampleResult($this->numberedTitle(), [], true);
             $error = $e instanceof ExampleError ? $e : new ExampleError($e->getMessage(), $e);
             $result->setError($error);
-            $contextResult = new ContextResult($this->numberedTitle(), [$result]);
+            if (!$attachments->isEmpty()) {
+                $result->setAttachments($attachments->read());
+            }
+            $contextResult = new ContextResult($this->numberedTitle(), [...$results, $result]);
             $contextResult->setError($error);
+            (new GroupNotes($setup->notes(), $teardown->notes()))->settleOn($contextResult->getResults());
 
             return $contextResult;
         } finally {
             CoverageRegistry::collector()?->popContext();
         }
 
-        DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->numberedTitle(), $this), ContextRan::NAME);
+        (new GroupNotes($setup->notes(), $teardown->notes()))->settleOn($results);
 
         return new ContextResult($this->numberedTitle(), $results);
     }
@@ -261,10 +281,28 @@ class Context implements ExampleRegistry, Rebindable, Titled
      * so that code exercised only during setup still counts as covered by it.
      *
      * @param Example $example the example to run
+     * @param Attachments $attachments what the example and its hooks hand over, on top of what its contexts did
      * @return Results the example result
      * @throws ReflectionException
      */
-    private function runExampleWithHooks(Example $example): Results
+    private function runExampleWithHooks(Example $example, Attachments $attachments): Results
+    {
+        // What its hooks raise is the example's, as their coverage is; its
+        // body takes its own.
+        $hooks = new CapturedNotes(OwnCode::here());
+        $result = $hooks->during(fn(): Results => $this->runHookedExample($example, $attachments));
+
+        if ($result instanceof ExampleResult) {
+            $result->raised($hooks->notes());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    private function runHookedExample(Example $example, Attachments $attachments): Results
     {
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();
@@ -282,6 +320,8 @@ class Context implements ExampleRegistry, Rebindable, Titled
         HeldCalls::forget();
         $arguments = new ExampleArguments($this->world, $this->boundNames());
 
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
         try {
             try {
                 $setup->around(function () use ($arguments): void {
@@ -291,11 +331,12 @@ class Context implements ExampleRegistry, Rebindable, Titled
                     }
                 });
 
-                $result = $example->run();
+                $result = $example->run($attachments);
             } catch (PendingException|SkippedException $signal) {
-                $result = $example->leftOutBy($signal);
+                $result = $example->leftOutBy($signal, $attachments);
             }
             $body = $result->getOutput();
+            $attachedBefore = $result->getAttachments();
 
             try {
                 $teardown->around(function () use ($arguments): void {
@@ -315,11 +356,16 @@ class Context implements ExampleRegistry, Rebindable, Titled
             if ($refused !== null && !$result->isError()) {
                 $result = $example->failedInHook(new ExampleError($refused->getMessage(), $refused));
             }
+
+            self::attach($result, $attachedBefore, $attachments);
         } catch (Throwable $e) {
             $coverage?->endExample($example->getTitle());
+            $failed = $example->failedInHook(new ExampleError($e->getMessage(), $e));
+            self::attach($failed, [], $attachments);
 
-            return $this->printed($example->failedInHook(new ExampleError($e->getMessage(), $e)), $setup->text(), '');
+            return $this->printed($failed, $setup->text(), '');
         } finally {
+            DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
             $this->forget($arguments);
             DoubleLabels::restore($outerLabels);
             HeldCalls::restore($outerHeld);
@@ -328,6 +374,38 @@ class Context implements ExampleRegistry, Rebindable, Titled
         $coverage?->endExample($result->getTitle());
 
         return $this->printed($result, $setup->text() . $body, $teardown->text());
+    }
+
+    /**
+     * Puts what was handed over about an example that needs attention onto its
+     * result: what it carried before its afterEach hooks, and the rest, read now
+     * they are done, which is what they handed over and anything a result that
+     * passed until then did not read.
+     *
+     * @param array<string, string|array{error: string}> $before
+     */
+    private static function attach(ExampleResult $result, array $before, Attachments $attachments): void
+    {
+        if (!$result->isFailure() && !$result->isError() && !$result->isPending() && !$result->isSkipped()) {
+            return;
+        }
+
+        $attached = [...$before, ...$attachments->read()];
+
+        if ($attached !== []) {
+            $result->setAttachments($attached);
+        }
+    }
+
+    private function collecting(Attachments $attachments, Closure $run): void
+    {
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
+        try {
+            $run();
+        } finally {
+            DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
+        }
     }
 
     /**
@@ -461,6 +539,16 @@ class Context implements ExampleRegistry, Rebindable, Titled
         $this->beforeEachHooks = array_merge($before, $this->beforeEachHooks);
         $this->afterEachHooks = array_merge($this->afterEachHooks, $after);
         $this->bindings = array_merge($bindings, $this->bindings);
+    }
+
+    /**
+     * Takes what the contexts around this one handed over: a copy, read by
+     * each example under it that fails, or, when a beforeAll above left it out,
+     * theirs, read once by the first example it leaves out.
+     */
+    public function inheritAttachments(Attachments $attachments): void
+    {
+        $this->inherited = $attachments;
     }
 
     /**

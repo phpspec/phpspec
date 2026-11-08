@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Result;
 
+use PhpSpec\ProjectRoot;
 use PhpSpec\Results;
 
 /**
@@ -72,5 +73,80 @@ final readonly class ScenarioResult implements Results
     public function getResults(): array
     {
         return $this->stepResults;
+    }
+
+    /**
+     * The step that decides how the scenario ended: its first step that fails
+     * the run, whatever came before it, so the verdict agrees with the exit
+     * code; else its first step left pending or skipped on purpose; none for a
+     * scenario that passed.
+     */
+    public function decidingStep(): ?StepResult
+    {
+        $leftOut = null;
+
+        foreach ($this->stepResults as $step) {
+            if ($step->state()->failsTheRun()) {
+                return $step;
+            }
+
+            if ($leftOut === null && ($step->isPending() || $step->isSkippedForAReason())) {
+                $leftOut = $step;
+            }
+        }
+
+        return $leftOut;
+    }
+
+    public function state(): State
+    {
+        return $this->decidingStep()?->state() ?? State::Passed;
+    }
+
+    public function message(): ?string
+    {
+        return $this->decidingStep()?->message();
+    }
+
+    public function reason(): ?string
+    {
+        return $this->decidingStep()?->getReason();
+    }
+
+    public function failedAt(): ?Location
+    {
+        return $this->decidingStep()?->failedAt();
+    }
+
+    /**
+     * How the scenario ended, under the name it is given, written at its line
+     * in its feature file; its places named from the project root.
+     *
+     * @param list<string> $titles the titles that lead to it, its own last
+     */
+    public function outcome(array $titles, string $featurePath, ProjectRoot $root): Outcome
+    {
+        $deciding = $this->decidingStep();
+
+        return new Outcome(
+            Kind::Scenario,
+            $titles,
+            $this->state(),
+            $deciding?->message(),
+            $deciding?->getReason(),
+            $deciding?->failedAt()?->relativeTo($root),
+            Location::at($featurePath, $this->line)?->relativeTo($root),
+            $this->getDuration(),
+            $deciding?->getTitle(),
+            $deciding?->errorType(),
+        );
+    }
+
+    /**
+     * How long its steps ran, in seconds.
+     */
+    public function getDuration(): float
+    {
+        return array_sum(array_map(static fn(StepResult $step): float => $step->getDuration(), $this->stepResults));
     }
 }

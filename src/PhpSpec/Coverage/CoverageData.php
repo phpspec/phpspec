@@ -47,33 +47,36 @@ final class CoverageData
     }
 
     /**
-     * Filters raw coverage data to only include files under the given source path.
-     * Returns relative paths sorted alphabetically, using forward slashes on
-     * every platform (an engine and realpath() report backslash paths on Windows).
+     * Filters raw coverage data to only include files under the given source
+     * directories, those that exist. Returns paths sorted alphabetically,
+     * relative to the one source directory, or to the project root when there
+     * are several, using forward slashes on every platform (an engine and
+     * realpath() report backslash paths on Windows).
      *
      * @param array<string, array<int, int>> $data raw coverage data keyed by absolute file path
-     * @param string $srcPath the source directory path to filter by
+     * @param string ...$sources the source directories to filter by
      * @return array<string, array<int, int>> relative file paths mapped to line-level hit counts
      */
-    public static function filterData(array $data, string $srcPath): array
+    public static function filterData(array $data, string ...$sources): array
     {
-        $realSrcPath = realpath($srcPath);
+        $roots = array_values(array_filter(array_map(
+            static fn(string $source): ?string => ($real = realpath($source)) === false ? null : rtrim(str_replace('\\', '/', $real), '/') . '/',
+            $sources,
+        )));
 
-        if ($realSrcPath === false) {
+        if ($roots === []) {
             return [];
         }
-        $realSrcPath = rtrim(str_replace('\\', '/', $realSrcPath), '/') . '/';
 
+        $namedFrom = count($roots) === 1 ? $roots[0] : rtrim(str_replace('\\', '/', (string) realpath('.')), '/') . '/';
         $filtered = [];
 
         foreach ($data as $file => $lines) {
             $file = str_replace('\\', '/', $file);
+            $held = array_filter($roots, static fn(string $root): bool => str_starts_with($file, $root));
 
-            if (str_starts_with($file, $realSrcPath)
-                && !str_contains($file, "eval()'d code")
-            ) {
-                $relative = substr($file, strlen($realSrcPath));
-                $filtered[$relative] = $lines;
+            if ($held !== [] && !str_contains($file, "eval()'d code") && str_starts_with($file, $namedFrom)) {
+                $filtered[substr($file, strlen($namedFrom))] = $lines;
             }
         }
 

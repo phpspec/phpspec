@@ -147,28 +147,30 @@ final class CoverageReporter
         // directory's view, guard wants the project's, and guard bounds the
         // paths itself.
         $this->hits = $collector->getAggregate();
-        $covData = $this->reported($options->srcPath);
+        $covData = $this->reported($options->sources);
 
         if ($options->jsonPath !== null) {
-            $this->renderJson($output, $collector, $options->srcPath, $options->jsonPath);
+            $this->renderJson($output, $collector, $options->sources, $options->jsonPath);
         }
 
         return $this->renderReports($output, $covData, $options);
     }
 
     /**
-     * The hits the reports cover: the source path's, without what coverage
-     * leaves out, named from the source path. Narrowed first, so no file
-     * outside it is read for what it leaves out.
+     * The hits the reports cover: the source directories', without what
+     * coverage leaves out, named as {@see CoverageData::filterData()} names
+     * them. Narrowed first, so no file outside them is read for what it
+     * leaves out.
      *
+     * @param list<string> $sources
      * @return array<string, array<int, int>>
      */
-    private function reported(string $srcPath): array
+    private function reported(array $sources): array
     {
-        $source = ProjectRoot::at($srcPath);
-        $inSource = array_filter($this->hits, $source->holds(...), ARRAY_FILTER_USE_KEY);
+        $roots = array_map(ProjectRoot::at(...), $sources);
+        $inSource = array_filter($this->hits, static fn(string $file): bool => array_filter($roots, static fn(ProjectRoot $root): bool => $root->holds($file)) !== [], ARRAY_FILTER_USE_KEY);
 
-        return CoverageData::filterData($this->exclusions->appliedTo($inSource), $srcPath);
+        return CoverageData::filterData($this->exclusions->appliedTo($inSource), ...$sources);
     }
 
     /**
@@ -224,17 +226,16 @@ final class CoverageReporter
      *
      * @param Output $output the console output
      * @param PerExampleCollector $collector the collector holding per-example coverage
-     * @param string $srcPath the source directory to scope the report to
+     * @param list<string> $sources the source directories to scope the report to
      * @param string $jsonPath the file path to write the JSON report to
      */
-    private function renderJson(Output $output, PerExampleCollector $collector, string $srcPath, string $jsonPath): void
+    private function renderJson(Output $output, PerExampleCollector $collector, array $sources, string $jsonPath): void
     {
-        $realSrcPath = realpath($srcPath);
         $projectRoot = getcwd();
 
         $report = (new JsonReportBuilder(new RealFilesystem(), $this->exclusions))->build(
             $collector,
-            $realSrcPath !== false ? $realSrcPath : $srcPath,
+            array_map(static fn(string $source): string => realpath($source) ?: $source, $sources),
             $projectRoot !== false ? $projectRoot : '.',
         );
         (new JsonReport())->render($report['tests'], $report['sources'], $jsonPath);
@@ -264,7 +265,7 @@ final class CoverageReporter
         }
 
         if ($options->htmlPath !== null) {
-            (new HtmlReport())->render($covData, $options->htmlPath);
+            (new HtmlReport($options->sources))->render($covData, $options->htmlPath);
             $output->writeln("  HTML report: {$options->htmlPath}/index.html");
         }
 
@@ -284,7 +285,7 @@ final class CoverageReporter
         $verdict = new CoverageVerdict(
             new Percentage($totalCovered, $totalExecutable),
             (float) $options->coverageMin,
-            (new SourceFiles(new RealFilesystem(), realpath($options->srcPath) ?: $options->srcPath, ProjectRoot::here()))->unrecorded($this->hits, $this->exclusions),
+            (new SourceFiles(new RealFilesystem(), array_map(static fn(string $source): string => realpath($source) ?: $source, $options->sources), ProjectRoot::here()))->unrecorded($this->hits, $this->exclusions),
         );
         $this->printJudgement($output, $verdict, $options->coverageMin);
 

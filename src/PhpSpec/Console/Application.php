@@ -194,6 +194,7 @@ final class Application extends BaseApplication
         $defaultCommands[] = new Describe(
             new SpecGenerator($config->specDir(), specSuffix: $specSuffix),
             $config->getSourceLayout(),
+            composer: $config->composerJson(),
         );
         $defaultCommands[] = new Exemplify(
             new SpecGenerator($config->specDir(), specSuffix: $specSuffix),

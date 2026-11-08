@@ -14,8 +14,8 @@ if (!function_exists('_phpspec_exec')) {
                 $world->exitCode = $result->exitCode;
                 $world->output = $result->output;
                 return;
-            } catch (\PhpSpec\ClassConflictException) {
-                // Class already loaded from a different project — fall back to subprocess
+            } catch (\PhpSpec\SymbolConflictException) {
+                // It would see what an earlier run declared: a fresh process sees only its own
             } catch (\Error $e) {
                 if (!str_contains($e->getMessage(), 'Cannot declare class')
                     && !str_contains($e->getMessage(), 'Cannot redeclare class')

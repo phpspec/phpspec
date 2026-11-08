@@ -23,6 +23,23 @@ final class PrettySpecPoint
 require_once __DIR__ . '/../../BlameOutsider.php';
 describe(Pretty::class, function() {
 
+    it("lists in the detail what a broken context ran before it broke, names the break by the context, and places both from the project root", function () {
+        $output = new BufferedOutput();
+        $carrier = new ExampleResult('Server', [], true);
+        $carrier->setError(new ExampleError('would not stop', new \RuntimeException('would not stop')));
+        $pages = new ExampleResult('pages', [MatchResult::failed(1, 2, 'Expected 1 to be 2', __FILE__, $line = __LINE__)]);
+        $context = new ContextResult('Server', [$pages, $carrier]);
+        $context->setError($carrier->getError());
+
+        (new Pretty($output))->format(new SuiteResult([new SpecificationResult('Server', [$context])]));
+        $text = $output->fetch();
+
+        expect($text)->toContain('• Server > pages');
+        expect($text)->toContain('at spec/PhpSpec/Report/Formatter/Pretty.spec.php:' . $line);
+        expect($text)->toContain('RuntimeException: would not stop');
+        expect($text)->not()->toContain('Server > Server');
+    });
+
     // A response body or a watched log can run to megabytes, and a terminal
     // scrolling for a minute has buried the failure it was meant to explain.
     it("cuts a flood of printed text, saying how much more there was", function() {
@@ -319,8 +336,8 @@ describe(Pretty::class, function() {
         expect($text)->toContain("○ fetches the rates (Needs the rates API)");
         expect($text)->toContain("- posts the order (No network here)");
         expect($text)->toContain("○ is crossed out\n");
-        expect($text)->toContain("Pending:\n\n  • MySpec > fetches the rates\n    Needs the rates API\n\n  • MySpec > is crossed out\n");
-        expect($text)->toContain("Skipped:\n\n  • MySpec > posts the order\n    No network here\n");
+        expect($text)->toContain("Pending:\n\n  • fetches the rates\n    Needs the rates API\n\n  • is crossed out\n");
+        expect($text)->toContain("Skipped:\n\n  • posts the order\n    No network here\n");
     });
 
     it("formats error results with details", function() {
@@ -354,8 +371,8 @@ describe(Pretty::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("  at " . __FILE__ . ":" . $line);
-        expect(substr_count($text, __FILE__ . ":" . $line))->toBe(1);
+        expect($text)->toContain("  at spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . $line);
+        expect(substr_count($text, "spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . $line))->toBe(1);
     });
 
     it("points at the spec line an error came through when it was raised beyond the spec, the deeper frames underneath", function() {
@@ -374,9 +391,9 @@ describe(Pretty::class, function() {
 
         $formatter->format(new SuiteResult([new SpecificationResult("MySpec", [$example])]));
         $text = $output->fetch();
-        expect($text)->toContain("  at " . __FILE__ . ":" . $line);
-        expect($text)->toContain(realpath(BLAME_SPEC_OUTSIDER) . ":2");
-        expect($text)->not()->toContain(__FILE__ . ":" . ($line - 7));
+        expect($text)->toContain("  at spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . $line);
+        expect($text)->toContain(str_replace('\\', '/', realpath(BLAME_SPEC_OUTSIDER)) . ":2");
+        expect($text)->not()->toContain("spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . ($line - 7));
     });
 
     it("prints a step's blamed line once, with only the frames beyond it underneath", function() {
@@ -395,8 +412,8 @@ describe(Pretty::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("  at " . __FILE__ . ":" . $line);
-        expect(substr_count($text, __FILE__ . ":" . $line))->toBe(1);
+        expect($text)->toContain("  at spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . $line);
+        expect(substr_count($text, "spec/PhpSpec/Report/Formatter/Pretty.spec.php:" . $line))->toBe(1);
     });
 
     it("formats pending results", function() {
@@ -450,8 +467,10 @@ describe(Pretty::class, function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
 
-        $ctx = new ContextResult("errored context", []);
         $error = new ExampleError("context broke", new \RuntimeException("context broke"));
+        $carrier = new ExampleResult("errored context", [], true);
+        $carrier->setError($error);
+        $ctx = new ContextResult("errored context", [$carrier]);
         $ctx->setError($error);
         $spec = new SpecificationResult("MySpec", [$ctx]);
         $suite = new SuiteResult([$spec]);
@@ -656,7 +675,7 @@ describe(Pretty::class, function() {
 
         $text = str_replace("\r\n", "\n", $output->fetch());
         expect($text)->toContain("! calls the code (no expectation)");
-        expect($text)->toContain("Risky:\n\n  • MySpec > calls the code\n    No expectation in this example.\n");
+        expect($text)->toContain("Risky:\n\n  • calls the code\n    no expectation\n");
         expect($text)->toContain("1 passed, 1 risky");
     });
 

@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 use PhpSpec\CodeGeneration\SurroundingCode;
+use PhpSpec\Result\Location;
 
 /**
  * @internal
@@ -69,6 +70,29 @@ trait BlameTrait
         }
 
         return null;
+    }
+
+    /**
+     * Where the error broke, as a reader should look at it: the site when it is
+     * the user's code, else the line of the file declaring what ran that it
+     * came through. An error that did not come through that file broke in
+     * PhpSpec's own machinery, and the user's frames on its way called
+     * PhpSpec rather than the code that ran, so it broke nowhere to name.
+     * With no declaring file, the nearest frame of the user's code.
+     */
+    public function brokeAt(?string $declaredIn = null): ?Location
+    {
+        if ($this->file !== '' && self::isUsersCode($this->file)) {
+            return Location::at($this->file, $this->line);
+        }
+
+        if ($declaredIn !== null) {
+            return Location::at($declaredIn, $this->lineIn($declaredIn));
+        }
+
+        $blame = $this->blame();
+
+        return $blame === null ? null : Location::at($blame['file'], $blame['line']);
     }
 
     private static function samePath(string $a, string $b): bool

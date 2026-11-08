@@ -19,10 +19,8 @@ use PhpSpec\Attachments;
 use PhpSpec\CapturedNotes;
 use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Event\ExampleCompleted;
 use PhpSpec\EventDispatcher\Event\ExampleErrored;
 use PhpSpec\EventDispatcher\Event\ExampleRunned;
-use PhpSpec\EventDispatcher\Event\ExampleStarted;
 use PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber;
 use PhpSpec\ExampleId;
 use PhpSpec\Mock\HeldCalls;
@@ -221,16 +219,22 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
      * Executes the example closure, dispatching lifecycle events, capturing
      * errors/warnings, and measuring execution duration.
      *
+     * @param Attachments|null $attachments what the example's hooks are handing over about it too, or null when it runs without them
      * @return ExampleResult the match outcomes and metadata
      */
-    public function run(): ExampleResult
+    public function run(?Attachments $attachments = null): ExampleResult
     {
         // Whatever this example subscribes dies with it, so a leak cannot
         // collect and re-judge its siblings' matches.
         $boundary = DispatcherRegistry::dispatcher()->snapshot();
 
+        if ($attachments === null) {
+            $attachments = new Attachments();
+            DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+        }
+
         try {
-            return $this->declared($this->execute());
+            return $this->declared($this->execute($attachments));
         } finally {
             DispatcherRegistry::dispatcher()->restore($boundary);
         }
@@ -254,13 +258,9 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
      */
     public function failedInHook(ExampleError $error): ExampleResult
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
-
         $this->isError = true;
         $this->exampleResult = new ExampleResult($this->getTitle(), [], true);
         $this->exampleResult->setError($error);
-
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
 
         return $this->declared($this->exampleResult);
     }
@@ -270,30 +270,23 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
      * pending(): skipped or pending with the hook's reason, declared where it
      * is, the body never run.
      */
-    public function leftOutBy(PendingException|SkippedException $signal): ExampleResult
+    public function leftOutBy(PendingException|SkippedException $signal, ?Attachments $attachments = null): ExampleResult
     {
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
-
         $this->exampleResult = $signal instanceof PendingException
             ? new ExampleResult($this->getTitle(), [], isPending: true, reason: $signal->getMessage())
             : new ExampleResult($this->getTitle(), [], isSkipped: true, reason: $signal->getMessage());
 
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
+        if ($attachments !== null) {
+            $this->keepAttachments($attachments);
+        }
 
         return $this->declared($this->exampleResult);
     }
 
-    private function execute(): ExampleResult
+    private function execute(Attachments $attachments): ExampleResult
     {
         $subscriber = new ExampleSubscriber($this);
         DispatcherRegistry::dispatcher()->addSubscriber($subscriber);
-
-        // Read while the example is still standing where it attached them, which
-        // is before its afterEach hooks tidy away what they point at.
-        $attachments = new Attachments();
-        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
-
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->getTitle()), ExampleStarted::NAME);
 
         if ($this->pending) {
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
@@ -302,7 +295,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
                 $this->exampleResult->markLeftOutByFocus();
             }
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         }
 
@@ -323,7 +315,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
             $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
             $caught->stop();
@@ -332,7 +323,6 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
             $this->exampleResult->raised($caught->notes());
             $this->exampleResult->setOutput($printed->text());
             $this->keepAttachments($attachments);
-            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
             // An undeclared call came first; its default answer may be what broke.
@@ -364,23 +354,20 @@ class Example implements ExampleResultRegistry, Rebindable, Titled
         }
         $this->exampleResult->raised($caught->notes());
         $this->keepAttachments($attachments);
-        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->getTitle(), $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;
     }
 
     /**
-     * Puts what the example handed over about itself onto its result, and stops
-     * listening for more. Read here, while the example still stands where it
-     * attached them, because its afterEach hooks are next and they are what
-     * tidies away the files and processes an attachment points at.
+     * Puts what was handed over about the example so far onto its result. Read
+     * here, while the example still stands where it attached them, because its
+     * afterEach hooks are next and they are what tidies away the files and
+     * processes an attachment points at.
      *
      * Nothing is read for an example that passed: an attachment is a diagnosis,
      * and there is nothing to diagnose.
      */
     private function keepAttachments(Attachments $attachments): void
     {
-        DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
-
         if ($attachments->isEmpty()) {
             return;
         }

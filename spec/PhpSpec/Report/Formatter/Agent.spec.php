@@ -83,7 +83,7 @@ describe(Agent::class, function () {
         $entry = json_decode($lines[1], true, flags: JSON_THROW_ON_ERROR);
         $summary = json_decode($lines[2], true, flags: JSON_THROW_ON_ERROR);
         expect($entry['state'])->toBe('risky');
-        expect($entry['message'])->toBe('No expectation in this example.');
+        expect($entry['message'])->toBe('no expectation');
         expect($entry['rerun'])->toEndWith('Agent.spec.php:12');
         expect($summary['risky'])->toBe(1);
         expect($summary['passing'])->toBe(0);
@@ -380,6 +380,18 @@ describe(Agent::class, function () {
         expect($doc['fatal']['at'])->toBe('spec/App/Broken.spec.php:8');
         expect($doc['result']['actionable'])->toBe(1);
         expect($doc['result']['passing'])->toBe(1);
+    });
+
+    it('writes nothing once the run is handed to another process, not even as this one ends', function () {
+        $output = new BufferedOutput();
+        $end = new AgentSpecProcessEnd();
+        $formatter = new Agent($output, null, $end);
+
+        $formatter->handedOver();
+        $formatter->publish();
+        $end->arrives();
+
+        expect($output->fetch())->toBe('');
     });
 
     it('publishes what it has when the process ends with no fatal', function () use ($stream) {
@@ -1004,7 +1016,7 @@ describe(Agent::class, function () {
     it('counts a story run in scenarios and steps, never in examples', function () use ($render) {
         $step = new StepResult('Given a basket', 'failure');
         $step->setError(new \PhpSpec\StoryBDD\StepError('step went wrong', new \RuntimeException('step went wrong')));
-        $scenario = new ScenarioResult('Checkout', [$step, new StepResult('When I pay', 'skipped')]);
+        $scenario = new ScenarioResult('Checkout', [$step, new StepResult('When I pay', 'skipped')], 3);
         $feature = new FeatureResult('Shopping', [$scenario], '/features/shopping.feature');
 
         $doc = $render(new SuiteResult([$feature]));

@@ -132,7 +132,7 @@ given('the watcher is running', function () {
 });
 ```
 
-A closure is read when the scenario ends, so it holds what the process wrote *after* you attached it rather than the empty file it was then. It is read **before** `afterScenario`, so a hook that terminates the process and clears the workspace cannot empty it first. Nothing is read at all when the scenario passes, so attaching a large log costs a green run nothing. The same name twice keeps the latest.
+A closure is read when the scenario ends, so it holds what the process wrote *after* you attached it rather than the empty file it was then. It is read **before** `afterScenario`, so a hook that terminates the process and clears the workspace cannot empty it first. Hooks attach too: what `beforeScenario` hands over is kept with the steps', and what `afterScenario` hands over, a screenshot of the failure, say, is read once it is done. What `beforeFeature` hands over is carried by every scenario of the feature that fails, a closure read at that scenario's failure, and what a scenario hands over itself wins under the same name; a `beforeFeature` that does not pass puts it on the first scenario. `afterFeature` runs once the scenarios are reported, so what it hands over is kept only when it breaks, with `beforeFeature`'s, on the last scenario. Nothing is read at all when the scenario passes, so attaching a large log costs a green run nothing. The same name twice keeps the latest.
 
 Attachments appear under the failure in the pretty and dot formatters, and as `attachments` in [`--format=agent`](agent.md#handing-over-context-phpspec-cannot-see).
 
@@ -314,9 +314,10 @@ afterFeature(function () {
 ```
 
 The after hooks are teardown hooks: `afterScenario` runs even when a step in
-the scenario failed, so resources are always cleaned up. `afterStep` runs after
-every step that executed, but not for steps skipped because an earlier step
-failed.
+the scenario failed, so resources are always cleaned up. `beforeStep` and
+`afterStep` run around every step that executes, and around no other: not a
+step no definition matches, nor one skipped because an earlier step did not
+pass.
 
 A before hook can decide for what it wraps: `skip()` or `pending()` in
 `beforeFeature`, `beforeScenario` or `beforeStep` leaves every scenario of the
@@ -334,14 +335,23 @@ already failed keeps its failure, with the hook's error as a warning under it.
 | State | Color | Meaning |
 |---|---|---|
 | passed | green | Step executed successfully |
-| failed | red | Step threw an exception or expectation failed |
+| failed | red | An expectation in the step did not hold |
+| errored | red | The step, or a hook around it, threw |
 | pending | yellow | Step calls `pending()`, shown with the reason it gave |
 | undefined | blue | No matching step definition found |
-| skipped | cyan | Step calls `skip()`, shown with the reason it gave, or a prior step failed |
+| skipped | cyan | Step calls `skip()`, shown with the reason it gave, or an earlier step did not pass |
 
-After the first failure in a scenario, all remaining steps are skipped. A
-pending or skipped step is listed under `Pending:` or `Skipped:` at the end
-with its reason; a step skipped behind a failure is not, the failure is.
+A scenario stops at its first step that does not pass, whether it fails,
+errors, is pending or undefined, or skips itself. The steps after it do not
+run: each is skipped, or undefined when no definition matches it, so step
+generation offers every step the scenario lacks at once. A pending or skipped
+step is listed under `Pending:` or `Skipped:` at the end with its reason; a
+step skipped behind another is not, the one that stopped the scenario is.
+
+A scenario ends as its deciding step did: its first step that fails the run
+(failed, errored or undefined), whatever came before it, so the verdict
+agrees with the exit code; else its first step left pending or skipped on
+purpose, with that step's reason; else it passed.
 
 ## Running Features
 

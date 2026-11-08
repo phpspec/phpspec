@@ -321,7 +321,7 @@ final class Agent
             $system = strtr($system, [
                 '%spec_path%' => $this->config->specDir(),
                 '%spec_suffix%' => $this->config->getSpecSuffix(),
-                '%src_path%' => $this->config->srcDir(),
+                '%src_path%' => implode('/, ', $this->config->sourceRoots()),
                 '%features_path%' => $roots['features'],
                 '%steps_path%' => $this->steps->directory(),
             ]);
@@ -360,10 +360,11 @@ final class Agent
         $scanner = new TreeScanner($this->filesystem);
         $sections = [];
 
-        $srcPath = $this->config->srcDir();
-        $srcTree = $scanner->scan($cwd . '/' . $srcPath, 3);
-        if ($srcTree !== '') {
-            $sections[] = "## Source files ($srcPath/)\n$srcTree";
+        foreach ($this->config->sourceRoots() as $srcPath) {
+            $srcTree = $scanner->scan($cwd . '/' . $srcPath, 3);
+            if ($srcTree !== '') {
+                $sections[] = "## Source files ($srcPath/)\n$srcTree";
+            }
         }
 
         $specPath = $this->config->specDir();
@@ -466,13 +467,13 @@ final class Agent
         if (in_array('recency', $profile->grounding, true) && $recentFeature === null && $recentSource === null) {
             $scanner = new RecencyScanner($this->filesystem);
             $recentFeature = ProjectPath::relativeOrNull($scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './')));
-            $recentSource = ProjectPath::relativeOrNull($scanner->mostRecentSource($cwd . '/' . $this->config->srcDir()));
+            $recentSource = ProjectPath::relativeOrNull($scanner->mostRecentSource(...array_map(static fn(string $root): string => $cwd . '/' . $root, $this->config->sourceRoots())));
         }
 
         if (in_array('tree', $profile->grounding, true) && $tree === '') {
             $scanner = new TreeScanner($this->filesystem);
             $sections = [];
-            foreach ([$this->config->srcDir(), $this->config->specDir()] as $dir) {
+            foreach ([...$this->config->sourceRoots(), $this->config->specDir()] as $dir) {
                 $listing = $scanner->scan($cwd . '/' . $dir, 3);
                 if ($listing !== '') {
                     $sections[] = "$dir/:\n" . $listing;
@@ -500,12 +501,13 @@ final class Agent
     {
         $cwd = getcwd() ?: '.';
         $specPath = $this->config->specDir();
-        $srcPath = $this->config->srcDir();
         $files = [];
         preg_match_all('/\b[A-Z][A-Za-z0-9]+\b/', $instruction, $matches);
 
         foreach (array_unique($matches[0]) as $class) {
-            foreach ([[$srcPath, $class . '.php'], [$specPath, $class . $this->config->getSpecSuffix()]] as [$dir, $name]) {
+            $places = [...array_map(static fn(string $root): array => [$root, $class . '.php'], $this->config->sourceRoots()), [$specPath, $class . $this->config->getSpecSuffix()]];
+
+            foreach ($places as [$dir, $name]) {
                 foreach ($this->findFilesNamed($cwd . '/' . $dir, $name) as $rel) {
                     $files["$dir/$rel"] = $this->filesystem->read($cwd . '/' . $dir . '/' . $rel);
                 }
@@ -589,17 +591,17 @@ final class Agent
     {
         $cwd = getcwd() ?: '.';
         $specDir = $this->config->specDir();
-        $srcDir = $this->config->srcDir();
         $suffix = $this->config->getSpecSuffix();
-        $prefix = trim($this->config->getPsr4Prefix(), '\\');
+        $layout = $this->config->getSourceLayout();
 
         $candidates = [];
         foreach ($this->findFilesNamed($cwd . '/' . $specDir, $class . $suffix) as $rel) {
             $candidates[] = str_replace('/', '\\', substr($rel, 0, -strlen($suffix)));
         }
-        foreach ($this->findFilesNamed($cwd . '/' . $srcDir, $class . '.php') as $rel) {
-            $bare = str_replace('/', '\\', substr($rel, 0, -strlen('.php')));
-            $candidates[] = $prefix !== '' ? $prefix . '\\' . $bare : $bare;
+        foreach ($this->config->sourceRoots() as $srcDir) {
+            foreach ($this->findFilesNamed($cwd . '/' . $srcDir, $class . '.php') as $rel) {
+                $candidates[] = $layout->classAt(ltrim($srcDir . '/' . $rel, '/'));
+            }
         }
 
         $unique = array_values(array_unique($candidates));

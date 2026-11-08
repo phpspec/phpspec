@@ -239,6 +239,24 @@ Feature: Story BDD lifecycle hooks
     And the output should contain "1 scenario, 1 step (1 failed, 1 warning)"
     And the exit code should be 1
 
+  Scenario: Step hooks run only around a step a definition matches, so a hook that throws leaves an undefined step undefined
+    Given a feature file "features/gap.feature":
+      """
+      Feature: Gap
+        Scenario: Unwritten
+          Given a step nobody has written yet
+      """
+    And a step file "features/steps/gap.steps.php":
+      """
+      <?php
+      beforeStep(fn () => throw new RuntimeException('session expired'));
+      afterStep(fn () => throw new RuntimeException('log full'));
+      """
+    When I run phpspec run "features/"
+    Then the output should contain "? Given a step nobody has written yet"
+    And the output should not contain "session expired"
+    And the output should not contain "log full"
+
   Scenario: skip() in afterScenario comes too late, and says so
     Given a feature file "features/late.feature":
       """

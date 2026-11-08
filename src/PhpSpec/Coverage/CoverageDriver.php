@@ -35,7 +35,7 @@ interface CoverageDriver
      * Stops recording and returns what was recorded since the last stop(),
      * the next cycle starting from nothing.
      *
-     * @return array<string, array<int, int>> file paths mapped to line-level hit counts
+     * @return array<string, array<int, int>> file paths mapped to each line: 1 when it ran, -1 for code that did not, -2 for a line that is not code
      */
     public function stop(): array;
 }

@@ -21,6 +21,7 @@ use PhpSpec\Console\Prompt;
 use PhpSpec\Console\ReceiptFormat;
 use PhpSpec\ProjectRoot;
 use PhpSpec\Report\Formatter\Agent\Schema;
+use PhpSpec\Source\ComposerJson;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\ExceptionInterface;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -38,12 +39,14 @@ final class Describe extends Command
 {
     /**
      * @param SpecGenerator $generator the spec file generator
+     * @param ComposerJson|null $composer the project's composer.json, told about a name kept as written
      * @param string|null $name the command name (defaults to "describe")
      */
     public function __construct(
         private readonly SpecGenerator $generator,
         private readonly SourceLayout $layout = new SourceLayout(),
         private readonly Prompt $prompt = new Prompt(),
+        private readonly ?ComposerJson $composer = null,
         ?string $name = null,
     ) {
         parent::__construct($name);
@@ -115,6 +118,14 @@ final class Describe extends Command
             $this->specFile($spec),
         ));
 
+        if ($this->layout->mappings() !== [] && !$this->layout->covers($fqcn)) {
+            $notice = $this->composer?->autoloadBelow($this->layout->srcPath());
+
+            if ($notice !== null) {
+                $output->writeln($notice);
+            }
+        }
+
         $method = $input->getOption('exemplify');
         if ($method) {
             $added = $this->generator->addExample($spec, $method);
@@ -149,15 +160,12 @@ final class Describe extends Command
     }
 
     /**
-     * The spec file for a class path, named from the project root.
-     *
-     * @param string $spec the class path using forward slashes
-     */
-    /**
      * The name to describe: as given when it is under a mapped namespace, or
-     * when the project maps none; otherwise within the default namespace, or
-     * under the mapped namespace the person picks. Null when nobody could
-     * pick, said and explained on the way out.
+     * when the project maps none; otherwise within the default namespace, as
+     * given when a fallback mapping places every name, or under the mapped
+     * namespace the person picks, or as written when they say so and nothing
+     * claims the source path. Null when nobody could pick, said and explained
+     * on the way out.
      */
     private function placed(string $fqcn, Input $input, Output $output, bool $forAgent): ?string
     {
@@ -167,6 +175,10 @@ final class Describe extends Command
 
         if ($this->layout->defaultNamespace() !== null) {
             return $this->layout->withinDefaultNamespace($fqcn);
+        }
+
+        if ($this->layout->covers($fqcn)) {
+            return $fqcn;
         }
 
         $candidates = $this->layout->candidatesFor($fqcn);
@@ -186,12 +198,16 @@ final class Describe extends Command
             return null;
         }
 
+        $asWritten = $this->composer?->refusal($fqcn, $this->layout->srcPath()) === null;
+
         $output->writeln('');
         $output->writeln(sprintf('<fg=yellow>%s</> Describe:', $problem));
         foreach ($candidates as $index => $candidate) {
             $output->writeln(sprintf('  [%d] %s', $index + 1, $candidate));
         }
-        $output->writeln(sprintf('  [0] %s, as written', $fqcn));
+        if ($asWritten) {
+            $output->writeln(sprintf('  [0] %s, as written', $fqcn));
+        }
 
         while (true) {
             $answer = $this->prompt->ask('  > ');
@@ -204,7 +220,7 @@ final class Describe extends Command
 
             $answer = trim($answer) === '' ? '1' : trim($answer);
 
-            if ($answer === '0') {
+            if ($answer === '0' && $asWritten) {
                 return $fqcn;
             }
 
@@ -212,7 +228,7 @@ final class Describe extends Command
                 return $candidates[(int) $answer - 1];
             }
 
-            $output->writeln(sprintf('  <fg=red>Answer with a number from 0 to %d.</>', count($candidates)));
+            $output->writeln(sprintf('  <fg=red>Answer with a number from %d to %d.</>', $asWritten ? 0 : 1, count($candidates)));
         }
     }
 
@@ -226,6 +242,11 @@ final class Describe extends Command
         return $names === [] ? (string) $last : implode(', ', $names) . ' or ' . $last;
     }
 
+    /**
+     * The spec file for a class path, named from the project root.
+     *
+     * @param string $spec the class path using forward slashes
+     */
     private function specFile(string $spec): string
     {
         return ProjectRoot::here()->relative($this->generator->filePath($spec));

@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Parallel;
 
+use PhpSpec\ByReturnValue;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\SpecificationResult;
@@ -22,8 +23,9 @@ use PhpSpec\StopConditions;
 
 /**
  * @internal
- * Wraps a single child process that runs phpspec on a set of spec files and
- * reports each result back over the wire, one line per spec or feature.
+ * Wraps a single child process that runs phpspec on the files it is handed,
+ * one at a time over its standard input, and reports each result back over
+ * the wire, one line per spec or feature.
  */
 final class WorkerProcess
 {
@@ -39,6 +41,10 @@ final class WorkerProcess
 
     private readonly Wire $wire;
 
+    private ?string $running = null;
+
+    private ?string $stderrFile = null;
+
     /** @var list<string> the files the worker has reported so far */
     private array $reported = [];
 
@@ -47,7 +53,6 @@ final class WorkerProcess
     private bool $stopped = false;
 
     /**
-     * @param string[] $paths spec file paths to run in this worker
      * @param string $phpspecBin absolute path to the phpspec binary
      * @param string|null $coveragePartial file path for the worker to dump raw coverage state to, or null to run without coverage
      * @param list<string> $childOptions the options the parent was started with that set up the project (a named config, a bootstrap), forwarded so the worker runs against the same one
@@ -55,9 +60,10 @@ final class WorkerProcess
      * @param string|null $filter the title filter the parent runs under, forwarded so a worker selects as it did
      * @param string|null $tags the tag expression the parent runs under, forwarded likewise
      * @param list<string> $phpOptions the php options the worker runs under, which switch its coverage engine on or off
+     * @param int $number which worker this is, from 1, told to it as PHPSPEC_WORKER and TEST_TOKEN so each can keep a database of its own
+     * @param bool $perExample whether the worker credits each covered line to the example that ran it, which only the JSON report reads
      */
     public function __construct(
-        private readonly array $paths,
         private readonly string $phpspecBin,
         private readonly ?string $coveragePartial = null,
         private readonly array $childOptions = [],
@@ -65,6 +71,8 @@ final class WorkerProcess
         private readonly ?string $filter = null,
         private readonly ?string $tags = null,
         private readonly array $phpOptions = [],
+        private readonly int $number = 1,
+        private readonly bool $perExample = false,
     ) {
         $this->wire = new Wire();
     }
@@ -82,7 +90,7 @@ final class WorkerProcess
             ...$this->phpOptions,
             $this->phpspecBin,
             'run',
-            ...$this->paths,
+            '--queue',
             '-f', 'wire',
             '--no-ansi',
             '--no-interaction',
@@ -90,6 +98,10 @@ final class WorkerProcess
 
         if ($this->coveragePartial !== null) {
             $command[] = '--coverage-partial=' . $this->coveragePartial;
+        }
+
+        if ($this->coveragePartial !== null && $this->perExample) {
+            $command[] = '--coverage-per-example';
         }
 
         array_push($command, ...$this->childOptions);
@@ -104,24 +116,31 @@ final class WorkerProcess
 
         array_push($command, ...$this->stop->options());
 
-        return array_values($command);
+        return $command;
     }
 
     /**
-     * Spawns the child phpspec process with non-blocking stdout/stderr pipes.
+     * Spawns the child phpspec process with a non-blocking socket for its report,
+     * keeping its standard input open to hand it files.
      */
     public function start(): void
     {
         $command = $this->buildCommand();
 
+        // A socket, not a pipe: on Windows a read from an empty pipe waits however
+        // it was set up, and a worker waiting for its next file would never get it.
+        // Its error stream goes to a file: what a worker last says is read once it
+        // has gone, and a socket on Windows does not keep it that long.
+        $this->stderrFile = (string) tempnam(sys_get_temp_dir(), 'phpspec_worker_stderr_');
         $descriptors = [
             0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            1 => ['socket'],
+            2 => ['file', $this->stderrFile, 'w'],
         ];
 
         $cwd = getcwd();
-        $process = proc_open($command, $descriptors, $this->pipes, $cwd !== false ? $cwd : null);
+        $environment = [...getenv(), 'PHPSPEC_WORKER' => (string) $this->number, 'TEST_TOKEN' => (string) $this->number];
+        $process = proc_open($command, $descriptors, $this->pipes, $cwd !== false ? $cwd : null, $environment);
 
         if (!is_resource($process)) {
             throw new \RuntimeException('Failed to start worker process');
@@ -129,11 +148,46 @@ final class WorkerProcess
 
         $this->process = $process;
 
-        fclose($this->pipes[0]);
-        unset($this->pipes[0]);
-
         stream_set_blocking($this->pipes[1], false);
-        stream_set_blocking($this->pipes[2], false);
+    }
+
+    /**
+     * Hands the worker a file to run, by the targets it runs in it.
+     *
+     * @param list<string> $targets
+     */
+    public function give(string $file, array $targets): void
+    {
+        $this->running = $file;
+
+        if (!isset($this->pipes[0])) {
+            return;
+        }
+
+        $line = $this->wire->give($targets) . "\n";
+
+        // A worker that died has closed its end, and is reported once it is
+        // seen to be done.
+        (new ByReturnValue())->call(fn(): int|false => fwrite($this->pipes[0], $line));
+    }
+
+    /**
+     * Whether the worker ran what it was handed and waits for another file.
+     */
+    public function wantsWork(): bool
+    {
+        return $this->running === null && isset($this->pipes[0]);
+    }
+
+    /**
+     * Tells the worker no file is left, so it ends its report once through.
+     */
+    public function finish(): void
+    {
+        if (isset($this->pipes[0])) {
+            fclose($this->pipes[0]);
+            unset($this->pipes[0]);
+        }
     }
 
     /**
@@ -155,7 +209,7 @@ final class WorkerProcess
     }
 
     /**
-     * Non-blocking read of available stdout/stderr data from the child process.
+     * Non-blocking read of what the child process has reported so far.
      */
     public function read(): void
     {
@@ -163,27 +217,37 @@ final class WorkerProcess
             return;
         }
 
-        $readable = array_filter($this->pipes, 'is_resource');
-        if (empty($readable)) {
+        $read = $this->pipes();
+        if ($read === []) {
             return;
         }
 
-        $read = array_values($readable);
         $write = null;
         $except = null;
 
-        if (@stream_select($read, $write, $except, 0) > 0) {
+        // A signal arriving mid-wait makes it warn and answer false: nothing to read yet.
+        if ((new ByReturnValue())->call(static function () use (&$read, &$write, &$except): int|false {
+            return stream_select($read, $write, $except, 0);
+        }) > 0) {
             foreach ($read as $pipe) {
-                $content = stream_get_contents($pipe);
-                if ($content !== false && $content !== '') {
-                    if ($pipe === ($this->pipes[1] ?? null)) {
-                        $this->stdout .= $content;
-                    } else {
-                        $this->stderr .= $content;
-                    }
+                $this->stdout .= (string) stream_get_contents($pipe);
+
+                // A pipe the worker closed would wake every wait at once.
+                if (feof($pipe)) {
+                    $this->closePipe($pipe);
                 }
             }
         }
+    }
+
+    /**
+     * The stream the worker reports on, while it is open, for a wait across workers.
+     *
+     * @return list<resource>
+     */
+    public function pipes(): array
+    {
+        return array_filter([$this->pipes[1] ?? null], 'is_resource');
     }
 
     /**
@@ -198,6 +262,7 @@ final class WorkerProcess
             $this->closePipes();
             proc_close($process);
             $this->process = null;
+            $this->readStderr();
         }
     }
 
@@ -233,8 +298,10 @@ final class WorkerProcess
             $this->stdout = substr($this->stdout, $newline + 1);
             $decoded = $this->wire->decode($line);
 
-            if ($decoded === true) {
+            if ($decoded === WireMark::Ended) {
                 $this->ended = true;
+            } elseif ($decoded === WireMark::Ran) {
+                $this->running = null;
             } elseif ($decoded !== null) {
                 $this->reported[] = $decoded->getPath();
                 $results[] = $decoded;
@@ -246,7 +313,7 @@ final class WorkerProcess
 
     /**
      * Everything the worker still had to report once it is done, and an error
-     * on each file it was running but never reported when it died before
+     * on the file it was running but never reported when it died before
      * ending its report.
      *
      * @return list<SpecificationResult|FeatureResult>
@@ -260,6 +327,7 @@ final class WorkerProcess
             $this->process = null;
         }
 
+        $this->readStderr();
         $results = $this->takeResults();
 
         return $this->ended ? $results : [...$results, ...$this->unreported()];
@@ -284,24 +352,33 @@ final class WorkerProcess
     }
 
     /**
+     * An error on each of these files, which the worker died before reporting.
+     *
+     * @param list<string> $files
+     * @return list<SpecificationResult>
+     */
+    public function leftBehind(array $files): array
+    {
+        return array_map(function (string $path): SpecificationResult {
+            $example = new ExampleResult(basename($path), [], true);
+            $example->setError(ExampleError::fromReport($this->died($path), \RuntimeException::class));
+
+            return new SpecificationResult(basename($path), [$example], $path);
+        }, $files);
+    }
+
+    /**
      * @return list<SpecificationResult>
      */
     private function unreported(): array
     {
         $reported = array_map(self::samePathKey(...), $this->reported);
-        $results = [];
 
-        foreach ($this->paths as $path) {
-            if (in_array(self::samePathKey($path), $reported, true)) {
-                continue;
-            }
-
-            $example = new ExampleResult(basename($path), [], true);
-            $example->setError(ExampleError::fromReport($this->died($path), \RuntimeException::class));
-            $results[] = new SpecificationResult(basename($path), [$example], $path);
+        if ($this->running === null || in_array(self::samePathKey($this->running), $reported, true)) {
+            return [];
         }
 
-        return $results;
+        return $this->leftBehind([$this->running]);
     }
 
     private function died(string $path): string
@@ -323,22 +400,40 @@ final class WorkerProcess
     }
 
     /**
-     * Switches pipes to blocking mode and reads all remaining data.
+     * Reads all that remains of the worker's report.
      */
     private function drainPipes(): void
     {
         if (isset($this->pipes[1]) && is_resource($this->pipes[1])) {
             stream_set_blocking($this->pipes[1], true);
-            $content = stream_get_contents($this->pipes[1]);
-            if ($content !== false && $content !== '') {
-                $this->stdout .= $content;
-            }
+            $this->stdout .= (string) stream_get_contents($this->pipes[1]);
         }
-        if (isset($this->pipes[2]) && is_resource($this->pipes[2])) {
-            stream_set_blocking($this->pipes[2], true);
-            $content = stream_get_contents($this->pipes[2]);
-            if ($content !== false && $content !== '') {
-                $this->stderr .= $content;
+    }
+
+    /**
+     * Takes what the worker said on its error stream, once it has gone.
+     */
+    private function readStderr(): void
+    {
+        if ($this->stderrFile === null) {
+            return;
+        }
+
+        $this->stderr .= (string) file_get_contents($this->stderrFile);
+        $file = $this->stderrFile;
+        $this->stderrFile = null;
+        (new ByReturnValue())->call(static fn(): bool => unlink($file));
+    }
+
+    /**
+     * @param resource $pipe
+     */
+    private function closePipe($pipe): void
+    {
+        foreach ($this->pipes as $key => $open) {
+            if ($open === $pipe) {
+                fclose($open);
+                unset($this->pipes[$key]);
             }
         }
     }

@@ -13,6 +13,10 @@ Feature: Spec API reference
     And the output should contain "describe(string $context, Closure $examples): void"
     And the output should contain "toThrow(Throwable|string $exception = '', ?string $message = null): static"
     And the output should contain "mock(string $class): object"
+    And the output should contain "dummy(string $class): object"
+    And the output should contain "ignoreOthers(): void"
+    And the output should contain "once(): PhpSpec\Mock\CallCountExpectation"
+    And the output should contain "times(): PhpSpec\Mock\CallCountExpectation"
     And the output should contain "given(string $pattern, Closure $fn): void"
     And the output should contain "visit(string $path): PhpSpec\Browser\Response"
     And the output should contain "this() values are built the first time an example reads them"
@@ -23,3 +27,10 @@ Feature: Spec API reference
     And the output should contain "timing"
     And the output should contain "runs_subject"
     And the output should contain "matchers.md"
+
+  Scenario: The api command lists every mock function, what follows allow(), and the counts a call expectation takes
+    When I run phpspec api with option "--format=agent"
+    Then the api should list the mock functions "mock, dummy, allow"
+    And the api should list the stubs "toReturn, andReturn, toReturnUsing, toThrow, ignoreOthers"
+    And the api should list the call counts "once, twice, exactly, atLeast, atMost, times"
+    And the api should list the mock expectations "toReturn, andReturn, toThrow, toBeCalled, toHaveBeenCalled"

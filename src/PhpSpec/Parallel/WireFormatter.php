@@ -24,12 +24,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  * What a parallel worker runs with: each spec or feature result goes out on
- * its own line as it completes, whole, and a last line says the report is
- * done, so the parent can tell a worker that finished from one that died.
+ * its own line as it completes, whole; a line says when the worker ran the
+ * file it was handed, and a last one that the report is done, so the parent
+ * can tell a worker that finished from one that died.
  */
 final class WireFormatter extends AbstractFormatter
 {
     private readonly Wire $wire;
+
+    private string $held = '';
 
     public function __construct(OutputInterface $output)
     {
@@ -42,12 +45,35 @@ final class WireFormatter extends AbstractFormatter
     public function printResult(Results $result): void
     {
         if ($result instanceof SpecificationResult || $result instanceof FeatureResult) {
-            $this->output->write($this->wire->encode($result) . "\n", false, OutputInterface::OUTPUT_RAW);
+            $this->send('');
+            $this->held = $this->wire->encode($result) . "\n";
         }
     }
 
     public function end(SuiteResult $results): void
     {
-        $this->output->write($this->wire->ending() . "\n", false, OutputInterface::OUTPUT_RAW);
+        $this->send($this->wire->ending() . "\n");
+    }
+
+    /**
+     * Says the worker ran the file it was handed, so it is handed the next.
+     */
+    public function ran(): void
+    {
+        $this->send($this->wire->ran() . "\n");
+    }
+
+    /**
+     * Writes the result held back along with what follows it, in one write:
+     * a parent that read the result alone would report it before it could
+     * hand the worker its next file.
+     */
+    private function send(string $line): void
+    {
+        if ($this->held . $line !== '') {
+            $this->output->write($this->held . $line, false, OutputInterface::OUTPUT_RAW);
+        }
+
+        $this->held = '';
     }
 }

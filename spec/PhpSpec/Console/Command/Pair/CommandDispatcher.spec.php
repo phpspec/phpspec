@@ -22,6 +22,7 @@ use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Console\Consent;
 use PhpSpec\Filesystem;
+use PhpSpec\Source\ComposerAutoload;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -156,6 +157,53 @@ describe(CommandDispatcher::class, function () {
         expect($output)->toContain('Specification for');
         expect($output)->toContain('Acme\Greeter');
         expect($output)->toContain('.spec.php');
+    });
+
+    it('describe maps the class it creates for Composer when composer.json autoloads no classes, and says so', function (Filesystem $fs) {
+        $files = new ArrayObject(['/app/composer.json' => '{"name": "acme/kata"}']);
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($files[$path]));
+        allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $files[$path] ?? '');
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use ($files): void {
+            $files[$path] = $content;
+        });
+        $dispatcher = new CommandDispatcher(
+            new SpecGenerator('spec', $fs),
+            new ClassGenerator(SourceLayout::under('src'), $fs),
+            new Configuration([], '/app', new ComposerAutoload()),
+            $this->pairOutput,
+            false,
+            $fs,
+            specRunner: $this->specRunner,
+        );
+
+        $dispatcher->dispatch('/describe Pins');
+
+        expect($files['/app/composer.json'])->toContain('"": "src/"');
+        expect($this->buffer->fetch())->toContain('Composer autoload was updated to include "": "src/". Run composer dumpautoload next.');
+    });
+
+    it('describe creates no class where Composer maps the source path to another namespace, and says why', function (Filesystem $fs) {
+        $files = new ArrayObject(['/app/composer.json' => '{"autoload": {"psr-4": {"Other\\\\": "src/"}}}']);
+        allow($fs->exists(any()))->toReturnUsing(fn(string $path): bool => isset($files[$path]));
+        allow($fs->read(any()))->toReturnUsing(fn(string $path): string => $files[$path] ?? '');
+        allow($fs->write(cetera()))->toReturnUsing(function (string $path, string $content) use ($files): void {
+            $files[$path] = $content;
+        });
+        $dispatcher = new CommandDispatcher(
+            new SpecGenerator('spec', $fs),
+            new ClassGenerator(SourceLayout::under('src'), $fs),
+            new Configuration([], '/app', new ComposerAutoload(['Other\\' => ['src/']])),
+            $this->pairOutput,
+            false,
+            $fs,
+            specRunner: $this->specRunner,
+        );
+
+        $dispatcher->dispatch('/describe Brew\\Acme\\Sombrero');
+
+        expect($this->buffer->fetch())->toContain('Brew\\Acme\\Sombrero cannot be written under src/: Composer maps src/ to Other\\.');
+        expect(array_filter(array_keys($files->getArrayCopy()), fn(string $path): bool => str_ends_with($path, 'Sombrero.php')))->toBe([]);
+        expect($files['/app/composer.json'])->toBe('{"autoload": {"psr-4": {"Other\\\\": "src/"}}}');
     });
 
     it('describe offers class creation after spec generation', function (Filesystem $fs) {

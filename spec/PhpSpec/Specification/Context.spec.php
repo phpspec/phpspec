@@ -117,6 +117,165 @@ describe(Context::class, function() {
         expect($results[1]->getMessage())->toBe('no setup');
     });
 
+    it("reports what its body and beforeAll raise on its first example, and what its afterAll raises on its last", function() {
+        $ctx = new Context("noted", function() {
+            trigger_error('described', E_USER_WARNING);
+            beforeAll(fn() => trigger_error('set up', E_USER_NOTICE));
+            afterAll(fn() => trigger_error('torn down', E_USER_DEPRECATED));
+            it("one", fn() => expect(true)->toBeTrue());
+            it("two", fn() => expect(true)->toBeTrue());
+        });
+        $ctx->setWorld(new Subject());
+
+        [$one, $two] = $ctx->run()->getResults();
+
+        expect(array_column($one->getWarnings(), 'message'))->toBe(['described']);
+        expect(array_column($one->getNotices(), 'message'))->toBe(['set up']);
+        expect(array_column($two->getDeprecations(), 'message'))->toBe(['torn down']);
+        expect([...$two->getWarnings(), ...$two->getNotices(), ...$one->getDeprecations()])->toBe([]);
+    });
+
+    it("reports what an example's beforeEach and afterEach raise on that example", function() {
+        $ctx = new Context("hooked", function() {
+            beforeEach(fn() => trigger_error('set up', E_USER_WARNING));
+            afterEach(fn() => trigger_error('torn down', E_USER_NOTICE));
+            it("one", fn() => expect(true)->toBeTrue());
+            it("two", fn() => expect(true)->toBeTrue());
+        });
+        $ctx->setWorld(new Subject());
+
+        foreach ($ctx->run()->getResults() as $example) {
+            expect(array_column($example->getWarnings(), 'message'))->toBe(['set up']);
+            expect(array_column($example->getNotices(), 'message'))->toBe(['torn down']);
+        }
+    });
+
+    it("reports what its body raised on the error it broke with", function() {
+        $ctx = new Context("broken", function() {
+            trigger_error('described', E_USER_WARNING);
+            beforeAll(function () { throw new \RuntimeException('no setup'); });
+            it("never runs", fn() => expect(true)->toBeTrue());
+        });
+        $ctx->setWorld(new Subject());
+
+        $results = $ctx->run()->getResults();
+
+        expect(end($results)->isError())->toBeTrue();
+        expect(array_column($results[0]->getWarnings(), 'message'))->toBe(['described']);
+    });
+
+    it("keeps what an example's hooks hand over about it, its teardown's read once that is done", function() {
+        $ctx = new Context("attached", function() {
+            beforeEach(function() { \PhpSpec\attach('set up', 'from beforeEach'); });
+            afterEach(function() { \PhpSpec\attach('torn down', 'from afterEach'); });
+            it("fails", function() {
+                \PhpSpec\attach('ran', 'from the example');
+                expect(1)->toBe(2);
+            });
+        });
+        $ctx->setWorld(new Subject());
+
+        expect($ctx->run()->getResults()[0]->getAttachments())->toBe(['set up' => 'from beforeEach', 'ran' => 'from the example', 'torn down' => 'from afterEach']);
+    });
+
+    it("keeps what was handed over on an example its hook broke, before or after it", function() {
+        $ctx = new Context("broken while attaching", function() {
+            beforeEach(function() {
+                \PhpSpec\attach('set up', 'half done');
+                throw new \RuntimeException('no setup');
+            });
+            it("one", function() { expect(true)->toBeTrue(); });
+        });
+        $ctx->setWorld(new Subject());
+        $teardown = new Context("broken teardown while attaching", function() {
+            afterEach(function() {
+                \PhpSpec\attach('torn down', 'half undone');
+                throw new \RuntimeException('no teardown');
+            });
+            it("one", function() {
+                \PhpSpec\attach('ran', 'green');
+                expect(true)->toBeTrue();
+            });
+        });
+        $teardown->setWorld(new Subject());
+
+        expect($ctx->run()->getResults()[0]->getAttachments())->toBe(['set up' => 'half done']);
+        expect($teardown->run()->getResults()[0]->getAttachments())->toBe(['ran' => 'green', 'torn down' => 'half undone']);
+    });
+
+    it("hands what its body and a beforeAll handed over to each example under it that fails, nested ones too, theirs winning", function() {
+        $ctx = new Context("Server", function() {
+            \PhpSpec\attach('fixture', 'from the body');
+            beforeAll(function() {
+                \PhpSpec\attach('log', 'booted');
+                \PhpSpec\attach('port', '8080');
+            });
+            it("answers", function() {
+                \PhpSpec\attach('port', '7070');
+                expect(1)->toBe(2);
+            });
+            it("passes", function() {});
+            context("when busy", function() {
+                beforeAll(function() { \PhpSpec\attach('port', '9090'); });
+                it("queues", function() { expect(1)->toBe(2); });
+            });
+        });
+        $ctx->setWorld(new Subject());
+        [$answers, $passes, $busy] = $ctx->run()->getResults();
+
+        expect($answers->getAttachments())->toBe(['fixture' => 'from the body', 'log' => 'booted', 'port' => '7070']);
+        expect($passes->getAttachments())->toBe([]);
+        expect($busy->getResults()[0]->getAttachments())->toBe(['fixture' => 'from the body', 'log' => 'booted', 'port' => '9090']);
+    });
+
+    it("puts what a beforeAll that left the examples out handed over on the first one it leaves out, once", function() {
+        $ctx = new Context("Remote", function() {
+            beforeAll(function() {
+                \PhpSpec\attach('network', 'no route to host');
+                skip('no network');
+            });
+            context("when online", function() {
+                it("fetches", function() {});
+            });
+            it("posts", function() {});
+        });
+        $ctx->setWorld(new Subject());
+        [$online, $posts] = $ctx->run()->getResults();
+
+        expect($online->getResults()[0]->getAttachments())->toBe(['network' => 'no route to host']);
+        expect($posts->getAttachments())->toBe([]);
+    });
+
+    it("puts what the setup and a broken afterAll handed over on the context's error, the afterAll's winning", function() {
+        $ctx = new Context("Server", function() {
+            beforeAll(function() {
+                \PhpSpec\attach('log', 'booted');
+                \PhpSpec\attach('state', 'up');
+            });
+            afterAll(function() {
+                \PhpSpec\attach('state', 'stuck');
+                throw new RuntimeException('would not stop');
+            });
+            it("answers", function() {});
+        });
+        $ctx->setWorld(new Subject());
+
+        expect(array_map(fn($child) => $child->getAttachments(), $ctx->run()->getResults()))->toBe([[], ['log' => 'booted', 'state' => 'stuck']]);
+    });
+
+    it("puts what a beforeAll that threw handed over on the context's error", function() {
+        $ctx = new Context("Server", function() {
+            beforeAll(function() {
+                \PhpSpec\attach('log', 'port taken');
+                throw new RuntimeException('would not start');
+            });
+            it("answers", function() {});
+        });
+        $ctx->setWorld(new Subject());
+
+        expect(array_map(fn($child) => $child->getAttachments(), $ctx->run()->getResults()))->toBe([['log' => 'port taken']]);
+    });
+
     it("fails the example whose afterEach threw, and goes on to the next", function() {
         $ctx = new Context("broken teardown", function() {
             afterEach(function() { throw new \RuntimeException('no teardown'); });
@@ -328,6 +487,21 @@ describe(Context::class, function() {
         $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toBe(['ex1', 'ex2', 'afterAll']);
+    });
+
+    it("keeps the examples that ran when afterAll throws, and the error after them", function() {
+        $ctx = new Context("Server", function() {
+            afterAll(function() {
+                throw new RuntimeException('would not stop');
+            });
+            it("answers", function() {});
+            it("pages", function() {});
+        });
+        $ctx->setWorld(new Subject());
+        $result = $ctx->run();
+
+        expect(array_map(fn($child) => [$child->getTitle(), $child->isError()], $result->getResults()))->toBe([['answers', false], ['pages', false], ['Server', true]]);
+        expect($result->isError())->toBe(true);
     });
 
     it("runs all children inside fdescribe", function() {
@@ -683,7 +857,7 @@ describe(Context::class, function() {
         }
 
         expect($log)->toBe(['coverage start', 'beforeEach', 'example', 'afterEach', 'coverage stop']);
-        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+        expect($collector->linesOf('/project/src/App/Calculator.php')[12])->toBe([
             'spec/App/Calculator.spec.php::Calculator > adds two numbers',
         ]);
     });
