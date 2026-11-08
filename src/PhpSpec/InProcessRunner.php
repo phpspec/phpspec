@@ -44,7 +44,7 @@ final class InProcessRunner
      * @param string $projectDir absolute path to the temporary project directory
      * @param string $args       CLI arguments string (e.g. 'run', 'run --stop-on-failure')
      * @return InProcessResult   exit code and captured output
-     * @throws ClassConflictException when the run would see a class or function an earlier run declared other than as the project's files declare it
+     * @throws SymbolConflictException when the run would see a class or function an earlier run declared other than as the project's files declare it
      */
     public static function run(string $projectDir, string $args = 'run'): InProcessResult
     {
@@ -52,7 +52,7 @@ final class InProcessRunner
         $conflict = $symbols->conflictIn($projectDir, $args);
 
         if ($conflict !== null) {
-            throw new ClassConflictException($conflict);
+            throw new SymbolConflictException($conflict);
         }
 
         // Save outer state

@@ -14,7 +14,7 @@ if (!function_exists('_phpspec_exec')) {
                 $world->exitCode = $result->exitCode;
                 $world->output = $result->output;
                 return;
-            } catch (\PhpSpec\ClassConflictException) {
+            } catch (\PhpSpec\SymbolConflictException) {
                 // It would see what an earlier run declared: a fresh process sees only its own
             } catch (\Error $e) {
                 if (!str_contains($e->getMessage(), 'Cannot declare class')

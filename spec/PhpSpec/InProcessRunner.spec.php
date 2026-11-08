@@ -1,6 +1,6 @@
 <?php
 
-use PhpSpec\ClassConflictException;
+use PhpSpec\SymbolConflictException;
 use PhpSpec\Coverage\CoverageDriver;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\PerExampleCollector;
@@ -240,7 +240,7 @@ describe(InProcessRunner::class, function () {
             try {
                 InProcessRunner::run($first->path, 'run');
 
-                expect(fn() => InProcessRunner::run($second->path, 'run'))->toThrow(ClassConflictException::class);
+                expect(fn() => InProcessRunner::run($second->path, 'run'))->toThrow(SymbolConflictException::class);
             } finally {
                 $first->remove();
                 $second->remove();

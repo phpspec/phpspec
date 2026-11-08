@@ -20,4 +20,4 @@ namespace PhpSpec;
  * run declared other than as its project's files declare it, so the run
  * goes to a fresh process instead.
  */
-final class ClassConflictException extends \RuntimeException {}
+final class SymbolConflictException extends \RuntimeException {}
