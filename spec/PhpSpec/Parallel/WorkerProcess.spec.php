@@ -13,6 +13,21 @@ use PhpSpec\StopConditions;
 describe(WorkerProcess::class, function () {
 
     context('listening to a worker', function () {
+        it('listens over sockets, the one stream a wait and a read can trust on every platform', function () {
+            $script = tempnam(sys_get_temp_dir(), 'phpspec_worker_spec_');
+            file_put_contents($script, '<?php');
+            $worker = new WorkerProcess($script);
+            $worker->start();
+
+            $types = array_map(static fn($stream): string => stream_get_meta_data($stream)['stream_type'], $worker->pipes());
+
+            $worker->finish();
+            $worker->getResults();
+            unlink($script);
+
+            expect($types)->toBe(['generic_socket', 'generic_socket']);
+        });
+
         it('stops listening to a pipe the worker closed, so a wait is never woken by it again', function () {
             $script = tempnam(sys_get_temp_dir(), 'phpspec_worker_spec_');
             file_put_contents($script, '<?php echo "done\n";');

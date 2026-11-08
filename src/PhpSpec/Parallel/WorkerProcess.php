@@ -118,17 +118,19 @@ final class WorkerProcess
     }
 
     /**
-     * Spawns the child phpspec process with non-blocking stdout/stderr pipes,
+     * Spawns the child phpspec process with non-blocking stdout/stderr sockets,
      * keeping its standard input open to hand it files.
      */
     public function start(): void
     {
         $command = $this->buildCommand();
 
+        // Sockets, not pipes: on Windows a read from an empty pipe waits however
+        // it was set up, and a worker waiting for its next file would never get it.
         $descriptors = [
             0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            1 => ['socket'],
+            2 => ['socket'],
         ];
 
         $cwd = getcwd();
