@@ -59,7 +59,7 @@ describe(ParallelRunner::class, function () {
             $directory = TemporaryDirectory::create('phpspec_parallel_handing_');
             $log = $directory->path . '/handed.log';
             $worker = $directory->path . '/worker.php';
-            file_put_contents($worker, '<?php require ' . var_export(realpath(__DIR__ . '/../../../vendor/autoload.php'), true) . '; $wire = new PhpSpec\\Parallel\\Wire(); while (($line = fgets(STDIN)) !== false) { $file = $wire->given(rtrim($line))[0]; file_put_contents(' . var_export($log, true) . ', basename($file) . "\\n", FILE_APPEND); echo $wire->encode(new PhpSpec\\Result\\SpecificationResult(basename($file), [], $file)), "\\n", $wire->ran(), "\\n"; } echo $wire->ending(), "\\n";');
+            file_put_contents($worker, '<?php require ' . var_export(realpath(__DIR__ . '/../../../vendor/autoload.php'), true) . '; $wire = new PhpSpec\\Parallel\\Wire(); while (($line = fgets(STDIN)) !== false) { $file = $wire->given(rtrim($line))[0]; file_put_contents(' . var_export($log, true) . ', basename($file) . "\\n", FILE_APPEND); echo $wire->encode(new PhpSpec\\Result\\SpecificationResult(basename($file), [], $file)) . "\\n" . $wire->ran() . "\\n"; } echo $wire->ending(), "\\n";');
             $first = $directory->path . '/a.spec.php';
             $second = $directory->path . '/b.spec.php';
             $handedFirst = null;
