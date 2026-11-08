@@ -16,7 +16,8 @@ namespace PhpSpec;
 
 /**
  * @internal
- * Thrown when an in-process run detects a class name already loaded
- * from a different project directory, requiring subprocess fallback.
+ * Thrown when an in-process run would see a class or function an earlier
+ * run declared other than as its project's files declare it, so the run
+ * goes to a fresh process instead.
  */
 final class ClassConflictException extends \RuntimeException {}

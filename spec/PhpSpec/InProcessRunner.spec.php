@@ -8,6 +8,7 @@ use PhpSpec\InProcessResult;
 use PhpSpec\InProcessRunner;
 use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Report\DoubleLabels;
+use PhpSpec\TemporaryDirectory;
 
 interface InProcessRunnerSpecClock {}
 
@@ -204,32 +205,6 @@ describe(InProcessRunner::class, function () {
         });
     });
 
-    describe('::checkForClassConflicts', function () {
-        this('checkForClassConflicts', function () {
-            $ref = new ReflectionMethod(InProcessRunner::class, 'checkForClassConflicts');
-            return $ref->getClosure();
-        });
-
-        it('does nothing when src directory does not exist', function () {
-            $dir = sys_get_temp_dir() . '/phpspec_test_no_src_' . uniqid();
-            mkdir($dir);
-            // Should not throw
-            ($this->checkForClassConflicts)($dir);
-            expect(true)->toBeTrue();
-            rmdir($dir);
-        });
-
-        it('does nothing when src directory has no PHP files', function () {
-            $dir = sys_get_temp_dir() . '/phpspec_test_empty_src_' . uniqid();
-            mkdir($dir . '/src', 0777, true);
-            // Should not throw
-            ($this->checkForClassConflicts)($dir);
-            expect(true)->toBeTrue();
-            rmdir($dir . '/src');
-            rmdir($dir);
-        });
-    });
-
     describe('::run', function () {
         it('returns an InProcessResult', function () {
             $dir = sys_get_temp_dir() . '/phpspec_inprocess_' . uniqid();
@@ -251,6 +226,25 @@ describe(InProcessRunner::class, function () {
             @rmdir($dir . '/spec');
             @rmdir($dir . '/src');
             @rmdir($dir);
+        });
+
+        it('refuses to run a project that names a class an earlier run declared from another project', function () {
+            $namespace = 'InProcessSpec' . bin2hex(random_bytes(6));
+            $first = TemporaryDirectory::create('phpspec_inprocess_first_');
+            mkdir($first->path . '/spec', 0777, true);
+            file_put_contents($first->path . '/spec/Catalogue.spec.php', "<?php\nnamespace {$namespace};\ninterface Catalogue {}\ndescribe('Catalogue', function () { it('is declared', fn() => expect(interface_exists(Catalogue::class))->toBeTrue()); });\n");
+            $second = TemporaryDirectory::create('phpspec_inprocess_second_');
+            mkdir($second->path . '/spec', 0777, true);
+            file_put_contents($second->path . '/spec/Pricing.spec.php', "<?php\ndescribe('Pricing', function () { it('mocks the catalogue', fn() => mock({$namespace}\\Catalogue::class)); });\n");
+
+            try {
+                InProcessRunner::run($first->path, 'run');
+
+                expect(fn() => InProcessRunner::run($second->path, 'run'))->toThrow(ClassConflictException::class);
+            } finally {
+                $first->remove();
+                $second->remove();
+            }
         });
 
         it('isolates the coverage registry from the inner run and restores it', function (CoverageDriver $driver) {

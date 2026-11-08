@@ -24,7 +24,6 @@ use PhpSpec\Mock\Expectation as MockExpectation;
 use PhpSpec\Mock\HeldCalls;
 use PhpSpec\Report\DoubleLabels;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
-use ReflectionClass;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -37,15 +36,24 @@ use Symfony\Component\Console\Output\BufferedOutput;
  */
 final class InProcessRunner
 {
+    // PHP declares a class or a function for the whole process, so what the
+    // runs declared is kept for the whole process too.
+    private static ?InProcessSymbols $symbols = null;
+
     /**
      * @param string $projectDir absolute path to the temporary project directory
      * @param string $args       CLI arguments string (e.g. 'run', 'run --stop-on-failure')
      * @return InProcessResult   exit code and captured output
-     * @throws ClassConflictException when a class from this project is already loaded from a different directory
+     * @throws ClassConflictException when the run would see a class or function an earlier run declared other than as the project's files declare it
      */
     public static function run(string $projectDir, string $args = 'run'): InProcessResult
     {
-        self::checkForClassConflicts($projectDir);
+        $symbols = self::$symbols ??= new InProcessSymbols();
+        $conflict = $symbols->conflictIn($projectDir, $args);
+
+        if ($conflict !== null) {
+            throw new ClassConflictException($conflict);
+        }
 
         // Save outer state
         $savedDispatcher = DispatcherRegistry::dispatcher();
@@ -86,7 +94,7 @@ final class InProcessRunner
             $input = new ArrayInput(self::parseArgs($args));
             $input->setInteractive(false);
             $output = new BufferedOutput();
-            $exitCode = $app->run($input, $output);
+            $exitCode = $symbols->record($projectDir, fn(): int => $app->run($input, $output));
 
             return new InProcessResult($exitCode, $output->fetch());
         } finally {
@@ -144,40 +152,6 @@ final class InProcessRunner
             unset($_SERVER['SHELL_VERBOSITY']);
         } else {
             $_SERVER['SHELL_VERBOSITY'] = $server;
-        }
-    }
-
-    /**
-     * Checks whether any PHP classes from the project's src/ directory are already
-     * loaded from a different directory — indicating a class name conflict across scenarios.
-     *
-     * @throws ClassConflictException if a conflicting class is found
-     */
-    private static function checkForClassConflicts(string $projectDir): void
-    {
-        $srcDir = $projectDir . '/src';
-        if (!is_dir($srcDir)) {
-            return;
-        }
-
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($srcDir, \FilesystemIterator::SKIP_DOTS),
-        );
-
-        foreach ($iterator as $file) {
-            if ($file->getExtension() !== 'php') {
-                continue;
-            }
-
-            $relativePath = substr($file->getPathname(), strlen($srcDir) + 1);
-            $fqcn = str_replace(['/', '.php'], ['\\', ''], $relativePath);
-
-            if (class_exists($fqcn, false) || interface_exists($fqcn, false)) {
-                $loaded = (new ReflectionClass($fqcn))->getFileName();
-                if ($loaded !== false && !str_starts_with($loaded, $projectDir)) {
-                    throw new ClassConflictException("Class $fqcn already loaded from $loaded");
-                }
-            }
         }
     }
 
