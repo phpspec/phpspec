@@ -17,6 +17,12 @@ describe(PapiProvider::class, function () {
             /** @var array<string, mixed> */
             public array $options = [];
 
+            /** @var list<\PapiAI\Core\Message> */
+            public array $messages = [];
+
+            /** @var array<string, array<mixed>> */
+            public array $replay = [];
+
             /** @var array<string, int> */
             public array $usage = [];
 
@@ -25,8 +31,9 @@ describe(PapiProvider::class, function () {
             public function chat(array $messages, array $options = []): \PapiAI\Core\Response
             {
                 $this->options = $options;
+                $this->messages = $messages;
 
-                return new \PapiAI\Core\Response(text: 'ok', usage: $this->usage, stoppedBecause: $this->stoppedBecause);
+                return new \PapiAI\Core\Response(text: 'ok', usage: $this->usage, stoppedBecause: $this->stoppedBecause, replay: $this->replay);
             }
 
             public function stream(array $messages, array $options = []): iterable
@@ -113,5 +120,15 @@ describe(PapiProvider::class, function () {
 
             expect($this->provider->chat([Message::user('hi')], ['maxTokens' => 64])->text)->toBe('ok');
         }
+    });
+
+    it('hands back what the provider left on its answer, and sends it with that answer next time', function () {
+        $this->papi->replay = ['fake' => ['signature' => 'sig']];
+
+        $answer = $this->provider->chat([Message::user('hi')]);
+        $this->provider->chat([Message::user('hi'), $answer->toMessage(), Message::user('and then?')]);
+
+        expect($answer->replay)->toBe(['fake' => ['signature' => 'sig']]);
+        expect($this->papi->messages[1]->replay)->toBe(['fake' => ['signature' => 'sig']]);
     });
 });

@@ -37,7 +37,10 @@ final class Transcript
     /** The command name the system slot was composed for, '' when none yet. */
     private string $orientedWith = '';
 
-    public function __construct(private readonly ConversationWindow $window = new ConversationWindow()) {}
+    /**
+     * @param ConversationWindow|null $window keeps the conversation within budget; none when the provider does that itself
+     */
+    public function __construct(private readonly ?ConversationWindow $window = new ConversationWindow()) {}
 
     /**
      * Starts a user turn, starting the conversation afresh once it outgrows
@@ -45,7 +48,9 @@ final class Transcript
      */
     public function beginTurn(): void
     {
-        $this->messages = $this->window->apply($this->messages);
+        if ($this->window !== null) {
+            $this->messages = $this->window->apply($this->messages);
+        }
     }
 
     /**
@@ -99,7 +104,7 @@ final class Transcript
      */
     public function heard(Response $response): void
     {
-        $this->messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
+        $this->messages[] = $response->toMessage();
     }
 
     /**

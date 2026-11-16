@@ -155,12 +155,12 @@ configured next to the provider.
 ### Providers
 
 phpspec works with whichever papi provider packages the project has installed,
-alongside `papi-ai/papi-core` ^0.15.5; `provider` picks one by name.
+alongside `papi-ai/papi-core` ^0.15.6; `provider` picks one by name.
 
 | Provider | Package |
 |---|---|
 | `google` | `papi-ai/google` ^0.17.2 |
-| `anthropic` | `papi-ai/anthropic` ^0.17.2 |
+| `anthropic` | `papi-ai/anthropic` ^0.18.0 |
 | `openai` | `papi-ai/openai` ^0.17.2 |
 | `azure-openai` | `papi-ai/azure-openai` ^0.16.2 |
 | `grok` | `papi-ai/grok` ^0.17.2 |
@@ -182,6 +182,14 @@ unknown or wrong-typed one before any request: the hosted providers take an
 Each package also keeps its provider's current model as its default, so a
 project without a `model` follows the provider as it moves on; `ollama` has no
 default, so `model` names a local one.
+
+A pair session's conversation only grows, so phpspec asks a provider that takes
+the settings to send the model's thinking back with each answer
+(`replay_thinking: drop_on_edit`), to clear old tool results on its server
+(`clear_tool_results_at: 100000`), and to keep the conversation within budget
+there (`compact_at: 150000`). Your own values in the `ai` section win. With
+a provider that does not compact on its server, phpspec starts the conversation
+afresh from a summary once it passes about 40 messages or 48,000 tokens.
 
 The status bar reflects whether the provider actually started, not merely that an `ai:`
 section exists. If a provider is configured but can't start (its package isn't installed,

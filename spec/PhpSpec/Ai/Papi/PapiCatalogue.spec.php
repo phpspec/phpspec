@@ -11,6 +11,10 @@ describe(PapiCatalogue::class, function () {
         expect((new PapiCatalogue())->installed())->toBe([]);
     });
 
+    it('knows no settings of a provider no package provides', function () {
+        expect((new PapiCatalogue())->settings('anthropic'))->toBe([]);
+    });
+
     it('refuses a provider no package provides, in papi\'s words', function () {
         expect(fn() => (new PapiCatalogue())->create('google', ['api_key' => 'k']))
             ->toThrow(new ConfigurationException('Provider "google" is not installed, and no papi provider package is.'));

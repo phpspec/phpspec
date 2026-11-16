@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 use PhpSpec\Ai\Agent\Agent;
+use PhpSpec\Ai\Agent\ConversationWindow;
 use PhpSpec\Ai\Agent\Grounding;
 use PhpSpec\Ai\Agent\Transcript;
 use PhpSpec\Ai\Contracts\ProviderInterface;
@@ -92,7 +93,7 @@ final class AiAssistant
             $filesystem,
             $provider,
             prompts: $prompts,
-            transcript: new Transcript(),
+            transcript: new Transcript($config->aiProviderCompacts() ? null : new ConversationWindow()),
             executor: $this->executor,
         );
     }

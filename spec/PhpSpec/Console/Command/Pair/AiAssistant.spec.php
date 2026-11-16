@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Ai\Contracts\ProviderCatalogueInterface;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
@@ -1372,6 +1373,29 @@ describe(AiAssistant::class, function () {
             $previous = $requests[$index - 1];
             expect(array_slice($request['messages'], 0, count($previous['messages'])))->toBeLike($previous['messages']);
             expect($request['tools'])->toBe($requests[0]['tools']);
+        }
+    });
+
+    it('leaves a long conversation whole when the provider keeps it within budget on its server', function (Filesystem $fs, ProviderCatalogueInterface $catalogue) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($catalogue->settings('anthropic'))->toReturn(['api_key', 'replay_thinking', 'compact_at']);
+        $requests = [];
+        $this->provider->responder = function (array $messages) use (&$requests) {
+            $requests[] = $messages;
+
+            return new Response('noted');
+        };
+        $config = new Configuration(['ai' => ['provider' => 'anthropic', 'api_key' => 'k']], '/app', providers: $catalogue);
+        $assistant = new AiAssistant($this->provider, $config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+
+        for ($turn = 1; $turn <= 25; $turn++) {
+            $assistant->handle("turn $turn");
+        }
+
+        expect(count(end($requests)))->toBeGreaterThan(40);
+        foreach (array_slice($requests, 1, null, true) as $index => $messages) {
+            expect(array_slice($messages, 0, count($requests[$index - 1])))->toBeLike($requests[$index - 1]);
         }
     });
 });

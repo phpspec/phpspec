@@ -26,7 +26,7 @@ final class ReplayProvider implements ProviderInterface
      * Builds a single-turn replay from an eval recording document: the recorded
      * text plus any recorded tool calls.
      *
-     * @param array{response: array{text?: string, tool_calls?: list<array{id?: string, name: string, arguments?: array<string, mixed>}>}} $recording
+     * @param array{response: array{text?: string, tool_calls?: list<array{id?: string, name: string, arguments?: array<string, mixed>}>, replay?: array<string, array<mixed>>}} $recording
      */
     public static function fromRecording(array $recording): self
     {
@@ -35,14 +35,14 @@ final class ReplayProvider implements ProviderInterface
             $recording['response']['tool_calls'] ?? [],
         );
 
-        return new self([new Response($recording['response']['text'] ?? '', $calls)]);
+        return new self([new Response($recording['response']['text'] ?? '', $calls, 0, $recording['response']['replay'] ?? [])]);
     }
 
     /**
      * Builds a whole-conversation replay from a session recording: one scripted
      * response per provider call, in order, across every turn's rounds.
      *
-     * @param array{turns: list<array{rounds?: list<array{response: array{text?: string, tool_calls?: list<array{id?: string, name: string, arguments?: array<string, mixed>}>}}>}>} $recording
+     * @param array{turns: list<array{rounds?: list<array{response: array{text?: string, tool_calls?: list<array{id?: string, name: string, arguments?: array<string, mixed>}>, replay?: array<string, array<mixed>>}}>}>} $recording
      */
     public static function fromConversation(array $recording): self
     {
@@ -53,7 +53,7 @@ final class ReplayProvider implements ProviderInterface
                     static fn(array $call): ToolCall => new ToolCall($call['id'] ?? '1', $call['name'], $call['arguments'] ?? []),
                     $round['response']['tool_calls'] ?? [],
                 );
-                $responses[] = new Response($round['response']['text'] ?? '', $calls);
+                $responses[] = new Response($round['response']['text'] ?? '', $calls, 0, $round['response']['replay'] ?? []);
             }
         }
 

@@ -44,9 +44,9 @@
     },
 
     "suggest": {
-        "papi-ai/papi-core": "Required for AI features (pair, next, generate, refactor); ^0.15.5 or newer",
+        "papi-ai/papi-core": "Required for AI features (pair, next, generate, refactor); ^0.15.6 or newer",
         "papi-ai/google": "Google Gemini AI provider; ^0.17.2 or newer",
-        "papi-ai/anthropic": "Anthropic Claude AI provider; ^0.17.2 or newer",
+        "papi-ai/anthropic": "Anthropic Claude AI provider; ^0.18.0 or newer",
         "papi-ai/openai": "OpenAI GPT AI provider; ^0.17.2 or newer",
         "papi-ai/azure-openai": "Azure OpenAI AI provider; ^0.16.2 or newer",
         "papi-ai/grok": "xAI Grok AI provider; ^0.17.2 or newer",
@@ -66,12 +66,12 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.75",
         "phpstan/phpstan": "^2.1",
-        "papi-ai/papi-core": "^0.15.5",
+        "papi-ai/papi-core": "^0.15.6",
         "psr/http-message": "^2.0"
     },
 
     "conflict": {
-        "papi-ai/papi-core": "<0.15.5",
+        "papi-ai/papi-core": "<0.15.6",
         "papi-ai/google": "<0.17.2",
         "papi-ai/anthropic": "<0.17.2",
         "papi-ai/openai": "<0.17.2",

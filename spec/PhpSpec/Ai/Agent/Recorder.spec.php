@@ -108,6 +108,16 @@ describe(Recorder::class, function () {
         expect($doc['proposals'][0]['path'])->toBe('features/steps/adding.steps.php');
     });
 
+    it('records what the provider left on an answer, so a replay sends it back', function (Filesystem $fs) {
+        $recorder = new Recorder($fs, '/proj');
+        $response = new Response('ok', [], 0, ['fake' => ['signature' => 'sig']]);
+
+        $recorder->capture('generate', 'the steps', null, new Request('SYSTEM', 'CONTEXT'), ['provider' => 'google'], $response);
+
+        $doc = json_decode($this->written['/proj/.phpspec/ai/last-request.json'] ?? '', true);
+        expect($doc['response']['replay'])->toBe(['fake' => ['signature' => 'sig']]);
+    });
+
     it('never writes credentials into the capture', function (Filesystem $fs) {
         $recorder = new Recorder($fs, '/proj');
 

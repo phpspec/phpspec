@@ -68,6 +68,30 @@ describe(Transcript::class, function () {
         expect($transcript->messages())->toBe($before);
     });
 
+    it('never starts afresh when the provider keeps the conversation within budget on its own', function () {
+        $transcript = new Transcript(null);
+        $transcript->orient('driver', 'DRIVER CONTRACT');
+        for ($turn = 1; $turn <= 30; $turn++) {
+            $transcript->say("turn $turn");
+            $transcript->heard(new Response("answer $turn"));
+        }
+        $before = $transcript->messages();
+        $transcript->beginTurn();
+
+        expect($transcript->messages())->toBe($before);
+    });
+
+    it('keeps what the provider left on an answer, to send back with it', function () {
+        $transcript = new Transcript();
+        $transcript->orient('driver', 'DRIVER CONTRACT');
+        $transcript->say('go');
+        $transcript->heard(new Response('ok', [], 0, ['anthropic' => ['blocks' => []]]));
+
+        $messages = $transcript->messages();
+
+        expect(end($messages)->replay)->toBe(['anthropic' => ['blocks' => []]]);
+    });
+
     it('keeps tool_use and tool_result paired when recording a round', function () {
         $transcript = new Transcript();
         $transcript->orient('driver', 'DRIVER CONTRACT');

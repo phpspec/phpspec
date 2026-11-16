@@ -17,6 +17,7 @@ namespace PhpSpec\Ai\Papi;
 use PapiAI\Core\Contracts\ProviderFactoryInterface;
 use PapiAI\Core\Factory\ComposerDiscovery;
 use PapiAI\Core\Factory\ProviderRegistry;
+use PapiAI\Core\Factory\Setting;
 use PhpSpec\Ai\Contracts\ProviderCatalogueInterface;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use RuntimeException;
@@ -40,6 +41,17 @@ final class PapiCatalogue implements ProviderCatalogueInterface
         }
 
         return $installed;
+    }
+
+    public function settings(string $provider): array
+    {
+        foreach ($this->registry()?->installed() ?? [] as $factory) {
+            if ($factory->name() === $provider) {
+                return array_map(static fn(Setting $setting): string => $setting->name, $factory->settings());
+            }
+        }
+
+        return [];
     }
 
     public function create(string $provider, array $settings): ProviderInterface
