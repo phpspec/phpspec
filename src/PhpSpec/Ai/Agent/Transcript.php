@@ -24,10 +24,10 @@ use PhpSpec\Ai\Response;
  * mutable object in the pipeline, because it IS the session state; everything
  * around it stays a value.
  *
- * The system prompt lives in slot 0: `orient()` seats it once per command and
- * re-orienting for another command replaces only that slot, which is what makes
- * a role swap self-healing. `beginTurn()` applies the window policy, so bounded
- * history is the transcript's own concern, not its callers'.
+ * The conversation only grows, so every request extends the one before it.
+ * `orient()` seats the first system prompt in slot 0, and a later command's
+ * prompt is said after the conversation so far. `beginTurn()` applies the
+ * window, so bounded history is the transcript's own concern, not its callers'.
  */
 final class Transcript
 {
@@ -40,8 +40,8 @@ final class Transcript
     public function __construct(private readonly ConversationWindow $window = new ConversationWindow()) {}
 
     /**
-     * Starts a user turn: prunes superseded situations, trims stale tool
-     * output, and compacts old turns once the history outgrows the window.
+     * Starts a user turn, starting the conversation afresh once it outgrows
+     * the window.
      */
     public function beginTurn(): void
     {
@@ -58,9 +58,9 @@ final class Transcript
     }
 
     /**
-     * Seats the system prompt for a command in slot 0. Re-orienting for the
-     * same command is a no-op; a different command replaces only the system
-     * slot, keeping the conversation intact across a role swap.
+     * Seats the system prompt for a command: the first in slot 0, a later one
+     * after the conversation so far, so a role swap changes nothing earlier.
+     * Re-orienting for the same command is a no-op.
      */
     public function orient(string $command, string $system): void
     {
@@ -68,21 +68,17 @@ final class Transcript
             return;
         }
 
-        $message = Message::system($system);
-
         if ($this->orientedWith === '') {
-            array_unshift($this->messages, $message);
+            array_unshift($this->messages, Message::system($system));
         } else {
-            $this->messages[0] = $message;
+            $this->messages[] = Message::system($system);
         }
 
         $this->orientedWith = $command;
     }
 
     /**
-     * Grounds the turn in the current situation. The marker prefix is what
-     * `beginTurn()` recognises next turn, so only the latest snapshot ever
-     * reaches the model.
+     * Grounds the turn in the current situation, after the earlier ones.
      */
     public function situate(string $report): void
     {

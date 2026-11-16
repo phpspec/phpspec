@@ -37,9 +37,10 @@ interface ToolExecutor
     public function beginTurn(): void;
 
     /**
-     * The tools to advertise this round, serialised for the provider: the
-     * session's declared surface filtered by its turn state (a spent offer, a
-     * written artifact), plus any extension tools. The executor owns the whole
+     * The tools to advertise this round, serialised for the provider: the same
+     * every round of the session, so each request extends the one before it.
+     * What the turn state does not allow (a spent offer, a written artifact),
+     * the executor refuses in the call's result. The executor owns the whole
      * surface; the pipeline only forwards what it answers.
      *
      * @return list<array{name: string, description: string, input_schema: array<string, mixed>}>

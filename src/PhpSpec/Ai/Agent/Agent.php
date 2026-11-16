@@ -149,11 +149,14 @@ final class Agent
     {
         $transcript = $this->transcript ?? new Transcript();
         $transcript->beginTurn();
+        $this->situateTranscript($transcript, $step, $grounding);
+        $transcript->say($request->context);
+
+        // After the input, where a later system prompt is valid; the first one
+        // still goes to slot 0.
         if (!$transcript->isOrientedFor($profile->name)) {
             $transcript->orient($profile->name, $this->orientation($request->system));
         }
-        $this->situateTranscript($transcript, $step, $grounding);
-        $transcript->say($request->context);
 
         return $transcript;
     }
