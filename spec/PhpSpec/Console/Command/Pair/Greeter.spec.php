@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Console\Command\Pair\Greeter;
+use PhpSpec\Console\Command\Pair\Notes;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Run\RunOutcome;
@@ -25,7 +26,7 @@ describe(Greeter::class, function () {
             }
         };
 
-        (new Greeter($runner, $pairOutput, true))->greet();
+        (new Greeter($runner, $pairOutput, true, new Notes()))->greet();
 
         $text = $buffer->fetch();
         expect($text)->toContain('red');
@@ -51,7 +52,7 @@ describe(Greeter::class, function () {
             }
         };
 
-        (new Greeter($runner, $pairOutput, false))->greet();
+        (new Greeter($runner, $pairOutput, false, new Notes()))->greet();
 
         $text = $buffer->fetch();
         expect($runner->argument)->toBe('');
@@ -60,4 +61,27 @@ describe(Greeter::class, function () {
         expect($text)->toContain('describe');
     });
 
+
+    it('leaves what it said for the model to read with the next answer', function () {
+        $notes = new Notes();
+        $runner = new class implements SpecRunner {
+            public function run(string $argument, OutputInterface $output): ?RunOutcome
+            {
+                return new RunOutcome(null, new SuiteSummary(
+                    'red',
+                    ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+                    [['subject' => 'App\\Calculator', 'example' => 'adds numbers']],
+                ));
+            }
+        };
+
+        (new Greeter($runner, new PairOutput(new BufferedOutput()), true, $notes))->greet();
+
+        $brief = $notes->brief('yes');
+
+        expect($brief)->toContain("App\\Calculator");
+        expect($brief)->toContain('Want to start there?');
+        expect($brief)->not()->toContain('/quit');
+        expect($notes->brief('yes'))->toBe('yes');
+    });
 });

@@ -33,6 +33,9 @@ final class Notes
     /** Whether the most recent answer's note is still unclaimed (it is the last pending entry). */
     private bool $latestPending = false;
 
+    /** @var list<string> what the session opened with, not yet shown to the model */
+    private array $opening = [];
+
     /**
      * Records what the human answered and what they said about it. A blank note
      * is nothing to say, so only the answer's timing is remembered: it makes the
@@ -73,32 +76,49 @@ final class Notes
     }
 
     /**
-     * The instruction with every unclaimed note in front of it, in the human's
-     * own voice, and the book emptied. Unchanged when nothing was noted.
+     * Keeps what the session opened with, so the model reads it with the
+     * human's first answer: the greeting asks, the model must know what.
+     *
+     * @param list<string> $lines the greeting as it was shown, console markup and all
+     */
+    public function opened(array $lines): void
+    {
+        $this->opening = array_values(array_filter(array_map(self::plain(...), $lines), static fn(string $line): bool => $line !== ''));
+    }
+
+    /**
+     * The instruction with what the session opened with and every unclaimed
+     * note in front of it, and the book emptied. Unchanged when there is
+     * nothing to tell.
      *
      * @param string $instruction the turn's instruction
      * @return string the instruction the model should read
      */
     public function brief(string $instruction): string
     {
-        if ($this->pending === []) {
-            return $instruction;
+        $sections = [];
+
+        if ($this->opening !== []) {
+            $sections[] = "[You opened our session by saying]\n" . implode("\n", $this->opening);
         }
 
-        $lines = array_map(
-            static fn(array $note): string => sprintf(
-                '- I %s "%s" and said: %s',
-                $note['accepted'] ? 'accepted' : 'declined',
-                $note['question'],
-                $note['note'],
-            ),
-            $this->pending,
-        );
+        if ($this->pending !== []) {
+            $sections[] = "[Notes I left on the choices I just made]\n" . implode("\n", array_map(
+                static fn(array $note): string => sprintf(
+                    '- I %s "%s" and said: %s',
+                    $note['accepted'] ? 'accepted' : 'declined',
+                    $note['question'],
+                    $note['note'],
+                ),
+                $this->pending,
+            ));
+        }
 
+        $this->opening = [];
         $this->pending = [];
         $this->latestPending = false;
 
-        return "[Notes I left on the choices I just made]\n" . implode("\n", $lines) . "\n\n" . $instruction;
+        return $sections === [] ? $instruction : implode("\n\n", $sections) . "\n\n" . $instruction;
     }
 
     /**

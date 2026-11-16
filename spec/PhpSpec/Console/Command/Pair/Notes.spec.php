@@ -94,4 +94,13 @@ describe(Notes::class, function () {
         expect($this->notes->take())->toBe('');
         expect($this->notes->brief('go on'))->toBe('go on');
     });
+
+    it('briefs what the session opened with, once, ahead of the notes and the instruction', function () {
+        $notes = new Notes();
+        $notes->opened(['  <fg=red>We\'re red</> on <options=bold>App\\Calculator</>: adds numbers', '  <fg=gray>Want to start there?</>']);
+        $notes->record('Run the specs?', false, 'not yet');
+
+        expect($notes->brief('yes'))->toBe("[You opened our session by saying]\nWe're red on App\\Calculator: adds numbers\nWant to start there?\n\n[Notes I left on the choices I just made]\n- I declined \"Run the specs?\" and said: not yet\n\nyes");
+        expect($notes->brief('and then'))->toBe('and then');
+    });
 });
