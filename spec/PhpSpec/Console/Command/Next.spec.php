@@ -1045,7 +1045,7 @@ describe(Next::class, function () {
 
             expect($receivedConfig)->not()->toBeNull();
             expect($receivedConfig['provider'])->toBe('anthropic');
-            expect($receivedConfig['api_key'])->toBe('sk-test');
+            expect($receivedConfig)->not()->toHaveKey('api_key');
         });
     });
 });

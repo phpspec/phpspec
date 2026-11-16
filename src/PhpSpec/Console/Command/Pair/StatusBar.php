@@ -34,7 +34,7 @@ final readonly class StatusBar
      * @param string|null $provider the configured provider name, when AI is on
      * @param RoleState $roleState the live pairing role, read at render time
      * @param string|null $unavailableReason why a configured provider could not start (drives the "unavailable" state)
-     * @param string|null $model the resolved model in use, when AI is on
+     * @param string|null $model the configured model, when AI is on and one is named
      */
     public function __construct(
         private string $workingDir,

@@ -14,7 +14,7 @@ if (!function_exists('_pair_exec')) {
     {
         $interactive = $answers !== null ? 'true' : 'false';
 
-        $shim = _pair_shim_source($interactive, $greet, $configFile);
+        $shim = _pair_shim_source($interactive, $greet, $configFile, $world->fakeProvider ?? false);
         file_put_contents($world->projectDir . '/_pair_shim.php', $shim);
 
         $cmd = [
@@ -49,11 +49,12 @@ if (!function_exists('_pair_exec')) {
      * Builds the shim source with the given interactivity flag, reading the
      * config file named as `pair --config` would, or the one found under the root.
      */
-    function _pair_shim_source(string $interactive, bool $greet = false, ?string $configFile = null): string
+    function _pair_shim_source(string $interactive, bool $greet = false, ?string $configFile = null, bool $fakeProvider = false): string
     {
         $shim = <<<'PHP'
     <?php
     require __DIR__ . '/vendor/autoload.php';
+    %FAKE_PROVIDER_FILE%
 
     use PhpSpec\CodeGeneration\ClassGenerator;
     use PhpSpec\CodeGeneration\SpecGenerator;
@@ -63,7 +64,7 @@ if (!function_exists('_pair_exec')) {
     use PhpSpec\Console\Command\Pair\PairOutput;
     use Symfony\Component\Console\Output\StreamOutput;
 
-    $config = Configuration::load(__DIR__, configFile: %CONFIG%);
+    $config = Configuration::load(__DIR__, configFile: %CONFIG%, providers: %PROVIDERS%);
     $specSuffix = $config->getSpecSuffix();
     $output = new StreamOutput(fopen('php://stdout', 'w'));
     $pairOutput = new PairOutput($output);
@@ -88,8 +89,14 @@ if (!function_exists('_pair_exec')) {
     PHP;
 
         return str_replace(
-            ['%INTERACTIVE%', '%GREET%', '%CONFIG%'],
-            [$interactive, $greet ? '$dispatcher->greet();' : '', var_export($configFile, true)],
+            ['%INTERACTIVE%', '%GREET%', '%CONFIG%', '%FAKE_PROVIDER_FILE%', '%PROVIDERS%'],
+            [
+                $interactive,
+                $greet ? '$dispatcher->greet();' : '',
+                var_export($configFile, true),
+                $fakeProvider ? sprintf('require %s; require %s;', var_export(realpath(__DIR__ . '/../support/FakeProvider.php'), true), var_export(realpath(__DIR__ . '/../support/FakeProviderCatalogue.php'), true)) : '',
+                $fakeProvider ? 'new PhpSpec\\Acceptance\\Support\\FakeProviderCatalogue()' : 'null',
+            ],
             $shim,
         );
     }

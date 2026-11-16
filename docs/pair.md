@@ -134,49 +134,59 @@ Or with an explicit model:
 
 ```yaml
 ai:
-  provider: openai
-  model: gpt-5.1
+  provider: anthropic
+  model: claude-opus-5-5
   api_key: YOUR_API_KEY
 ```
 
 | Key | Required | Description |
 |---|---|---|
-| `provider` | Yes | `google`, `anthropic`, `openai`, `grok`, `deepseek`, or `ollama` |
-| `model` | No | Model identifier (see defaults below) |
-| `api_key` | Yes (hosted providers) | API key for the provider |
-| `max_tokens` | No | Output-token ceiling per reply |
+| `provider` | Yes | The name of an installed papi provider (see below) |
+| `model` | No (required for `ollama`) | Model identifier; without it the provider package uses its own default |
+| `max_tokens` | No | Output-token ceiling per reply, for every command |
 | `effort` | No | Reasoning effort forwarded to the provider (where supported) |
+| any other key | As the provider needs | A setting of the chosen provider, such as `api_key`, `base_url`, or Azure's `endpoint` and `deployment` |
 
-Your `model` and `max_tokens` always beat the shipped defaults, and the pair
-status bar shows the resolved model next to the provider.
+Your `max_tokens` beats the shipped ceilings (16384 tokens per reply). An answer
+the ceiling cuts off is reported as a failure and never used; a larger
+`max_tokens` gives the model more room. The pair status bar shows the model you
+configured next to the provider.
 
-### Providers and Default Models
+### Providers
 
-| Provider | Default Model | Auth |
-|---|---|---|
-| `google` | `gemini-3.1-pro-preview` | API key |
-| `anthropic` | `claude-sonnet-5` | API key |
-| `openai` | `gpt-5.1` | API key |
-| `grok` | `grok-4` | API key |
-| `deepseek` | `deepseek-chat` | API key |
-| `ollama` | `llama3.1` | local, no key |
+phpspec works with whichever papi provider packages the project has installed,
+alongside `papi-ai/papi-core` ^0.15.4; `provider` picks one by name.
 
-The hosted providers support tool calling, vision, and streaming.
-
-Each provider needs its PapiAI package installed alongside `papi-ai/papi-core`:
+| Provider | Package |
+|---|---|
+| `google` | `papi-ai/google` ^0.17.1 |
+| `anthropic` | `papi-ai/anthropic` ^0.17.1 |
+| `openai` | `papi-ai/openai` ^0.17.1 |
+| `azure-openai` | `papi-ai/azure-openai` ^0.16.1 |
+| `grok` | `papi-ai/grok` ^0.17.1 |
+| `deepseek` | `papi-ai/deepseek` ^0.17.1 |
+| `mistral` | `papi-ai/mistral` ^0.16.2 |
+| `groq` | `papi-ai/groq` ^0.16.2 |
+| `cohere` | `papi-ai/cohere` ^0.16.2 |
+| `ollama` | `papi-ai/ollama` ^0.16.1 |
 
 ```bash
 composer require papi-ai/papi-core papi-ai/google      # for Gemini
 composer require papi-ai/papi-core papi-ai/anthropic   # for Claude
-composer require papi-ai/papi-core papi-ai/openai       # for GPT
+composer require papi-ai/papi-core papi-ai/openai      # for GPT
 ```
+
+Each package says which settings its provider needs, and refuses a missing,
+unknown or wrong-typed one before any request: the hosted providers take an
+`api_key`, `ollama` takes a `base_url` (`http://localhost:11434` when unset).
+Each package also keeps its provider's current model as its default, so a
+project without a `model` follows the provider as it moves on; `ollama` has no
+default, so `model` names a local one.
 
 The status bar reflects whether the provider actually started, not merely that an `ai:`
 section exists. If a provider is configured but can't start (its package isn't installed,
-the name is misspelt, the key is for a different provider), the bar shows **`ai: unavailable`**
-rather than `ai: on`, and the reason is shown the moment you type a prompt or run `/help`.
-So an `AIza…` (Google) key under `provider: openai` will read as unavailable until you set
-`provider: google`.
+or it refuses its settings), the bar shows **`ai: unavailable`** rather than `ai: on`, and
+the reason is shown the moment you type a prompt or run `/help`.
 
 ## AI Assistant
 

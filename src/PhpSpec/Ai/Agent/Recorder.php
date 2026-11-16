@@ -50,7 +50,7 @@ final class Recorder
      * A conversational turn passes its rounds, so the log holds every provider
      * exchange of the turn, not only the last.
      *
-     * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
+     * @param array{provider?: string, model?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
      * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      */
@@ -76,7 +76,7 @@ final class Recorder
      * identical every turn and already sits in last-request.json, so repeating
      * it would grow the session by the whole system prompt per turn.
      *
-     * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
+     * @param array{provider?: string, model?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
      * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      */
@@ -107,7 +107,7 @@ final class Recorder
      * "instruction", "aiConfig", "response") plus the pipeline's own view
      * (step, request, proposals). The api_key is deliberately dropped.
      *
-     * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
+     * @param array{provider?: string, model?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
      * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      * @return array<string, mixed>

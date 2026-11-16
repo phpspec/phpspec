@@ -16,10 +16,12 @@ namespace PhpSpec\Ai\Papi;
 
 use PapiAI\Core\Contracts\ProviderInterface as PapiProviderInterface;
 use PapiAI\Core\Message as PapiMessage;
+use PapiAI\Core\Response as PapiResponse;
 use PapiAI\Core\ToolCall as PapiToolCall;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\Role;
 use PhpSpec\Ai\ToolCall;
@@ -52,6 +54,12 @@ final class PapiProvider implements ProviderInterface
         }
 
         $papiResponse = $this->provider->chat($papiMessages, $options);
+
+        if ($papiResponse->isTruncated()) {
+            throw new ModelFailedException(isset($options['maxTokens'])
+                ? sprintf('The answer was cut off at %d tokens.', $options['maxTokens'])
+                : 'The answer was cut off at the token ceiling.');
+        }
 
         return self::fromPapiResponse($papiResponse);
     }
@@ -99,7 +107,7 @@ final class PapiProvider implements ProviderInterface
         return new PapiToolCall($toolCall->id, $toolCall->name, $toolCall->arguments);
     }
 
-    private static function fromPapiResponse(\PapiAI\Core\Response $response): Response
+    private static function fromPapiResponse(PapiResponse $response): Response
     {
         $toolCalls = array_map(
             fn(PapiToolCall $tc) => new ToolCall($tc->id, $tc->name, $tc->arguments),

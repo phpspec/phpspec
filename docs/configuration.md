@@ -375,16 +375,13 @@ ai:
 
 | Key | Required | Description |
 |---|---|---|
-| `provider` | Yes | LLM provider: `google`, `anthropic`, `openai`, `grok`, `deepseek`, or `ollama` |
-| `model` | No | Model identifier; your setting always beats the shipped default |
-| `max_tokens` | No | Output-token ceiling per call; beats the per-command defaults |
+| `provider` | Yes | The name of an installed papi provider, such as `google`, `anthropic` or `ollama` |
+| `model` | No | Model identifier; without it the provider package uses its own default. Required for `ollama`. |
+| `max_tokens` | No | Output-token ceiling per call, for every command; beats the shipped 16384. An answer the ceiling cuts off is reported as a failure. |
 | `effort` | No | Reasoning effort passed to the provider (e.g. `low`, `medium`, `high`), applied once the provider supports it |
-| `api_key` | Yes* | API key for the provider. Required for every provider except `ollama`. |
-| `base_url` | No | The local ollama endpoint (defaults to `http://localhost:11434`); only `ollama` reads it |
+| any other key | As the provider needs | A setting of the chosen provider, such as `api_key`, `base_url`, or Azure's `endpoint` and `deployment` |
 
-Default models per provider: `gemini-3.1-pro-preview` (google), `claude-sonnet-5` (anthropic), `gpt-5.1` (openai), `grok-4` (grok), `deepseek-chat` (deepseek), `llama3.1` (ollama).
-
-Key names are snake_case; hyphenated spellings (`api-key`) are accepted. A misspelled or unknown key, a missing required one, or a wrong-typed value is reported precisely, naming the key and the fix.
+Key names are snake_case; hyphenated spellings (`api-key`) are accepted. phpspec checks the four keys it reads; the provider's package checks its own settings, refusing a missing, unknown or wrong-typed one, and either names the key at fault. See [Pair Programming & AI](pair.md) for the providers and their packages.
 
 ### Customising the prompts
 
@@ -398,11 +395,12 @@ Every prompt the AI commands use is a text file. The shipped ones live inside th
   commands/navigator.txt       the pair navigator's manifest: its tools, params, and voice (also: driver.txt)
   instructions/write-spec.txt  step guidance (also: write-feature, write-steps, write-code, refactor, tdd-cycle)
   instructions/spec-syntax.txt syntax primers (also: steps-syntax, gherkin-syntax, pair-guidance)
+  instructions/answer-with-a-tool.txt  how generate, next and refactor are asked to answer through a tool, and asked again after prose
   tools/offer_change.txt       any tool description, by tool name (write tools; the live ones run_specs, inspect_symbol, ask_user, read_file, list_files; refactor's propose_plan, propose_step, decline_refactoring)
   navigator.txt                the pair navigator role contract (also: driver.txt, next.txt)
 ```
 
-Command files under `commands/` may start with YAML frontmatter (tools, answer channel, grounding, temperature, max_tokens, max_turns). Overrides inherit the shipped frontmatter per key: a prose-only file keeps the shipped machine contract, and declaring only `temperature: 0.2` keeps the shipped tools. An `@include <name>` line inside any prompt resolves project-first.
+Command files under `commands/` may start with YAML frontmatter (tools, answer channel, grounding, temperature, max_tokens, max_turns). Overrides inherit the shipped frontmatter per key: a prose-only file keeps the shipped machine contract, and declaring only `max_turns: 20` keeps the shipped tools. An `@include <name>` line inside any prompt resolves project-first.
 
 `.phpspec/ai/last-request.json` marks overridden prompts in `composed_from` (e.g. `"commands/next (project)"`), so you can always see whose words the model heard.
 

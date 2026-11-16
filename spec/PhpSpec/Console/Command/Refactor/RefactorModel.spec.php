@@ -62,13 +62,14 @@ describe(RefactorModel::class, function () {
         expect($asked)->toContain("# src/App/Checkout/CheckoutService.php\n");
         expect($asked)->toContain("# spec/App/Checkout/CheckoutService.spec.php\n");
         expect($asked)->toContain("# src/App/Pricing/Rates.php\n");
-        expect($request['options']['toolChoice'])->toBe('required');
+        expect($request['options'])->not()->toHaveKey('toolChoice');
+        expect($request['messages'][0]->content)->toContain('only a tool call carries your answer');
         expect(array_map(fn($tool) => $tool->getName(), $request['options']['tools']))->toBe(['propose_plan', 'decline_refactoring']);
     });
 
     it('takes a plan with no steps, or an answer with neither plan nor reason, for a model that failed', function () {
         $empty = ($this->model)(new Response('', [new ToolCall('p', 'propose_plan', ['technique' => 'Extract Class', 'rationale' => 'x', 'steps' => []])]));
-        $silent = ($this->model)(new Response(''));
+        $silent = ($this->model)(new Response(''), new Response(''));
 
         expect(fn() => $empty->plan($this->target, ''))->toThrow(new ModelFailedException('The model proposed a plan with no steps.'));
         expect(fn() => $silent->plan($this->target, ''))->toThrow(new ModelFailedException('The model answered with neither a plan nor a reason to decline.'));
@@ -78,6 +79,12 @@ describe(RefactorModel::class, function () {
         $model = ($this->model)(new RuntimeException('Google API error (400): API key not valid.'));
 
         expect(fn() => $model->plan($this->target, ''))->toThrow(new ModelFailedException('The model did not answer: Google API error (400): API key not valid.'));
+    });
+
+    it('asks with room for every file a step writes in full, unless the configuration sets the limit', function () {
+        ($this->model)($this->plan)->plan($this->target, '');
+
+        expect($this->replay->requests[0]['options']['maxTokens'])->toBe(16384);
     });
 
     it('asks with the model, the token limit and the effort the configuration sets', function () {
@@ -92,7 +99,7 @@ describe(RefactorModel::class, function () {
 
     it('reads a decline, or an answer in prose, as nothing to refactor, in the model\'s words', function () {
         $declined = ($this->model)(new Response('', [new ToolCall('d1', 'decline_refactoring', ['reason' => 'It does one thing.'])]))->plan($this->target, '');
-        $prose = ($this->model)(new Response('Nothing here is worth moving.'))->plan($this->target, '');
+        $prose = ($this->model)(new Response('Let me look.'), new Response('Nothing here is worth moving.'))->plan($this->target, '');
 
         expect($declined)->toBeLike(new Declined('It does one thing.'));
         expect($prose)->toBeLike(new Declined('Nothing here is worth moving.'));
@@ -120,7 +127,20 @@ describe(RefactorModel::class, function () {
         $asked = end($this->replay->requests[1]['messages'])->content;
         expect($asked)->toContain('Step 2 of 2: Describe LoyaltyDiscount');
         expect($asked)->toContain("# src/App/Checkout/CheckoutService.php\n");
-        expect($this->replay->requests[1]['options']['toolChoice'])->toBe(['name' => 'propose_step']);
+        expect($this->replay->requests[1]['options'])->not()->toHaveKey('toolChoice');
+    });
+
+    it('asks once more for a tool call when the model answers a plan or a step in prose', function () {
+        $step = new Response('', [new ToolCall('s1', 'propose_step', ['files' => [['path' => 'src/App/Checkout/CheckoutService.php', 'content' => "<?php // changed\n"]], 'red' => false])]);
+        $model = ($this->model)(new Response('I would extract a policy.'), $this->plan, new Response('Here is the step.'), $step);
+
+        $plan = $model->plan($this->target, '');
+        $model->step($plan, 1);
+
+        expect($plan)->toBeAnInstanceOf(RefactorPlan::class);
+        expect($this->replay->requests)->toHaveLength(4);
+        expect(end($this->replay->requests[1]['messages'])->content)->toContain('only a tool call carries your answer');
+        expect(end($this->replay->requests[3]['messages'])->content)->toContain('only a tool call carries your answer');
     });
 
     it('refuses a step that writes outside the source and spec paths, or a file that is not PHP', function () {

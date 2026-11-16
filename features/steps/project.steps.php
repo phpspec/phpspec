@@ -245,3 +245,7 @@ given('no phpspec.json config', function () {
         unlink($jsonPath);
     }
 });
+
+given('a fake AI provider', function () {
+    $this->fakeProvider = true;
+});

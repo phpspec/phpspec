@@ -15,12 +15,16 @@
 namespace PhpSpec;
 
 use BackedEnum;
-use PhpSpec\Ai\ProviderFactory;
+use InvalidArgumentException;
+use PhpSpec\Ai\Contracts\ProviderCatalogueInterface;
+use PhpSpec\Ai\Contracts\ProviderInterface;
+use PhpSpec\Ai\Papi\PapiCatalogue;
 use PhpSpec\CodeGeneration\SourceLayout;
 use PhpSpec\Coverage\CoverageAdapter;
 use PhpSpec\Source\ComposerAutoload;
 use PhpSpec\Source\ComposerJson;
 use PhpSpec\Source\ProjectAutoloader;
+use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -62,6 +66,7 @@ final class Configuration
      * @param ComposerAutoload|null $composer what composer.json declares, or null for a project without one
      * @param string|null $settingsFile the file the settings were read from, when there is one
      * @param bool $named whether the settings file was named with --config rather than found under the root
+     * @param ProviderCatalogueInterface|null $providers the AI providers the project has installed; papi's when not given
      */
     public function __construct(
         private array $config = [],
@@ -69,6 +74,7 @@ final class Configuration
         private ?ComposerAutoload $composer = null,
         private ?string $settingsFile = null,
         private bool $named = false,
+        private ?ProviderCatalogueInterface $providers = null,
     ) {}
 
     /**
@@ -80,13 +86,14 @@ final class Configuration
      * @param string $rootDir project root directory containing the config files
      * @param Filesystem|null $filesystem the filesystem to read through
      * @param string|null $configFile explicit config file path; when set, the working directory cascade is skipped
+     * @param ProviderCatalogueInterface|null $providers the AI providers the project has installed; papi's when not given
      */
-    public static function load(string $rootDir = '.', ?Filesystem $filesystem = null, ?string $configFile = null): self
+    public static function load(string $rootDir = '.', ?Filesystem $filesystem = null, ?string $configFile = null, ?ProviderCatalogueInterface $providers = null): self
     {
         $fs = $filesystem ?? new RealFilesystem();
         $path = $configFile ?? self::settingsFile($rootDir, $fs);
         $settings = $path === null ? [] : self::readFile($path, $fs);
-        $configuration = new self($settings, $rootDir, ComposerAutoload::of($rootDir, $fs), $path, $configFile !== null);
+        $configuration = new self($settings, $rootDir, ComposerAutoload::of($rootDir, $fs), $path, $configFile !== null, $providers);
         $configuration->checkAgainstComposer();
 
         return $configuration;
@@ -593,7 +600,8 @@ final class Configuration
      * The keys a valid ai section may hold, in their canonical snake_case
      * spellings; the documented contract in one place.
      */
-    private const AI_KEYS = ['provider', 'model', 'max_tokens', 'effort', 'api_key', 'base_url'];
+    /** The ai keys phpspec reads itself; every other one is a setting of the provider. */
+    private const AI_KEYS = ['provider', 'model', 'max_tokens', 'effort'];
 
     /**
      * What a guard section may say, and what it means when it says nothing.
@@ -810,11 +818,10 @@ final class Configuration
     }
 
     /**
-     * Returns the AI configuration block, or null when it is absent or
-     * unusable ({@see aiConfigProblem()} says why). api_key is present for
-     * every provider that authenticates with one; a local ollama has none.
+     * Returns what phpspec reads from the AI configuration block, or null
+     * when it is absent or unusable ({@see aiConfigProblem()} says why).
      *
-     * @return array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null
+     * @return array{provider: string, model?: string, maxTokens?: int, effort?: string}|null
      */
     public function getAiConfig(): ?array
     {
@@ -835,14 +842,22 @@ final class Configuration
         if (isset($ai['effort'])) {
             $result['effort'] = $ai['effort'];
         }
-        if (isset($ai['base_url'])) {
-            $result['base_url'] = $ai['base_url'];
-        }
-        if (isset($ai['api_key'])) {
-            $result['api_key'] = $ai['api_key'];
-        }
 
         return $result;
+    }
+
+    /**
+     * The provider the ai section names, built with the provider's own
+     * settings: every key of the section phpspec does not read itself.
+     *
+     * @throws RuntimeException when the ai section is missing or unusable
+     * @throws InvalidArgumentException when the provider is not installed, or refuses its settings
+     */
+    public function aiProvider(): ProviderInterface
+    {
+        $ai = $this->getAiConfig() ?? throw new RuntimeException((string) $this->aiConfigProblem());
+
+        return $this->providers()->create($ai['provider'], array_diff_key($this->normalisedAiSection() ?? [], array_flip(self::AI_KEYS)));
     }
 
     /**
@@ -916,7 +931,7 @@ final class Configuration
      */
     private function missingAiSection(): array
     {
-        $installed = ProviderFactory::installed();
+        $installed = array_keys($this->installedOrNone());
         $provider = count($installed) === 1 ? $installed[0] : 'anthropic';
         $file = $this->settingsFile ?? $this->rootDir . '/phpspec.yml';
         $shown = str_starts_with($file, $this->rootDir . '/') ? substr($file, strlen($this->rootDir) + 1) : $file;
@@ -947,45 +962,20 @@ final class Configuration
 
     /**
      * The first unmet requirement of the ai section as a user-facing message,
-     * or null when the section is usable. The one statement of what a usable
-     * ai config requires: the reader and the diagnosis both derive from it,
-     * and the provider knowledge comes from the factory that constructs them,
-     * so neither the message nor the acceptance can drift from reality.
+     * or null when the section is usable. The reader and the diagnosis both
+     * derive from it, so they cannot disagree. Only the keys phpspec reads
+     * are judged here; the provider judges its own settings when it is built.
      *
      * @param array<string, mixed> $ai the normalised ai section
      */
     private function aiSectionGap(array $ai): ?string
     {
-        foreach (array_keys($ai) as $key) {
-            if (!in_array($key, self::AI_KEYS, true)) {
-                return $this->unknownAiKey((string) $key);
-            }
-        }
-
         if (!isset($ai['provider'])) {
             return $this->missingProvider();
         }
 
-        if (!is_string($ai['provider']) || !in_array($ai['provider'], ProviderFactory::providers(), true)) {
-            return sprintf(
-                'Unknown ai provider "%s". The known providers are %s.',
-                is_scalar($ai['provider']) ? (string) $ai['provider'] : get_debug_type($ai['provider']),
-                self::naturalList(ProviderFactory::providers()),
-            );
-        }
-
-        if (ProviderFactory::needsApiKey($ai['provider'])) {
-            if (!isset($ai['api_key'])) {
-                return 'The ai section is missing api_key. Add it to your phpspec config.';
-            }
-
-            if (!is_string($ai['api_key'])) {
-                return 'The ai section\'s api_key must be a string. Quote it in your phpspec config.';
-            }
-
-            if (trim($ai['api_key']) === '') {
-                return 'The ai section\'s api_key is empty. Put your key in your phpspec config.';
-            }
+        if (!is_string($ai['provider']) || $ai['provider'] === '') {
+            return 'The ai section\'s provider must be a provider name.';
         }
 
         if (isset($ai['model']) && !is_string($ai['model'])) {
@@ -1000,48 +990,46 @@ final class Configuration
             return 'The ai section\'s effort must be a non-empty string.';
         }
 
-        if (isset($ai['base_url']) && !is_string($ai['base_url'])) {
-            return 'The ai section\'s base_url must be a string.';
-        }
-
         return null;
     }
 
     /**
-     * The message for an unrecognised ai key: the nearest known key when the
-     * spelling is close (a typo), the full list otherwise.
-     */
-    private function unknownAiKey(string $key): string
-    {
-        $closest = null;
-        $best = 4;
-        foreach (self::AI_KEYS as $known) {
-            $distance = levenshtein($key, $known);
-            if ($distance < $best) {
-                $best = $distance;
-                $closest = $known;
-            }
-        }
-
-        if ($closest !== null) {
-            return sprintf('Unknown ai key "%s". Did you mean "%s"?', $key, $closest);
-        }
-
-        return sprintf('Unknown ai key "%s". The known keys are %s.', $key, self::naturalList(self::AI_KEYS));
-    }
-
-    /**
-     * The missing-provider message: when exactly one papi provider package is
-     * installed, the error names it as the answer.
+     * The missing-provider message, naming what the project has installed.
      */
     private function missingProvider(): string
     {
-        $installed = ProviderFactory::installed();
-        if (count($installed) === 1) {
-            return sprintf('The ai section is missing provider. papi-ai/%s is installed, so set provider: %s.', $installed[0], $installed[0]);
+        try {
+            $installed = $this->providers()->installed();
+        } catch (InvalidArgumentException $e) {
+            return $e->getMessage();
         }
 
-        return sprintf('The ai section is missing provider. Set it to %s.', self::naturalList(ProviderFactory::providers()));
+        if ($installed === []) {
+            return 'The ai section is missing provider, and no papi provider package is installed.';
+        }
+
+        if (count($installed) === 1) {
+            return sprintf('The ai section is missing provider. %s is installed, so set provider: %s.', current($installed), key($installed));
+        }
+
+        return sprintf('The ai section is missing provider. Set it to %s.', self::naturalList(array_keys($installed), 'or'));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function installedOrNone(): array
+    {
+        try {
+            return $this->providers()->installed();
+        } catch (InvalidArgumentException) {
+            return [];
+        }
+    }
+
+    private function providers(): ProviderCatalogueInterface
+    {
+        return $this->providers ??= new PapiCatalogue();
     }
 
     /**
@@ -1065,8 +1053,8 @@ final class Configuration
 
     /**
      * The raw ai section with hyphenated spellings of its keys folded onto the
-     * canonical snake_case names (api-key reads as api_key, for every known
-     * key), or null when the config has no ai section. Snake case stays the
+     * canonical snake_case names (api-key reads as api_key), in the order
+     * written, or null when the config has no ai section. Snake case stays the
      * documented spelling; the common YAML hyphen habit simply keeps working.
      *
      * @return array<string, mixed>|null
@@ -1078,14 +1066,12 @@ final class Configuration
             return null;
         }
 
-        foreach (array_keys($ai) as $key) {
+        $normalised = [];
+        foreach ($ai as $key => $value) {
             $canonical = str_replace('-', '_', (string) $key);
-            if ($canonical !== $key && in_array($canonical, self::AI_KEYS, true) && !isset($ai[$canonical])) {
-                $ai[$canonical] = $ai[$key];
-                unset($ai[$key]);
-            }
+            $normalised[isset($ai[$canonical]) ? (string) $key : $canonical] = $value;
         }
 
-        return $ai;
+        return $normalised;
     }
 }

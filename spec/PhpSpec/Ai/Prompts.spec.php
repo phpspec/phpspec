@@ -50,6 +50,23 @@ describe('prompt artifacts', function () {
         expect($driver->body)->toContain('DRIVER');
     });
 
+    it('asks every command that answers through a tool for a tool call, never prose, in its own words', function () use ($read) {
+        foreach (['commands/generate', 'commands/next', 'commands/refactor'] as $name) {
+            expect($read($name))->toContain('only a tool call carries your answer');
+        }
+    });
+
+    it('leaves sampling to the model in every shipped command, since current models reject a temperature', function () {
+        $library = new PromptLibrary();
+
+        foreach (glob(getcwd() . '/src/PhpSpec/Ai/Prompts/commands/*.txt') ?: [] as $file) {
+            $name = basename($file, '.txt');
+            $profile = CommandProfile::compose($name, ...$library->stack('commands/' . $name));
+
+            expect($profile->providerOptions(['provider' => 'anthropic']))->not()->toHaveKey('temperature');
+        }
+    });
+
     it('ships editable descriptions for the live pair tools', function () use ($read) {
         expect($read('tools/run_specs'))->toContain('red/green');
         expect($read('tools/inspect_symbol'))->toContain('Reflection');
@@ -119,7 +136,6 @@ describe('prompt artifacts', function () {
     it('ships the refactor command as a manifest: a plan of baby steps, a spec first for a collaborator, and an honest decline', function () use ($read) {
         $text = $read('commands/refactor');
 
-        expect($text)->toContain('temperature: 0.3');
         expect($text)->toContain('propose_plan');
         expect($text)->toContain('propose_step');
         expect($text)->toContain('A new collaborator gets its own spec first');

@@ -11,9 +11,11 @@ Feature: AI-assisted pair programming
         model: gemini-2.5-flash
         api_key: test-key-123
       """
+    And a fake AI provider
     When I run phpspec pair with input "/help"
     Then the output should contain "AI assistant"
     And the output should contain "available"
+    And the output should not contain "unavailable"
     And the output should contain "/generate" exactly 1 times
 
   Scenario: Help shows AI as unavailable when the configured provider cannot start

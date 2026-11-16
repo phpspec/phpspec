@@ -20,7 +20,6 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\PromptLibrary;
-use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
@@ -93,7 +92,7 @@ final class RefactorModel
             ]],
         ]), $this->tool('decline_refactoring', [
             'reason' => ['type' => 'string', 'description' => 'why nothing is worth changing'],
-        ])], 'required');
+        ])]);
 
         foreach ($response->toolCalls as $call) {
             if ($call->name === 'propose_plan') {
@@ -152,7 +151,7 @@ final class RefactorModel
         $title = $plan->steps[$index]->title;
         $ask = sprintf('Step %d of %d: %s', $index + 1, count($plan->steps), $title) . "\n\n" . $this->currentFiles();
 
-        return $this->stepFrom($title, $this->ask($ask, [$this->stepTool()], ['name' => 'propose_step']));
+        return $this->stepFrom($title, $this->ask($ask, [$this->stepTool()]));
     }
 
     /**
@@ -165,7 +164,7 @@ final class RefactorModel
     {
         $ask = "The specs after this step say:\n\n" . $failures . "\n\nPropose the step again, fixed.\n\n" . $this->currentFiles();
 
-        return $this->stepFrom($step->title, $this->ask($ask, [$this->stepTool()], ['name' => 'propose_step']));
+        return $this->stepFrom($step->title, $this->ask($ask, [$this->stepTool()]));
     }
 
     /**
@@ -210,14 +209,27 @@ final class RefactorModel
 
     /**
      * @param list<Tool> $tools
-     * @param string|array{name: string} $choice
      */
-    private function ask(string $content, array $tools, string|array $choice): Response
+    private function ask(string $content, array $tools): Response
+    {
+        $response = $this->answerTo($content, $tools);
+
+        if ($response->hasToolCalls()) {
+            return $response;
+        }
+
+        return $this->answerTo($this->prompts->read('instructions/answer-with-a-tool'), $tools);
+    }
+
+    /**
+     * @param list<Tool> $tools
+     */
+    private function answerTo(string $content, array $tools): Response
     {
         $this->messages[] = Message::user($content);
 
         try {
-            $response = $this->provider->chat($this->messages, $this->options($tools, $choice));
+            $response = $this->provider->chat($this->messages, $this->options($tools));
         } catch (InterruptedException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -250,7 +262,7 @@ final class RefactorModel
             'command' => 'refactor',
             'target' => $this->subject,
             'provider' => $ai['provider'],
-            'model' => $ai['model'] ?? ProviderFactory::defaultModel($ai['provider']),
+            'model' => $ai['model'] ?? null,
             'turns' => [['rounds' => $this->rounds]],
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
@@ -353,12 +365,11 @@ final class RefactorModel
 
     /**
      * @param list<Tool> $tools
-     * @param string|array{name: string} $choice
      * @return array<string, mixed>
      */
-    private function options(array $tools, string|array $choice): array
+    private function options(array $tools): array
     {
-        return $this->profile()->providerOptions($this->config->getAiConfig() ?? []) + ['tools' => $tools, 'toolChoice' => $choice];
+        return $this->profile()->providerOptions($this->config->getAiConfig() ?? []) + ['tools' => $tools];
     }
 
     private function stepTool(): Tool

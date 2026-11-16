@@ -1,6 +1,8 @@
 <?php
 
+use PapiAI\Core\StopReason;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\Papi\PapiProvider;
 use PhpSpec\Ai\Tool;
 
@@ -18,11 +20,13 @@ describe(PapiProvider::class, function () {
             /** @var array<string, int> */
             public array $usage = [];
 
+            public StopReason $stoppedBecause = StopReason::Other;
+
             public function chat(array $messages, array $options = []): \PapiAI\Core\Response
             {
                 $this->options = $options;
 
-                return new \PapiAI\Core\Response(text: 'ok', usage: $this->usage);
+                return new \PapiAI\Core\Response(text: 'ok', usage: $this->usage, stoppedBecause: $this->stoppedBecause);
             }
 
             public function stream(array $messages, array $options = []): iterable
@@ -79,10 +83,10 @@ describe(PapiProvider::class, function () {
         expect($this->papi->options['tools'][0])->toBe($asArray);
     });
 
-    it('leaves the other options, toolChoice included, intact', function () {
-        $this->provider->chat([Message::user('hi')], ['toolChoice' => ['name' => 'suggest_next'], 'maxTokens' => 64]);
+    it('leaves the other options intact', function () {
+        $this->provider->chat([Message::user('hi')], ['effort' => 'low', 'maxTokens' => 64]);
 
-        expect($this->papi->options['toolChoice'])->toBe(['name' => 'suggest_next']);
+        expect($this->papi->options['effort'])->toBe('low');
         expect($this->papi->options['maxTokens'])->toBe(64);
     });
 
@@ -92,5 +96,22 @@ describe(PapiProvider::class, function () {
         $this->papi->usage = ['input_tokens' => 1200, 'output_tokens' => 340];
 
         expect($this->provider->chat([Message::user('hi')])->outputTokens)->toBe(340);
+    });
+
+    it('refuses an answer the token ceiling cut off', function () {
+        $this->papi->stoppedBecause = StopReason::MaxTokens;
+
+        expect(fn() => $this->provider->chat([Message::user('hi')], ['maxTokens' => 64]))
+            ->toThrow(new ModelFailedException('The answer was cut off at 64 tokens.'));
+        expect(fn() => $this->provider->chat([Message::user('hi')]))
+            ->toThrow(new ModelFailedException('The answer was cut off at the token ceiling.'));
+    });
+
+    it('takes an answer that ended any other way', function () {
+        foreach ([StopReason::Stop, StopReason::ToolCalls, StopReason::Refused, StopReason::Other] as $reason) {
+            $this->papi->stoppedBecause = $reason;
+
+            expect($this->provider->chat([Message::user('hi')], ['maxTokens' => 64])->text)->toBe('ok');
+        }
     });
 });

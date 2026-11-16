@@ -1,0 +1,1 @@
+Answer by calling exactly one of the declared tools, never in prose: only a tool call carries your answer to the program.

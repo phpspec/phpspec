@@ -148,11 +148,12 @@ describe('E15 refactor: a clean class is declined, replayed from a live session'
         expect(($this->code)())->toBe($this->before);
     });
 
-    it('offered the model a plan or a decline, and made it answer with one of them', function () {
+    it('offered the model a plan or a decline, and asked it to answer with one of them', function () {
         ($this->refactor)();
 
         $request = $this->replay->requests[0];
         expect(array_map(fn($tool) => $tool->getName(), $request['options']['tools']))->toBe(['propose_plan', 'decline_refactoring']);
-        expect($request['options']['toolChoice'])->toBe('required');
+        expect($request['options'])->not()->toHaveKey('toolChoice');
+        expect($request['messages'][0]->content)->toContain('only a tool call carries your answer');
     });
 });

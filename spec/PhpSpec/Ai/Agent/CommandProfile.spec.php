@@ -88,4 +88,11 @@ describe(CommandProfile::class, function () {
             ->toThrow(RuntimeException::class);
     });
 
+    it('names the model the configuration names, and none otherwise, so the provider package picks its own', function () {
+        $profile = new CommandProfile('generate', 'Body.');
+
+        expect($profile->providerOptions(['provider' => 'anthropic']))->not()->toHaveKey('model');
+        expect($profile->providerOptions(['provider' => 'anthropic', 'model' => 'claude-opus-5-5'])['model'])->toBe('claude-opus-5-5');
+    });
+
 });
