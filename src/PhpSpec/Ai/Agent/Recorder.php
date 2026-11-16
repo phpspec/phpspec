@@ -15,7 +15,6 @@
 namespace PhpSpec\Ai\Agent;
 
 use PhpSpec\Ai\Response;
-use PhpSpec\Ai\ToolCall;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 
@@ -130,7 +129,7 @@ final class Recorder
                 'context' => $request->context,
                 'composed_from' => $request->composedFrom,
             ],
-            'response' => $response === null ? null : self::responseDocument($response),
+            'response' => $response === null ? null : $response->recorded(),
             'proposals' => array_map(
                 static fn(Proposal $proposal): array => [
                     'path' => $proposal->path,
@@ -145,7 +144,7 @@ final class Recorder
         if ($rounds !== []) {
             $document['rounds'] = array_map(
                 static fn(array $round): array => array_filter([
-                    'response' => self::responseDocument($round['response']),
+                    'response' => $round['response']->recorded(),
                     'tool_results' => $round['tool_results'] ?? null,
                 ], static fn(mixed $value): bool => $value !== null),
                 $rounds,
@@ -153,19 +152,5 @@ final class Recorder
         }
 
         return $document;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function responseDocument(Response $response): array
-    {
-        return [
-            'text' => $response->text,
-            'tool_calls' => array_map(
-                static fn(ToolCall $call): array => ['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments],
-                $response->toolCalls,
-            ),
-        ];
     }
 }

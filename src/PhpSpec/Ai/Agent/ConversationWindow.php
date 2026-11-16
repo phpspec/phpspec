@@ -19,13 +19,12 @@ use PhpSpec\Ai\Role;
 
 /**
  * @internal
- * Keeps a pair session's message history bounded, fresh, and focused so a long
- * session never bloats, costs, or loses the plot. It drops superseded grounding,
- * trims stale tool output, and — past a size threshold — folds the oldest turns
- * into a single compact "earlier in this session" summary, always preserving the
- * system prompt, the recent turns verbatim, and clean tool_use/tool_result
- * pairing. Grounding (Slice B) and auto-verify (Slice C) make fresh state
- * authoritative, so old history is largely redundant and safe to compact.
+ * Keeps a pair session's conversation within its budget. Until the budget is
+ * reached the history is left exactly as it is, so every request extends the
+ * one before it and the provider can cache it. Past the budget the
+ * conversation starts afresh: the system prompt in force, a summary of the
+ * turns it drops, and the recent turns verbatim, cut on a user message so no
+ * tool_use/tool_result pair is split.
  */
 final readonly class ConversationWindow
 {
@@ -33,111 +32,40 @@ final readonly class ConversationWindow
      * @param int $recentMessages how many trailing messages are always kept verbatim
      * @param int $compactThreshold history length past which the oldest turns are folded
      * @param int $maxContextTokens estimated-token budget that also triggers compaction
-     * @param int $toolResultMax characters kept of a stale tool result before trimming
      */
     public function __construct(
         private int $recentMessages = 16,
         private int $compactThreshold = 40,
         private int $maxContextTokens = 48000,
-        private int $toolResultMax = 400,
     ) {}
 
     /**
-     * Applies the full window policy to a message history and returns the result.
-     * Intended to run once per turn, before fresh grounding and input are added.
+     * The history as the next request should carry it: unchanged within the
+     * budget, started afresh past it.
      *
      * @param Message[] $messages
      * @return Message[]
      */
     public function apply(array $messages): array
     {
-        $messages = $this->pruneSupersededSituations($messages);
-        $messages = $this->trimStaleToolOutput($messages);
-
-        return $this->compact($messages);
-    }
-
-    /**
-     * Removes every "[Current situation]" grounding message — a fresh one is
-     * injected each turn, so the previous snapshots are pure noise.
-     *
-     * @param Message[] $messages
-     * @return Message[]
-     */
-    private function pruneSupersededSituations(array $messages): array
-    {
-        return array_values(array_filter(
-            $messages,
-            fn(Message $message) => !$this->isSituation($message),
-        ));
-    }
-
-    /**
-     * Whether a message is a "[Current situation]" grounding message.
-     */
-    private function isSituation(Message $message): bool
-    {
-        return $message->role === Role::User
-            && is_string($message->content)
-            && str_starts_with($message->content, '[Current situation]');
-    }
-
-    /**
-     * Shrinks the content of tool results that have fallen out of the recent
-     * window — a stale read_file or run_specs dump is superseded by fresh reads
-     * and auto-verify, so only a short marker is kept. The message itself stays
-     * so its tool_use/tool_result pairing is never broken.
-     *
-     * @param Message[] $messages
-     * @return Message[]
-     */
-    private function trimStaleToolOutput(array $messages): array
-    {
-        $cutoff = count($messages) - $this->recentMessages;
-        if ($cutoff <= 0) {
-            return $messages;
-        }
-
-        foreach ($messages as $index => $message) {
-            if ($index >= $cutoff) {
-                break;
-            }
-
-            if ($message->role === Role::Tool && is_string($message->content) && strlen($message->content) > $this->toolResultMax) {
-                $messages[$index] = new Message(Role::Tool, '[earlier tool result trimmed]', null, $message->toolCallId);
-            }
-        }
-
-        return $messages;
-    }
-
-    /**
-     * Folds the oldest turns into a single summary once history grows past the
-     * threshold, keeping the system message, the summary, and the recent turns.
-     * The cut lands on a user-message boundary so no tool_use/tool_result pair is
-     * split and the retained tail never begins with an orphan tool result.
-     *
-     * @param Message[] $messages
-     * @return Message[]
-     */
-    private function compact(array $messages): array
-    {
         if (!$this->needsCompaction($messages)) {
             return $messages;
         }
 
-        $system = $messages[0];
-        $rest = array_slice($messages, 1);
-
-        $cut = $this->firstUserBoundary($rest, max(0, count($rest) - $this->recentMessages));
-        if ($cut === null || $cut === 0) {
+        $cut = $this->firstUserBoundary($messages, max(1, count($messages) - $this->recentMessages));
+        if ($cut === null) {
             return $messages;
         }
 
-        $dropped = array_slice($rest, 0, $cut);
-        $retained = array_slice($rest, $cut);
+        $dropped = array_slice($messages, 0, $cut);
+        $spoken = array_values(array_filter($dropped, static fn(Message $message): bool => $message->role !== Role::System));
+        if ($spoken === []) {
+            return $messages;
+        }
 
-        return array_merge([$system, $this->summarise($dropped)], $retained);
+        $inForce = array_values(array_filter($dropped, static fn(Message $message): bool => $message->role === Role::System));
+
+        return array_merge(array_slice($inForce, -1), [$this->summarise($spoken)], array_slice($messages, $cut));
     }
 
     /**
@@ -170,12 +98,12 @@ final readonly class ConversationWindow
      * The index of the first user message at or after $from, or null when the
      * tail holds none (in which case compaction is skipped this round).
      *
-     * @param Message[] $rest
+     * @param Message[] $messages
      */
-    private function firstUserBoundary(array $rest, int $from): ?int
+    private function firstUserBoundary(array $messages, int $from): ?int
     {
-        for ($index = $from; $index < count($rest); $index++) {
-            if ($rest[$index]->role === Role::User) {
+        for ($index = $from; $index < count($messages); $index++) {
+            if ($messages[$index]->role === Role::User) {
                 return $index;
             }
         }

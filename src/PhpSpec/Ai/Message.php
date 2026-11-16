@@ -25,12 +25,14 @@ final readonly class Message
      * @param string|mixed $content the message content
      * @param ToolCall[]|null $toolCalls tool calls attached to assistant messages
      * @param string|null $toolCallId the tool call ID for tool result messages
+     * @param array<string, array<mixed>> $replay what each provider left on its answer to be sent back with it, keyed by provider name
      */
     public function __construct(
         public Role $role,
         public mixed $content,
         public ?array $toolCalls = null,
         public ?string $toolCallId = null,
+        public array $replay = [],
     ) {}
 
     /**
@@ -53,10 +55,11 @@ final readonly class Message
      * Creates an assistant message with optional tool calls.
      *
      * @param ToolCall[]|null $toolCalls
+     * @param array<string, array<mixed>> $replay what each provider left on its answer to be sent back with it
      */
-    public static function assistant(string $content, ?array $toolCalls = null): self
+    public static function assistant(string $content, ?array $toolCalls = null, array $replay = []): self
     {
-        return new self(Role::Assistant, $content, $toolCalls);
+        return new self(Role::Assistant, $content, $toolCalls, replay: $replay);
     }
 
     /**

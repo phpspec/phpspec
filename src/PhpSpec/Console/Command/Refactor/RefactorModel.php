@@ -132,11 +132,12 @@ final class RefactorModel
     public function adopt(RefactorTarget $target, RefactorPlan $plan, string $journal): void
     {
         $call = new ToolCall('propose_plan', 'propose_plan', $plan->toArray());
+        $proposed = new Response('', [$call]);
 
         $this->messages[] = Message::user($this->planRequestStartingTheConversation($target, $journal));
-        $this->messages[] = Message::assistant('', [$call]);
+        $this->messages[] = $proposed->toMessage();
         $this->messages[] = Message::toolResult($call->id, 'Shown to the developer.');
-        $this->rounds[] = ['response' => ['text' => '', 'tool_calls' => [['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments]]]];
+        $this->rounds[] = ['response' => $proposed->recorded()];
     }
 
     /**
@@ -236,7 +237,7 @@ final class RefactorModel
             throw new ModelFailedException(sprintf('The model did not answer: %s', $e->getMessage()), 0, $e);
         }
 
-        $this->messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
+        $this->messages[] = $response->toMessage();
         $this->record($response);
 
         foreach ($response->toolCalls as $call) {
@@ -252,10 +253,7 @@ final class RefactorModel
      */
     private function record(Response $response): void
     {
-        $this->rounds[] = ['response' => [
-            'text' => $response->text,
-            'tool_calls' => array_values(array_map(static fn(ToolCall $call): array => ['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments], $response->toolCalls)),
-        ]];
+        $this->rounds[] = ['response' => $response->recorded()];
 
         $ai = $this->config->getAiConfig() ?? ['provider' => 'google'];
         $this->filesystem->write($this->root . '/.phpspec/ai/last-refactor.json', (string) json_encode([

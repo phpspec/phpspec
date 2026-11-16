@@ -94,6 +94,7 @@ final class PapiProvider implements ProviderInterface
                 $message->toolCalls !== null
                     ? array_map(self::toPapiToolCall(...), $message->toolCalls)
                     : null,
+                $message->replay,
             ),
             Role::Tool => PapiMessage::toolResult(
                 $message->toolCallId ?? '',
@@ -114,6 +115,6 @@ final class PapiProvider implements ProviderInterface
             $response->toolCalls,
         );
 
-        return new Response($response->text, $toolCalls, (int) ($response->usage['output_tokens'] ?? 0));
+        return new Response($response->text, $toolCalls, (int) ($response->usage['output_tokens'] ?? 0), $response->replay);
     }
 }

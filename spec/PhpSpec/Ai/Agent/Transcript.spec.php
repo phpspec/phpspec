@@ -21,19 +21,18 @@ describe(Transcript::class, function () {
         expect(count($messages))->toBe(2);
     });
 
-    it('replaces only the system slot when re-oriented for another command', function () {
+    it('says another command\'s system prompt after what came before when re-oriented, changing nothing earlier', function () {
         $transcript = new Transcript();
         $transcript->orient('navigator', 'NAV CONTRACT');
         $transcript->say('add a spec');
         $transcript->heard(new Response('on it'));
+        $transcript->say('you drive now');
         $transcript->orient('driver', 'DRIVER CONTRACT');
 
         $messages = $transcript->messages();
 
-        expect($messages[0]->content)->toBe('DRIVER CONTRACT');
-        expect($messages[1]->content)->toBe('add a spec');
-        expect($messages[2]->content)->toBe('on it');
-        expect(count($messages))->toBe(3);
+        expect(array_map(fn(Message $message) => $message->content, $messages))->toBe(['NAV CONTRACT', 'add a spec', 'on it', 'you drive now', 'DRIVER CONTRACT']);
+        expect($messages[4]->role)->toBe(Role::System);
     });
 
     it('answers whether it is oriented for a command', function () {
@@ -58,17 +57,39 @@ describe(Transcript::class, function () {
         expect($messages[1]->content)->toBe("[Current situation]\nSUITE: green");
     });
 
-    it('prunes superseded situations at turn start', function () {
+    it('keeps every situation it was given, so a turn only adds to the conversation', function () {
         $transcript = new Transcript();
         $transcript->orient('navigator', 'NAV CONTRACT');
         $transcript->situate('SUITE: red');
         $transcript->say('what now?');
+        $before = $transcript->messages();
         $transcript->beginTurn();
 
-        $contents = array_map(fn(Message $message) => is_string($message->content) ? $message->content : '', $transcript->messages());
+        expect($transcript->messages())->toBe($before);
+    });
 
-        expect(implode("\n", $contents))->not()->toContain('[Current situation]');
-        expect($contents)->toContain('what now?');
+    it('never starts afresh when the provider keeps the conversation within budget on its own', function () {
+        $transcript = new Transcript(null);
+        $transcript->orient('driver', 'DRIVER CONTRACT');
+        for ($turn = 1; $turn <= 30; $turn++) {
+            $transcript->say("turn $turn");
+            $transcript->heard(new Response("answer $turn"));
+        }
+        $before = $transcript->messages();
+        $transcript->beginTurn();
+
+        expect($transcript->messages())->toBe($before);
+    });
+
+    it('keeps what the provider left on an answer, to send back with it', function () {
+        $transcript = new Transcript();
+        $transcript->orient('driver', 'DRIVER CONTRACT');
+        $transcript->say('go');
+        $transcript->heard(new Response('ok', [], 0, ['anthropic' => ['blocks' => []]]));
+
+        $messages = $transcript->messages();
+
+        expect(end($messages)->replay)->toBe(['anthropic' => ['blocks' => []]]);
     });
 
     it('keeps tool_use and tool_result paired when recording a round', function () {

@@ -620,6 +620,7 @@ describe(Configuration::class, function () {
             default => false,
         });
         allow($fs->read(any()))->toReturn("ai:\n  provider: azure-openai\n  model: gpt-6-astra\n  max-tokens: 32000\n  effort: high\n  api-key: test-key-123\n  endpoint: https://brew.openai.azure.com\n  deployment: brew\n");
+        allow($providers->settings('azure-openai'))->toReturn(['api_key', 'endpoint', 'deployment', 'effort']);
         allow($providers->create('azure-openai', ['api_key' => 'test-key-123', 'endpoint' => 'https://brew.openai.azure.com', 'deployment' => 'brew']))->toReturn($provider);
 
         $config = Configuration::load('/app', $fs, providers: $providers);
@@ -634,11 +635,36 @@ describe(Configuration::class, function () {
     });
 
     it('says why a provider refused its settings, in the provider\'s words', function (ProviderCatalogueInterface $providers) {
+        allow($providers->settings('google'))->toReturn(['api_key', 'model']);
         allow($providers->create('google', []))->toThrow(new InvalidArgumentException('Provider "google" needs the "api_key" setting.'));
         $config = new Configuration(['ai' => ['provider' => 'google']], '/app', providers: $providers);
 
         expect($config->aiConfigProblem())->toBeNull();
         expect(fn() => $config->aiProvider())->toThrow(new InvalidArgumentException('Provider "google" needs the "api_key" setting.'));
+    });
+
+    it('asks a provider that offers it to send thinking back, compact on its server and clear old tool results, unless the section says otherwise', function (ProviderCatalogueInterface $providers, ProviderInterface $provider) {
+        allow($providers->settings('anthropic'))->toReturn(['api_key', 'model', 'replay_thinking', 'compact_at', 'clear_tool_results_at']);
+        allow($providers->create('anthropic', ['api_key' => 'k', 'replay_thinking' => 'drop_on_edit', 'compact_at' => 150000, 'clear_tool_results_at' => 100000]))->toReturn($provider);
+        allow($providers->create('anthropic', ['api_key' => 'k', 'replay_thinking' => 'off', 'compact_at' => 90000, 'clear_tool_results_at' => 100000]))->toReturn($provider);
+
+        $preferred = new Configuration(['ai' => ['provider' => 'anthropic', 'api_key' => 'k']], '/app', providers: $providers);
+        $chosen = new Configuration(['ai' => ['provider' => 'anthropic', 'api_key' => 'k', 'replay_thinking' => 'off', 'compact_at' => 90000]], '/app', providers: $providers);
+
+        expect($preferred->aiProvider())->toBe($provider);
+        expect($preferred->aiProviderCompacts())->toBeTrue();
+        expect($chosen->aiProvider())->toBe($provider);
+    });
+
+    it('asks nothing of a provider that does not offer it, which keeps its conversation within budget itself', function (ProviderCatalogueInterface $providers, ProviderInterface $provider) {
+        allow($providers->settings('google'))->toReturn(['api_key', 'model', 'max_tokens', 'effort']);
+        allow($providers->create('google', ['api_key' => 'k']))->toReturn($provider);
+
+        $config = new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']], '/app', providers: $providers);
+
+        expect($config->aiProvider())->toBe($provider);
+        expect($config->aiProviderCompacts())->toBeFalse();
+        expect((new Configuration())->aiProviderCompacts())->toBeFalse();
     });
 
     it('builds no provider from an ai section it cannot read, saying why', function () {

@@ -7,41 +7,19 @@ use PhpSpec\Ai\Agent\ConversationWindow;
 
 describe(ConversationWindow::class, function () {
 
-    it('prunes every superseded [Current situation] grounding message', function () {
-        $window = new ConversationWindow();
+    it('leaves a history within its budget exactly as it is, situations and long tool output included', function () {
+        $window = new ConversationWindow(recentMessages: 2, compactThreshold: 999, maxContextTokens: 999999);
         $messages = [
             Message::system('SYS'),
             Message::user("[Current situation]\nSUITE: red"),
             Message::user('input 1'),
+            Message::assistant('', [new ToolCall('t1', 'read_file', ['path' => 'a'])]),
+            Message::toolResult('t1', str_repeat('x', 5000)),
             Message::user("[Current situation]\nSUITE: green"),
             Message::user('input 2'),
         ];
 
-        $result = $window->apply($messages);
-        $contents = array_map(fn($m) => is_string($m->content) ? $m->content : '', $result);
-
-        expect(implode("\n", $contents))->not()->toContain('[Current situation]');
-        expect($contents)->toContain('input 1');
-        expect($contents)->toContain('input 2');
-    });
-
-    it('trims stale tool output beyond the recent window while keeping the pairing', function () {
-        $window = new ConversationWindow(recentMessages: 2, compactThreshold: 999, maxContextTokens: 999999, toolResultMax: 20);
-        $long = str_repeat('x', 100);
-        $messages = [
-            Message::system('SYS'),
-            Message::assistant('', [new ToolCall('t1', 'read_file', ['path' => 'a'])]),
-            Message::toolResult('t1', $long),
-            Message::user('recent input'),
-            Message::assistant('', [new ToolCall('t2', 'read_file', ['path' => 'b'])]),
-            Message::toolResult('t2', $long),
-        ];
-
-        $result = $window->apply($messages);
-
-        expect($result[2]->content)->toBe('[earlier tool result trimmed]');
-        expect($result[2]->toolCallId)->toBe('t1');
-        expect($result[5]->content)->toBe($long);
+        expect($window->apply($messages))->toBe($messages);
     });
 
     it('leaves a short history untouched', function () {
@@ -116,6 +94,27 @@ describe(ConversationWindow::class, function () {
         expect(implode("\n", array_map(fn($m) => is_string($m->content) ? $m->content : '', $result)))
             ->not()->toContain('[Earlier in this session]');
         expect(count($result))->toBe(6);
+    });
+
+    it('starts the compacted conversation from the system prompt in force where it cuts, so a swapped role survives', function () {
+        $window = new ConversationWindow(recentMessages: 2, compactThreshold: 8, maxContextTokens: 999999);
+        $messages = [Message::system('NAV CONTRACT'), Message::user('swap'), Message::system('DRIVER CONTRACT')];
+        for ($i = 1; $i <= 4; $i++) {
+            $messages[] = Message::user("input $i");
+            $messages[] = Message::assistant("answer $i");
+        }
+
+        $result = $window->apply($messages);
+
+        expect($result[0]->content)->toBe('DRIVER CONTRACT');
+        expect(array_filter($result, fn(Message $message) => $message->role === Role::System))->toHaveLength(1);
+    });
+
+    it('leaves the history alone when the cut would fold nothing but the system prompt', function () {
+        $window = new ConversationWindow(recentMessages: 4, compactThreshold: 2, maxContextTokens: 999999);
+        $messages = [Message::system('SYS'), Message::user('one'), Message::assistant('a'), Message::assistant('b')];
+
+        expect($window->apply($messages))->toBe($messages);
     });
 
 });

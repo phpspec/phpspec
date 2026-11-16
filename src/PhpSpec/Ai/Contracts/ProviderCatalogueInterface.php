@@ -30,6 +30,13 @@ interface ProviderCatalogueInterface
     public function installed(): array;
 
     /**
+     * @return list<string> the names of the settings the provider takes, none when it is not installed
+     *
+     * @throws InvalidArgumentException when an installed package cannot provide one
+     */
+    public function settings(string $provider): array;
+
+    /**
      * @param array<string, mixed> $settings the provider's own settings, keyed as the configuration names them
      *
      * @throws InvalidArgumentException when the provider is not installed, or refuses its settings

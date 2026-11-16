@@ -208,4 +208,18 @@ describe(RefactorModel::class, function () {
         expect($replayed->chat([])->toolCalls[0]->name)->toBe('propose_plan');
         expect($replayed->chat([])->toolCalls[0]->arguments['files'][0]['path'])->toBe('src/App/Checkout/DiscountPolicy.php');
     });
+
+    it('sends back with each answer what the provider left on it, and records it for a replay', function () {
+        $replay = ['fake' => ['signature' => 'sig']];
+        $planned = new Response('', $this->plan->toolCalls, 0, $replay);
+        $step = new Response('', [new ToolCall('s1', 'propose_step', ['files' => [['path' => 'src/App/Checkout/DiscountPolicy.php', 'content' => "<?php // policy\n"]], 'red' => false])]);
+        $model = ($this->model)($planned, $step);
+        $model->step($model->plan($this->target, ''), 0);
+
+        $recording = json_decode($this->files['/proj/.phpspec/ai/last-refactor.json'] ?? '', true);
+
+        expect($this->replay->requests[1]['messages'][2]->replay)->toBe($replay);
+        expect($recording['turns'][0]['rounds'][0]['response']['replay'])->toBe($replay);
+        expect(ReplayProvider::fromConversation($recording)->chat([])->replay)->toBe($replay);
+    });
 });

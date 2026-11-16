@@ -29,6 +29,11 @@ final class FakeProviderCatalogue implements ProviderCatalogueInterface
         return ['google' => 'papi-ai/google'];
     }
 
+    public function settings(string $provider): array
+    {
+        return $provider === 'google' ? ['api_key', 'model', 'max_tokens', 'effort'] : [];
+    }
+
     public function create(string $provider, array $settings): ProviderInterface
     {
         if ($provider !== 'google') {

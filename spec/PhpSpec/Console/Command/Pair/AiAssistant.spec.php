@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Ai\Contracts\ProviderCatalogueInterface;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
@@ -202,7 +203,7 @@ describe(AiAssistant::class, function () {
         $this->answers = ['1'];
         $assistant->handle('tighten the feature');
 
-        expect($toolsByRound[1] ?? [])->not()->toContain('suggest_next');
+        expect($toolsByRound[1])->toBe($toolsByRound[0]);
         expect((string) json_encode($captured))->toContain('hand back');
         expect($assistant->lastSuggestion())->toBeNull();
     });
@@ -296,23 +297,21 @@ describe(AiAssistant::class, function () {
         expect((string) json_encode($captured))->toContain('drop existing examples');
     });
 
-    it('allows at most one offer per turn, withholding and refusing the second', function (Filesystem $fs) {
+    it('allows at most one offer per turn, refusing the second', function (Filesystem $fs) {
         allow($fs->isDir(any()))->toReturn(false);
         allow($fs->exists(any()))->toReturn(true);
         allow($fs->read(any()))->toReturn("<?php\n// old");
         allow($fs->mkdir(any()));
 
-        $secondTurnTools = null;
         $captured = null;
         $turn = 0;
-        $this->provider->responder = function (array $messages, array $options) use (&$secondTurnTools, &$captured, &$turn) {
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
             if (++$turn === 1) {
                 return new Response('', [
                     new ToolCall('t1', 'offer_change', ['path' => 'src/A.php', 'content' => "<?php\n// first", 'intent' => 'first change']),
                     new ToolCall('t2', 'offer_change', ['path' => 'src/B.php', 'content' => "<?php\n// second", 'intent' => 'second change']),
                 ]);
             }
-            $secondTurnTools = array_column($options['tools'], 'name');
             $captured = $messages;
 
             return new Response('done');
@@ -325,7 +324,6 @@ describe(AiAssistant::class, function () {
         $artifacts = array_filter($this->written, fn(string $p) => !str_contains($p, '.phpspec/ai/'), ARRAY_FILTER_USE_KEY);
         expect($artifacts)->toHaveLength(1);                               // only the first offer landed
         expect((string) json_encode($captured))->toContain('One offer per turn');
-        expect($secondTurnTools)->not()->toContain('offer_change');        // and none advertised after
     });
 
     it('ends the driver turn after one artifact instead of chasing a bigger goal', function (Filesystem $fs) {
@@ -721,33 +719,42 @@ describe(AiAssistant::class, function () {
             expect($this->specRunner->arguments)->not()->toContain('--all');
         });
 
-        it('offers replace writes while navigating, and writes replace offers while driving', function (Filesystem $fs) {
-            $names = null;
-            $this->provider->responder = function (array $messages, array $options) use (&$names) {
-                $names = array_column($options['tools'], 'name');
+        it('refuses a write while navigating and an offer while driving, offering both roles the same tools', function (Filesystem $fs) {
+            $asked = function (string $tool) {
+                $answer = ['tools' => [], 'replied' => null];
+                $this->provider->responder = function (array $messages, array $options) use ($tool, &$answer) {
+                    if ($answer['tools'] === []) {
+                        $answer['tools'] = array_column($options['tools'], 'name');
 
-                return new Response('done');
+                        return new Response('', [new ToolCall('t1', $tool, ['path' => 'src/App/Calculator.php', 'content' => "<?php\n", 'intent' => 'a calculator'])]);
+                    }
+                    $answer['replied'] = (string) json_encode($messages);
+
+                    return new Response('done');
+                };
+
+                return function () use (&$answer) {
+                    return $answer;
+                };
             };
 
-            $navigator = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-            $navigator->handle('hello');
-            expect($names)->toContain('offer_change');
-            expect($names)->not()->toContain('write_file');
+            $navigating = $asked('write_file');
+            (new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner))->handle('write a calculator');
+            $driving = $asked('offer_change');
+            (new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner))->handle('offer a calculator');
 
-            $driver = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
-            $driver->handle('hello');
-            expect($names)->toContain('write_file');
-            expect($names)->not()->toContain('offer_change');
+            expect($navigating()['replied'])->toContain("won't write files");
+            expect($driving()['replied'])->toContain('offer_change is not mine to use while I drive.');
+            expect($navigating()['tools'])->toBe($driving()['tools']);
+            expect(($this->artifactWrites)())->toBe([]);
         });
 
         it('registers at most one suggestion per turn, ending the advice in prose', function (Filesystem $fs) {
-            $secondTurnTools = null;
             $turn = 0;
-            $this->provider->responder = function (array $messages, array $options) use (&$secondTurnTools, &$turn) {
+            $this->provider->responder = function () use (&$turn) {
                 if (++$turn === 1) {
                     return new Response('', [new ToolCall('t1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\First', 'reason' => 'one'])]);
                 }
-                $secondTurnTools = array_column($options['tools'], 'name');
 
                 return new Response('My advice in prose.');
             };
@@ -756,7 +763,6 @@ describe(AiAssistant::class, function () {
             $assistant->handle('what next?');
 
             expect($assistant->lastSuggestion()['target'])->toBe('App\\First');
-            expect($secondTurnTools)->not()->toContain('suggest_next');        // one registration per turn
         });
 
         it('registers the model suggestion for the dispatcher ghost', function (Filesystem $fs) {
@@ -805,25 +811,6 @@ describe(AiAssistant::class, function () {
             expect((string) json_encode($captured))->toContain('always');
         });
 
-        it('does not advertise write tools while the human drives', function (Filesystem $fs) {
-            $captured = null;
-            $this->provider->responder = function (array $messages, array $options) use (&$captured) {
-                $captured = $options;
-                return new Response('ok');
-            };
-
-            $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
-            $assistant->handle('write me a spec for a Calculator');
-
-            $names = array_column($captured['tools'] ?? [], 'name');
-            expect($names)->not()->toContain('describe');
-            expect($names)->not()->toContain('write_file');
-            expect($names)->not()->toContain('add_example');
-            expect($names)->toContain('read_file');
-            expect($names)->toContain('run_specs');
-            // Read tools like inspect_symbol stay available while navigating.
-            expect($names)->toContain('inspect_symbol');
-        });
 
         it('refuses a write tool call while the human drives', function (Filesystem $fs) {
             $captured = null;
@@ -981,11 +968,6 @@ describe(AiAssistant::class, function () {
             expect(($this->artifactWrites)())->toHaveLength(1);
             expect((string) json_encode($secondTurnMessages))->toContain('One artifact per turn');
 
-            // Once an artifact is written, no further write tools are advertised this turn.
-            $names = array_column($captured['tools'] ?? [], 'name');
-            expect($names)->not()->toContain('generate_feature');
-            expect($names)->not()->toContain('write_file');
-            expect($names)->toContain('run_specs');
         });
 
         it('starts a new spec with describe, writing a skeleton', function (Filesystem $fs) {
@@ -1287,7 +1269,7 @@ describe(AiAssistant::class, function () {
             expect($captures)->toHaveLength(1);
         });
 
-        it('does not accumulate stale [Current situation] grounding across turns', function (Filesystem $fs) {
+        it('keeps each turn\'s situation, the latest after the earlier ones', function (Filesystem $fs) {
             $captured = null;
             $this->provider->responder = function (array $messages) use (&$captured) {
                 $captured = $messages;
@@ -1301,8 +1283,9 @@ describe(AiAssistant::class, function () {
             $assistant->handle('turn one', $red);
             $assistant->handle('turn two', $green);
 
-            // Only the latest situation survives in what the model sees.
-            expect(substr_count((string) json_encode($captured), '[Current situation]'))->toBe(1);
+            $situations = array_values(array_filter($captured, fn($message) => str_starts_with((string) $message->content, '[Current situation]')));
+            expect($situations)->toHaveLength(2);
+            expect($situations[1]->content)->toContain('green');
         });
 
         it('injects no situation message when no summary is supplied', function (Filesystem $fs) {
@@ -1354,5 +1337,65 @@ describe(AiAssistant::class, function () {
             expect($this->reads)->toBe(1);
             expect(($this->artifactWrites)())->toHaveLength(2);
         });
+    });
+
+    it('keeps one conversation that only grows: every request extends the last, with the same tools, across writes, offers, turns and a swap', function (Filesystem $fs) {
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($fs->exists(any()))->toReturn(true);
+        allow($fs->read(any()))->toReturn("<?php\nnamespace App;\nclass TodoList {}\n// " . str_repeat('padding ', 80) . "\n");
+
+        $reads = array_map(fn(int $n) => new Response('', [new ToolCall("r$n", 'read_file', ['path' => "src/App/File$n.php"])]), range(1, 6));
+        $script = [
+            ...$reads,
+            new Response('', [new ToolCall('w1', 'write_file', ['path' => 'src/App/TodoList.php', 'content' => "<?php\nnamespace App;\nclass TodoList {}\n"])]),
+            new Response('Written; the example can now run.'),
+            new Response('', [new ToolCall('o1', 'offer_change', ['path' => 'src/App/TodoList.php', 'content' => "<?php\nnamespace App;\nclass TodoList { public function tasks(): array { return []; } }\n", 'intent' => 'add tasks()'])]),
+            new Response('', [new ToolCall('o2', 'offer_change', ['path' => 'src/App/TodoList.php', 'content' => "<?php\n// again", 'intent' => 'again'])]),
+            new Response('Offered; over to you.'),
+        ];
+        $requests = [];
+        $this->provider->responder = function (array $messages, array $options) use (&$requests, &$script) {
+            $requests[] = ['messages' => $messages, 'tools' => $options['tools'] ?? []];
+
+            return array_shift($script) ?? new Response('done');
+        };
+        $suite = new SuiteSummary('red', ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0], [['subject' => 'App\\TodoList', 'example' => 'holds tasks', 'error' => 'Class App\\TodoList does not exist']]);
+        $roles = new RoleState(PairRole::AiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, $roles, $this->specRunner);
+        $this->answers = ['1', '1'];
+
+        $assistant->handle('make the list real', $suite);
+        $roles->swap();
+        $assistant->handle('what now?', $suite);
+
+        expect(count($requests))->toBeGreaterThan(10);
+        foreach (array_slice($requests, 1, null, true) as $index => $request) {
+            $previous = $requests[$index - 1];
+            expect(array_slice($request['messages'], 0, count($previous['messages'])))->toBeLike($previous['messages']);
+            expect($request['tools'])->toBe($requests[0]['tools']);
+        }
+    });
+
+    it('leaves a long conversation whole when the provider keeps it within budget on its server', function (Filesystem $fs, ProviderCatalogueInterface $catalogue) {
+        allow($fs->exists(any()))->toReturn(false);
+        allow($fs->isDir(any()))->toReturn(false);
+        allow($catalogue->settings('anthropic'))->toReturn(['api_key', 'replay_thinking', 'compact_at']);
+        $requests = [];
+        $this->provider->responder = function (array $messages) use (&$requests) {
+            $requests[] = $messages;
+
+            return new Response('noted');
+        };
+        $config = new Configuration(['ai' => ['provider' => 'anthropic', 'api_key' => 'k']], '/app', providers: $catalogue);
+        $assistant = new AiAssistant($this->provider, $config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+
+        for ($turn = 1; $turn <= 25; $turn++) {
+            $assistant->handle("turn $turn");
+        }
+
+        expect(count(end($requests)))->toBeGreaterThan(40);
+        foreach (array_slice($requests, 1, null, true) as $index => $messages) {
+            expect(array_slice($messages, 0, count($requests[$index - 1])))->toBeLike($requests[$index - 1]);
+        }
     });
 });

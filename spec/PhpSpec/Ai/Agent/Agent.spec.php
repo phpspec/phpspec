@@ -450,19 +450,21 @@ describe(Agent::class, function () {
             expect($outcome->prose)->toBe('what should the argument be?');
         });
 
-        it('re-orients the system slot when the command changes mid-transcript', function (Filesystem $fs) {
+        it('says the new command\'s system prompt after the input when the command changes, leaving the first in place', function (Filesystem $fs) {
             $replay = new ReplayProvider([new Response('as navigator'), new Response('as driver')]);
             $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: new AgentSpecScriptedExecutor());
 
             $agent->chat('navigator', 'hello');
             $agent->chat('driver', 'you drive now');
 
+            $first = $replay->requests[0]['messages'];
             $second = $replay->requests[1]['messages'];
 
-            expect($second[0]->role)->toBe(Role::System);
-            expect($second[0]->content)->toContain('DRIVER');
-            expect(count(array_filter($second, fn($message) => $message->role === Role::System)))->toBe(1);
-            expect($second[1]->content)->toContain('hello');
+            expect(array_slice($second, 0, count($first)))->toBeLike($first);
+            expect($second[0]->content)->toContain('NAVIGATOR');
+            expect(end($second)->role)->toBe(Role::System);
+            expect(end($second)->content)->toContain('DRIVER');
+            expect(prev($second)->content)->toContain('you drive now');
         });
 
         it('grounds the suite state once: the situation message carries it, the context block does not', function (Filesystem $fs) {

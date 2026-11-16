@@ -604,6 +604,15 @@ final class Configuration
     private const AI_KEYS = ['provider', 'model', 'max_tokens', 'effort'];
 
     /**
+     * What phpspec asks of a provider that takes the setting, unless the ai
+     * section names it: the pair conversation only grows, so the model's
+     * thinking can go back with each answer, and the provider's server can
+     * keep the conversation within budget, clearing old tool results and
+     * compacting, instead of phpspec starting it afresh.
+     */
+    private const PREFERRED_PROVIDER_SETTINGS = ['replay_thinking' => 'drop_on_edit', 'compact_at' => 150000, 'clear_tool_results_at' => 100000];
+
+    /**
      * What a guard section may say, and what it means when it says nothing.
      * One statement of the requirements: the defaults below and the diagnosis
      * in {@see guardSectionGap()} both read from it, so a key cannot be
@@ -857,7 +866,37 @@ final class Configuration
     {
         $ai = $this->getAiConfig() ?? throw new RuntimeException((string) $this->aiConfigProblem());
 
-        return $this->providers()->create($ai['provider'], array_diff_key($this->normalisedAiSection() ?? [], array_flip(self::AI_KEYS)));
+        return $this->providers()->create($ai['provider'], $this->providerSettings($ai['provider']));
+    }
+
+    /**
+     * Whether the provider the ai section names keeps the conversation within
+     * budget on its server, so pair need not start it afresh itself.
+     */
+    public function aiProviderCompacts(): bool
+    {
+        $ai = $this->getAiConfig();
+
+        try {
+            return $ai !== null && isset($this->providerSettings($ai['provider'])['compact_at']);
+        } catch (InvalidArgumentException) {
+            return false;
+        }
+    }
+
+    /**
+     * The provider's own settings: every key of the ai section phpspec does
+     * not read, and what phpspec prefers of the ones the provider takes and
+     * the section leaves out.
+     *
+     * @return array<string, mixed>
+     */
+    private function providerSettings(string $provider): array
+    {
+        $settings = array_diff_key($this->normalisedAiSection() ?? [], array_flip(self::AI_KEYS));
+        $offered = array_intersect_key(self::PREFERRED_PROVIDER_SETTINGS, array_flip($this->providers()->settings($provider)));
+
+        return $settings + $offered;
     }
 
     /**

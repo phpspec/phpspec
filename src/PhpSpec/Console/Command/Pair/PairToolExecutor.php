@@ -67,15 +67,15 @@ final class PairToolExecutor implements ToolExecutor
     private bool $initialised = false;
 
     /**
-     * Each role's manifest-declared tool names, keyed by command name, so
-     * advertising filters to the current role's declared surface.
+     * Each role's manifest-declared tool names, keyed by command name, so a
+     * tool outside the current role's surface is refused.
      *
      * @var array<string, list<string>>
      */
     private array $roleTools = [];
 
     /**
-     * Extension-provided tool names: outside any manifest, always advertised.
+     * Extension-provided tool names: outside any manifest, so no role refuses them.
      *
      * @var list<string>
      */
@@ -149,9 +149,11 @@ final class PairToolExecutor implements ToolExecutor
     }
 
     /**
-     * The tools advertised to the model this round, serialised for the
-     * provider. A round starts here, so the artifact flag is snapshotted for
-     * the round's settling.
+     * The tools advertised to the model, serialised for the provider: both
+     * roles' tools and the extensions', the same for the whole session, so
+     * every request extends the one before it. What the role or the turn does
+     * not allow, {@see execute()} refuses in the tool's result. A round starts
+     * here, so the artifact flag is snapshotted for the round's settling.
      *
      * @return list<array{name: string, description: string, input_schema: array<string, mixed>}>
      */
@@ -159,47 +161,6 @@ final class PairToolExecutor implements ToolExecutor
     {
         $this->ensureInitialised();
         $this->hadArtifactAtRoundStart = $this->artifactWrittenThisHandle;
-        $role = $this->roleState->current();
-
-        // The role's manifest declares its static tool surface (a navigator
-        // has no write tools to withhold; a driver has no offer_change), so
-        // the static filter is data. Extension tools sit outside any manifest
-        // and are always advertised.
-        $declared = $this->roleTools[$role->commandName()] ?? [];
-        $tools = array_values(array_filter(
-            $this->tools,
-            fn(ToolInterface $tool) => in_array($tool->getName(), $declared, true)
-                || in_array($tool->getName(), $this->extensionToolNames, true),
-        ));
-
-        // While the AI drives, once it has written its one artifact this turn
-        // the write tools are withheld, so it can only read and run for the
-        // rest of the turn.
-        if ($role->aiIsDriver() && $this->artifactWrittenThisHandle) {
-            $tools = array_values(array_filter(
-                $tools,
-                fn(ToolInterface $tool) => !in_array($tool->getName(), self::WRITE_TOOLS, true),
-            ));
-        }
-
-        // An offer happens at most once per turn; likewise one registered
-        // suggestion per turn. Withholding the used-up tool is what lets the
-        // loop end in prose instead of chaining suggestion after suggestion.
-        $spent = [];
-        if ($this->offerResolvedThisHandle) {
-            $spent[] = 'offer_change';
-        }
-        // A verified change ends the turn: no fresh suggestion rides on its
-        // back; the human asks for the next step.
-        if ($this->lastSuggestion !== null || $this->artifactWrittenThisHandle) {
-            $spent[] = 'suggest_next';
-        }
-        if ($spent !== []) {
-            $tools = array_values(array_filter(
-                $tools,
-                fn(ToolInterface $tool) => !in_array($tool->getName(), $spent, true),
-            ));
-        }
 
         return array_map(
             fn(ToolInterface $tool) => [
@@ -207,7 +168,7 @@ final class PairToolExecutor implements ToolExecutor
                 'description' => $tool->getDescription(),
                 'input_schema' => $tool->getParameterSchema(),
             ],
-            $tools,
+            array_values($this->tools),
         );
     }
 
@@ -222,14 +183,12 @@ final class PairToolExecutor implements ToolExecutor
 
         $isWrite = in_array($toolCall->name, self::WRITE_TOOLS, true);
 
-        // Auto-refuse a write the role or one-artifact rule forbids: before it
-        // is shown, so a refused write never appears on screen as if it ran.
-        if ($isWrite) {
-            $refusal = $this->autoRefuseWrite();
+        // Refused before it is shown, so a refused call never appears on
+        // screen as if it ran.
+        $refusal = $isWrite ? $this->autoRefuseWrite() : $this->refuseOutsideTheRole($toolCall->name);
 
-            if ($refusal !== null) {
-                return $refusal;
-            }
+        if ($refusal !== null) {
+            return $refusal;
         }
 
         $this->output->getOutput()->writeln($this->formatToolDisplay($toolCall));
@@ -476,6 +435,25 @@ final class PairToolExecutor implements ToolExecutor
     }
 
     /**
+     * Refuses a tool the current role's manifest does not declare, such as
+     * offer_change while the AI drives.
+     *
+     * @return array{error: string}|null
+     */
+    private function refuseOutsideTheRole(string $name): ?array
+    {
+        $role = $this->roleState->current();
+
+        if (in_array($name, $this->extensionToolNames, true) || in_array($name, $this->roleTools[$role->commandName()] ?? [], true)) {
+            return null;
+        }
+
+        PairLogger::log('RESULT', 'Role refusal');
+
+        return ['error' => sprintf('%s is not mine to use while I %s.', $name, $role->aiIsDriver() ? 'drive' : 'navigate')];
+    }
+
+    /**
      * Refuses a write that the role or the one-artifact rule forbids, returning
      * the error payload to send back to the model: the AI never writes while
      * navigating, and only one artifact per turn while driving. Returns null when
@@ -519,7 +497,7 @@ final class PairToolExecutor implements ToolExecutor
      * Builds the session's tool surface from the role manifests: each role's
      * `commands/<name>.txt` declares its tools, the registry serves their
      * schemas and editable descriptions, and pair binds its live handlers. The
-     * union of both roles is built once; advertising filters per round.
+     * union of both roles is built once and advertised whole.
      *
      * @return ToolInterface[]
      */
