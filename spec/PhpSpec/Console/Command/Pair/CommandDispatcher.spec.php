@@ -48,7 +48,7 @@ class CommandDispatcherFakeRunner implements SpecRunner
 }
 
 // Builds a dispatcher whose Configuration holds an ai: block for the given provider.
-function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRunner $specRunner, string $provider): CommandDispatcher
+function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRunner $specRunner, string $provider, ?ProviderInterface $answering = null): CommandDispatcher
 {
     return new CommandDispatcher(
         new SpecGenerator('spec', $fs),
@@ -58,6 +58,7 @@ function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRun
         false,
         $fs,
         specRunner: $specRunner,
+        provider: $answering,
     );
 }
 
@@ -655,8 +656,8 @@ describe(CommandDispatcher::class, function () {
     });
 
     context('AI provider readiness', function () {
-        it('is ready, with no failure reason, when a working provider is configured', function (Filesystem $fs) {
-            $dispatcher = commandDispatcherWithAi($fs, $this->pairOutput, $this->specRunner, 'google');
+        it('is ready, with no failure reason, when it is given the provider to ask', function (Filesystem $fs, ProviderInterface $provider) {
+            $dispatcher = commandDispatcherWithAi($fs, $this->pairOutput, $this->specRunner, 'google', $provider);
 
             expect($dispatcher->aiIsReady())->toBe(true);
             expect($dispatcher->aiUnavailableReason())->toBeNull();

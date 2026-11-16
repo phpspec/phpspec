@@ -634,7 +634,7 @@ describe(Refactor::class, function () {
             $tester->execute(['target' => 'App\\Checkout\\CheckoutService']);
 
             expect($tester->getStatusCode())->toBe(1);
-            expect($tester->getDisplay())->toContain('composer require papi-ai/anthropic');
+            expect($tester->getDisplay())->toContain('Provider "anthropic" is not installed');
             expect($checked)->toBeFalse();
         });
     });

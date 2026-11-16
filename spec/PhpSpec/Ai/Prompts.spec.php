@@ -50,6 +50,12 @@ describe('prompt artifacts', function () {
         expect($driver->body)->toContain('DRIVER');
     });
 
+    it('asks every command that answers through a tool for a tool call, never prose, in its own words', function () use ($read) {
+        foreach (['commands/generate', 'commands/next', 'commands/refactor'] as $name) {
+            expect($read($name))->toContain('only a tool call carries your answer');
+        }
+    });
+
     it('leaves sampling to the model in every shipped command, since current models reject a temperature', function () {
         $library = new PromptLibrary();
 

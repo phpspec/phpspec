@@ -8,6 +8,12 @@
 if (!function_exists('_phpspec_exec')) {
     function _phpspec_exec(object $world, string $args, bool $interactive = false): void
     {
+        if ($world->fakeProvider ?? false) {
+            _phpspec_exec_subprocess($world, $args, $interactive, env: $interactive ? ['SHELL_INTERACTIVE' => '1'] : [], bin: _phpspec_bin_with_fake_provider($world));
+
+            return;
+        }
+
         if (!$interactive) {
             try {
                 $result = \PhpSpec\InProcessRunner::run($world->projectDir, $args);
@@ -34,14 +40,14 @@ if (!function_exists('_phpspec_exec')) {
      * @param string|list<string> $args a command line, or the arguments as a process takes them
      * @param array<string, string> $env what to set in the environment phpspec runs in, over this one's
      */
-    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $engine = 'off', ?string $answers = null, array $php = [], array $env = []): void
+    function _phpspec_exec_subprocess(object $world, string|array $args, bool $interactive = false, string $engine = 'off', ?string $answers = null, array $php = [], array $env = [], ?string $bin = null): void
     {
         $switches = match ($engine) {
             'xdebug' => ['-d', 'xdebug.mode=coverage', '-d', 'pcov.enabled=0'],
             'pcov' => ['-d', 'pcov.enabled=1', '-d', 'xdebug.mode=off'],
             default => ['-d', 'pcov.enabled=0', '-d', 'xdebug.mode=off'],
         };
-        $cmd = [$world->phpBin, ...$switches, ...$php, $world->phpspecBin, ...(is_array($args) ? $args : \PhpSpec\InProcessRunner::argv($args))];
+        $cmd = [$world->phpBin, ...$switches, ...$php, $bin ?? $world->phpspecBin, ...(is_array($args) ? $args : \PhpSpec\InProcessRunner::argv($args))];
 
         // The error stream goes to a file rather than a second pipe: reading
         // two pipes one after the other deadlocks once the child fills the one
@@ -72,6 +78,25 @@ if (!function_exists('_phpspec_exec')) {
         // Kept apart as well: a machine-readable format owns standard output
         // alone, and PHP's own error text belongs on the error stream.
         $world->stdout = $stdout;
+    }
+
+    /**
+     * Writes a phpspec entry point into the project whose installed AI
+     * providers are the fake catalogue's, in place of papi's.
+     */
+    function _phpspec_bin_with_fake_provider(object $world): string
+    {
+        $bin = $world->projectDir . '/_phpspec_with_fake_provider.php';
+        file_put_contents($bin, sprintf(<<<'PHP'
+            <?php
+            require __DIR__ . '/vendor/autoload.php';
+            require %s;
+            require %s;
+
+            (new PhpSpec\Console\Application(null, new PhpSpec\Acceptance\Support\FakeProviderCatalogue()))->run();
+            PHP, var_export(realpath(__DIR__ . '/../support/FakeProvider.php'), true), var_export(realpath(__DIR__ . '/../support/FakeProviderCatalogue.php'), true)));
+
+        return $bin;
     }
 
     /**

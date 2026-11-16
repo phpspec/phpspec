@@ -15,6 +15,7 @@
 namespace PhpSpec\Console;
 
 use Composer\InstalledVersions;
+use PhpSpec\Ai\Contracts\ProviderCatalogueInterface;
 
 use function PhpSpec\attach;
 
@@ -63,9 +64,12 @@ final class Application extends BaseApplication
 
     /**
      * @param array<int, string>|null $argv raw argv tokens; defaults to the process argv (in-process runners pass their own)
+     * @param ProviderCatalogueInterface|null $providers the AI providers the project has installed; papi's when not given
      */
-    public function __construct(?array $argv = null)
-    {
+    public function __construct(
+        ?array $argv = null,
+        private readonly ?ProviderCatalogueInterface $providers = null,
+    ) {
         $globalArgv = $_SERVER['argv'] ?? null;
         $this->argv = $argv ?? (is_array($globalArgv) ? $globalArgv : []);
 
@@ -171,7 +175,7 @@ final class Application extends BaseApplication
      */
     public function getDefaultCommands(): array
     {
-        $config = Configuration::load('.', configFile: Configuration::configPathFromArgv($this->argv));
+        $config = Configuration::load('.', configFile: Configuration::configPathFromArgv($this->argv), providers: $this->providers);
 
         $config->registerAutoloaders();
         $extensionLoader = new ExtensionLoader($config);

@@ -18,7 +18,6 @@ use InvalidArgumentException;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\PromptLibrary;
-use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\CommandLine;
 use PhpSpec\Configuration;
@@ -107,7 +106,7 @@ final class Refactor extends Command
 
         try {
             $target = (new TargetResolver($this->config, $this->filesystem, $root, $this->commandLine))->resolve(is_string($argument) ? $argument : null);
-            $provider = $this->provider ?? ProviderFactory::create($aiConfig);
+            $provider = $this->provider ?? $this->config->aiProvider();
         } catch (UnresolvedTargetException $e) {
             return $this->refuse($output, $forAgent, $e->problem(), $e->remedy());
         } catch (RuntimeException|InvalidArgumentException $e) {

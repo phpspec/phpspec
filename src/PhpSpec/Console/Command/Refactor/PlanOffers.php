@@ -18,7 +18,6 @@ use InvalidArgumentException;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\PromptLibrary;
-use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\Generation;
@@ -62,7 +61,7 @@ final readonly class PlanOffers
 
         try {
             $target = (new TargetResolver($this->config, $this->filesystem, $this->root))->resolve($offer->target);
-            $provider = $this->provider ?? ProviderFactory::create($aiConfig);
+            $provider = $this->provider ?? $this->config->aiProvider();
         } catch (RuntimeException|InvalidArgumentException $e) {
             return [$this->notApplied($e->getMessage())];
         }

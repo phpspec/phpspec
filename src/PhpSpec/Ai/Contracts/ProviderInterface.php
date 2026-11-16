@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Ai\Contracts;
 
+use PhpSpec\Ai\ModelFailedException;
 use PhpSpec\Ai\Response;
 
 /**
@@ -31,6 +32,8 @@ interface ProviderInterface
      * @param array<string, mixed> $options provider options (model, maxTokens, temperature, tools, etc.)
      *
      * @return Response
+     *
+     * @throws ModelFailedException when the token ceiling cut the answer off
      */
     public function chat(array $messages, array $options = []): Response;
 }

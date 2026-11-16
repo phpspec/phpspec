@@ -14,6 +14,7 @@ Feature: Project-level prompt overrides
       """
       You are OUR generator. House rule: never invent fixture domains.
       """
+    And a fake AI provider
     When I run phpspec command "generate a spec for App/Basket that holds products"
     Then the file ".phpspec/ai/last-request.json" should contain "commands/generate (project)"
     And the file ".phpspec/ai/last-request.json" should contain "OUR generator"
@@ -25,6 +26,7 @@ Feature: Project-level prompt overrides
         provider: google
         api_key: test-key
       """
+    And a fake AI provider
     When I run phpspec command "generate a spec for App/Basket that holds products"
     Then the file ".phpspec/ai/last-request.json" should contain "commands/generate"
     And the file ".phpspec/ai/last-request.json" should not contain "(project)"

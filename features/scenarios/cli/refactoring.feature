@@ -28,6 +28,7 @@ Feature: AI-powered refactoring
 
       class Broken {}
       """
+    And a fake AI provider
     When I run phpspec refactor "App\Broken"
     Then the exit code should not be 0
     And the output should contain "Specs must pass before refactoring"
@@ -57,6 +58,7 @@ Feature: AI-powered refactoring
 
       class Solid {}
       """
+    And a fake AI provider
     When I run phpspec refactor "App\Solid"
     Then the output should not contain "Could not open input file"
     And the output should not contain "Specs must pass"
@@ -97,6 +99,7 @@ Feature: AI-powered refactoring
 
       class Solid {}
       """
+    And a fake AI provider
     When I run phpspec refactor "App\Solid"
     Then the exit code should not be 0
     And the output should contain "Specs must pass before refactoring"
@@ -131,6 +134,7 @@ Feature: AI-powered refactoring
 
       class Solid {}
       """
+    And a fake AI provider
     When I run phpspec refactor "App\Solid"
     Then the output should not contain "Specs must pass"
 
@@ -161,6 +165,7 @@ Feature: AI-powered refactoring
       """
     And Xdebug is available
     And I run phpspec guard
+    And a fake AI provider
     When I run phpspec refactor "App\Solid"
     Then the output should not contain "Specs must pass"
     And the output should not contain "no coverage driver"
@@ -303,6 +308,7 @@ Feature: AI-powered refactoring
 
       class Till {}
       """
+    And a fake AI provider
     When I run phpspec command "refactor Basket"
     Then the exit code should be 1
     And the output should contain "Checking the specs..."
@@ -426,6 +432,7 @@ Feature: AI-powered refactoring
 
       class Broken {}
       """
+    And a fake AI provider
     When I run phpspec command "refactor App/Broken --format=agent"
     Then the exit code should not be 0
     And the output should be valid JSON

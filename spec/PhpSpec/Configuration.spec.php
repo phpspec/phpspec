@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\Ai\Contracts\ProviderCatalogueInterface;
+use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Configuration;
 use PhpSpec\ConfigurationException;
 use PhpSpec\Coverage\CoverageAdapter;
@@ -597,7 +599,7 @@ describe(Configuration::class, function () {
         expect($config->guardConfigProblem())->toBe('The guard section\'s paths must be a list of paths.');
     });
 
-    it('returns ai config when configured with api_key', function (Filesystem $fs) {
+    it('reads its own ai keys and leaves the rest to the provider', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
@@ -609,24 +611,39 @@ describe(Configuration::class, function () {
         expect($config->getAiConfig())->toBe([
             'provider' => 'google',
             'model' => 'gemini-2.5-flash',
-            'api_key' => 'test-key-123',
         ]);
     });
 
-    it('accepts hyphenated spellings of the ai keys, api-key and max-tokens', function (Filesystem $fs) {
+    it('builds the provider the ai section names, every key it does not read being a setting of that provider', function (Filesystem $fs, ProviderCatalogueInterface $providers, ProviderInterface $provider) {
         allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
             default => false,
         });
-        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api-key: test-key-123\n  max-tokens: 32000\n");
+        allow($fs->read(any()))->toReturn("ai:\n  provider: azure-openai\n  model: gpt-6-astra\n  max-tokens: 32000\n  effort: high\n  api-key: test-key-123\n  endpoint: https://brew.openai.azure.com\n  deployment: brew\n");
+        allow($providers->create('azure-openai', ['api_key' => 'test-key-123', 'endpoint' => 'https://brew.openai.azure.com', 'deployment' => 'brew']))->toReturn($provider);
 
-        $config = Configuration::load('/app', $fs);
+        $config = Configuration::load('/app', $fs, providers: $providers);
 
         expect($config->getAiConfig())->toBe([
-            'provider' => 'google',
+            'provider' => 'azure-openai',
+            'model' => 'gpt-6-astra',
             'maxTokens' => 32000,
-            'api_key' => 'test-key-123',
+            'effort' => 'high',
         ]);
+        expect($config->aiProvider())->toBe($provider);
+    });
+
+    it('says why a provider refused its settings, in the provider\'s words', function (ProviderCatalogueInterface $providers) {
+        allow($providers->create('google', []))->toThrow(new InvalidArgumentException('Provider "google" needs the "api_key" setting.'));
+        $config = new Configuration(['ai' => ['provider' => 'google']], '/app', providers: $providers);
+
+        expect($config->aiConfigProblem())->toBeNull();
+        expect(fn() => $config->aiProvider())->toThrow(new InvalidArgumentException('Provider "google" needs the "api_key" setting.'));
+    });
+
+    it('builds no provider from an ai section it cannot read, saying why', function () {
+        expect(fn() => (new Configuration(['ai' => ['provider' => 'google', 'max_tokens' => 'plenty']]))->aiProvider())
+            ->toThrow(new RuntimeException('The ai section\'s max_tokens must be a positive number.'));
     });
 
     it('names the config file to add the ai section to, and shows one', function (Filesystem $fs) {
@@ -664,17 +681,10 @@ describe(Configuration::class, function () {
         expect($problem)->toContain("\nai:\n  provider: ");
     });
 
-    it('names the missing key when the ai section exists without api_key', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n");
+    it('shows the one installed provider in the ai section it asks for', function (ProviderCatalogueInterface $providers) {
+        allow($providers->installed())->toReturn(['ollama' => 'papi-ai/ollama']);
 
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->getAiConfig())->toBeNull();
-        expect($config->aiConfigProblem())->toBe('The ai section is missing api_key. Add it to your phpspec config.');
+        expect((new Configuration([], '/app', providers: $providers))->aiConfigProblem())->toContain("\nai:\n  provider: ollama");
     });
 
     it('gives a missing ai section as a problem and, apart, the section that would answer it', function () {
@@ -682,68 +692,29 @@ describe(Configuration::class, function () {
 
         expect($refusal['problem'] ?? null)->toBe('AI configuration required. Create phpspec.yml with an "ai" section.');
         expect($refusal['remedy'] ?? null)->toContain("ai:\n  provider: ");
-        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '']]))->aiConfigRefusal())->toBe(['problem' => 'The ai section\'s api_key is empty. Put your key in your phpspec config.', 'remedy' => null]);
         expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => 'k']]))->aiConfigRefusal())->toBeNull();
     });
 
-    it('takes an empty api_key for a missing one', function () {
-        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '']]))->aiConfigProblem())->toBe('The ai section\'s api_key is empty. Put your key in your phpspec config.');
-        expect((new Configuration(['ai' => ['provider' => 'google', 'api_key' => '  ']]))->getAiConfig())->toBeNull();
-    });
-
-    it('requires provider, and names the installed papi package as the answer', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("ai:\n  api_key: test-key-123\n");
-
-        $config = Configuration::load('/app', $fs);
+    it('requires provider, saying so when no papi provider package is installed', function (ProviderCatalogueInterface $providers) {
+        allow($providers->installed())->toReturn([]);
+        $config = new Configuration(['ai' => ['api_key' => 'test-key-123']], '/app', providers: $providers);
 
         expect($config->getAiConfig())->toBeNull();
+        expect($config->aiConfigProblem())->toBe('The ai section is missing provider, and no papi provider package is installed.');
+    });
+
+    it('names the one installed papi package as the provider to set', function (ProviderCatalogueInterface $providers) {
+        allow($providers->installed())->toReturn(['google' => 'papi-ai/google']);
+        $config = new Configuration(['ai' => ['api_key' => 'test-key-123']], '/app', providers: $providers);
+
         expect($config->aiConfigProblem())->toBe('The ai section is missing provider. papi-ai/google is installed, so set provider: google.');
     });
 
-    it('rejects an unknown provider, listing the known ones', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("ai:\n  provider: googel\n  api_key: test-key-123\n");
+    it('names every installed provider when there are several to choose from', function (ProviderCatalogueInterface $providers) {
+        allow($providers->installed())->toReturn(['google' => 'papi-ai/google', 'anthropic' => 'papi-ai/anthropic', 'ollama' => 'papi-ai/ollama']);
+        $config = new Configuration(['ai' => ['api_key' => 'test-key-123']], '/app', providers: $providers);
 
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->getAiConfig())->toBeNull();
-        expect($config->aiConfigProblem())->toBe('Unknown ai provider "googel". The known providers are google, anthropic, openai, grok, deepseek, and ollama.');
-    });
-
-    it('accepts an ollama section without api_key, passing its base_url through', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("ai:\n  provider: ollama\n  base_url: http://localhost:11434\n");
-
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->aiConfigProblem())->toBeNull();
-        expect($config->getAiConfig())->toBe([
-            'provider' => 'ollama',
-            'base_url' => 'http://localhost:11434',
-        ]);
-    });
-
-    it('catches a misspelled ai key with a suggestion', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_keys: test-key-123\n");
-
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->getAiConfig())->toBeNull();
-        expect($config->aiConfigProblem())->toBe('Unknown ai key "api_keys". Did you mean "api_key"?');
+        expect($config->aiConfigProblem())->toBe('The ai section is missing provider. Set it to google, anthropic, or ollama.');
     });
 
     it('names a wrong-typed optional key instead of silently dropping it', function (Filesystem $fs) {
@@ -757,19 +728,6 @@ describe(Configuration::class, function () {
 
         expect($config->getAiConfig())->toBeNull();
         expect($config->aiConfigProblem())->toBe('The ai section\'s max_tokens must be a positive number.');
-    });
-
-    it('names the wrong type when api_key is present but not a string', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n  api_key: 12345\n");
-
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->getAiConfig())->toBeNull();
-        expect($config->aiConfigProblem())->toBe('The ai section\'s api_key must be a string. Quote it in your phpspec config.');
     });
 
     it('asks for the ai section when the config has none', function (Filesystem $fs) {
@@ -808,7 +766,6 @@ describe(Configuration::class, function () {
         expect($config->getAiConfig())->toBe([
             'provider' => 'google',
             'maxTokens' => 32000,
-            'api_key' => 'test-key-123',
         ]);
     });
 
@@ -824,7 +781,6 @@ describe(Configuration::class, function () {
         expect($config->getAiConfig())->toBe([
             'provider' => 'google',
             'effort' => 'high',
-            'api_key' => 'test-key-123',
         ]);
 
         // A wrong-typed effort is named, never silently dropped.
@@ -837,18 +793,6 @@ describe(Configuration::class, function () {
 
     it('returns null for ai config when not configured', function (Filesystem $fs) {
         allow($fs->exists(any()))->toReturn(false);
-        $config = Configuration::load('/app', $fs);
-
-        expect($config->getAiConfig())->toBeNull();
-    });
-
-    it('returns null for ai config when api_key is missing', function (Filesystem $fs) {
-        allow($fs->exists(any()))->toReturnUsing(fn(string $path) => match ($path) {
-            '/app/phpspec.yaml' => true,
-            default => false,
-        });
-        allow($fs->read(any()))->toReturn("ai:\n  provider: google\n");
-
         $config = Configuration::load('/app', $fs);
 
         expect($config->getAiConfig())->toBeNull();

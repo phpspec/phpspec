@@ -18,8 +18,8 @@ use Closure;
 use Exception;
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\Writer;
+use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\PromptLibrary;
-use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\ClassLocation;
 use PhpSpec\CodeGeneration\SpecGenerator;
@@ -103,6 +103,7 @@ final class CommandDispatcher
      * @param Application|null $application the Symfony console application for command delegation
      * @param SpecRunner|null $specRunner runs specs for `run`; defaults to a fresh subprocess
      * @param (Closure(Consent): Refactor)|null $refactor builds the refactor command asking through the given consent; defaults to the real one
+     * @param ProviderInterface|null $provider the model every AI turn asks; built from the ai config when not given
      */
     public function __construct(
         private readonly SpecGenerator $specGenerator,
@@ -119,6 +120,7 @@ final class CommandDispatcher
         ?Agent $agent = null,
         ?AiAssistant $ai = null,
         ?Closure $refactor = null,
+        ?ProviderInterface $provider = null,
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
@@ -127,8 +129,8 @@ final class CommandDispatcher
         $this->notes = $this->chooser->notes();
         $this->specRunner = $specRunner ?? new SubprocessRunner($config);
         $this->roleState = $roleState ?? new RoleState();
-        $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
-        $this->refactor = $refactor ?? fn(Consent $consent): Refactor => new Refactor($this->config, $this->filesystem, consent: $consent);
+        $this->agent = $agent ?? new Agent($this->config, $this->filesystem, $provider);
+        $this->refactor = $refactor ?? fn(Consent $consent): Refactor => new Refactor($this->config, $this->filesystem, provider: $provider, consent: $consent);
         $this->registerAutoloader();
 
         if ($ai !== null) {
@@ -150,8 +152,7 @@ final class CommandDispatcher
         }
 
         try {
-            $provider = ProviderFactory::create($aiConfig);
-            $this->ai = new AiAssistant($provider, $this->config, $this->output, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
+            $this->ai = new AiAssistant($provider ?? $this->config->aiProvider(), $this->config, $this->output, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
         } catch (Exception $e) {
             // Any provider failure — a missing package, a bad key — leaves AI
             // unavailable rather than crashing the session.

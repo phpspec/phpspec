@@ -76,10 +76,13 @@ describe('E14 refactor: a parameter object, spec first, replayed from a live ses
         expect(($this->code)('src/Brew/Drink.php'))->toContain('public function price(): Money');
     });
 
-    it('asks for the plan and for each step through a forced tool call', function () {
+    it('asks for the plan and for each step through a tool call, never a forced one', function () {
         ($this->refactor)();
 
-        $choices = array_map(fn(array $request): mixed => $request['options']['toolChoice'], $this->replay->requests);
-        expect($choices)->toBe(['required', ...array_fill(0, 5, ['name' => 'propose_step'])]);
+        $offered = array_map(fn(array $request): array => array_map(fn($tool) => $tool->getName(), $request['options']['tools']), $this->replay->requests);
+        expect($offered)->toBe([['propose_plan', 'decline_refactoring'], ...array_fill(0, 5, ['propose_step'])]);
+        foreach ($this->replay->requests as $request) {
+            expect($request['options'])->not()->toHaveKey('toolChoice');
+        }
     });
 });

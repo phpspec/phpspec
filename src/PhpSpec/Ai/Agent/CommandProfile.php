@@ -15,7 +15,6 @@
 namespace PhpSpec\Ai\Agent;
 
 use PhpSpec\Ai\Prompt;
-use PhpSpec\Ai\ProviderFactory;
 use RuntimeException;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -54,9 +53,10 @@ final readonly class CommandProfile
     /**
      * The options the provider is asked with for this command: the model and
      * the effort the configuration names, its token limit before this
-     * command's own, and this command's temperature.
+     * command's own, and this command's temperature. Without a configured
+     * model the provider package answers with its own default.
      *
-     * @param array{provider?: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string} $aiConfig
+     * @param array{provider?: string, model?: string, maxTokens?: int, effort?: string} $aiConfig
      * @return array<string, mixed>
      */
     public function providerOptions(array $aiConfig): array
@@ -70,9 +70,8 @@ final readonly class CommandProfile
             $options['effort'] = $aiConfig['effort'];
         }
 
-        $model = $aiConfig['model'] ?? (isset($aiConfig['provider']) ? ProviderFactory::defaultModel($aiConfig['provider']) : null);
-        if ($model !== null) {
-            $options['model'] = $model;
+        if (isset($aiConfig['model'])) {
+            $options['model'] = $aiConfig['model'];
         }
 
         if ($this->temperature !== null) {

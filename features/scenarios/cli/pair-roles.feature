@@ -10,6 +10,7 @@ Feature: Pair mode roles — /swap changes who holds the keyboard
         provider: google
         api_key: test-key
       """
+    And a fake AI provider
     When I run phpspec pair with input "/swap; /swap"
     Then the output should contain "I'm driving"
     And the output should contain "You're driving"
@@ -21,6 +22,7 @@ Feature: Pair mode roles — /swap changes who holds the keyboard
         provider: google
         api_key: test-key
       """
+    And a fake AI provider
     When I run phpspec pair with input "/help"
     Then the output should contain "/swap"
 

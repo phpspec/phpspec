@@ -18,7 +18,6 @@ use InvalidArgumentException;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolExecutor;
 use PhpSpec\Ai\PromptLibrary;
-use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\TreeScanner;
@@ -39,8 +38,6 @@ use Throwable;
  */
 final class Agent
 {
-    /** Fallback output-token ceiling; a tight cap returns EMPTY from reasoning models (gemini-3.1-pro-preview at 8192). */
-
     private readonly Filesystem $filesystem;
 
     private readonly ToolRegistry $registry;
@@ -124,14 +121,14 @@ final class Agent
     }
 
     /**
-     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string}|null $aiConfig
      */
     private function askTheModel(CommandProfile $profile, ?Step $step, Grounding $grounding, string $instruction, ?array $aiConfig): Outcome
     {
         $request = Request::compose($profile, $step, $this->transcript !== null ? $grounding->withoutSuite() : $grounding, $instruction, $this->prompts);
 
         try {
-            $provider = $this->providerFor($aiConfig);
+            $provider = $this->providerFor();
             $options = $this->providerOptions($profile, $aiConfig ?? []);
         } catch (RuntimeException|InvalidArgumentException $e) {
             $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null);
@@ -163,17 +160,16 @@ final class Agent
 
     /**
      * @param array<string, mixed> $options
-     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string}|null $aiConfig
      */
     private function proposeInOneRound(ProviderInterface $provider, array $options, Transcript $transcript, CommandProfile $profile, ?Step $step, string $instruction, Request $request, ?array $aiConfig): Outcome
     {
         try {
             $response = $provider->chat($transcript->messages(), $options);
 
-            // papi-core < 0.13 ignores toolChoice, so a prose answer gets one corrective re-ask.
             if ($profile->answer === 'tool_call' && !$response->hasToolCalls()) {
                 $transcript->heard($response);
-                $transcript->say('Answer by calling exactly one of the declared tools; do not answer in prose.');
+                $transcript->say($this->prompts->read('instructions/answer-with-a-tool'));
                 $response = $provider->chat($transcript->messages(), $options);
             }
 
@@ -188,7 +184,7 @@ final class Agent
     }
 
     /**
-     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string}|null $aiConfig
      */
     private function proposalsOutcome(Response $response, CommandProfile $profile, ?Step $step, string $instruction, Request $request, ?array $aiConfig): Outcome
     {
@@ -219,7 +215,7 @@ final class Agent
 
     /**
      * @param array<string, mixed> $options
-     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string}|null $aiConfig
      */
     private function converseUntilHandBack(ToolExecutor $executor, ProviderInterface $provider, array $options, Transcript $transcript, CommandProfile $profile, ?Step $step, string $instruction, Request $request, ?array $aiConfig): Outcome
     {
@@ -299,7 +295,7 @@ final class Agent
     }
 
     /**
-     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string}|null $aiConfig
      * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      */
     private function captureTurn(CommandProfile $profile, string $instruction, ?Step $step, Request $request, ?array $aiConfig, ?Response $response, array $rounds): void
@@ -420,24 +416,13 @@ final class Agent
         return new Outcome($step, [], $error, failure: $error);
     }
 
-    /**
-     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
-     */
-    private function providerFor(?array $aiConfig): ProviderInterface
+    private function providerFor(): ProviderInterface
     {
-        if ($this->provider !== null) {
-            return $this->provider;
-        }
-
-        if ($aiConfig === null) {
-            throw new RuntimeException($this->config->aiConfigProblem() ?? 'AI configuration required. Add an "ai" section to your phpspec config.');
-        }
-
-        return ProviderFactory::create($aiConfig);
+        return $this->provider ?? $this->config->aiProvider();
     }
 
     /**
-     * @param array{provider?: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string} $aiConfig
+     * @param array{provider?: string, model?: string, maxTokens?: int, effort?: string} $aiConfig
      * @return array<string, mixed>
      */
     private function providerOptions(CommandProfile $profile, array $aiConfig): array
@@ -446,11 +431,6 @@ final class Agent
         $tools = $this->registry->definitions($profile);
         if ($tools !== []) {
             $options['tools'] = $tools;
-
-            // papi-core >= 0.13 enforces toolChoice at the provider; older versions ignore it.
-            if ($profile->answer === 'tool_call') {
-                $options['toolChoice'] = count($profile->tools) === 1 ? ['name' => $profile->tools[0]] : 'required';
-            }
         }
 
         return $options;

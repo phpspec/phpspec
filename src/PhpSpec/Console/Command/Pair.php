@@ -14,7 +14,6 @@
 
 namespace PhpSpec\Console\Command;
 
-use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
@@ -89,12 +88,9 @@ final class Pair extends Command
 
         // The banner reflects whether the provider actually started, not merely
         // that an ai: block exists, so "ai: on" never contradicts a session that
-        // can't answer natural language. The model is resolved only for a ready
-        // provider, whose name is then known to the factory.
+        // can't answer natural language.
         $aiConfig = $this->config->getAiConfig();
-        $model = $dispatcher->aiIsReady() && is_array($aiConfig)
-            ? $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider'])
-            : null;
+        $model = $dispatcher->aiIsReady() && is_array($aiConfig) ? $aiConfig['model'] ?? null : null;
         $pairOutput->configureStatus(
             StatusBar::abbreviateHome(getcwd() ?: '.', getenv('HOME') ?: ''),
             $dispatcher->aiIsReady(),

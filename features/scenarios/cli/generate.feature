@@ -32,6 +32,7 @@ Feature: Generate code from a natural-language instruction
         provider: google
         api_key: test-key
       """
+    And a fake AI provider
     When I run phpspec command "generate a Calculator that adds two numbers"
     Then the output should contain "Generating"
 
@@ -66,6 +67,7 @@ Feature: Generate code from a natural-language instruction
           pending();
       });
       """
+    And a fake AI provider
     When I run phpspec command "generate the body of the steps in features/completing_a_task.feature"
     Then the output should not contain "steps.php"
     And the output should not contain "pending();"

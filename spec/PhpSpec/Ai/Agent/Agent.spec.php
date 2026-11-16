@@ -15,8 +15,7 @@ use PhpSpec\Source\ComposerAutoload;
 
 require_once __DIR__ . '/../ReplayProvider.php';
 
-// A provider whose chat always fails, the way a live one does on a bad key or
-// an unenforceable toolChoice (papi-core 0.13 throws before any HTTP call).
+// A provider whose chat always fails, the way a live one does on a bad key.
 class AgentSpecThrowingProvider implements PhpSpec\Ai\Contracts\ProviderInterface
 {
     public function chat(array $messages, array $options = []): Response
@@ -190,26 +189,21 @@ describe(Agent::class, function () {
         expect($outcome->proposals[0]->path)->toBe('spec/Acme/Coupon.spec.php');
     });
 
-    it('forces the tool channel via toolChoice: required with several tools declared', function (Filesystem $fs) {
-        $replay = new ReplayProvider([
+    it('asks for a tool answer in the prompt, never by forcing the tool choice, which current models refuse', function (Filesystem $fs) {
+        $generating = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
-        $agent = new Agent($this->config, $fs, $replay);
-
-        $agent->chat('generate', 'a spec for a Coupon');
-
-        expect($replay->requests[0]['options']['toolChoice'])->toBe('required');
-    });
-
-    it('forces the one declared tool by name when the manifest declares exactly one', function (Filesystem $fs) {
-        $replay = new ReplayProvider([
+        $advising = new ReplayProvider([
             new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\Coupon', 'reason' => 'ok'])]),
         ]);
-        $agent = new Agent($this->config, $fs, $replay);
 
-        $agent->chat('next', '');
+        (new Agent($this->config, $fs, $generating))->chat('generate', 'a spec for a Coupon');
+        (new Agent($this->config, $fs, $advising))->chat('next', '');
 
-        expect($replay->requests[0]['options']['toolChoice'])->toBe(['name' => 'suggest_next']);
+        foreach ([$generating, $advising] as $replay) {
+            expect($replay->requests[0]['options'])->not()->toHaveKey('toolChoice');
+            expect($replay->requests[0]['messages'][0]->content)->toContain('only a tool call carries your answer');
+        }
     });
 
     it('lets the user config max_tokens beat the manifest and the default', function (Filesystem $fs) {
@@ -312,6 +306,7 @@ describe(Agent::class, function () {
         $outcome = $agent->chat('generate', 'a spec for a Coupon');
 
         expect($replay->requests)->toHaveLength(2);
+        expect(end($replay->requests[1]['messages'])->content)->toContain('only a tool call carries your answer');
         expect($outcome->proposals[0]->path)->toBe('spec/Coupon.spec.php');
     });
 
