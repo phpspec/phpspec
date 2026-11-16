@@ -1,5 +1,4 @@
 ---
-temperature: 0.3
 max_tokens: 8192
 ---
 You refactor PHP code with PhpSpec, the GOOS way, in baby steps the developer

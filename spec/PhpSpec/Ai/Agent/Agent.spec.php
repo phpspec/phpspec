@@ -144,7 +144,7 @@ describe(Agent::class, function () {
         expect($outcome->proposals[0]->path)->toBe('spec/Coupon.spec.php');
         expect($replay->requests)->toHaveLength(1);
         expect($replay->requests[0]['messages'][1]->content)->toContain('a spec for a Coupon');
-        expect($replay->requests[0]['options']['temperature'])->toBe(0.2);
+        expect($replay->requests[0]['options'])->not()->toHaveKey('temperature');
         expect($replay->requests[0]['options']['tools'])->toHaveLength(3);
     });
 

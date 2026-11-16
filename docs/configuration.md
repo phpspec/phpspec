@@ -402,7 +402,7 @@ Every prompt the AI commands use is a text file. The shipped ones live inside th
   navigator.txt                the pair navigator role contract (also: driver.txt, next.txt)
 ```
 
-Command files under `commands/` may start with YAML frontmatter (tools, answer channel, grounding, temperature, max_tokens, max_turns). Overrides inherit the shipped frontmatter per key: a prose-only file keeps the shipped machine contract, and declaring only `temperature: 0.2` keeps the shipped tools. An `@include <name>` line inside any prompt resolves project-first.
+Command files under `commands/` may start with YAML frontmatter (tools, answer channel, grounding, temperature, max_tokens, max_turns). Overrides inherit the shipped frontmatter per key: a prose-only file keeps the shipped machine contract, and declaring only `max_turns: 20` keeps the shipped tools. An `@include <name>` line inside any prompt resolves project-first.
 
 `.phpspec/ai/last-request.json` marks overridden prompts in `composed_from` (e.g. `"commands/next (project)"`), so you can always see whose words the model heard.
 
