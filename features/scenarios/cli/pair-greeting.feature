@@ -50,3 +50,25 @@ Feature: Pair mode greets from the suite state
     When I start a pair session
     Then the output should contain "Green"
     And the output should not contain "PhpSpec Pair Programming Mode"
+
+  Scenario: Answering the greeting tells the model what the answer answers
+    Given a PSR-4 project with "spec" and "src" directories
+    And a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key
+      """
+    And a fake AI provider
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+      describe('App\Calculator', function () {
+          it('adds numbers', function () {
+              expect(1)->toBe(2);
+          });
+      });
+      """
+    When I start a pair session and answer "yes"
+    Then the file ".phpspec/ai/last-request.json" should contain "Want to start there?"
+    And the file ".phpspec/ai/last-request.json" should contain "yes"

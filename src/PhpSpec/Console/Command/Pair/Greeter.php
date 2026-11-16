@@ -29,12 +29,14 @@ final readonly class Greeter
      * @param SpecRunner $specRunner runs the suite to learn its state
      * @param PairOutput $output the pair screen to greet into
      * @param bool $aiAvailable whether an AI provider is configured
+     * @param Notes $notes where the model reads what the greeting said
      * @param SuiteNarrator $narrator maps suite state to the greeting lines
      */
     public function __construct(
         private SpecRunner $specRunner,
         private PairOutput $output,
         private bool $aiAvailable,
+        private Notes $notes,
         private SuiteNarrator $narrator = new SuiteNarrator(),
     ) {}
 
@@ -50,5 +52,7 @@ final readonly class Greeter
         foreach ($this->narrator->greeting($outcome, $this->aiAvailable) as $line) {
             $console->writeln($line);
         }
+
+        $this->notes->opened($this->narrator->opening($outcome, $this->aiAvailable));
     }
 }

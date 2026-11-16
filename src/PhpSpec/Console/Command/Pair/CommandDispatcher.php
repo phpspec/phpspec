@@ -186,7 +186,7 @@ final class CommandDispatcher
      */
     public function greet(): void
     {
-        (new Greeter($this->specRunner, $this->output, $this->ai !== null))->greet();
+        (new Greeter($this->specRunner, $this->output, $this->ai !== null, $this->notes))->greet();
     }
 
     /**

@@ -121,3 +121,7 @@ when('I run phpspec pair with input {string} and nobody answering', function (st
 when('I start a pair session', function () {
     _pair_exec($this, '', null, true);
 });
+
+when('I start a pair session and answer {string}', function (string $input) {
+    _pair_exec($this, $input, null, true);
+});

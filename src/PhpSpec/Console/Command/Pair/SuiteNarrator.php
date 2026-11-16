@@ -41,17 +41,25 @@ final class SuiteNarrator
      */
     public function greeting(?RunOutcome $outcome, bool $aiAvailable): array
     {
+        $footer = $aiAvailable ? self::FOOTER_AI : self::FOOTER_COMMANDS;
+
+        return ['', ...$this->opening($outcome, $aiAvailable), '', $footer];
+    }
+
+    /**
+     * What the greeting says, without the commands shown under it.
+     *
+     * @return list<string>
+     */
+    public function opening(?RunOutcome $outcome, bool $aiAvailable): array
+    {
         $summary = $outcome?->summary;
 
-        $observation = match (true) {
+        return match (true) {
             $summary === null || $summary->isEmpty() => $this->emptyProjectGreeting($aiAvailable),
             $summary->isRed() => $this->redGreeting($summary),
             default => $this->greenGreeting($summary),
         };
-
-        $footer = $aiAvailable ? self::FOOTER_AI : self::FOOTER_COMMANDS;
-
-        return ['', ...$observation, '', $footer];
     }
 
     /**
