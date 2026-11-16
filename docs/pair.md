@@ -155,20 +155,20 @@ configured next to the provider.
 ### Providers
 
 phpspec works with whichever papi provider packages the project has installed,
-alongside `papi-ai/papi-core` ^0.15.4; `provider` picks one by name.
+alongside `papi-ai/papi-core` ^0.15.5; `provider` picks one by name.
 
 | Provider | Package |
 |---|---|
-| `google` | `papi-ai/google` ^0.17.1 |
-| `anthropic` | `papi-ai/anthropic` ^0.17.1 |
-| `openai` | `papi-ai/openai` ^0.17.1 |
-| `azure-openai` | `papi-ai/azure-openai` ^0.16.1 |
-| `grok` | `papi-ai/grok` ^0.17.1 |
-| `deepseek` | `papi-ai/deepseek` ^0.17.1 |
-| `mistral` | `papi-ai/mistral` ^0.16.2 |
-| `groq` | `papi-ai/groq` ^0.16.2 |
-| `cohere` | `papi-ai/cohere` ^0.16.2 |
-| `ollama` | `papi-ai/ollama` ^0.16.1 |
+| `google` | `papi-ai/google` ^0.17.2 |
+| `anthropic` | `papi-ai/anthropic` ^0.17.2 |
+| `openai` | `papi-ai/openai` ^0.17.2 |
+| `azure-openai` | `papi-ai/azure-openai` ^0.16.2 |
+| `grok` | `papi-ai/grok` ^0.17.2 |
+| `deepseek` | `papi-ai/deepseek` ^0.17.2 |
+| `mistral` | `papi-ai/mistral` ^0.16.3 |
+| `groq` | `papi-ai/groq` ^0.16.3 |
+| `cohere` | `papi-ai/cohere` ^0.16.3 |
+| `ollama` | `papi-ai/ollama` ^0.16.2 |
 
 ```bash
 composer require papi-ai/papi-core papi-ai/google      # for Gemini
